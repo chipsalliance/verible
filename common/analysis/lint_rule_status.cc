@@ -42,7 +42,7 @@ namespace verible {
 std::string AutoFix::Apply(absl::string_view base) const {
   std::string result;
   auto prev_start = base.cbegin();
-  for (const auto& edit : edits_) {
+  for (const auto &edit : edits_) {
     CHECK_LE(base.cbegin(), edit.fragment.cbegin());
     CHECK_GE(base.cend(), edit.fragment.cend());
 
@@ -57,9 +57,9 @@ std::string AutoFix::Apply(absl::string_view base) const {
   return absl::StrCat(result, text_after);
 }
 
-bool AutoFix::AddEdits(const std::set<ReplacementEdit>& new_edits) {
+bool AutoFix::AddEdits(const std::set<ReplacementEdit> &new_edits) {
   // Check for conflicts
-  for (const auto& edit : new_edits) {
+  for (const auto &edit : new_edits) {
     if (edits_.find(edit) != edits_.end()) {
       return false;
     }
@@ -68,8 +68,8 @@ bool AutoFix::AddEdits(const std::set<ReplacementEdit>& new_edits) {
   return true;
 }
 
-static TokenInfo SymbolToToken(const Symbol& root) {
-  const auto* leaf = GetLeftmostLeaf(root);
+static TokenInfo SymbolToToken(const Symbol &root) {
+  const auto *leaf = GetLeftmostLeaf(root);
   if (leaf) {
     return leaf->get();
   }
@@ -77,10 +77,10 @@ static TokenInfo SymbolToToken(const Symbol& root) {
   return TokenInfo::EOFToken();
 }
 
-LintViolation::LintViolation(const Symbol& root, absl::string_view reason,
-                             const SyntaxTreeContext& context,
-                             const std::vector<AutoFix>& autofixes,
-                             const std::vector<TokenInfo>& related_tokens)
+LintViolation::LintViolation(const Symbol &root, absl::string_view reason,
+                             const SyntaxTreeContext &context,
+                             const std::vector<AutoFix> &autofixes,
+                             const std::vector<TokenInfo> &related_tokens)
     : root(&root),
       token(SymbolToToken(root)),
       reason(reason),
@@ -88,11 +88,11 @@ LintViolation::LintViolation(const Symbol& root, absl::string_view reason,
       autofixes(autofixes),
       related_tokens(related_tokens) {}
 
-void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
-                                               const LintRuleStatus& status,
+void LintStatusFormatter::FormatLintRuleStatus(std::ostream *stream,
+                                               const LintRuleStatus &status,
                                                absl::string_view base,
                                                absl::string_view path) const {
-  for (const auto& violation : status.violations) {
+  for (const auto &violation : status.violations) {
     FormatViolation(stream, violation, base, path, status.url,
                     status.lint_rule_name);
     (*stream) << std::endl;
@@ -100,7 +100,7 @@ void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
 }
 
 std::string LintStatusFormatter::FormatWithRelatedTokens(
-    const std::vector<verible::TokenInfo>& tokens, absl::string_view message,
+    const std::vector<verible::TokenInfo> &tokens, absl::string_view message,
     absl::string_view path, absl::string_view base) const {
   if (tokens.empty()) {
     return std::string(message);
@@ -108,7 +108,7 @@ std::string LintStatusFormatter::FormatWithRelatedTokens(
   size_t beg_pos = 0;
   size_t end_pos = message.find("@", beg_pos);
   std::ostringstream s;
-  for (const auto& token : tokens) {
+  for (const auto &token : tokens) {
     if (end_pos == absl::string_view::npos) {
       s << message.substr(beg_pos);
       break;
@@ -129,14 +129,14 @@ std::string LintStatusFormatter::FormatWithRelatedTokens(
 }
 
 void LintStatusFormatter::FormatLintRuleStatuses(
-    std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
+    std::ostream *stream, const std::vector<LintRuleStatus> &statuses,
     absl::string_view base, absl::string_view path,
-    const std::vector<absl::string_view>& lines) const {
+    const std::vector<absl::string_view> &lines) const {
   std::set<LintViolationWithStatus> violations;
 
   // TODO(fangism): rewrite as a linear time merge of pre-ordered sub-sequences
-  for (const auto& status : statuses) {
-    for (const auto& violation : status.violations) {
+  for (const auto &status : statuses) {
+    for (const auto &violation : status.violations) {
       violations.insert(LintViolationWithStatus(&violation, &status));
     }
   }
@@ -159,8 +159,8 @@ void LintStatusFormatter::FormatLintRuleStatuses(
 
 // Formats and outputs violation on stream
 // Path is file path of original file and url is a link to violated rule
-void LintStatusFormatter::FormatViolation(std::ostream* stream,
-                                          const LintViolation& violation,
+void LintStatusFormatter::FormatViolation(std::ostream *stream,
+                                          const LintViolation &violation,
                                           absl::string_view base,
                                           absl::string_view path,
                                           absl::string_view url,
@@ -180,7 +180,7 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
 // Formats and outputs violation to a file stream in a syntax accepted by
 // --waiver_files flag. Path is file path of original file
 void LintStatusFormatter::FormatViolationWaiver(
-    std::ostream* stream, const LintViolation& violation,
+    std::ostream *stream, const LintViolation &violation,
     absl::string_view base, absl::string_view path,
     absl::string_view rule_name) const {
   const verible::LineColumnRange range{
@@ -193,7 +193,7 @@ void LintStatusFormatter::FormatViolationWaiver(
 }
 
 void LintRuleStatus::WaiveViolations(
-    std::function<bool(const LintViolation&)>&& is_waived) {
+    std::function<bool(const LintViolation &)> &&is_waived) {
   std::set<LintViolation> filtered_violations;
   std::remove_copy_if(
       violations.begin(), violations.end(),

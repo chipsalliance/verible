@@ -63,8 +63,8 @@ namespace {
 // Not intended for direct use - use the other VerifyTree with
 // EXPECT_PRED_FORMAT2 instead.
 template <typename T>
-testing::AssertionResult VerifyTree(const T& actual, const T& expected,
-                                    const std::vector<size_t>& path) {
+testing::AssertionResult VerifyTree(const T &actual, const T &expected,
+                                    const std::vector<size_t> &path) {
   const bool id_ok = actual.id() == expected.id();
   const bool children_count_ok =
       actual.Children().size() == expected.Children().size();
@@ -105,9 +105,9 @@ testing::AssertionResult VerifyTree(const T& actual, const T& expected,
 // Recursively verifies two trees.
 // This verification function is intended for use with EXPECT_PRED_FORMAT2.
 template <typename T>
-testing::AssertionResult VerifyTree(const char* actual_expr,
-                                    const char* expected_expr, const T& actual,
-                                    const T& expected) {
+testing::AssertionResult VerifyTree(const char *actual_expr,
+                                    const char *expected_expr, const T &actual,
+                                    const T &expected) {
   auto result = VerifyTree(actual, expected, {});
   if (!result) {
     result << "\n"
@@ -133,30 +133,30 @@ class SimpleNode {
  public:
   using ChildrenType = Container<ThisType>;
 
-  explicit SimpleNode(absl::string_view id, ChildrenType&& children = {})
+  explicit SimpleNode(absl::string_view id, ChildrenType &&children = {})
       : children_(std::move(children)), id_(id) {
     Relink();
   }
 
-  ChildrenType& Children() { return children_; }
-  const ChildrenType& Children() const { return children_; }
+  ChildrenType &Children() { return children_; }
+  const ChildrenType &Children() const { return children_; }
 
   // Debug/test functions:
 
-  const std::string& id() const { return id_; }
+  const std::string &id() const { return id_; }
 
-  void set_id(std::string&& new_id) { id_ = new_id; }
+  void set_id(std::string &&new_id) { id_ = new_id; }
 
-  bool operator==(const ThisType& other) const { return this == &other; }
-  bool operator!=(const ThisType& other) const { return !(*this == other); }
+  bool operator==(const ThisType &other) const { return this == &other; }
+  bool operator!=(const ThisType &other) const { return !(*this == other); }
 
-  friend std::ostream& operator<<(std::ostream& stream, const ThisType& self) {
+  friend std::ostream &operator<<(std::ostream &stream, const ThisType &self) {
     self.PrintRecursively(stream, 0);
     return stream;
   }
 
-  friend std::ostream& operator<<(std::ostream& stream,
-                                  const ThisType* self_ptr) {
+  friend std::ostream &operator<<(std::ostream &stream,
+                                  const ThisType *self_ptr) {
     if (self_ptr == nullptr) {
       return stream << "nullptr";
     }
@@ -166,26 +166,26 @@ class SimpleNode {
 
   // Updates parent pointers in children.
   void Relink() {
-    for (auto& child : children_) {
+    for (auto &child : children_) {
       child.Relink();
-      child.parent_ = static_cast<ThisType*>(this);
+      child.parent_ = static_cast<ThisType *>(this);
     }
   }
 
  protected:
-  void PrintRecursively(std::ostream& stream, size_t depth = 0) const {
+  void PrintRecursively(std::ostream &stream, size_t depth = 0) const {
     stream << verible::Spacer(4 * depth)
            << absl::StreamFormat("@%p (%s; parent=%p)\n",
-                                 static_cast<const ThisType*>(this), id_,
+                                 static_cast<const ThisType *>(this), id_,
                                  parent_);
-    for (const auto& child : Children()) {
+    for (const auto &child : Children()) {
       child.PrintRecursively(stream, depth + 1);
     }
   }
 
   ChildrenType children_;
   std::string id_;              // Exposed in subclasses as value
-  ThisType* parent_ = nullptr;  // Exposed in subclasses
+  ThisType *parent_ = nullptr;  // Exposed in subclasses
 };
 
 template <template <class...> class Container, class Derived = void>
@@ -200,8 +200,8 @@ class NodeWithValue
   using Base::Base;
   using typename Base::ChildrenType;
 
-  std::string& Value() { return this->id_; }
-  const std::string& Value() const { return this->id_; }
+  std::string &Value() { return this->id_; }
+  const std::string &Value() const { return this->id_; }
 };
 
 template <template <class...> class Container, class Derived = void>
@@ -216,8 +216,8 @@ class NodeWithParent
   using Base::Base;
   using typename Base::ChildrenType;
 
-  ThisType* Parent() { return this->parent_; }
-  const ThisType* Parent() const { return this->parent_; }
+  ThisType *Parent() { return this->parent_; }
+  const ThisType *Parent() const { return this->parent_; }
 };
 
 template <template <class...> class Container, class Derived = void>
@@ -232,8 +232,8 @@ class NodeWithParentAndValue
   using Base::Base;
   using typename Base::ChildrenType;
 
-  std::string& Value() { return this->id_; }
-  const std::string& Value() const { return this->id_; }
+  std::string &Value() { return this->id_; }
+  const std::string &Value() const { return this->id_; }
 };
 
 // "Other" node type. Has different value type and is not related to other test
@@ -244,21 +244,21 @@ class IntNode {
   explicit IntNode(int value, std::initializer_list<IntNode> children = {})
       : value_(value), children_(children) {}
 
-  const int& Value() const { return value_; }
+  const int &Value() const { return value_; }
 
-  const std::vector<IntNode>& Children() const { return children_; }
-  std::vector<IntNode>& Children() { return children_; }
+  const std::vector<IntNode> &Children() const { return children_; }
+  std::vector<IntNode> &Children() { return children_; }
 
-  const int& id() const { return value_; }
+  const int &id() const { return value_; }
 
 #if CURRENT_SHARD_IS(6)
-  friend std::ostream& operator<<(std::ostream& stream, const IntNode& self) {
+  friend std::ostream &operator<<(std::ostream &stream, const IntNode &self) {
     self.PrintRecursively(stream, 0);
     return stream;
   }
 
-  friend std::ostream& operator<<(std::ostream& stream,
-                                  const IntNode* self_ptr) {
+  friend std::ostream &operator<<(std::ostream &stream,
+                                  const IntNode *self_ptr) {
     if (self_ptr == nullptr) {
       return stream << "nullptr";
     }
@@ -268,10 +268,10 @@ class IntNode {
 #endif
 
  private:
-  void PrintRecursively(std::ostream& stream, size_t depth = 0) const {
+  void PrintRecursively(std::ostream &stream, size_t depth = 0) const {
     stream << verible::Spacer(4 * depth)
            << absl::StreamFormat("@%p (%d)\n", this, value_);
-    for (const auto& child : Children()) {
+    for (const auto &child : Children()) {
       child.PrintRecursively(stream, depth + 1);
     }
   }
@@ -299,8 +299,8 @@ class TreeTest : public ::testing::Test {
                               N("3.2", {N("3.2.0", {N("3.2.0.0")}),    //
                                         N("3.2.1", {N("3.2.1.0")})})})});
 
-  Node& NodeAt(std::initializer_list<size_t> child_indexes) {
-    Node* subnode = &root;
+  Node &NodeAt(std::initializer_list<size_t> child_indexes) {
+    Node *subnode = &root;
     for (auto index : child_indexes) {
       CHECK_GE(index, 0);
       CHECK_LT(index, subnode->Children().size());
@@ -385,7 +385,7 @@ TEST(Misc, TreeNodeTraits) {
   struct NodeWithCustomContainerType {
     using subnodes_type = std::initializer_list<NodeWithCustomContainerType>;
 
-    const std::vector<NodeWithCustomContainerType>& Children() const {
+    const std::vector<NodeWithCustomContainerType> &Children() const {
       return children_;
     }
 
@@ -436,9 +436,9 @@ TYPED_TEST(NodeWithValueTest, TreeNodeTraits) {
   static_assert(std::is_same_v<typename Traits::Value::type, std::string>);
   static_assert(
       std::is_same_v<typename Traits::Value::reference,
-                     verible::match_const_t<std::string, TypeParam>&>);
+                     verible::match_const_t<std::string, TypeParam> &>);
   static_assert(std::is_same_v<typename Traits::Value::const_reference,
-                               const std::string&>);
+                               const std::string &>);
 }
 #endif
 
@@ -593,7 +593,7 @@ TYPED_TEST(NodeWithValueTest, ApplyPreOrderWithValue) {
         "3.0.1.0", "3.1",     "3.1.0", "3.1.0.0", "3.1.1", "3.1.1.0", "3.2",
         "3.2.0",   "3.2.0.0", "3.2.1", "3.2.1.0"};
     std::vector<std::string> visited_values;
-    ApplyPreOrder(this->root, [&](const std::string& value) {
+    ApplyPreOrder(this->root, [&](const std::string &value) {
       visited_values.push_back(value);
     });
     EXPECT_EQ(visited_values, expected_visited_values);
@@ -603,7 +603,7 @@ TYPED_TEST(NodeWithValueTest, ApplyPreOrderWithValue) {
   if constexpr (!std::is_const_v<TypeParam>) {
     // Modify
     ApplyPreOrder(this->root,
-                  [&](std::string& value) { absl::StrAppend(&value, "-new"); });
+                  [&](std::string &value) { absl::StrAppend(&value, "-new"); });
     // Verify
     static const std::vector<std::string> expected_visited_values = {
         "root-new", "0-new",     "1-new",       "1.0-new",   "2-new",
@@ -612,7 +612,7 @@ TYPED_TEST(NodeWithValueTest, ApplyPreOrderWithValue) {
         "3.1-new",  "3.1.0-new", "3.1.0.0-new", "3.1.1-new", "3.1.1.0-new",
         "3.2-new",  "3.2.0-new", "3.2.0.0-new", "3.2.1-new", "3.2.1.0-new"};
     std::vector<std::string> visited_values;
-    ApplyPreOrder(this->root, [&](const std::string& value) {
+    ApplyPreOrder(this->root, [&](const std::string &value) {
       visited_values.push_back(value);
     });
 
@@ -630,7 +630,7 @@ TYPED_TEST(NodeWithValueTest, ApplyPostOrderWithValue) {
         "3.1.0", "3.1.1.0", "3.1.1", "3.1",     "3.2.0.0", "3.2.0", "3.2.1.0",
         "3.2.1", "3.2",     "3",     "root"};
     std::vector<std::string> visited_values;
-    ApplyPostOrder(this->root, [&](const std::string& value) {
+    ApplyPostOrder(this->root, [&](const std::string &value) {
       visited_values.push_back(value);
     });
     EXPECT_EQ(visited_values, expected_visited_values);
@@ -639,7 +639,7 @@ TYPED_TEST(NodeWithValueTest, ApplyPostOrderWithValue) {
   // Test for mutable nodes only
   if constexpr (!std::is_const_v<TypeParam>) {
     // Modify
-    ApplyPostOrder(this->root, [&](std::string& value) {
+    ApplyPostOrder(this->root, [&](std::string &value) {
       absl::StrAppend(&value, "-new");
     });
     // Verify
@@ -650,7 +650,7 @@ TYPED_TEST(NodeWithValueTest, ApplyPostOrderWithValue) {
         "3.1.1.0-new", "3.1.1-new", "3.1-new", "3.2.0.0-new", "3.2.0-new",
         "3.2.1.0-new", "3.2.1-new", "3.2-new", "3-new",       "root-new"};
     std::vector<std::string> visited_values;
-    ApplyPostOrder(this->root, [&](const std::string& value) {
+    ApplyPostOrder(this->root, [&](const std::string &value) {
       visited_values.push_back(value);
     });
 
@@ -891,8 +891,8 @@ TYPED_TEST(NodeWithParentTest, HasAncestor) {
 }
 
 template <class TestSuite>
-void TestPath(TestSuite* test_suite, std::initializer_list<size_t> node_path) {
-  auto& node = test_suite->NodeAt(node_path);
+void TestPath(TestSuite *test_suite, std::initializer_list<size_t> node_path) {
+  auto &node = test_suite->NodeAt(node_path);
   {
     std::vector<size_t> calculated_path;
     Path(node, calculated_path);
@@ -939,10 +939,10 @@ TYPED_TEST(NodeWithParentTest, Path) {
 #endif
 
 template <class TestSuite>
-void TestNodePath(TestSuite* test_suite,
+void TestNodePath(TestSuite *test_suite,
                   std::initializer_list<size_t> node_path,
                   absl::string_view expected_string) {
-  auto& node = test_suite->NodeAt(node_path);
+  auto &node = test_suite->NodeAt(node_path);
   std::ostringstream output;
   output << NodePath(node);
   EXPECT_EQ(output.str(), expected_string);
@@ -984,7 +984,7 @@ TYPED_TEST(NodeWithValueTest, PrintTreeWithCustomPrinter) {
     std::ostringstream output;
     PrintTree(
         this->root, &output,
-        [](std::ostream& stream, const std::string& value) -> std::ostream& {
+        [](std::ostream &stream, const std::string &value) -> std::ostream & {
           return stream << "value=" << value;
         });
     static const absl::string_view expected_output =
@@ -1034,7 +1034,7 @@ TYPED_TEST(NodeWithValueTest, PrintTreeWithCustomPrinter) {
     std::ostringstream output;
     PrintTree(
         this->NodeAt({3, 1}), &output,
-        [](std::ostream& stream, const std::string& value) -> std::ostream& {
+        [](std::ostream &stream, const std::string &value) -> std::ostream & {
           return stream << "value=" << value;
         });
     static const absl::string_view expected_output =
@@ -1494,7 +1494,7 @@ TYPED_TEST(NodeWithValueTest, MergeConsecutiveSiblings) {
   // Const nodes are not supported
   if constexpr (!std::is_const_v<TypeParam>) {
     MergeConsecutiveSiblings(this->NodeAt({3}), 1,
-                             [](std::string* v0, const std::string& v1) {
+                             [](std::string *v0, const std::string &v1) {
                                absl::StrAppend(v0, "+", v1);
                              });
     EXPECT_PRED_FORMAT2(
@@ -1511,7 +1511,7 @@ TYPED_TEST(NodeWithValueTest, MergeConsecutiveSiblings) {
                                          N("3.2.1", {N("3.2.1.0")})})})}));
 
     MergeConsecutiveSiblings(this->NodeAt({3}), 0,
-                             [](std::string* v0, const std::string& v1) {
+                             [](std::string *v0, const std::string &v1) {
                                absl::StrAppend(v0, "+", v1);
                              });
     EXPECT_PRED_FORMAT2(
@@ -1528,7 +1528,7 @@ TYPED_TEST(NodeWithValueTest, MergeConsecutiveSiblings) {
                                              N("3.2.1", {N("3.2.1.0")})})})}));
 
     MergeConsecutiveSiblings(this->root, 0,
-                             [](std::string* v0, const std::string& v1) {
+                             [](std::string *v0, const std::string &v1) {
                                absl::StrAppend(v0, "+", v1);
                              });
     EXPECT_PRED_FORMAT2(
@@ -1744,7 +1744,7 @@ TYPED_TEST(SimpleNodeTest, Transform) {
   using N = TypeParam;
 
   IntNode id_lengths_tree = Transform<IntNode>(
-      this->root, [](const N& node) -> int { return node.id().size(); });
+      this->root, [](const N &node) -> int { return node.id().size(); });
 
   EXPECT_PRED_FORMAT2(
       VerifyTree, id_lengths_tree,
@@ -1760,7 +1760,7 @@ TYPED_TEST(SimpleNodeTest, Transform) {
                                           IntNode(5, {IntNode(7)})})})}));
 
   N censored_id_tree = Transform<std::remove_const_t<N>>(
-      id_lengths_tree, [](const IntNode& node) -> std::string {
+      id_lengths_tree, [](const IntNode &node) -> std::string {
         return std::string(node.id(), 'x');
       });
   EXPECT_PRED_FORMAT2(
@@ -1801,7 +1801,7 @@ TYPED_TEST(NodeWithValueTest, DeepEqual) {
                            N("xxx", {N("xxxxx", {N("xxxxxxx")}),    //
                                      N("xxxxx", {N("xxxxxxx")})})})});
     const auto diff = DeepEqual(this->root, censored_id_tree,
-                                [](const std::string& l, const std::string& r) {
+                                [](const std::string &l, const std::string &r) {
                                   return l.size() == r.size();
                                 });
     EXPECT_EQ(diff.left, nullptr);
@@ -1820,7 +1820,7 @@ TYPED_TEST(NodeWithValueTest, DeepEqual) {
                                 IntNode(3, {IntNode(5, {IntNode(7)}),    //
                                             IntNode(5, {IntNode(7)})})})});
     const auto diff = DeepEqual(this->root, id_lengths_tree,
-                                [](const std::string& l, const int& r) {
+                                [](const std::string &l, const int &r) {
                                   return static_cast<int>(l.size()) == r;
                                 });
     EXPECT_EQ(diff.left, nullptr);
@@ -1855,7 +1855,7 @@ TYPED_TEST(NodeWithValueTest, DeepEqual) {
     auto n321 = std::next(n32->Children().begin(), 1);
     auto n3210 = n321->Children().begin();
     const auto diff = DeepEqual(this->root, censored_id_tree,
-                                [](const std::string& l, const std::string& r) {
+                                [](const std::string &l, const std::string &r) {
                                   return l.size() == r.size();
                                 });
     EXPECT_EQ(diff.left, &this->NodeAt({3, 2, 1, 0}));
@@ -1874,7 +1874,7 @@ TYPED_TEST(NodeWithValueTest, DeepEqual) {
                                 IntNode(3, {IntNode(5, {IntNode(7)}),       //
                                             IntNode(999, {IntNode(7)})})})});
     const auto diff = DeepEqual(this->root, id_lengths_tree,
-                                [](const std::string& l, const int& r) {
+                                [](const std::string &l, const int &r) {
                                   return static_cast<int>(l.size()) == r;
                                 });
     EXPECT_EQ(diff.left, &this->NodeAt({0}));

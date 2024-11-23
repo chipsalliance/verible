@@ -35,7 +35,7 @@ namespace internal {
 // label.
 // TODO(fangism): move this to verilog_token_classifications.cc
 static bool KeywordAcceptsOptionalLabel(int token_enum) {
-  static const auto* keywords = new std::set<int>(
+  static const auto *keywords = new std::set<int>(
       {// begin-like keywords
        TK_begin, TK_fork, TK_generate,
        // end-like keywords
@@ -76,7 +76,7 @@ void KeywordLabelStateMachine::UpdateState(int token_enum) {
   }
 }
 
-std::ostream& ConstraintBlockStateMachine::Dump(std::ostream& os) const {
+std::ostream &ConstraintBlockStateMachine::Dump(std::ostream &os) const {
   os << '[' << states_.size() << ']';
   if (!states_.empty()) {
     os << ": top:" << int(states_.top());
@@ -101,7 +101,7 @@ void ConstraintBlockStateMachine::UpdateState(int token_enum) {
   }
   // In verilog.y grammar:
   // see constraint_block, constraint_block_item, constraint_expression rules.
-  State& top(states_.top());
+  State &top(states_.top());
   switch (top) {
     case kBeginningOfBlockItemOrExpression: {
       // Depending on the next token, push into next state, so that
@@ -414,7 +414,7 @@ int ConstraintDeclarationStateMachine::InterpretToken(int token_enum) const {
   return token_enum;  // no change
 }
 
-void LastSemicolonStateMachine::UpdateState(verible::TokenInfo* token) {
+void LastSemicolonStateMachine::UpdateState(verible::TokenInfo *token) {
   switch (state_) {
     case kNone:
       if (token->token_enum() == trigger_token_enum_) {
@@ -458,7 +458,7 @@ LexicalContext::LexicalContext()
           TK_sequence, TK_endsequence,
           SemicolonEndOfAssertionVariableDeclarations) {}
 
-void LexicalContext::AdvanceToken(TokenInfo* token) {
+void LexicalContext::AdvanceToken(TokenInfo *token) {
   // Note: It might not always be possible to mutate a token as it is
   // encountered; it may have to be bookmarked to be returned to later after
   // looking ahead.
@@ -475,7 +475,7 @@ void LexicalContext::AdvanceToken(TokenInfo* token) {
   previous_token_ = token;
 }
 
-void LexicalContext::UpdateState(const TokenInfo& token) {
+void LexicalContext::UpdateState(const TokenInfo &token) {
   // Forward tokens to concurrent sub-state-machines.
   {
     // Handle begin/end-like keywords with optional labels.

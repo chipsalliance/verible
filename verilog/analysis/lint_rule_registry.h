@@ -108,40 +108,40 @@ using LintRuleDescriptionsMap =
 template <typename RuleType>
 class LintRuleRegisterer {
  public:
-  LintRuleRegisterer(const LintDescriptionFun& descriptor,
-                     const LintRuleGeneratorFun<RuleType>& creator);
+  LintRuleRegisterer(const LintDescriptionFun &descriptor,
+                     const LintRuleGeneratorFun<RuleType> &creator);
 };
 
 // Returns true if rule_name refers to a known lint rule.
-bool IsRegisteredLintRule(const LintRuleId& rule_name);
+bool IsRegisteredLintRule(const LintRuleId &rule_name);
 
 // Returns sequence of syntax tree rule names.
 std::vector<LintRuleId> RegisteredSyntaxTreeRulesNames();
 
 // Returns a syntax tree lint rule object corresponding the rule_name.
 std::unique_ptr<verible::SyntaxTreeLintRule> CreateSyntaxTreeLintRule(
-    const LintRuleId& rule_name);
+    const LintRuleId &rule_name);
 
 // Returns sequence of token stream rule names.
 std::vector<LintRuleId> RegisteredTokenStreamRulesNames();
 
 // Returns a token stream lint rule object corresponding the rule_name.
 std::unique_ptr<verible::TokenStreamLintRule> CreateTokenStreamLintRule(
-    const LintRuleId& rule_name);
+    const LintRuleId &rule_name);
 
 // Returns sequence of line rule names.
 std::vector<LintRuleId> RegisteredLineRulesNames();
 
 // Returns a token stream lint rule object corresponding the rule_name.
 std::unique_ptr<verible::LineLintRule> CreateLineLintRule(
-    const LintRuleId& rule_name);
+    const LintRuleId &rule_name);
 
 // Returns sequence of text structure rule names.
 std::vector<LintRuleId> RegisteredTextStructureRulesNames();
 
 // Returns a token stream lint rule object corresponding the rule_name.
 std::unique_ptr<verible::TextStructureLintRule> CreateTextStructureLintRule(
-    const LintRuleId& rule_name);
+    const LintRuleId &rule_name);
 
 // Returns set of all registered lint rule names.
 // When storing string_views to the lint rule keys, use the ones returned in

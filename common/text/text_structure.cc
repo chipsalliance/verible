@@ -71,14 +71,14 @@ void TextStructureView::Clear() {
   contents_ = contents_.substr(0, 0);  // clear
 }
 
-static bool TokenLocationLess(const TokenInfo& token, const char* offset) {
+static bool TokenLocationLess(const TokenInfo &token, const char *offset) {
   return token.text().begin() < offset;
 }
 
 // Makes an iterator-writable copy of items_view without using const_cast.
 template <class V>
 std::vector<typename V::iterator> CopyWriteableIterators(
-    V& items, const std::vector<typename V::const_iterator>& items_view) {
+    V &items, const std::vector<typename V::const_iterator> &items_view) {
   // precondition: items_view's iterators all point into items array.
   // postcondition: results's iterators point to the same items as items_view.
   std::vector<typename V::iterator> result;
@@ -95,12 +95,12 @@ TokenStreamReferenceView TextStructureView::MakeTokenStreamReferenceView() {
   return CopyWriteableIterators(tokens_, tokens_view_);
 }
 
-const std::vector<TokenSequence::const_iterator>&
+const std::vector<TokenSequence::const_iterator> &
 TextStructureView::GetLineTokenMap() const {
   // Lazily calculate the map. It is mutable, so we can modify it here.
   if (lazy_line_token_map_.empty()) {
     auto token_iter = tokens_.cbegin();
-    const auto& offset_map = GetLineColumnMap().GetBeginningOfLineOffsets();
+    const auto &offset_map = GetLineColumnMap().GetBeginningOfLineOffsets();
     for (const auto offset : offset_map) {
       // TODO(fangism): linear search might be as competitive as binary search
       token_iter =
@@ -131,7 +131,7 @@ TokenRange TextStructureView::TokenRangeSpanningOffsets(size_t lower,
 }
 
 LineColumnRange TextStructureView::GetRangeForToken(
-    const TokenInfo& token) const {
+    const TokenInfo &token) const {
   if (token.isEOF()) {
     // In particular some unit tests pass in an artificial EOF token, not a
     // EOF token generated from this view. So handle this directly.
@@ -160,17 +160,17 @@ bool TextStructureView::ContainsText(absl::string_view text) const {
 }
 
 TokenRange TextStructureView::TokenRangeOnLine(size_t lineno) const {
-  const auto& line_token_map = GetLineTokenMap();
+  const auto &line_token_map = GetLineTokenMap();
   if (lineno + 1 < line_token_map.size()) {
     return make_range(line_token_map[lineno], line_token_map[lineno + 1]);
   }
   return make_range(tokens_.cend(), tokens_.cend());
 }
 
-TokenInfo TextStructureView::FindTokenAt(const LineColumn& pos) const {
+TokenInfo TextStructureView::FindTokenAt(const LineColumn &pos) const {
   if (pos.line < 0 || pos.column < 0) return EOFToken();
   // Maybe do binary search here if we have a huge amount tokens per line.
-  for (const TokenInfo& token : TokenRangeOnLine(pos.line)) {
+  for (const TokenInfo &token : TokenRangeOnLine(pos.line)) {
     if (GetRangeForToken(token).PositionInRange(pos)) return token;
   }
   return EOFToken();
@@ -182,11 +182,11 @@ TokenInfo TextStructureView::EOFToken() const {
 
 // Removes tokens from the TokenStreamView that do not satisfy the keep
 // predicate.
-void TextStructureView::FilterTokens(const TokenFilterPredicate& keep) {
+void TextStructureView::FilterTokens(const TokenFilterPredicate &keep) {
   FilterTokenStreamViewInPlace(keep, &tokens_view_);
 }
 
-static void TerminateTokenStream(TokenSequence* tokens) {
+static void TerminateTokenStream(TokenSequence *tokens) {
   if (tokens->empty()) return;
   if (tokens->back().isEOF()) return;
   // push_back might cause re-alloc.
@@ -254,7 +254,7 @@ void TextStructureView::TrimTokensToSubstring(int left_offset,
   if (!trimmed_stream.empty()) {
     const absl::string_view substr(
         contents_.substr(left_offset, right_offset - left_offset));
-    TokenInfo& last(trimmed_stream.back());
+    TokenInfo &last(trimmed_stream.back());
     const int overhang = std::distance(substr.end(), last.text().end());
     if (!IsSubRange(last.text(), substr)) {
       VLOG(2) << "last token overhangs end by " << overhang << ": " << last;
@@ -289,7 +289,7 @@ void TextStructureView::TrimContents(int left_offset, int length) {
   contents_ = contents_.substr(left_offset, length);
 }
 
-const TextStructureView::LinesInfo& TextStructureView::LinesInfo::Get(
+const TextStructureView::LinesInfo &TextStructureView::LinesInfo::Get(
     absl::string_view contents) {
   if (valid) return *this;
 
@@ -303,7 +303,7 @@ const TextStructureView::LinesInfo& TextStructureView::LinesInfo::Get(
 void TextStructureView::RebaseTokensToSuperstring(absl::string_view superstring,
                                                   absl::string_view src_base,
                                                   int offset) {
-  MutateTokens([&](TokenInfo* token) {
+  MutateTokens([&](TokenInfo *token) {
     const int delta = token->left(src_base);
     // Superstring must point to separate memory space.
     token->RebaseStringView(superstring.begin() + offset + delta);
@@ -313,8 +313,8 @@ void TextStructureView::RebaseTokensToSuperstring(absl::string_view superstring,
   lazy_lines_info_.valid = false;
 }
 
-void TextStructureView::MutateTokens(const LeafMutator& mutator) {
-  for (auto& token : tokens_) {
+void TextStructureView::MutateTokens(const LeafMutator &mutator) {
+  for (auto &token : tokens_) {
     mutator(&token);
   }
   // No need to touch tokens_view_, all transformations are in-place.
@@ -327,10 +327,10 @@ void TextStructureView::MutateTokens(const LeafMutator& mutator) {
 }
 
 // Find the last non-EOF token.  Usually searches at most 2 tokens.
-static const TokenInfo* FindLastNonEOFToken(const TokenSequence& tokens) {
+static const TokenInfo *FindLastNonEOFToken(const TokenSequence &tokens) {
   const auto iter =
       std::find_if(tokens.rbegin(), tokens.rend(),
-                   [](const TokenInfo& token) { return !token.isEOF(); });
+                   [](const TokenInfo &token) { return !token.isEOF(); });
   return iter != tokens.rend() ? &*iter : nullptr;
 }
 
@@ -342,13 +342,13 @@ absl::Status TextStructureView::FastTokenRangeConsistencyCheck() const {
   const auto upper_bound = contents_.end();
   if (!tokens_.empty()) {
     // Check that extremities of first and last token lie inside contents_.
-    const TokenInfo& first = tokens_.front();
+    const TokenInfo &first = tokens_.front();
     if (!first.isEOF() && lower_bound > first.text().cbegin()) {
       return absl::InternalError(absl::StrCat(
           "Token offset points before beginning of string contents.  delta=",
           std::distance(first.text().cbegin(), lower_bound)));
     }
-    const TokenInfo* last = FindLastNonEOFToken(tokens_);
+    const TokenInfo *last = FindLastNonEOFToken(tokens_);
     if (last != nullptr && last->text().cend() > upper_bound) {
       return absl::InternalError(absl::StrCat(
           "Token offset points past end of string contents.  delta=",
@@ -391,7 +391,7 @@ absl::Status TextStructureView::FastTokenRangeConsistencyCheck() const {
 
 absl::Status TextStructureView::FastLineRangeConsistencyCheck() const {
   VLOG(2) << __FUNCTION__;
-  const auto& lines = Lines();
+  const auto &lines = Lines();
   if (!lines.empty()) {
     if (lines.front().cbegin() != contents_.cbegin()) {
       return absl::InternalError(
@@ -408,12 +408,12 @@ absl::Status TextStructureView::SyntaxTreeConsistencyCheck() const {
   VLOG(2) << __FUNCTION__;
   // Check that first and last token in syntax_tree_ point to text
   // inside contents_.
-  const char* const lower_bound = contents_.data();
-  const char* const upper_bound = lower_bound + contents_.length();
+  const char *const lower_bound = contents_.data();
+  const char *const upper_bound = lower_bound + contents_.length();
   if (syntax_tree_ != nullptr) {
-    const SyntaxTreeLeaf* left = GetLeftmostLeaf(*syntax_tree_);
+    const SyntaxTreeLeaf *left = GetLeftmostLeaf(*syntax_tree_);
     if (!left) return absl::OkStatus();
-    const SyntaxTreeLeaf* right = GetRightmostLeaf(*syntax_tree_);
+    const SyntaxTreeLeaf *right = GetRightmostLeaf(*syntax_tree_);
     if (lower_bound > left->get().text().cbegin()) {
       return absl::InternalError(
           "Left-most tree leaf points before beginning of contents.");
@@ -438,14 +438,14 @@ absl::Status TextStructureView::InternalConsistencyCheck() const {
 // "view_source" is a sequence of iterators pointing to token_source content.
 // The TokenViewRange can be a container reference or iterator range.
 template <typename TokenRange, typename TokenViewRange>
-static void CopyTokensAndView(TokenSequence* destination,
-                              std::vector<int>* view_indices,
-                              const TokenRange& token_source,
-                              const TokenViewRange& view_source) {
+static void CopyTokensAndView(TokenSequence *destination,
+                              std::vector<int> *view_indices,
+                              const TokenRange &token_source,
+                              const TokenViewRange &view_source) {
   // Translate token_view's iterators into array indices, adjusting for the
   // number of pre-existing tokens.
   const auto pre_existing_start_index = destination->size();
-  for (const auto& token_iter : view_source) {
+  for (const auto &token_iter : view_source) {
     // TODO: something is wrong here, the view should never have iterators
     // pointing outside the range of the source. Needs to be explored.
 #if 0
@@ -456,7 +456,7 @@ static void CopyTokensAndView(TokenSequence* destination,
                             std::distance(token_source.begin(), token_iter));
   }
   // Copy tokens up to this expansion point.
-  for (const auto& token : token_source) {
+  for (const auto &token : token_source) {
     destination->push_back(token);
   }
 }
@@ -467,22 +467,22 @@ static void CopyTokensAndView(TokenSequence* destination,
 // tree.  Indices into the final token stream view are collected in
 // token_view_indices.  Offset is the location of each expansion point.
 void TextStructureView::ConsumeDeferredExpansion(
-    TokenSequence::const_iterator* next_token_iter,
-    TokenStreamView::const_iterator* next_token_view_iter,
-    DeferredExpansion* expansion, TokenSequence* combined_tokens,
-    std::vector<int>* token_view_indices, const char* offset) {
+    TokenSequence::const_iterator *next_token_iter,
+    TokenStreamView::const_iterator *next_token_view_iter,
+    DeferredExpansion *expansion, TokenSequence *combined_tokens,
+    std::vector<int> *token_view_indices, const char *offset) {
   auto token_iter = *next_token_iter;
   auto token_view_iter = *next_token_view_iter;
   // Find the position up to each expansion point.
   *next_token_iter =
       std::lower_bound(token_iter, tokens_.cend(), offset,
-                       [](const TokenInfo& token, const char* target) {
+                       [](const TokenInfo &token, const char *target) {
                          return std::distance(target, token.text().begin()) < 0;
                        });
   CHECK(*next_token_iter != tokens_.cend());
   *next_token_view_iter = std::lower_bound(
       token_view_iter, tokens_view_.cend(), offset,
-      [](TokenStreamView::const_reference token_ref, const char* target) {
+      [](TokenStreamView::const_reference token_ref, const char *target) {
         return std::distance(target, token_ref->text().begin()) < 0;
       });
   CHECK(*next_token_view_iter != tokens_view_.cend());
@@ -494,8 +494,8 @@ void TextStructureView::ConsumeDeferredExpansion(
 
   // Adjust locations of tokens in the expanded tree by pointing them
   // into the original text (contents_).
-  std::unique_ptr<TextStructure>& subanalysis = expansion->subanalysis;
-  TextStructureView& sub_data = ABSL_DIE_IF_NULL(subanalysis)->MutableData();
+  std::unique_ptr<TextStructure> &subanalysis = expansion->subanalysis;
+  TextStructureView &sub_data = ABSL_DIE_IF_NULL(subanalysis)->MutableData();
   const absl::string_view sub_data_text(sub_data.Contents());
   CHECK(!IsSubRange(sub_data_text, contents_));
   CHECK_EQ(sub_data_text, absl::string_view(offset, sub_data_text.length()));
@@ -536,14 +536,14 @@ TextStructure::~TextStructure() {
   CHECK(status.ok()) << status.message() << " (in dtor)";
 }
 
-void TextStructureView::ExpandSubtrees(NodeExpansionMap* expansions) {
+void TextStructureView::ExpandSubtrees(NodeExpansionMap *expansions) {
   TokenSequence combined_tokens;
   // Gather indices and reconstruct iterators after there are no more
   // reallocations due to growing combined_tokens.
   std::vector<int> combined_token_view_indices;
   auto token_iter = tokens_.cbegin();
   auto token_view_iter = tokens_view_.cbegin();
-  for (auto& expansion_entry : *expansions) {
+  for (auto &expansion_entry : *expansions) {
     const auto offset = Contents().begin() + expansion_entry.first;
     ConsumeDeferredExpansion(&token_iter, &token_view_iter,
                              &expansion_entry.second, &combined_tokens,

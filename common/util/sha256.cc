@@ -266,7 +266,7 @@ std::string Sha256Hex(absl::string_view content) {
     return "";
   }
   return absl::BytesToHexString(absl::string_view(
-      reinterpret_cast<const char*>(sha256bytes.data()), sha256bytes.size()));
+      reinterpret_cast<const char *>(sha256bytes.data()), sha256bytes.size()));
 }
 
 }  // namespace verible

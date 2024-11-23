@@ -60,14 +60,14 @@ struct LineRanges {
 
 LineRanges::storage_type LineRanges::values;  // global initializer
 
-bool AbslParseFlag(absl::string_view flag_arg, LineRanges* /* unused */,
-                   std::string* error) {
-  auto& values = LineRanges::values;
+bool AbslParseFlag(absl::string_view flag_arg, LineRanges * /* unused */,
+                   std::string *error) {
+  auto &values = LineRanges::values;
   // Pre-split strings, so that "--flag v1,v2" and "--flag v1 --flag v2" are
   // equivalent.
   const std::vector<absl::string_view> tokens = absl::StrSplit(flag_arg, ',');
   values.reserve(values.size() + tokens.size());
-  for (const absl::string_view& token : tokens) {
+  for (const absl::string_view &token : tokens) {
     // need to copy string, cannot just use string_view
     values.emplace_back(token.begin(), token.end());
   }
@@ -76,7 +76,7 @@ bool AbslParseFlag(absl::string_view flag_arg, LineRanges* /* unused */,
 }
 
 std::string AbslUnparseFlag(LineRanges /* unused */) {
-  const auto& values = LineRanges::values;
+  const auto &values = LineRanges::values;
   return absl::StrJoin(values.begin(), values.end(), ",",
                        absl::StreamFormatter());
 }
@@ -124,19 +124,19 @@ ABSL_FLAG(int, max_search_states, 100000,
           "Limits the number of search states explored during "
           "line wrap optimization.");
 
-static std::ostream& FileMsg(absl::string_view filename) {
+static std::ostream &FileMsg(absl::string_view filename) {
   std::cerr << filename << ": ";
   return std::cerr;
 }
 
 // TODO: Refactor and simplify
 static bool formatOneFile(absl::string_view filename,
-                          const LineNumberSet& lines_to_format,
-                          bool* any_changes) {
+                          const LineNumberSet &lines_to_format,
+                          bool *any_changes) {
   const bool inplace = absl::GetFlag(FLAGS_inplace);
   const bool check_changes_only = absl::GetFlag(FLAGS_verify);
   const bool is_stdin = filename == "-";
-  const auto& stdin_name = absl::GetFlag(FLAGS_stdin_name);
+  const auto &stdin_name = absl::GetFlag(FLAGS_stdin_name);
 
   if (inplace && is_stdin) {
     FileMsg(filename)
@@ -185,7 +185,7 @@ static bool formatOneFile(absl::string_view filename,
       FormatVerilog(*content_or, diagnostic_filename, format_style, stream,
                     lines_to_format, formatter_control);
 
-  const std::string& formatted_output(stream.str());
+  const std::string &formatted_output(stream.str());
   if (!format_status.ok()) {
     if (!inplace) {
       // Fall back to printing original content regardless of error condition.
@@ -244,7 +244,7 @@ static bool formatOneFile(absl::string_view filename,
   return true;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
                                   " [options] <file> [<file...>]\n"
                                   "To pipe from stdin, use '-' as <file>.");

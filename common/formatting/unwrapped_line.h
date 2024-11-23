@@ -105,7 +105,7 @@ enum class PartitionPolicyEnum {
   kJuxtapositionOrIndentedStack,
 };
 
-std::ostream& operator<<(std::ostream&, PartitionPolicyEnum);
+std::ostream &operator<<(std::ostream &, PartitionPolicyEnum);
 
 // An UnwrappedLine represents a partition of the input token stream that
 // is an independent unit of work for other phases of formatting, such as
@@ -127,10 +127,10 @@ class UnwrappedLine {
 
   // Allow default construction for use in resize-able containers.
   UnwrappedLine() = default;
-  UnwrappedLine(const UnwrappedLine&) = default;
-  UnwrappedLine(UnwrappedLine&&) = default;
-  UnwrappedLine& operator=(const UnwrappedLine&) = default;
-  UnwrappedLine& operator=(UnwrappedLine&&) = default;
+  UnwrappedLine(const UnwrappedLine &) = default;
+  UnwrappedLine(UnwrappedLine &&) = default;
+  UnwrappedLine &operator=(const UnwrappedLine &) = default;
+  UnwrappedLine &operator=(UnwrappedLine &&) = default;
 
   // Extends PreFormatToken range spanned by this UnwrappedLine by one token at
   // the back.
@@ -157,8 +157,8 @@ class UnwrappedLine {
     partition_policy_ = policy;
   }
 
-  const Symbol* Origin() const { return origin_; }
-  void SetOrigin(const Symbol* origin) { origin_ = origin; }
+  const Symbol *Origin() const { return origin_; }
+  void SetOrigin(const Symbol *origin) { origin_ = origin; }
 
   // Returns the range of PreFormatTokens spanned by this UnwrappedLine.
   // Note that this is a *copy*, and not a reference to the underlying range.
@@ -172,15 +172,15 @@ class UnwrappedLine {
 
   // Used by AsCode() and other code using it
   using OriginPrinterFunction =
-      std::function<void(std::ostream&, const verible::Symbol*)>;
+      std::function<void(std::ostream &, const verible::Symbol *)>;
 
   // Default origin printing function used by AsCode()
-  static void DefaultOriginPrinter(std::ostream&, const verible::Symbol*);
+  static void DefaultOriginPrinter(std::ostream &, const verible::Symbol *);
 
   // Currently for debugging, prints the UnwrappedLine as Code
-  std::ostream* AsCode(
-      std::ostream*, bool verbose = false,
-      const OriginPrinterFunction& origin_printer = DefaultOriginPrinter) const;
+  std::ostream *AsCode(
+      std::ostream *, bool verbose = false,
+      const OriginPrinterFunction &origin_printer = DefaultOriginPrinter) const;
 
  private:
   // Data members:
@@ -199,10 +199,10 @@ class UnwrappedLine {
 
   // Hint about the origin of this partition, e.g. a particular syntax
   // tree node/leaf.
-  const Symbol* origin_ = nullptr;
+  const Symbol *origin_ = nullptr;
 };
 
-std::ostream& operator<<(std::ostream&, const UnwrappedLine&);
+std::ostream &operator<<(std::ostream &, const UnwrappedLine &);
 
 // FormattedExcerpt is the result of formatting a slice of code represented
 // as an UnwrappedLine.  In this representation, wrapping and spacing decisions
@@ -212,15 +212,15 @@ class FormattedExcerpt {
  public:
   FormattedExcerpt() = default;
 
-  explicit FormattedExcerpt(const UnwrappedLine&);
+  explicit FormattedExcerpt(const UnwrappedLine &);
 
   // Returns the number of spaces to indent.
   int IndentationSpaces() const { return indentation_spaces_; }
 
-  const std::vector<FormattedToken>& Tokens() const { return tokens_; }
+  const std::vector<FormattedToken> &Tokens() const { return tokens_; }
 
   // Note: The mutable variant is only intended for use in StateNode.
-  std::vector<FormattedToken>& MutableTokens() { return tokens_; }
+  std::vector<FormattedToken> &MutableTokens() { return tokens_; }
 
   // Prints formatted text.  If indent is true, include the spacing
   // that is to the left of the first token.
@@ -228,10 +228,10 @@ class FormattedExcerpt {
   // always emit).
   // TODO(hzeller): instead of "indent" parameter, handle that with the
   // include_token_p() predicate ?
-  std::ostream& FormattedText(
-      std::ostream&, bool indent,
-      const std::function<bool(const TokenInfo&)>& include_token_p =
-          [](const TokenInfo&) { return true; }) const;
+  std::ostream &FormattedText(
+      std::ostream &, bool indent,
+      const std::function<bool(const TokenInfo &)> &include_token_p =
+          [](const TokenInfo &) { return true; }) const;
 
   // Returns formatted code as a string.
   std::string Render() const;
@@ -256,7 +256,7 @@ class FormattedExcerpt {
   bool completed_formatting_ = true;
 };
 
-std::ostream& operator<<(std::ostream&, const FormattedExcerpt&);
+std::ostream &operator<<(std::ostream &, const FormattedExcerpt &);
 
 }  // namespace verible
 

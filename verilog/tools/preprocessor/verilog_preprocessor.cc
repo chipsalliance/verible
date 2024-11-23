@@ -42,15 +42,15 @@ using FileOpener = verilog::VerilogPreprocess::FileOpener;
 // TODO(karimtera): Add a boolean flag to configure the macro expansion.
 ABSL_FLAG(int, limit_variants, 20, "Maximum number of variants printed");
 
-static absl::Status StripComments(const SubcommandArgsRange& args,
-                                  std::istream&, std::ostream& outs,
-                                  std::ostream&) {
+static absl::Status StripComments(const SubcommandArgsRange &args,
+                                  std::istream &, std::ostream &outs,
+                                  std::ostream &) {
   // Parse the arguments into a FileList.
   std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
   verilog::FileList file_list;
   RETURN_IF_ERROR(
       verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
-  const auto& files = file_list.file_paths;
+  const auto &files = file_list.file_paths;
 
   if (files.empty()) {
     return absl::InvalidArgumentError(
@@ -86,8 +86,8 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
 
 static absl::Status PreprocessSingleFile(
     absl::string_view source_file,
-    const verilog::FileList::PreprocessingInfo& preprocessing_info,
-    std::ostream& outs, std::ostream& message_stream) {
+    const verilog::FileList::PreprocessingInfo &preprocessing_info,
+    std::ostream &outs, std::ostream &message_stream) {
   absl::StatusOr<std::string> source_contents_or =
       verible::file::GetContentAsString(source_file);
   if (!source_contents_or.ok()) {
@@ -127,25 +127,25 @@ static absl::Status PreprocessSingleFile(
   InitTokenStreamView(lexed_sequence, &lexed_streamview);
   verilog::VerilogPreprocessData preprocessed_data =
       preprocessor.ScanStream(lexed_streamview);
-  auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
+  auto &preprocessed_stream = preprocessed_data.preprocessed_token_stream;
   for (auto u : preprocessed_stream) outs << u->text();
-  for (auto& u : preprocessed_data.errors) outs << u.error_message << '\n';
+  for (auto &u : preprocessed_data.errors) outs << u.error_message << '\n';
   if (!preprocessed_data.errors.empty()) {
     return absl::InvalidArgumentError("Error: The preprocessing has failed.");
   }
   return absl::OkStatus();
 }
 
-static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
-                               std::ostream& outs,
-                               std::ostream& message_stream) {
+static absl::Status MultipleCU(const SubcommandArgsRange &args, std::istream &,
+                               std::ostream &outs,
+                               std::ostream &message_stream) {
   // Parse the arguments into a FileList.
   std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
   verilog::FileList file_list;
   RETURN_IF_ERROR(
       verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
-  const auto& files = file_list.file_paths;
-  auto& preprocessing_info = file_list.preprocessing;
+  const auto &files = file_list.file_paths;
+  auto &preprocessing_info = file_list.preprocessing;
 
   // TODO(karimtera): allow including files with absolute paths.
   // This is a hacky solution for now.
@@ -161,15 +161,15 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
   return absl::OkStatus();
 }
 
-static absl::Status GenerateVariants(const SubcommandArgsRange& args,
-                                     std::istream&, std::ostream& outs,
-                                     std::ostream& message_stream) {
+static absl::Status GenerateVariants(const SubcommandArgsRange &args,
+                                     std::istream &, std::ostream &outs,
+                                     std::ostream &message_stream) {
   // Parse the arguments into a FileList.
   std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
   verilog::FileList file_list;
   RETURN_IF_ERROR(
       verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
-  const auto& files = file_list.file_paths;
+  const auto &files = file_list.file_paths;
   // TODO(karimtera): Pass the +define's to the preprocessor, and only
   // generate variants with theses defines fixed.
 
@@ -182,7 +182,7 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
     return absl::InvalidArgumentError(
         "ERROR: generate-variants only works on one file.");
   }
-  const auto& source_file = files[0];
+  const auto &source_file = files[0];
   absl::StatusOr<std::string> source_contents_or =
       verible::file::GetContentAsString(source_file);
   if (!source_contents_or.ok()) {
@@ -208,7 +208,7 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
   int counter = 0;
   return control_flow_tree.GenerateVariants(
       [limit_variants, &outs, &message_stream,
-       &counter](const verilog::FlowTree::Variant& variant) {
+       &counter](const verilog::FlowTree::Variant &variant) {
         if (counter == limit_variants) return false;
         counter++;
         message_stream << "Variant number " << counter << ":\n";
@@ -270,10 +270,10 @@ Output: (stdout)
     // Which would be the output of `GetUsedMacros()`.
 };
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   // Create a registry of subcommands (locally, rather than as a static global).
   verible::SubcommandRegistry commands;
-  for (const auto& entry : kCommands) {
+  for (const auto &entry : kCommands) {
     const auto status = commands.RegisterCommand(entry.first, entry.second);
     if (!status.ok()) {
       std::cerr << status.message() << std::endl;
@@ -297,7 +297,7 @@ int main(int argc, char* argv[]) {
   // subcommand args start at [2]
   const SubcommandArgsRange command_args(args.cbegin() + 2, args.cend());
 
-  const auto& sub = commands.GetSubcommandEntry(args[1]);
+  const auto &sub = commands.GetSubcommandEntry(args[1]);
   // Run the subcommand.
   const auto status = sub.main(command_args, std::cin, std::cout, std::cerr);
   if (!status.ok()) {

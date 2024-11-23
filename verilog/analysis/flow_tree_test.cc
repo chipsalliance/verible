@@ -65,14 +65,14 @@ TEST(FlowTree, MultipleConditionalsSameMacro) {
   FlowTree tree_test(LexToSequence(test_case));
   std::vector<FlowTree::Variant> variants;
   auto status =
-      tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
+      tree_test.GenerateVariants([&variants](const FlowTree::Variant &variant) {
         variants.push_back(variant);
         return true;
       });
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(variants.size(), 2);
 
-  const auto& used_macros = tree_test.GetUsedMacros();
+  const auto &used_macros = tree_test.GetUsedMacros();
   EXPECT_EQ(used_macros.size(), 1);
   EXPECT_THAT(used_macros[0]->text(), "A");
 
@@ -125,7 +125,7 @@ TEST(FlowTree, UnmatchedElses) {
   for (auto test : test_cases) {
     FlowTree tree_test(LexToSequence(test));
     auto status = tree_test.GenerateVariants(
-        [](const FlowTree::Variant& variant) { return true; });
+        [](const FlowTree::Variant &variant) { return true; });
     EXPECT_FALSE(status.ok());
     EXPECT_THAT(status.message(), StartsWith("ERROR: Unmatched"));
   }
@@ -156,7 +156,7 @@ TEST(FlowTree, UnvalidConditionals) {
   for (auto test : test_cases) {
     FlowTree tree_test(LexToSequence(test));
     auto status = tree_test.GenerateVariants(
-        [](const FlowTree::Variant& variant) { return true; });
+        [](const FlowTree::Variant &variant) { return true; });
     EXPECT_FALSE(status.ok());
   }
 }
@@ -182,7 +182,7 @@ TEST(FlowTree, UncompletedConditionals) {
   for (auto test : test_cases) {
     FlowTree tree_test(LexToSequence(test));
     auto status = tree_test.GenerateVariants(
-        [](const FlowTree::Variant& variant) { return true; });
+        [](const FlowTree::Variant &variant) { return true; });
     EXPECT_FALSE(status.ok());
     EXPECT_THAT(status.message(), StartsWith("ERROR: Uncompleted"));
   }
@@ -205,13 +205,13 @@ TEST(FlowTree, NestedConditionals) {
     FlowTree tree_test(LexToSequence(test));
     std::vector<FlowTree::Variant> variants;
     auto status = tree_test.GenerateVariants(
-        [&variants](const FlowTree::Variant& variant) {
+        [&variants](const FlowTree::Variant &variant) {
           variants.push_back(variant);
           return true;
         });
     EXPECT_TRUE(status.ok());
     EXPECT_EQ(variants.size(), 3);
-    for (const auto& variant : variants) {
+    for (const auto &variant : variants) {
       EXPECT_EQ(variant.sequence.size(), 1);
       if (variant.macros_mask.test(0) == 0) {
         // Check that if A is undefined, then B is not visited.
@@ -221,7 +221,7 @@ TEST(FlowTree, NestedConditionals) {
         EXPECT_TRUE(variant.visited.test(1));
       }
     }
-    const auto& used_macros = tree_test.GetUsedMacros();
+    const auto &used_macros = tree_test.GetUsedMacros();
     EXPECT_EQ(used_macros.size(), 2);
     EXPECT_THAT(used_macros[0]->text(), "A");
     EXPECT_THAT(used_macros[1]->text(), "B");
@@ -243,14 +243,14 @@ TEST(FlowTree, MultipleElseIfs) {
   FlowTree tree_test(LexToSequence(test_case));
   std::vector<FlowTree::Variant> variants;
   auto status =
-      tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
+      tree_test.GenerateVariants([&variants](const FlowTree::Variant &variant) {
         variants.push_back(variant);
         return true;
       });
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(variants.size(), 5);
 
-  const auto& used_macros = tree_test.GetUsedMacros();
+  const auto &used_macros = tree_test.GetUsedMacros();
   EXPECT_EQ(used_macros.size(), 4);
   EXPECT_THAT(used_macros[0]->text(), "A");
   EXPECT_THAT(used_macros[1]->text(), "B");
@@ -292,14 +292,14 @@ TEST(FlowTree, SwappedNegatedIfs) {
   FlowTree tree_test(LexToSequence(test_case));
   std::vector<FlowTree::Variant> variants;
   auto status =
-      tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
+      tree_test.GenerateVariants([&variants](const FlowTree::Variant &variant) {
         variants.push_back(variant);
         return true;
       });
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(variants.size(), 4);
 
-  const auto& used_macros = tree_test.GetUsedMacros();
+  const auto &used_macros = tree_test.GetUsedMacros();
   EXPECT_EQ(used_macros.size(), 2);
   EXPECT_THAT(used_macros[0]->text(), "A");
   EXPECT_THAT(used_macros[1]->text(), "B");
@@ -331,14 +331,14 @@ TEST(FlowTree, CompleteConditional) {
   FlowTree tree_test(LexToSequence(test_case));
   std::vector<FlowTree::Variant> variants;
   auto status =
-      tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
+      tree_test.GenerateVariants([&variants](const FlowTree::Variant &variant) {
         variants.push_back(variant);
         return true;
       });
   EXPECT_TRUE(status.ok());
   EXPECT_EQ(variants.size(), 4);
 
-  const auto& used_macros = tree_test.GetUsedMacros();
+  const auto &used_macros = tree_test.GetUsedMacros();
   EXPECT_EQ(used_macros.size(), 3);
   EXPECT_THAT(used_macros[0]->text(), "A");
   EXPECT_THAT(used_macros[1]->text(), "B");

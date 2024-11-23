@@ -76,35 +76,35 @@ using ::verible::TokenWithContext;
 using ::verilog::IsComment;
 
 // Used to filter the TokenStreamView by discarding space-only tokens.
-static bool KeepNonWhitespace(const TokenInfo& t) {
+static bool KeepNonWhitespace(const TokenInfo &t) {
   if (t.token_enum() == verible::TK_EOF) return false;  // omit the EOF token
   return !IsWhitespace(verilog_tokentype(t.token_enum()));
 }
 
-static bool NodeIsBeginEndBlock(const SyntaxTreeNode& node) {
+static bool NodeIsBeginEndBlock(const SyntaxTreeNode &node) {
   return node.MatchesTagAnyOf({NodeEnum::kSeqBlock, NodeEnum::kGenerateBlock});
 }
 
-static const SyntaxTreeNode& GetBlockEnd(const SyntaxTreeNode& block) {
+static const SyntaxTreeNode &GetBlockEnd(const SyntaxTreeNode &block) {
   CHECK(NodeIsBeginEndBlock(block));
   return verible::SymbolCastToNode(*block.back());
 }
 
-static const verible::Symbol* GetEndLabel(const SyntaxTreeNode& end_node) {
+static const verible::Symbol *GetEndLabel(const SyntaxTreeNode &end_node) {
   return GetSubtreeAsSymbol(end_node, NodeEnum::kEnd, 1);
 }
 
-static bool NodeIsConditionalConstruct(const SyntaxTreeNode& node) {
+static bool NodeIsConditionalConstruct(const SyntaxTreeNode &node) {
   return node.MatchesTagAnyOf({NodeEnum::kConditionalStatement,
                                NodeEnum::kConditionalGenerateConstruct});
 }
 
-static bool NodeIsConditionalOrBlock(const SyntaxTreeNode& node) {
+static bool NodeIsConditionalOrBlock(const SyntaxTreeNode &node) {
   return NodeIsBeginEndBlock(node) || NodeIsConditionalConstruct(node);
 }
 
 // Creates a PreFormatToken given a TokenInfo and returns it
-static PreFormatToken CreateFormatToken(const TokenInfo& token) {
+static PreFormatToken CreateFormatToken(const TokenInfo &token) {
   PreFormatToken format_token(&token);
   format_token.format_token_enum =
       GetFormatTokenType(verilog_tokentype(format_token.TokenEnum()));
@@ -122,7 +122,7 @@ static PreFormatToken CreateFormatToken(const TokenInfo& token) {
   return format_token;
 }
 
-UnwrapperData::UnwrapperData(const verible::TokenSequence& tokens) {
+UnwrapperData::UnwrapperData(const verible::TokenSequence &tokens) {
   // Create a TokenStreamView that removes spaces, but preserves comments.
   {
     verible::InitTokenStreamView(tokens, &tokens_view_no_whitespace);
@@ -160,7 +160,7 @@ enum TokenScannerState {
   kEndNoNewline,
 };
 
-static const verible::EnumNameMap<TokenScannerState>&
+static const verible::EnumNameMap<TokenScannerState> &
 TokenScannerStateStrings() {
   static const verible::EnumNameMap<TokenScannerState>
       kTokenScannerStateStringMap({
@@ -174,7 +174,7 @@ TokenScannerStateStrings() {
 }
 
 // Conventional stream printer (declared in header providing enum).
-std::ostream& operator<<(std::ostream& stream, TokenScannerState p) {
+std::ostream &operator<<(std::ostream &stream, TokenScannerState p) {
   return TokenScannerStateStrings().Unparse(p, stream);
 }
 
@@ -188,10 +188,10 @@ class TreeUnwrapper::TokenScanner {
   TokenScanner() = default;
 
   // Deleted standard interfaces:
-  TokenScanner(const TokenScanner&) = delete;
-  TokenScanner(TokenScanner&&) = delete;
-  TokenScanner& operator=(const TokenScanner&) = delete;
-  TokenScanner& operator=(TokenScanner&&) = delete;
+  TokenScanner(const TokenScanner &) = delete;
+  TokenScanner(TokenScanner &&) = delete;
+  TokenScanner &operator=(const TokenScanner &) = delete;
+  TokenScanner &operator=(TokenScanner &&) = delete;
 
   // Re-initializes state.
   void Reset() {
@@ -220,7 +220,7 @@ class TreeUnwrapper::TokenScanner {
 
   // Transitions the TokenScanner given a TokenState and a verilog_tokentype
   // transition
-  static State TransitionState(const State& old_state,
+  static State TransitionState(const State &old_state,
                                verilog_tokentype token_type);
 };
 
@@ -242,7 +242,7 @@ static bool IsNewlineOrEOF(verilog_tokentype token_type) {
  *   TreeUnwrapper::CatchUpToCurrentLeaf()
  */
 TokenScannerState TreeUnwrapper::TokenScanner::TransitionState(
-    const State& old_state, verilog_tokentype token_type) {
+    const State &old_state, verilog_tokentype token_type) {
   VLOG(4) << "state transition on: " << old_state
           << ", token: " << verilog_symbol_name(token_type);
   State new_state = old_state;
@@ -294,26 +294,26 @@ void TreeUnwrapper::EatSpaces() {
   // NextUnfilteredToken with EatSpaces.
   const auto before = NextUnfilteredToken();
   SkipUnfilteredTokens(
-      [](const TokenInfo& token) { return token.token_enum() == TK_SPACE; });
+      [](const TokenInfo &token) { return token.token_enum() == TK_SPACE; });
   const auto after = NextUnfilteredToken();
   VLOG(4) << __FUNCTION__ << " ate " << std::distance(before, after)
           << " space tokens";
 }
 
-TreeUnwrapper::TreeUnwrapper(const verible::TextStructureView& view,
-                             const FormatStyle& style,
-                             const preformatted_tokens_type& ftokens)
+TreeUnwrapper::TreeUnwrapper(const verible::TextStructureView &view,
+                             const FormatStyle &style,
+                             const preformatted_tokens_type &ftokens)
     : verible::TreeUnwrapper(view, ftokens),
       style_(style),
       inter_leaf_scanner_(new TokenScanner),
-      token_context_(FullText(), [](std::ostream& stream, int e) {
+      token_context_(FullText(), [](std::ostream &stream, int e) {
         stream << verilog_symbol_name(e);
       }) {
   // Verify that unfiltered token stream is properly EOF terminated,
   // so that stream scanners (inter_leaf_scanner_) know when to stop.
-  const auto& tokens = view.TokenStream();
+  const auto &tokens = view.TokenStream();
   CHECK(!tokens.empty());
-  const auto& back(tokens.back());
+  const auto &back(tokens.back());
   CHECK(back.isEOF());
   CHECK(back.text().empty());
 }
@@ -337,7 +337,7 @@ static bool IsPreprocessorClause(NodeEnum e) {
 // indented, even if it is a single statement.
 // Keep this list in sync below where the same function name appears in comment.
 static bool ShouldIndentRelativeToDirectParent(
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeContext &context) {
   // TODO(fangism): flip logic to check that item/statement is *not* a direct
   // child of one of the exceptions: sequential/parallel/generate blocks.
   return context.DirectParentIsOneOf({
@@ -387,7 +387,7 @@ void TreeUnwrapper::UpdateInterLeafScanner(verilog_tokentype token_type) {
 void TreeUnwrapper::AdvanceLastVisitedLeaf() {
   VLOG(4) << __FUNCTION__;
   EatSpaces();
-  const auto& next_token = *NextUnfilteredToken();
+  const auto &next_token = *NextUnfilteredToken();
   const verilog_tokentype token_enum =
       verilog_tokentype(next_token.token_enum());
   UpdateInterLeafScanner(token_enum);
@@ -396,13 +396,13 @@ void TreeUnwrapper::AdvanceLastVisitedLeaf() {
 }
 
 verible::TokenWithContext TreeUnwrapper::VerboseToken(
-    const TokenInfo& token) const {
+    const TokenInfo &token) const {
   return TokenWithContext{token, token_context_};
 }
 
 static void VerilogOriginPrinter(
-    std::ostream& stream, const verible::TokenInfo::Context& token_context,
-    const verible::Symbol* symbol) {
+    std::ostream &stream, const verible::TokenInfo::Context &token_context,
+    const verible::Symbol *symbol) {
   CHECK_NOTNULL(symbol);
 
   if (symbol->Kind() == verible::SymbolKind::kNode) {
@@ -411,8 +411,8 @@ static void VerilogOriginPrinter(
     stream << "#" << verilog_symbol_name(verilog_tokentype(symbol->Tag().tag));
   }
 
-  const auto* left = verible::GetLeftmostLeaf(*symbol);
-  const auto* right = verible::GetRightmostLeaf(*symbol);
+  const auto *left = verible::GetLeftmostLeaf(*symbol);
+  const auto *right = verible::GetRightmostLeaf(*symbol);
   if (left && right) {
     const int start = left->get().left(token_context.base);
     const int end = right->get().right(token_context.base);
@@ -423,15 +423,15 @@ static void VerilogOriginPrinter(
 }
 
 verible::TokenPartitionTreePrinter TreeUnwrapper::VerilogPartitionPrinter(
-    const verible::TokenPartitionTree& partition) const {
+    const verible::TokenPartitionTree &partition) const {
   return verible::TokenPartitionTreePrinter(
       partition, false,
-      [this](std::ostream& stream, const verible::Symbol* symbol) {
+      [this](std::ostream &stream, const verible::Symbol *symbol) {
         VerilogOriginPrinter(stream, this->token_context_, symbol);
       });
 }
 
-void TreeUnwrapper::CatchUpToCurrentLeaf(const TokenInfo& leaf_token) {
+void TreeUnwrapper::CatchUpToCurrentLeaf(const TokenInfo &leaf_token) {
   VLOG(4) << __FUNCTION__ << " to " << VerboseToken(leaf_token);
   // "Catch up" NextUnfilteredToken() to the current leaf.
   // Assigns non-whitespace tokens such as comments into UnwrappedLines.
@@ -493,7 +493,7 @@ void TreeUnwrapper::LookAheadBeyondCurrentLeaf() {
 // intended token that immediately follows.
 static verible::TokenSequence::const_iterator StopAtLastNewlineBeforeTreeLeaf(
     const verible::TokenSequence::const_iterator token_begin,
-    const TokenInfo::Context& context) {
+    const TokenInfo::Context &context) {
   VLOG(4) << __FUNCTION__;
   auto token_iter = token_begin;
   auto last_newline = token_begin;
@@ -542,7 +542,7 @@ void TreeUnwrapper::LookAheadBeyondCurrentNode() {
     // advancement.
     EatSpaces();
     const auto next_token_iter = NextUnfilteredToken();
-    const auto& next_token = *next_token_iter;
+    const auto &next_token = *next_token_iter;
     VLOG(4) << "token: " << VerboseToken(next_token);
     const verilog_tokentype token_enum =
         verilog_tokentype(next_token.token_enum());
@@ -559,7 +559,7 @@ void TreeUnwrapper::LookAheadBeyondCurrentNode() {
 // This hook is called between the children nodes of the handled node types.
 // This is what allows partitions containing only comments to be properly
 // indented to the same level that non-comment sub-partitions would.
-void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
+void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode &node) {
   const auto tag = NodeEnum(node.Tag().tag);
   VLOG(4) << __FUNCTION__ << " node type: " << tag;
   switch (tag) {
@@ -631,24 +631,24 @@ enum class ContextHint {
   kInsideStandaloneMacroCall,
 };
 
-static const verible::EnumNameMap<ContextHint>& ContextHintStrings() {
+static const verible::EnumNameMap<ContextHint> &ContextHintStrings() {
   static const verible::EnumNameMap<ContextHint> kContextHintStringMap({
       {"kInsideStandaloneMacroCall", ContextHint::kInsideStandaloneMacroCall},
   });
   return kContextHintStringMap;
 }
 
-std::ostream& operator<<(std::ostream& stream, ContextHint p) {
+std::ostream &operator<<(std::ostream &stream, ContextHint p) {
   return ContextHintStrings().Unparse(p, stream);
 }
 
-std::ostream& operator<<(std::ostream& stream,
-                         const std::vector<ContextHint>& f) {
+std::ostream &operator<<(std::ostream &stream,
+                         const std::vector<ContextHint> &f) {
   return stream << verible::SequenceFormatter(f);
 }
 
 // Visitor to determine which node enum function to call
-void TreeUnwrapper::Visit(const SyntaxTreeNode& node) {
+void TreeUnwrapper::Visit(const SyntaxTreeNode &node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
 
@@ -663,7 +663,7 @@ void TreeUnwrapper::Visit(const SyntaxTreeNode& node) {
   // such as merging, flattening, hoisting.  Reshaping should only occur on the
   // return path of tree traversal (here).
 
-  auto* partition = PreviousSibling(*CurrentTokenPartition());
+  auto *partition = PreviousSibling(*CurrentTokenPartition());
   if (partition != nullptr) {
     ReshapeTokenPartitions(node, style_, partition);
   }
@@ -678,14 +678,14 @@ void TreeUnwrapper::Visit(const SyntaxTreeNode& node) {
 // TODO(mglb): This function is > 600 lines and should probably be split
 //             up into multiple.
 void TreeUnwrapper::SetIndentationsAndCreatePartitions(
-    const SyntaxTreeNode& node) {
+    const SyntaxTreeNode &node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
   VLOG(4) << "Context hints: " << ContextHints();
   if (!Context().empty()) {
     DVLOG(4) << "Context: "
              << absl::StrJoin(Context().begin(), Context().end(), " / ",
-                              [](std::string* out, const SyntaxTreeNode* n) {
+                              [](std::string *out, const SyntaxTreeNode *n) {
                                 const auto tag =
                                     static_cast<NodeEnum>(n->Tag().tag);
                                 absl::StrAppend(out, NodeEnumToString(tag));
@@ -736,7 +736,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
           Context().IsInside(NodeEnum::kAlwaysStatement) &&
           Context().IsInside(NodeEnum::kNetVariableAssignment)) {
         if (any_of(node.children().begin(), node.children().end(),
-                   [](const verible::SymbolPtr& p) {
+                   [](const verible::SymbolPtr &p) {
                      return p->Tag().tag ==
                             static_cast<int>(NodeEnum::kParamByName);
                    })) {
@@ -904,7 +904,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kIfBody: {
       // In the case of if-begin, let the 'begin'-'end' block indent its own
       // section.  Othewise for single statements/items, indent here.
-      const auto* subnode =
+      const auto *subnode =
           verible::CheckOptionalSymbolAsNode(GetSubtreeAsSymbol(node, tag, 0));
       const auto next_indent =
           (subnode != nullptr && NodeIsBeginEndBlock(*subnode))
@@ -920,7 +920,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // section, otherwise, indent single statements here.
       // In the case of else-if, suppress further indentation, deferring to
       // the conditional construct.
-      const auto* subnode = GetSubtreeAsNode(node, tag, 0);
+      const auto *subnode = GetSubtreeAsNode(node, tag, 0);
       const auto next_indent = subnode && NodeIsConditionalOrBlock(*subnode)
                                    ? 0
                                    : style_.indentation_spaces;
@@ -1000,7 +1000,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // TODO(fangism): Create own section only for standalone calls
       if (Context().DirectParentsAre(
               {NodeEnum::kFunctionCall, NodeEnum::kStatement})) {
-        const auto& subnode =
+        const auto &subnode =
             verible::SymbolCastToNode(*ABSL_DIE_IF_NULL(node.back()));
         if (subnode.MatchesTag(NodeEnum::kRandomizeMethodCallExtension) &&
             subnode.back() != nullptr) {
@@ -1459,8 +1459,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
   }
 }
 
-static bool PartitionStartsWithSemicolon(const TokenPartitionTree& partition) {
-  const auto& uwline = partition.Value();
+static bool PartitionStartsWithSemicolon(const TokenPartitionTree &partition) {
+  const auto &uwline = partition.Value();
   if (uwline.IsEmpty()) return false;
   const auto first_token = uwline.TokensRange().front().TokenEnum();
   return (first_token == ';' ||
@@ -1468,42 +1468,42 @@ static bool PartitionStartsWithSemicolon(const TokenPartitionTree& partition) {
               verilog_tokentype::SemicolonEndOfAssertionVariableDeclarations);
 }
 
-static bool PartitionIsCloseParenSemi(const TokenPartitionTree& partition) {
+static bool PartitionIsCloseParenSemi(const TokenPartitionTree &partition) {
   const auto ftokens = partition.Value().TokensRange();
   if (ftokens.size() < 2) return false;
   if (ftokens.front().TokenEnum() != ')') return false;
   return ftokens.back().TokenEnum() == ';';
 }
 
-static bool PartitionStartsWithCloseParen(const TokenPartitionTree& partition) {
+static bool PartitionStartsWithCloseParen(const TokenPartitionTree &partition) {
   const auto ftokens = partition.Value().TokensRange();
   if (ftokens.empty()) return false;
   const auto token_enum = ftokens.front().TokenEnum();
   return ((token_enum == ')') || (token_enum == MacroCallCloseToEndLine));
 }
 
-static bool PartitionEndsWithOpenParen(const TokenPartitionTree& partition) {
+static bool PartitionEndsWithOpenParen(const TokenPartitionTree &partition) {
   const auto ftokens = partition.Value().TokensRange();
   if (ftokens.empty()) return false;
   const auto token_enum = ftokens.back().TokenEnum();
   return token_enum == '(';
 }
 
-static bool PartitionIsCloseBrace(const TokenPartitionTree& partition) {
+static bool PartitionIsCloseBrace(const TokenPartitionTree &partition) {
   const auto ftokens = partition.Value().TokensRange();
   if (ftokens.size() != 1) return false;
   const auto token_enum = ftokens.front().TokenEnum();
   return token_enum == '}';
 }
 
-static bool PartitionEndsWithOpenBrace(const TokenPartitionTree& partition) {
+static bool PartitionEndsWithOpenBrace(const TokenPartitionTree &partition) {
   const auto ftokens = partition.Value().TokensRange();
   if (ftokens.empty()) return false;
   const auto token_enum = ftokens.back().TokenEnum();
   return token_enum == '{';
 }
 
-static bool PartitionStartsWithCloseBrace(const TokenPartitionTree& partition) {
+static bool PartitionStartsWithCloseBrace(const TokenPartitionTree &partition) {
   const auto ftokens = partition.Value().TokensRange();
   if (ftokens.empty()) return false;
   const auto token_enum = ftokens.front().TokenEnum();
@@ -1511,12 +1511,12 @@ static bool PartitionStartsWithCloseBrace(const TokenPartitionTree& partition) {
 }
 
 // Returns true if the partition is forced to start in a new line.
-static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree& partition) {
+static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree &partition) {
   const auto policy = partition.Value().PartitionPolicy();
   if (policy == PartitionPolicyEnum::kAlreadyFormatted) return true;
   if (policy == PartitionPolicyEnum::kInline) return false;
   if (!is_leaf(partition)) {
-    auto* first_leaf = &LeftmostDescendant(partition);
+    auto *first_leaf = &LeftmostDescendant(partition);
     const auto leaf_policy = first_leaf->Value().PartitionPolicy();
     if (leaf_policy == PartitionPolicyEnum::kAlreadyFormatted ||
         leaf_policy == PartitionPolicyEnum::kInline) {
@@ -1532,7 +1532,7 @@ static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree& partition) {
 // Joins partition containing only a ',' (and optionally comments) with
 // a partition preceding or following it.
 static void AttachSeparatorToPreviousOrNextPartition(
-    TokenPartitionTree* partition) {
+    TokenPartitionTree *partition) {
   CHECK_NOTNULL(partition);
   VLOG(5) << __FUNCTION__ << ": subpartition:\n" << *partition;
 
@@ -1542,8 +1542,8 @@ static void AttachSeparatorToPreviousOrNextPartition(
   }
 
   // Find a separator and make sure this is the only non-comment token
-  const verible::PreFormatToken* separator = nullptr;
-  for (const auto& token : partition->Value().TokensRange()) {
+  const verible::PreFormatToken *separator = nullptr;
+  for (const auto &token : partition->Value().TokensRange()) {
     switch (token.TokenEnum()) {
       case verilog_tokentype::TK_COMMENT_BLOCK:
       case verilog_tokentype::TK_EOL_COMMENT:
@@ -1568,10 +1568,10 @@ static void AttachSeparatorToPreviousOrNextPartition(
 
   // Merge with previous partition if both partitions are in the same line in
   // original text
-  const auto* previous_partition = PreviousLeaf(*partition);
+  const auto *previous_partition = PreviousLeaf(*partition);
   if (previous_partition != nullptr) {
     if (!previous_partition->Value().TokensRange().empty()) {
-      const auto& previous_token =
+      const auto &previous_token =
           previous_partition->Value().TokensRange().back();
       absl::string_view original_text_between = verible::make_string_view_range(
           previous_token.Text().end(), separator->Text().begin());
@@ -1585,10 +1585,10 @@ static void AttachSeparatorToPreviousOrNextPartition(
 
   // Merge with next partition if both partitions are in the same line in
   // original text
-  const auto* next_partition = NextLeaf(*partition);
+  const auto *next_partition = NextLeaf(*partition);
   if (next_partition != nullptr) {
     if (!next_partition->Value().TokensRange().empty()) {
-      const auto& next_token = next_partition->Value().TokensRange().front();
+      const auto &next_token = next_partition->Value().TokensRange().front();
       absl::string_view original_text_between = verible::make_string_view_range(
           separator->Text().end(), next_token.Text().begin());
       if (!absl::StrContains(original_text_between, '\n')) {
@@ -1623,18 +1623,18 @@ static void AttachSeparatorToPreviousOrNextPartition(
   partition->Value().SetOrigin(nullptr);
 }
 
-void AttachSeparatorsToListElementPartitions(TokenPartitionTree* partition) {
+void AttachSeparatorsToListElementPartitions(TokenPartitionTree *partition) {
   CHECK_NOTNULL(partition);
   // Skip the first partition, it can't contain just a separator.
   for (int i = 1; i < static_cast<int>(partition->Children().size()); ++i) {
-    auto& subpartition = partition->Children()[i];
+    auto &subpartition = partition->Children()[i];
     // This can change children count
     AttachSeparatorToPreviousOrNextPartition(&subpartition);
   }
 }
 
 static void AttachTrailingSemicolonToPreviousPartition(
-    TokenPartitionTree* partition) {
+    TokenPartitionTree *partition) {
   // TODO(mglb): Replace this function with
   // AttachSeparatorToPreviousOrNextPartition().
 
@@ -1645,13 +1645,13 @@ static void AttachTrailingSemicolonToPreviousPartition(
   // In some cases where macros are involved, there may not necessarily
   // be a semicolon where one is grammatically expected.
   // In those cases, do nothing.
-  auto* semicolon_partition = &RightmostDescendant(*partition);
+  auto *semicolon_partition = &RightmostDescendant(*partition);
   if (PartitionStartsWithSemicolon(*semicolon_partition)) {
     // When the semicolon is forced to wrap (e.g. when previous partition ends
     // with EOL comment), wrap previous partition with a group and append the
     // semicolon partition to it.
     if (PartitionIsForcedIntoNewLine(*semicolon_partition)) {
-      auto* group = verible::GroupLeafWithPreviousLeaf(semicolon_partition);
+      auto *group = verible::GroupLeafWithPreviousLeaf(semicolon_partition);
       // Update invalidated pointer
       semicolon_partition = &RightmostDescendant(*group);
       group->Value().SetPartitionPolicy(
@@ -1667,13 +1667,13 @@ static void AttachTrailingSemicolonToPreviousPartition(
   }
 }
 
-static void AdjustSubsequentPartitionsIndentation(TokenPartitionTree* partition,
+static void AdjustSubsequentPartitionsIndentation(TokenPartitionTree *partition,
                                                   int indentation) {
   // Adjust indentation of subsequent partitions
   const auto npartitions = partition->Children().size();
   if (npartitions > 1) {
-    const auto& first_partition = partition->Children().front();
-    const auto& last_partition = partition->Children().back();
+    const auto &first_partition = partition->Children().front();
+    const auto &last_partition = partition->Children().back();
 
     // Do not indent intentionally wrapped partitions, e.g.
     // { (>>[assign foo = {] }
@@ -1698,19 +1698,19 @@ static void AdjustSubsequentPartitionsIndentation(TokenPartitionTree* partition,
 // Merges first found subpartition ending with "=" or ":" with "'{" or "{"
 // from the subpartition following it.
 static void AttachOpeningBraceToDeclarationsAssignmentOperator(
-    TokenPartitionTree* partition) {
+    TokenPartitionTree *partition) {
   const int children_count = partition->Children().size();
   if (children_count <= 1) return;
 
   for (int i = 0; i < children_count - 1; ++i) {
-    auto& current = RightmostDescendant(partition->Children()[i]);
+    auto &current = RightmostDescendant(partition->Children()[i]);
     const auto tokens = current.Value().TokensRange();
     if (tokens.empty()) continue;
 
     auto rbegin = std::make_reverse_iterator(tokens.end());
     auto rend = std::make_reverse_iterator(tokens.begin());
     auto last_non_comment_it =
-        std::find_if_not(rbegin, rend, [](const PreFormatToken& token) {
+        std::find_if_not(rbegin, rend, [](const PreFormatToken &token) {
           // Lines with EOL Comment are non-mergable, so don't skip it here.
           return token.TokenEnum() == verilog_tokentype::TK_COMMENT_BLOCK;
         });
@@ -1720,10 +1720,10 @@ static void AttachOpeningBraceToDeclarationsAssignmentOperator(
       continue;
     }
 
-    const auto& next = partition->Children()[i + 1];
+    const auto &next = partition->Children()[i + 1];
     if (next.Value().IsEmpty()) continue;
 
-    const auto& next_token = next.Value().TokensRange().front();
+    const auto &next_token = next.Value().TokensRange().front();
     if (!(next_token.TokenEnum() == verilog_tokentype::TK_LP ||
           next_token.TokenEnum() == '{')) {
       continue;
@@ -1737,10 +1737,10 @@ static void AttachOpeningBraceToDeclarationsAssignmentOperator(
   }
 }
 
-static void ReshapeIfClause(const SyntaxTreeNode& node,
-                            TokenPartitionTree* partition_ptr) {
-  auto& partition = *partition_ptr;
-  const SyntaxTreeNode* body = GetAnyControlStatementBody(node);
+static void ReshapeIfClause(const SyntaxTreeNode &node,
+                            TokenPartitionTree *partition_ptr) {
+  auto &partition = *partition_ptr;
+  const SyntaxTreeNode *body = GetAnyControlStatementBody(node);
   if (body == nullptr || !NodeIsBeginEndBlock(*body)) {
     VLOG(4) << "if-body was not a begin-end block.";
     // If body is a null statement, attach it to the previous partition.
@@ -1749,8 +1749,8 @@ static void ReshapeIfClause(const SyntaxTreeNode& node,
   }
 
   // Then fuse the 'begin' partition with the preceding 'if (...)'
-  auto& if_body_partition = partition.Children().back();
-  auto& begin_partition = if_body_partition.Children().front();
+  auto &if_body_partition = partition.Children().back();
+  auto &begin_partition = if_body_partition.Children().front();
   verible::MergeLeafIntoPreviousLeaf(&begin_partition);
   partition.Value().SetPartitionPolicy(
       if_body_partition.Value().PartitionPolicy());
@@ -1759,10 +1759,10 @@ static void ReshapeIfClause(const SyntaxTreeNode& node,
   FlattenOneChild(partition, verible::BirthRank(if_body_partition));
 }
 
-static void ReshapeElseClause(const SyntaxTreeNode& node,
-                              TokenPartitionTree* partition_ptr) {
-  auto& partition = *partition_ptr;
-  const SyntaxTreeNode& else_body_subnode =
+static void ReshapeElseClause(const SyntaxTreeNode &node,
+                              TokenPartitionTree *partition_ptr) {
+  auto &partition = *partition_ptr;
+  const SyntaxTreeNode &else_body_subnode =
       *ABSL_DIE_IF_NULL(GetAnyControlStatementBody(node));
   if (!NodeIsConditionalOrBlock(else_body_subnode)) {
     VLOG(4) << "else-body was neither a begin-end block nor if-conditional.";
@@ -1773,20 +1773,20 @@ static void ReshapeElseClause(const SyntaxTreeNode& node,
 
   // Then fuse 'else' and 'begin' partitions together
   // or fuse the 'else' and 'if' (header) partitions together
-  auto& children = partition.Children();
+  auto &children = partition.Children();
   auto else_partition_iter = std::find_if(
-      children.begin(), children.end(), [](const TokenPartitionTree& n) {
-        const auto* origin = n.Value().Origin();
+      children.begin(), children.end(), [](const TokenPartitionTree &n) {
+        const auto *origin = n.Value().Origin();
         return origin &&
                origin->Tag() == verible::LeafTag(verilog_tokentype::TK_else);
       });
   if (else_partition_iter == children.end()) return;
 
-  auto& else_partition = *else_partition_iter;
-  auto* next_leaf = NextLeaf(else_partition);
+  auto &else_partition = *else_partition_iter;
+  auto *next_leaf = NextLeaf(else_partition);
   if (!next_leaf || PartitionIsForcedIntoNewLine(*next_leaf)) return;
 
-  const auto* next_origin = next_leaf->Value().Origin();
+  const auto *next_origin = next_leaf->Value().Origin();
   if (!next_origin ||
       !(next_origin->Tag() == verible::NodeTag(NodeEnum::kBegin) ||
         next_origin->Tag() == verible::LeafTag(verilog_tokentype::TK_begin) ||
@@ -1799,12 +1799,12 @@ static void ReshapeElseClause(const SyntaxTreeNode& node,
   verible::MergeLeafIntoNextLeaf(&else_partition);
 }
 
-static void HoistOnlyChildPartition(TokenPartitionTree* partition) {
+static void HoistOnlyChildPartition(TokenPartitionTree *partition) {
   // kWrap uses relative child indentation as a hanging
   // if (partition->Value().PartitionPolicy() == PartitionPolicyEnum::kWrap) {
   // TODO(mglb): implement or remove.
   // }
-  const auto* origin = partition->Value().Origin();
+  const auto *origin = partition->Value().Origin();
   if (HoistOnlyChild(*partition)) {
     VLOG(4) << "reshape: hoisted, using child partition policy, parent origin";
     // Preserve source origin
@@ -1812,35 +1812,35 @@ static void HoistOnlyChildPartition(TokenPartitionTree* partition) {
   }
 }
 
-static void PushEndIntoElsePartition(TokenPartitionTree* partition_ptr) {
+static void PushEndIntoElsePartition(TokenPartitionTree *partition_ptr) {
   // Then combine 'end' with the following 'else' ...
   // Do not flatten, so that if- and else- clauses can make formatting
   // decisions independently from each other.
-  auto& partition = *partition_ptr;
-  auto& if_clause_partition = partition.Children().front();
-  auto* end_partition = &RightmostDescendant(if_clause_partition);
-  auto* end_parent = verible::MergeLeafIntoNextLeaf(end_partition);
+  auto &partition = *partition_ptr;
+  auto &if_clause_partition = partition.Children().front();
+  auto *end_partition = &RightmostDescendant(if_clause_partition);
+  auto *end_parent = verible::MergeLeafIntoNextLeaf(end_partition);
   // if moving leaf results in any singleton partitions, hoist.
   if (end_parent != nullptr) {
     HoistOnlyChildPartition(end_parent);
   }
 }
 
-static void MergeEndElseWithoutLabel(const SyntaxTreeNode& conditional,
-                                     TokenPartitionTree* partition_ptr) {
-  auto& partition = *partition_ptr;
+static void MergeEndElseWithoutLabel(const SyntaxTreeNode &conditional,
+                                     TokenPartitionTree *partition_ptr) {
+  auto &partition = *partition_ptr;
   // Handle merging of 'else' partition with (possibly)
   // a previous 'end' partition.
   // Do not flatten, so that if- and else- clauses can make formatting
   // decisions independently from each other.
-  const auto* if_body_subnode =
+  const auto *if_body_subnode =
       GetAnyControlStatementBody(*GetAnyConditionalIfClause(conditional));
   if (if_body_subnode == nullptr || !NodeIsBeginEndBlock(*if_body_subnode)) {
     VLOG(4) << "if-body was not begin-end block";
     return;
   }
   VLOG(4) << "if body was a begin-end block";
-  const auto* end_label = GetEndLabel(GetBlockEnd(*if_body_subnode));
+  const auto *end_label = GetEndLabel(GetBlockEnd(*if_body_subnode));
   if (end_label != nullptr) {
     VLOG(4) << "'end' came with label, no merge";
     return;
@@ -1849,21 +1849,21 @@ static void MergeEndElseWithoutLabel(const SyntaxTreeNode& conditional,
   PushEndIntoElsePartition(&partition);
 }
 
-static void FlattenElseIfElse(const SyntaxTreeNode& else_clause,
-                              TokenPartitionTree* partition_ptr) {
+static void FlattenElseIfElse(const SyntaxTreeNode &else_clause,
+                              TokenPartitionTree *partition_ptr) {
   // Keep chained else-if-else conditionals in a flat structure.
-  auto& partition = *partition_ptr;
-  const auto& else_body_subnode = *GetAnyControlStatementBody(else_clause);
+  auto &partition = *partition_ptr;
+  const auto &else_body_subnode = *GetAnyControlStatementBody(else_clause);
   if (NodeIsConditionalConstruct(else_body_subnode) &&
       GetAnyConditionalElseClause(else_body_subnode) != nullptr) {
     FlattenOneChild(partition, partition.Children().size() - 1);
   }
 }
 
-static void ReshapeConditionalConstruct(const SyntaxTreeNode& conditional,
-                                        TokenPartitionTree* partition_ptr,
-                                        const FormatStyle& style) {
-  const auto* else_clause = GetAnyConditionalElseClause(conditional);
+static void ReshapeConditionalConstruct(const SyntaxTreeNode &conditional,
+                                        TokenPartitionTree *partition_ptr,
+                                        const FormatStyle &style) {
+  const auto *else_clause = GetAnyConditionalElseClause(conditional);
   if (else_clause == nullptr) {
     VLOG(4) << "there was no else clause";
     return;
@@ -1875,13 +1875,13 @@ static void ReshapeConditionalConstruct(const SyntaxTreeNode& conditional,
   FlattenElseIfElse(*else_clause, partition_ptr);
 }
 
-static bool TokenIsComment(const PreFormatToken& t) {
+static bool TokenIsComment(const PreFormatToken &t) {
   return IsComment(verilog_tokentype(t.TokenEnum()));
 }
 
 static void SetCommentLinePartitionAsAlreadyFormatted(
-    TokenPartitionTree* partition) {
-  for (auto& child : partition->Children()) {
+    TokenPartitionTree *partition) {
+  for (auto &child : partition->Children()) {
     if (!is_leaf(child)) continue;
     const auto tokens = child.Value().TokensRange();
     if (std::all_of(tokens.begin(), tokens.end(), TokenIsComment)) {
@@ -1890,7 +1890,7 @@ static void SetCommentLinePartitionAsAlreadyFormatted(
   }
 }
 
-using TokenPartitionPredicate = std::function<bool(const TokenPartitionTree&)>;
+using TokenPartitionPredicate = std::function<bool(const TokenPartitionTree &)>;
 
 // TokenPartitionPredicate returning true for partitions whose Origin's tag is
 // equal to any tag from `tags` list.
@@ -1899,9 +1899,9 @@ struct OriginTagIs {
 
   std::initializer_list<SymbolTag> tags;
 
-  bool operator()(const TokenPartitionTree& partition) const {
+  bool operator()(const TokenPartitionTree &partition) const {
     if (!partition.Value().Origin()) return false;
-    for (const auto& tag : tags) {
+    for (const auto &tag : tags) {
       if (partition.Value().Origin()->Tag() == tag) return true;
     }
     return false;
@@ -1916,8 +1916,8 @@ struct ContainsToken {
 
   std::initializer_list<int> token_types;
 
-  bool operator()(const TokenPartitionTree& partition) const {
-    for (const auto& token : partition.Value().TokensRange()) {
+  bool operator()(const TokenPartitionTree &partition) const {
+    for (const auto &token : partition.Value().TokensRange()) {
       for (const auto token_type : token_types) {
         if (token.TokenEnum() == token_type) return true;
       }
@@ -1928,8 +1928,8 @@ struct ContainsToken {
 
 // Finds direct child of the `parent` node satisfying the `predicate`. Returns
 // nullptr when child has not been found.
-static const TokenPartitionTree* FindDirectChild(
-    const TokenPartitionTree* parent, TokenPartitionPredicate predicate) {
+static const TokenPartitionTree *FindDirectChild(
+    const TokenPartitionTree *parent, TokenPartitionPredicate predicate) {
   if (!parent) return nullptr;
   auto iter = std::find_if(parent->Children().begin(), parent->Children().end(),
                            std::move(predicate));
@@ -1939,16 +1939,16 @@ static const TokenPartitionTree* FindDirectChild(
 
 // Finds direct child of the `parent` node satisfying the `predicate`. Returns
 // nullptr when child has not been found.
-static TokenPartitionTree* FindDirectChild(TokenPartitionTree* parent,
+static TokenPartitionTree *FindDirectChild(TokenPartitionTree *parent,
                                            TokenPartitionPredicate predicate) {
-  const TokenPartitionTree* const_parent = parent;
-  return const_cast<TokenPartitionTree*>(
+  const TokenPartitionTree *const_parent = parent;
+  return const_cast<TokenPartitionTree *>(
       FindDirectChild(const_parent, std::move(predicate)));
 }
 
 static bool LineBreaksInsidePartitionBeforeChild(
-    const TokenPartitionTree& parent, const TokenPartitionTree& child) {
-  for (auto& node : parent.Children()) {
+    const TokenPartitionTree &parent, const TokenPartitionTree &child) {
+  for (auto &node : parent.Children()) {
     if (PartitionIsForcedIntoNewLine(node)) return true;
     if (&node == &child) break;
   }
@@ -1957,14 +1957,14 @@ static bool LineBreaksInsidePartitionBeforeChild(
 
 class MacroCallReshaper {
  public:
-  explicit MacroCallReshaper(const FormatStyle& style,
-                             TokenPartitionTree* main_node)
+  explicit MacroCallReshaper(const FormatStyle &style,
+                             TokenPartitionTree *main_node)
       : style_(style),
         main_node_(main_node),
         is_nested_(IsNested(*main_node)) {}
 
   void Reshape() {
-    const auto* const main_node_origin = main_node_->Value().Origin();
+    const auto *const main_node_origin = main_node_->Value().Origin();
 
     if (!FindInitialPartitions()) {
       // Something went wrong, leave partitions intact. Log message has been
@@ -1983,7 +1983,7 @@ class MacroCallReshaper {
     }
 
     if (ReshapeEmptyParenGroup()) {
-      auto* identifier_with_paren_group = main_node_;
+      auto *identifier_with_paren_group = main_node_;
       if (!IsLastChild(*paren_group_)) {
         // There is a semicolon preceded by comment line(s).
         identifier_with_paren_group =
@@ -2020,7 +2020,7 @@ class MacroCallReshaper {
     }
 
     if (argument_list_ && style_.try_wrap_long_lines) {
-      for (auto& arg : argument_list_->Children()) {
+      for (auto &arg : argument_list_->Children()) {
         const auto tokens = arg.Value().TokensRange();
         // Hack: in order to avoid wrapping just before comment, do not enable
         // wrapping on partitions containing comments.
@@ -2028,7 +2028,7 @@ class MacroCallReshaper {
             arg.Value().PartitionPolicy() !=
                 PartitionPolicyEnum::kAlreadyFormatted &&
             std::none_of(tokens.begin(), tokens.end(),
-                         [](const PreFormatToken& t) {
+                         [](const PreFormatToken &t) {
                            return IsComment(verilog_tokentype(t.TokenEnum()));
                          })) {
           arg.Value().SetPartitionPolicy(PartitionPolicyEnum::kWrap);
@@ -2064,7 +2064,7 @@ class MacroCallReshaper {
   }
 
  private:
-  static bool IsLeftParenPartition(const TokenPartitionTree& node) {
+  static bool IsLeftParenPartition(const TokenPartitionTree &node) {
     const auto tokens = node.Value().TokensRange();
     bool found = false;
     auto token = tokens.begin();
@@ -2144,7 +2144,7 @@ class MacroCallReshaper {
       const auto r_paren_index = BirthRank(*r_paren_);
       CHECK_LE(l_paren_index, r_paren_index);
       for (std::size_t i = l_paren_index + 1; i < r_paren_index; ++i) {
-        auto& child = paren_group_->Children()[i];
+        auto &child = paren_group_->Children()[i];
         if (OriginTagIs{NodeTag(NodeEnum::kArgumentList),
                         NodeTag(NodeEnum::kMacroArgList)}(child)) {
           argument_list_ = &child;
@@ -2191,7 +2191,7 @@ class MacroCallReshaper {
     // Move partitions into the group.
     group.Children().assign(std::make_move_iterator(args_begin),
                             std::make_move_iterator(args_end));
-    for (auto& node : group.Children()) {
+    for (auto &node : group.Children()) {
       verible::AdjustIndentationAbsolute(&node, arguments_indentation);
     }
     // Remove leftover entries of all grouped partitions except the first.
@@ -2225,7 +2225,7 @@ class MacroCallReshaper {
       const auto r_paren_tokens = r_paren_->Value().TokensRange();
       if (is_leaf(*r_paren_) &&
           std::none_of(r_paren_tokens.begin(), r_paren_tokens.end(),
-                       [](const PreFormatToken& t) {
+                       [](const PreFormatToken &t) {
                          return IsComment(verilog_tokentype(t.TokenEnum()));
                        })) {
         // Merge
@@ -2233,7 +2233,7 @@ class MacroCallReshaper {
         r_paren_ = &argument_list_->Children().back();
       } else {
         // Group
-        auto& last_argument = *PreviousSibling(*r_paren_);
+        auto &last_argument = *PreviousSibling(*r_paren_);
         auto group = TokenPartitionTree(
             verible::UnwrappedLine(last_argument.Value().IndentationSpaces(),
                                    last_argument.Value().TokensRange().begin(),
@@ -2382,21 +2382,21 @@ class MacroCallReshaper {
     argument_list_ = nullptr;
   }
 
-  const FormatStyle& style_;
-  TokenPartitionTree* const main_node_;
+  const FormatStyle &style_;
+  TokenPartitionTree *const main_node_;
 
   // Subnodes of main_node_. Initialized by FindInitialPartitions().
   // Tree modifications invalidate pointers, so keeping pointers here instead
   // of passing them to each method allows for more readable code.
-  TokenPartitionTree* identifier_ = nullptr;
-  TokenPartitionTree* paren_group_ = nullptr;
-  TokenPartitionTree* argument_list_ = nullptr;
-  TokenPartitionTree* l_paren_ = nullptr;
-  TokenPartitionTree* r_paren_ = nullptr;
-  TokenPartitionTree* semicolon_ = nullptr;
+  TokenPartitionTree *identifier_ = nullptr;
+  TokenPartitionTree *paren_group_ = nullptr;
+  TokenPartitionTree *argument_list_ = nullptr;
+  TokenPartitionTree *l_paren_ = nullptr;
+  TokenPartitionTree *r_paren_ = nullptr;
+  TokenPartitionTree *semicolon_ = nullptr;
 
-  static bool IsNested(const TokenPartitionTree& macro_call_node) {
-    auto* paren_group = FindDirectChild(
+  static bool IsNested(const TokenPartitionTree &macro_call_node) {
+    auto *paren_group = FindDirectChild(
         &macro_call_node, OriginTagIs{NodeTag(NodeEnum::kParenGroup)});
     if (!paren_group) return false;
     return paren_group->Value().IndentationSpaces() ==
@@ -2406,15 +2406,15 @@ class MacroCallReshaper {
   const bool is_nested_;
 };
 
-static void IndentBetweenUVMBeginEndMacros(TokenPartitionTree* partition_ptr,
+static void IndentBetweenUVMBeginEndMacros(TokenPartitionTree *partition_ptr,
                                            int indentation_spaces) {
-  auto& partition = *partition_ptr;
+  auto &partition = *partition_ptr;
   // Indent elements between UVM begin/end macro calls
   unsigned int uvm_level = 1;
-  std::vector<TokenPartitionTree*> uvm_range;
+  std::vector<TokenPartitionTree *> uvm_range;
 
   // Search backwards for matching _begin.
-  for (auto* itr = PreviousSibling(partition); itr;
+  for (auto *itr = PreviousSibling(partition); itr;
        itr = PreviousSibling(*itr)) {
     VLOG(4) << "Scanning previous sibling:\n" << *itr;
     const auto macroId =
@@ -2444,23 +2444,23 @@ static void IndentBetweenUVMBeginEndMacros(TokenPartitionTree* partition_ptr,
   // Found matching _begin-_end macros
   if ((uvm_level == 0) && !uvm_range.empty()) {
     VLOG(4) << "Found matching uvm-begin/end macros";
-    for (auto* itr : uvm_range) {
+    for (auto *itr : uvm_range) {
       // Indent uvm macros inside `uvm.*begin - `uvm.*end
       verible::AdjustIndentationRelative(itr, +indentation_spaces);
     }
   }
 }
 
-static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
-    const verible::Symbol& data_declaration) {
-  const auto* instance_list =
+static const SyntaxTreeNode *GetAssignedExpressionFromDataDeclaration(
+    const verible::Symbol &data_declaration) {
+  const auto *instance_list =
       GetInstanceListFromDataDeclaration(data_declaration);
   if (!instance_list || instance_list->empty()) return nullptr;
 
-  const auto& variable_or_gate = *instance_list->front();
+  const auto &variable_or_gate = *instance_list->front();
   if (variable_or_gate.Tag().kind != verible::SymbolKind::kNode) return nullptr;
 
-  const verible::Symbol* trailing_assign;
+  const verible::Symbol *trailing_assign;
   if (variable_or_gate.Tag() == verible::NodeTag(NodeEnum::kRegisterVariable)) {
     trailing_assign =
         GetTrailingExpressionFromRegisterVariable(variable_or_gate);
@@ -2473,7 +2473,7 @@ static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
   }
   if (!trailing_assign) return nullptr;
 
-  const verible::Symbol* expression = verible::GetSubtreeAsSymbol(
+  const verible::Symbol *expression = verible::GetSubtreeAsSymbol(
       *trailing_assign, NodeEnum::kTrailingAssign, 1);
   if (!expression ||
       expression->Tag() != verible::NodeTag(NodeEnum::kExpression)) {
@@ -2483,18 +2483,18 @@ static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
   return &verible::SymbolCastToNode(*expression);
 }
 
-static void HandleDataDeclaration(const SyntaxTreeNode& node,
-                                  const FormatStyle& style,
-                                  TokenPartitionTree* partition) {
+static void HandleDataDeclaration(const SyntaxTreeNode &node,
+                                  const FormatStyle &style,
+                                  TokenPartitionTree *partition) {
   AttachTrailingSemicolonToPreviousPartition(partition);
-  auto& data_declaration_partition = *partition;
-  auto& children = data_declaration_partition.Children();
+  auto &data_declaration_partition = *partition;
+  auto &children = data_declaration_partition.Children();
   CHECK(!children.empty());
 
   // TODO(fangism): fuse qualifiers (if any) with type partition
 
   // The instances/variable declaration list is always in last position.
-  auto& instance_list_partition = children.back();
+  auto &instance_list_partition = children.back();
   if (  // TODO(fangism): get type and qualifiers from declaration node,
         // and check whether type node is implicit, using CST functions.
       verible::BirthRank(instance_list_partition) == 0) {
@@ -2516,7 +2516,7 @@ static void HandleDataDeclaration(const SyntaxTreeNode& node,
             << instance_list_partition;
 
     // Reshape type-instance partitions.
-    auto* instance_type_partition =
+    auto *instance_type_partition =
         ABSL_DIE_IF_NULL(PreviousSibling(children.back()));
     VLOG(4) << "instance type:\n" << *instance_type_partition;
 
@@ -2546,41 +2546,41 @@ static void HandleDataDeclaration(const SyntaxTreeNode& node,
 
   // Handle variable declaration with an assignment
 
-  const auto* assigned_expr = GetAssignedExpressionFromDataDeclaration(node);
+  const auto *assigned_expr = GetAssignedExpressionFromDataDeclaration(node);
   if (!assigned_expr || assigned_expr->empty()) return;
 
   AttachOpeningBraceToDeclarationsAssignmentOperator(partition);
 
   // Special handling for assignment of a string concatenation
 
-  const auto* concat_expr_symbol = assigned_expr->front().get();
+  const auto *concat_expr_symbol = assigned_expr->front().get();
   if (concat_expr_symbol->Tag() !=
       verible::NodeTag(NodeEnum::kConcatenationExpression)) {
     return;
   }
 
-  const auto* open_range_list_symbol =
+  const auto *open_range_list_symbol =
       verible::SymbolCastToNode(*concat_expr_symbol)[1].get();
   if (open_range_list_symbol->Tag() !=
       verible::NodeTag(NodeEnum::kOpenRangeList)) {
     return;
   }
 
-  const auto& open_range_list =
+  const auto &open_range_list =
       verible::SymbolCastToNode(*open_range_list_symbol);
 
   if (std::all_of(
           open_range_list.children().begin(), open_range_list.children().end(),
-          [](const verible::SymbolPtr& sym) {
+          [](const verible::SymbolPtr &sym) {
             if (sym->Tag() == verible::NodeTag(NodeEnum::kExpression)) {
-              const auto& expr = verible::SymbolCastToNode(*sym.get());
+              const auto &expr = verible::SymbolCastToNode(*sym.get());
               return !expr.empty() &&
                      expr.front()->Tag() ==
                          verible::LeafTag(verilog_tokentype::TK_StringLiteral);
             }
             return (sym->Kind() == verible::SymbolKind::kLeaf);
           })) {
-    auto& assigned_value_partition = data_declaration_partition.Children()[1];
+    auto &assigned_value_partition = data_declaration_partition.Children()[1];
     partition->Value().SetPartitionPolicy(
         PartitionPolicyEnum::kAppendFittingSubPartitions);
     assigned_value_partition.Value().SetPartitionPolicy(
@@ -2593,11 +2593,11 @@ static void HandleDataDeclaration(const SyntaxTreeNode& node,
 // TODO: this method is long; possibly break out functionality similar to
 // HandleDataDeclaration().
 void TreeUnwrapper::ReshapeTokenPartitions(
-    const SyntaxTreeNode& node, const FormatStyle& style,
-    TokenPartitionTree* recent_partition) {
+    const SyntaxTreeNode &node, const FormatStyle &style,
+    TokenPartitionTree *recent_partition) {
   const NodeEnum tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
-  TokenPartitionTree& partition = *recent_partition;
+  TokenPartitionTree &partition = *recent_partition;
   VLOG(4) << "before reshaping " << tag << ":\n"
           << VerilogPartitionPrinter(partition);
 
@@ -2653,8 +2653,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
       // Take advantage here that preceding data declaration partition
       // was already shaped.
-      auto& target_instance_partition = partition;
-      auto& children = target_instance_partition.Children();
+      auto &target_instance_partition = partition;
+      auto &children = target_instance_partition.Children();
       // Attach ')' to the instance name
       verible::MergeLeafIntoNextLeaf(PreviousSibling(children.back()));
 
@@ -2669,8 +2669,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kModuleHeader: {
       // Allow empty ports to appear as "();"
       if (partition.Children().size() >= 2) {
-        auto& last = partition.Children().back();
-        auto& last_prev = *ABSL_DIE_IF_NULL(PreviousSibling(last));
+        auto &last = partition.Children().back();
+        auto &last_prev = *ABSL_DIE_IF_NULL(PreviousSibling(last));
         if (PartitionStartsWithCloseParen(last) &&
             PartitionEndsWithOpenParen(last_prev)) {
           verible::MergeLeafIntoPreviousLeaf(&last);
@@ -2689,8 +2689,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kClassHeader: {
       // Allow empty parameters to appear as "#();"
       if (partition.Children().size() >= 2) {
-        auto& last = partition.Children().back();
-        auto& last_prev = *ABSL_DIE_IF_NULL(PreviousSibling(last));
+        auto &last = partition.Children().back();
+        auto &last_prev = *ABSL_DIE_IF_NULL(PreviousSibling(last));
         if (PartitionStartsWithCloseParen(last) &&
             PartitionEndsWithOpenParen(last_prev)) {
           verible::MergeLeafIntoPreviousLeaf(&last);
@@ -2706,21 +2706,21 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kFunctionPrototype:
     case NodeEnum::kTaskHeader:
     case NodeEnum::kTaskPrototype: {
-      auto& last = RightmostDescendant(partition);
+      auto &last = RightmostDescendant(partition);
       if (PartitionIsCloseParenSemi(last)) {
         verible::MergeLeafIntoPreviousLeaf(&last);
       }
       break;
     }
     case NodeEnum::kFunctionCall: {
-      const auto& reference_call_base =
+      const auto &reference_call_base =
           verible::SymbolCastToNode(*node.front());
-      const auto& subnode =
+      const auto &subnode =
           verible::SymbolCastToNode(*reference_call_base.back());
       if (subnode.MatchesTagAnyOf({NodeEnum::kMethodCallExtension,
                                    NodeEnum::kParenGroup,
                                    NodeEnum::kRandomizeMethodCallExtension})) {
-        auto& last = RightmostDescendant(partition);
+        auto &last = RightmostDescendant(partition);
         if (PartitionStartsWithCloseParen(last) ||
             PartitionStartsWithSemicolon(last)) {
           verible::MergeLeafIntoPreviousLeaf(&last);
@@ -2742,13 +2742,13 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         // Merge closing parenthesis into last argument partition
         // Test for ')' and MacroCallCloseToEndLine because macros
         // use its own token 'MacroCallCloseToEndLine'
-        auto& last = RightmostDescendant(partition);
+        auto &last = RightmostDescendant(partition);
         if (PartitionStartsWithCloseParen(last) ||
             PartitionIsCloseParenSemi(last)) {
-          auto& token = last.Value().TokensRange().front();
+          auto &token = last.Value().TokensRange().front();
           if (token.before.break_decision ==
               verible::SpacingOptions::kMustWrap) {
-            auto* group = verible::GroupLeafWithPreviousLeaf(&last);
+            auto *group = verible::GroupLeafWithPreviousLeaf(&last);
             group->Value().SetPartitionPolicy(PartitionPolicyEnum::kStack);
           } else {
             verible::MergeLeafIntoPreviousLeaf(&last);
@@ -2766,13 +2766,13 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // force own partition section.
       const auto policy = partition.Value().PartitionPolicy();
       if (policy == PartitionPolicyEnum::kAppendFittingSubPartitions) {
-        auto& last = RightmostDescendant(partition);
+        auto &last = RightmostDescendant(partition);
         if (PartitionStartsWithCloseParen(last) ||
             PartitionStartsWithSemicolon(last)) {
-          auto& token = last.Value().TokensRange().front();
+          auto &token = last.Value().TokensRange().front();
           if (token.before.break_decision ==
               verible::SpacingOptions::kMustWrap) {
-            auto* group = verible::GroupLeafWithPreviousLeaf(&last);
+            auto *group = verible::GroupLeafWithPreviousLeaf(&last);
             group->Value().SetPartitionPolicy(PartitionPolicyEnum::kStack);
           } else {
             verible::MergeLeafIntoPreviousLeaf(&last);
@@ -2815,15 +2815,15 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       if (partition.Children().size() > 1) {
         auto if_header_partition_iter = std::find_if(
             partition.Children().begin(), partition.Children().end(),
-            [](const TokenPartitionTree& n) {
-              const auto* origin = n.Value().Origin();
+            [](const TokenPartitionTree &n) {
+              const auto *origin = n.Value().Origin();
               return origin && origin->Tag() ==
                                    verible::LeafTag(verilog_tokentype::TK_if);
             });
         if (if_header_partition_iter == partition.Children().end()) break;
 
         // Adjust indentation of all partitions following if header recursively
-        for (auto& child : make_range(if_header_partition_iter + 1,
+        for (auto &child : make_range(if_header_partition_iter + 1,
                                       partition.Children().end())) {
           verible::AdjustIndentationRelative(&child, style.wrap_spaces);
         }
@@ -2872,7 +2872,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
 
     case NodeEnum::kPreprocessorDefine: {
-      auto& last = RightmostDescendant(partition);
+      auto &last = RightmostDescendant(partition);
       // TODO(fangism): why does test fail without this clause?
       if (PartitionStartsWithCloseParen(last)) {
         verible::MergeLeafIntoPreviousLeaf(&last);
@@ -2883,7 +2883,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kConstraintDeclaration: {
       // TODO(fangism): kConstraintSet should be handled similarly with {}
       if (partition.Children().size() == 2) {
-        auto& last = RightmostDescendant(partition);
+        auto &last = RightmostDescendant(partition);
         if (PartitionIsCloseBrace(last)) {
           verible::MergeLeafIntoPreviousLeaf(&last);
         }
@@ -2895,10 +2895,10 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       HoistOnlyChildPartition(&partition);
 
       // Alwyas expand constraint(s) blocks with braces inside them
-      const auto& uwline = partition.Value();
-      const auto& ftokens = uwline.TokensRange();
+      const auto &uwline = partition.Value();
+      const auto &ftokens = uwline.TokensRange();
       auto found = std::find_if(ftokens.begin(), ftokens.end(),
-                                [](const verible::PreFormatToken& token) {
+                                [](const verible::PreFormatToken &token) {
                                   return token.TokenEnum() == '{';
                                 });
       if (found != ftokens.end()) {
@@ -2920,7 +2920,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       VLOG(4) << "before moving semicolon:\n" << partition;
       AttachTrailingSemicolonToPreviousPartition(&partition);
       // RHS may have been further partitioned, e.g. a macro call.
-      auto& children = partition.Children();
+      auto &children = partition.Children();
       if (children.size() == 2 &&
           verible::is_leaf(children.front()) /* left side */ &&
           !PartitionIsForcedIntoNewLine(children.back())) {
@@ -2935,7 +2935,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       VLOG(4) << "before moving semicolon:\n" << partition;
       AttachTrailingSemicolonToPreviousPartition(&partition);
       // Check body, for kSeqBlock, merge 'begin' with previous sibling
-      if (const auto* tbody = GetProceduralTimingControlStatementBody(node);
+      if (const auto *tbody = GetProceduralTimingControlStatementBody(node);
           tbody != nullptr && NodeIsBeginEndBlock(*tbody)) {
         verible::MergeConsecutiveSiblings(&partition, offsets[1] - 1);
         VLOG(4) << "after merge siblings:\n" << partition;
@@ -2963,7 +2963,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // This applies to loop statements and loop generate constructs.
       // There are two 'partitions' with ';'.
       // Merge those with their predecessor sibling partitions.
-      auto& children = partition.Children();
+      auto &children = partition.Children();
       const auto iter1 = std::find_if(children.begin(), children.end(),
                                       PartitionStartsWithSemicolon);
       CHECK(iter1 != children.end());
@@ -3000,7 +3000,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kFinalStatement: {
       // Check if 'initial' is separated from 'begin' by EOL_COMMENT. If so,
       // adjust indentation and do not merge leaf into previous leaf.
-      const verible::UnwrappedLine& unwrapped_line = partition.Value();
+      const verible::UnwrappedLine &unwrapped_line = partition.Value();
       verible::FormatTokenRange tokenrange = unwrapped_line.TokensRange();
       if (auto token_tmp = tokenrange.begin();
           token_tmp->TokenEnum() == TK_initial &&
@@ -3016,9 +3016,9 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // with the preceding keyword or header partition.
       if (!verible::is_leaf(partition.Children().back()) &&
           NodeIsBeginEndBlock(verible::SymbolCastToNode(*node.back()))) {
-        auto& seq_block_partition = partition.Children().back();
+        auto &seq_block_partition = partition.Children().back();
         VLOG(4) << "block partition: " << seq_block_partition;
-        auto& begin_partition = LeftmostDescendant(seq_block_partition);
+        auto &begin_partition = LeftmostDescendant(seq_block_partition);
         VLOG(4) << "begin partition: " << begin_partition;
         CHECK(is_leaf(begin_partition));
         verible::MergeLeafIntoPreviousLeaf(&begin_partition);
@@ -3030,17 +3030,17 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
     case NodeEnum::kDoWhileLoopStatement: {
-      if (const auto* dw = GetDoWhileStatementBody(node);
+      if (const auto *dw = GetDoWhileStatementBody(node);
           dw != nullptr && NodeIsBeginEndBlock(*dw)) {
         // between do... and while (...);
-        auto& seq_block_partition = partition.Children()[1];
+        auto &seq_block_partition = partition.Children()[1];
 
         // merge "do" <- "begin"
-        auto& begin_partition = LeftmostDescendant(seq_block_partition);
+        auto &begin_partition = LeftmostDescendant(seq_block_partition);
         verible::MergeLeafIntoPreviousLeaf(&begin_partition);
 
         // merge "end" -> "while"
-        auto& end_partition = RightmostDescendant(seq_block_partition);
+        auto &end_partition = RightmostDescendant(seq_block_partition);
         verible::MergeLeafIntoNextLeaf(&end_partition);
 
         // Flatten only the statement block so that the control partition
@@ -3065,7 +3065,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     }
 
     case NodeEnum::kMacroGenericItem: {
-      const auto* token = GetMacroGenericItemId(node);
+      const auto *token = GetMacroGenericItemId(node);
       if (token && absl::StartsWith(token->text(), "`uvm_") &&
           absl::EndsWith(token->text(), "_end")) {
         VLOG(4) << "Found `uvm_*_end macro call";
@@ -3117,7 +3117,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
     case NodeEnum::kPatternExpression: {
       if (partition.Children().size() >= 3) {
-        auto& colon = partition.Children()[1];
+        auto &colon = partition.Children()[1];
         AttachSeparatorToPreviousOrNextPartition(&colon);
       }
       FlattenOnlyChildrenWithChildren(partition);
@@ -3144,7 +3144,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         }
       }
       // Next the colon is located and attached to the first dimension
-      auto& colon = partition.Children()[partition_size - 3];
+      auto &colon = partition.Children()[partition_size - 3];
       // And the colon is checked to be an actual colon
       if (colon.Value().TokensRange().begin()->Text() != ":") break;
       AttachSeparatorToPreviousOrNextPartition(&colon);
@@ -3178,7 +3178,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 }
 
 // Visitor to determine which leaf enum function to call
-void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
+void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf &leaf) {
   VLOG(3) << __FUNCTION__ << " leaf: " << VerboseToken(leaf.get());
   const verilog_tokentype tag = verilog_tokentype(leaf.Tag().tag);
 
@@ -3204,7 +3204,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
     StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand, &leaf);
   }
 
-  auto& partition = *ABSL_DIE_IF_NULL(CurrentTokenPartition());
+  auto &partition = *ABSL_DIE_IF_NULL(CurrentTokenPartition());
   VLOG(4) << "before adding token " << VerboseToken(leaf.get()) << ":\n"
           << VerilogPartitionPrinter(partition);
 
@@ -3247,13 +3247,13 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
 
 // Specialized node visitors
 
-void TreeUnwrapper::VisitNewUnwrappedLine(const SyntaxTreeNode& node) {
+void TreeUnwrapper::VisitNewUnwrappedLine(const SyntaxTreeNode &node) {
   StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &node);
   TraverseChildren(node);
 }
 
 void TreeUnwrapper::VisitNewUnindentedUnwrappedLine(
-    const SyntaxTreeNode& node) {
+    const SyntaxTreeNode &node) {
   StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &node);
   // Force the current line to be unindented without losing track of where
   // the current indentation level is for children.

@@ -24,7 +24,7 @@ namespace formatter {
 using FTT = FormatTokenType;
 
 // Mapping of verilog_tokentype enum to FormatTokenType
-static const absl::node_hash_map<verilog_tokentype, FTT>& FormatTokenTypeMap() {
+static const absl::node_hash_map<verilog_tokentype, FTT> &FormatTokenTypeMap() {
   static const absl::node_hash_map<verilog_tokentype, FTT> kFormatTokenMap({
       // keywords
       {verilog_tokentype::PP_include, FTT::keyword},

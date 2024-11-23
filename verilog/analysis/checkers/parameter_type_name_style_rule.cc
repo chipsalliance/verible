@@ -45,7 +45,7 @@ static constexpr absl::string_view kMessage =
     "Parameter type names must use the lower_snake_case naming convention"
     " and end with _t.";
 
-const LintRuleDescriptor& ParameterTypeNameStyleRule::GetDescriptor() {
+const LintRuleDescriptor &ParameterTypeNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "parameter-type-name-style",
       .topic = "parametrized-objects",
@@ -56,16 +56,16 @@ const LintRuleDescriptor& ParameterTypeNameStyleRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& ParamDeclMatcher() {
+static const Matcher &ParamDeclMatcher() {
   static const Matcher matcher(NodekParamDeclaration());
   return matcher;
 }
 
 void ParameterTypeNameStyleRule::HandleSymbol(
-    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (ParamDeclMatcher().Matches(symbol, &manager)) {
-    const verible::TokenInfo* param_name_token = nullptr;
+    const verible::TokenInfo *param_name_token = nullptr;
     if (!IsParamTypeDeclaration(symbol)) return;
 
     param_name_token = GetSymbolIdentifierFromParamDeclaration(symbol);

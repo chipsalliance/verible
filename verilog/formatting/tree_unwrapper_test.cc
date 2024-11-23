@@ -59,16 +59,16 @@ struct ExpectedUnwrappedLine {
       int s, std::initializer_list<absl::string_view> expected_tokens)
       : indentation_spaces(s), tokens(expected_tokens) {}
 
-  void ShowUnwrappedLineDifference(std::ostream* stream,
-                                   const UnwrappedLine& uwline) const;
-  bool EqualsUnwrappedLine(std::ostream* stream,
-                           const UnwrappedLine& uwline) const;
+  void ShowUnwrappedLineDifference(std::ostream *stream,
+                                   const UnwrappedLine &uwline) const;
+  bool EqualsUnwrappedLine(std::ostream *stream,
+                           const UnwrappedLine &uwline) const;
 };
 
 // Human readable ExpectedUnwrappedLined which outputs indentation and line.
 // Mimic operator << (ostream&, const UnwrappedLine&).
-std::ostream& operator<<(std::ostream& stream,
-                         const ExpectedUnwrappedLine& expected_uwline) {
+std::ostream &operator<<(std::ostream &stream,
+                         const ExpectedUnwrappedLine &expected_uwline) {
   stream << verible::Spacer(expected_uwline.indentation_spaces,
                             UnwrappedLine::kIndentationMarker)
          << '[';
@@ -87,7 +87,7 @@ std::ostream& operator<<(std::ostream& stream,
 // This tree type will be 'diff-ed' against a VectorTree<UnwrappedLine>.
 using ExpectedUnwrappedLineTree = verible::VectorTree<ExpectedUnwrappedLine>;
 
-void ValidateExpectedTreeNode(const ExpectedUnwrappedLineTree& etree) {
+void ValidateExpectedTreeNode(const ExpectedUnwrappedLineTree &etree) {
   // At each tree node, there should either be expected tokens in the node's
   // value, or node's children, but not both.
   CHECK(etree.Value().tokens.empty() != is_leaf(etree))
@@ -96,13 +96,13 @@ void ValidateExpectedTreeNode(const ExpectedUnwrappedLineTree& etree) {
 }
 
 // Make sure the expect-tree is well-formed.
-void ValidateExpectedTree(const ExpectedUnwrappedLineTree& etree) {
+void ValidateExpectedTree(const ExpectedUnwrappedLineTree &etree) {
   ApplyPreOrder(etree, ValidateExpectedTreeNode);
 }
 
 // Outputs the unwrapped line followed by this expected unwrapped line
 void ExpectedUnwrappedLine::ShowUnwrappedLineDifference(
-    std::ostream* stream, const UnwrappedLine& uwline) const {
+    std::ostream *stream, const UnwrappedLine &uwline) const {
   *stream << std::endl
           << "unwrapped line: " << std::endl
           << '\"' << uwline << '\"' << std::endl;
@@ -114,7 +114,7 @@ void ExpectedUnwrappedLine::ShowUnwrappedLineDifference(
 // sizes (number of tokens), each token sequentially, and indentation.
 // Outputs differences to stream
 bool ExpectedUnwrappedLine::EqualsUnwrappedLine(
-    std::ostream* stream, const UnwrappedLine& uwline) const {
+    std::ostream *stream, const UnwrappedLine &uwline) const {
   VLOG(4) << __FUNCTION__;
   bool equal = true;
   // If the expected token array is empty, don't check because tokens
@@ -165,7 +165,7 @@ bool ExpectedUnwrappedLine::EqualsUnwrappedLine(
 // Contains test cases for files with the UnwrappedLines that should be
 // produced from TreeUnwrapper.Unwrap()
 struct TreeUnwrapperTestData {
-  const char* test_name;
+  const char *test_name;
 
   // The source code for testing must be syntactically correct.
   absl::string_view source_code;
@@ -174,8 +174,8 @@ struct TreeUnwrapperTestData {
   ExpectedUnwrappedLineTree expected_unwrapped_lines;
 
   template <typename... Args>
-  TreeUnwrapperTestData(const char* name, absl::string_view code,
-                        Args&&... nodes)
+  TreeUnwrapperTestData(const char *name, absl::string_view code,
+                        Args &&...nodes)
       : test_name(name),
         source_code(code),
         expected_unwrapped_lines(ExpectedUnwrappedLine{0},
@@ -187,14 +187,14 @@ struct TreeUnwrapperTestData {
 
 // Iterates through UnwrappedLines and expected lines and verifies that they
 // are equal
-bool VerifyUnwrappedLines(std::ostream* stream,
-                          const verible::TokenPartitionTree& uwlines,
-                          const TreeUnwrapperTestData& test_case) {
+bool VerifyUnwrappedLines(std::ostream *stream,
+                          const verible::TokenPartitionTree &uwlines,
+                          const TreeUnwrapperTestData &test_case) {
   std::ostringstream first_diff_stream;
   const auto diff = verible::DeepEqual(
       uwlines, test_case.expected_unwrapped_lines,
-      [&first_diff_stream](const UnwrappedLine& actual,
-                           const ExpectedUnwrappedLine& expect) {
+      [&first_diff_stream](const UnwrappedLine &actual,
+                           const ExpectedUnwrappedLine &expect) {
         return expect.EqualsUnwrappedLine(&first_diff_stream, actual);
       });
 
@@ -243,7 +243,7 @@ class TreeUnwrapperTest : public ::testing::Test {
       constexpr bool with_diagnostic_context = false;
       const std::vector<std::string> syntax_error_messages(
           analyzer_->LinterTokenErrorMessages(with_diagnostic_context));
-      for (const auto& message : syntax_error_messages) {
+      for (const auto &message : syntax_error_messages) {
         std::cout << message << std::endl;
       }
     }
@@ -253,7 +253,7 @@ class TreeUnwrapperTest : public ::testing::Test {
   std::unique_ptr<TreeUnwrapper> CreateTreeUnwrapper(
       absl::string_view source_code) {
     MakeTree(source_code);
-    const verible::TextStructureView& text_structure_view = analyzer_->Data();
+    const verible::TextStructureView &text_structure_view = analyzer_->Data();
     unwrapper_data_ =
         std::make_unique<UnwrapperData>(text_structure_view.TokenStream());
 
@@ -304,7 +304,7 @@ TEST_F(TreeUnwrapperTest, UnwrapBlankLineOnly) {
 
 // N is for node
 template <typename... Args>
-ExpectedUnwrappedLineTree N(int spaces, Args&&... nodes) {
+ExpectedUnwrappedLineTree N(int spaces, Args &&...nodes) {
   return ExpectedUnwrappedLineTree(ExpectedUnwrappedLine(spaces),
                                    std::forward<Args>(nodes)...);
 }
@@ -2884,10 +2884,10 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from module tests
 TEST_F(TreeUnwrapperTest, UnwrapModuleTests) {
-  for (const auto& test_case : kUnwrapModuleTestCases) {
+  for (const auto &test_case : kUnwrapModuleTestCases) {
     VLOG(1) << "Test: " << test_case.test_name;
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -3143,10 +3143,10 @@ const TreeUnwrapperTestData kUnwrapCommentsTestCases[] = {
 // Test that TreeUnwrapper produces the correct UnwrappedLines from code with
 // comments
 TEST_F(TreeUnwrapperTest, UnwrapCommentsTests) {
-  for (const auto& test_case : kUnwrapCommentsTestCases) {
+  for (const auto &test_case : kUnwrapCommentsTestCases) {
     VLOG(1) << "Test: " << test_case.test_name;
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case))
         << "code:\n"
@@ -3273,10 +3273,10 @@ const TreeUnwrapperTestData kUnwrapUvmTestCases[] = {
 // Test that TreeUnwrapper produces the correct UnwrappedLines from code with
 // uvm macros
 TEST_F(TreeUnwrapperTest, UnwrapUvmTests) {
-  for (const auto& test_case : kUnwrapUvmTestCases) {
+  for (const auto &test_case : kUnwrapUvmTestCases) {
     VLOG(1) << "Test: " << test_case.test_name;
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case))
         << "code:\n"
@@ -3956,10 +3956,10 @@ const TreeUnwrapperTestData kClassTestCases[] = {
 
 // Test that TreeUnwrapper produces the correct UnwrappedLines from class tests
 TEST_F(TreeUnwrapperTest, UnwrapClassTests) {
-  for (const auto& test_case : kClassTestCases) {
+  for (const auto &test_case : kClassTestCases) {
     VLOG(1) << "Test: " << test_case.test_name;
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -4145,9 +4145,9 @@ const TreeUnwrapperTestData kUnwrapPackageTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from package tests
 TEST_F(TreeUnwrapperTest, UnwrapPackageTests) {
-  for (const auto& test_case : kUnwrapPackageTestCases) {
+  for (const auto &test_case : kUnwrapPackageTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -4217,9 +4217,9 @@ const TreeUnwrapperTestData kDescriptionTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from package tests
 TEST_F(TreeUnwrapperTest, DescriptionTests) {
-  for (const auto& test_case : kDescriptionTestCases) {
+  for (const auto &test_case : kDescriptionTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -4886,9 +4886,9 @@ const TreeUnwrapperTestData kUnwrapPreprocessorTestCases[] = {
 
 // Test for correct UnwrappedLines for preprocessor directives.
 TEST_F(TreeUnwrapperTest, UnwrapPreprocessorTests) {
-  for (const auto& test_case : kUnwrapPreprocessorTestCases) {
+  for (const auto &test_case : kUnwrapPreprocessorTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -5063,9 +5063,9 @@ const TreeUnwrapperTestData kUnwrapInterfaceTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from interface tests
 TEST_F(TreeUnwrapperTest, UnwrapInterfaceTests) {
-  for (const auto& test_case : kUnwrapInterfaceTestCases) {
+  for (const auto &test_case : kUnwrapInterfaceTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -6234,9 +6234,9 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from task tests
 TEST_F(TreeUnwrapperTest, UnwrapTaskTests) {
-  for (const auto& test_case : kUnwrapTaskTestCases) {
+  for (const auto &test_case : kUnwrapTaskTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -7677,10 +7677,10 @@ const TreeUnwrapperTestData kUnwrapFunctionTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from function tests
 TEST_F(TreeUnwrapperTest, UnwrapFunctionTests) {
-  for (const auto& test_case : kUnwrapFunctionTestCases) {
+  for (const auto &test_case : kUnwrapFunctionTestCases) {
     VLOG(4) << "==== kUnwrapFunctionTests ====\n" << test_case.source_code;
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -7710,9 +7710,9 @@ const TreeUnwrapperTestData kUnwrapStructTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from structs
 TEST_F(TreeUnwrapperTest, UnwrapStructTests) {
-  for (const auto& test_case : kUnwrapStructTestCases) {
+  for (const auto &test_case : kUnwrapStructTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -7742,9 +7742,9 @@ const TreeUnwrapperTestData kUnwrapUnionTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from unions
 TEST_F(TreeUnwrapperTest, UnwrapUnionTests) {
-  for (const auto& test_case : kUnwrapUnionTestCases) {
+  for (const auto &test_case : kUnwrapUnionTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -7804,9 +7804,9 @@ const TreeUnwrapperTestData kUnwrapEnumTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from structs
 TEST_F(TreeUnwrapperTest, UnwrapEnumTests) {
-  for (const auto& test_case : kUnwrapEnumTestCases) {
+  for (const auto &test_case : kUnwrapEnumTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -7953,9 +7953,9 @@ const TreeUnwrapperTestData kUnwrapPropertyTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from properties
 TEST_F(TreeUnwrapperTest, UnwrapPropertyTests) {
-  for (const auto& test_case : kUnwrapPropertyTestCases) {
+  for (const auto &test_case : kUnwrapPropertyTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -8091,9 +8091,9 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from covergroups
 TEST_F(TreeUnwrapperTest, UnwrapCovergroupTests) {
-  for (const auto& test_case : kUnwrapCovergroupTestCases) {
+  for (const auto &test_case : kUnwrapCovergroupTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -8162,9 +8162,9 @@ const TreeUnwrapperTestData kUnwrapSequenceTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from sequences
 TEST_F(TreeUnwrapperTest, UnwrapSequenceTests) {
-  for (const auto& test_case : kUnwrapSequenceTestCases) {
+  for (const auto &test_case : kUnwrapSequenceTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }
@@ -8446,9 +8446,9 @@ const TreeUnwrapperTestData kUnwrapPrimitivesTestCases[] = {
 
 // Test that TreeUnwrapper produces correct UnwrappedLines from primitives
 TEST_F(TreeUnwrapperTest, UnwrapPrimitivesTests) {
-  for (const auto& test_case : kUnwrapPrimitivesTestCases) {
+  for (const auto &test_case : kUnwrapPrimitivesTestCases) {
     auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
-    const auto* uwline_tree = tree_unwrapper->Unwrap();
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
     EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
                                      test_case));
   }

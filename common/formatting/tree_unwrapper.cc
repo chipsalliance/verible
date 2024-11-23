@@ -55,8 +55,8 @@ static TokenPartitionTree MakeInitialUnwrappedLines(
 }
 
 TreeUnwrapper::TreeUnwrapper(
-    const TextStructureView& view,
-    const preformatted_tokens_type& preformatted_tokens)
+    const TextStructureView &view,
+    const preformatted_tokens_type &preformatted_tokens)
     : text_structure_view_(view),
       preformatted_tokens_(preformatted_tokens),
       next_unfiltered_token_(text_structure_view_.TokenStream().begin()),
@@ -71,7 +71,7 @@ TreeUnwrapper::TreeUnwrapper(
   // array, and be able to 'extend' into the array of preformatted_tokens_.
 }
 
-const TokenPartitionTree* TreeUnwrapper::Unwrap() {
+const TokenPartitionTree *TreeUnwrapper::Unwrap() {
   // Collect tokens that appear before first syntax tree leaf, e.g. comments.
   CollectLeadingFilteredTokens();
 
@@ -116,7 +116,7 @@ std::vector<UnwrappedLine> TreeUnwrapper::FullyPartitionedUnwrappedLines()
   // visit only the node's children.
   std::vector<UnwrappedLine> result;
   verible::ApplyPostOrder(unwrapped_lines_,
-                          [&result](const TokenPartitionTree& node) {
+                          [&result](const TokenPartitionTree &node) {
                             if (is_leaf(node)) {
                               result.push_back(node.Value());
                             }
@@ -130,7 +130,7 @@ std::vector<UnwrappedLine> TreeUnwrapper::FullyPartitionedUnwrappedLines()
 }
 
 TokenSequence::const_iterator TreeUnwrapper::NextUnfilteredToken() const {
-  const auto& origin_tokens = text_structure_view_.TokenStream();
+  const auto &origin_tokens = text_structure_view_.TokenStream();
   CHECK(next_unfiltered_token_ >= origin_tokens.begin());
   CHECK(next_unfiltered_token_ <= origin_tokens.end());
   return next_unfiltered_token_;
@@ -142,25 +142,25 @@ TreeUnwrapper::CurrentFormatTokenIterator() const {
   return CurrentUnwrappedLine().TokensRange().end();
 }
 
-UnwrappedLine& TreeUnwrapper::CurrentUnwrappedLine() {
+UnwrappedLine &TreeUnwrapper::CurrentUnwrappedLine() {
   return ABSL_DIE_IF_NULL(CurrentTokenPartition())->Value();
 }
 
-const UnwrappedLine& TreeUnwrapper::CurrentUnwrappedLine() const {
+const UnwrappedLine &TreeUnwrapper::CurrentUnwrappedLine() const {
   return ABSL_DIE_IF_NULL(CurrentTokenPartition())->Value();
 }
 
-void TreeUnwrapper::RemoveTrailingEmptyPartitions(TokenPartitionTree* node) {
-  auto& children = node->Children();
+void TreeUnwrapper::RemoveTrailingEmptyPartitions(TokenPartitionTree *node) {
+  auto &children = node->Children();
   while (!children.empty() && children.back().Value().IsEmpty()) {
     children.pop_back();
   }
 }
 
 void TreeUnwrapper::CloseUnwrappedLineTreeNode(
-    TokenPartitionTree* node,
+    TokenPartitionTree *node,
     preformatted_tokens_type::const_iterator token_iter) {
-  const auto& children = node->Children();
+  const auto &children = node->Children();
   if (!children.empty()) {
     const auto last_child_end = children.back().Value().TokensRange().end();
     CHECK(last_child_end >= token_iter)
@@ -188,9 +188,9 @@ void TreeUnwrapper::FinishUnwrappedLine() {
 }
 
 void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
-                                          const Symbol* origin) {
+                                          const Symbol *origin) {
   // TODO(fangism): Take an optional indentation depth override parameter.
-  auto& current_unwrapped_line = CurrentUnwrappedLine();
+  auto &current_unwrapped_line = CurrentUnwrappedLine();
   if (current_unwrapped_line.IsEmpty()) {  // token range is empty
     // Re-use previously created unwrapped line.
     current_unwrapped_line.SetIndentationSpaces(current_indentation_spaces_);
@@ -215,7 +215,7 @@ void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
     FinishUnwrappedLine();
 
     // Create new sibling to current unwrapped line, maintaining same level.
-    auto& siblings = active_unwrapped_lines_->Parent()->Children();
+    auto &siblings = active_unwrapped_lines_->Parent()->Children();
     siblings.emplace_back(UnwrappedLine(current_indentation_spaces_,
                                         CurrentFormatTokenIterator(),
                                         partitioning));
@@ -249,7 +249,7 @@ bool TreeUnwrapper::NextUnfilteredTokenIsRetained() const {
 }
 
 void TreeUnwrapper::SkipUnfilteredTokens(
-    const std::function<bool(const verible::TokenInfo&)>& predicate) {
+    const std::function<bool(const verible::TokenInfo &)> &predicate) {
   while (predicate(*next_unfiltered_token_)) {
     ++next_unfiltered_token_;
   }
@@ -272,12 +272,12 @@ void TreeUnwrapper::AdvanceNextUnfilteredToken() {
   }
 }
 
-void TreeUnwrapper::TraverseChildren(const verible::SyntaxTreeNode& node) {
+void TreeUnwrapper::TraverseChildren(const verible::SyntaxTreeNode &node) {
   // Can't just use TreeContextVisitor::Visit(node) because we need to
   // call a visit hook between children.
   const verible::SyntaxTreeContext::AutoPop p(&current_context_, &node);
   InterChildNodeHook(node);
-  for (const auto& child : node.children()) {
+  for (const auto &child : node.children()) {
     if (child) {
       child->Accept(this);
       InterChildNodeHook(node);
@@ -286,7 +286,7 @@ void TreeUnwrapper::TraverseChildren(const verible::SyntaxTreeNode& node) {
 }
 
 TreeUnwrapper::preformatted_tokens_type::const_iterator
-TreeUnwrapper::VisitIndentedChildren(const SyntaxTreeNode& node,
+TreeUnwrapper::VisitIndentedChildren(const SyntaxTreeNode &node,
                                      int indentation_delta,
                                      PartitionPolicyEnum partitioning) {
   // Visit subtree with increased indentation level.
@@ -301,7 +301,7 @@ TreeUnwrapper::VisitIndentedChildren(const SyntaxTreeNode& node,
   active_unwrapped_lines_->Children().emplace_back(
       UnwrappedLine(current_indentation_spaces_, CurrentFormatTokenIterator(),
                     PartitionPolicyEnum::kFitOnLineElseExpand /* default */));
-  const ValueSaver<TokenPartitionTree*> tree_saver(
+  const ValueSaver<TokenPartitionTree *> tree_saver(
       &active_unwrapped_lines_, &active_unwrapped_lines_->Children().back());
   VLOG(3) << __FUNCTION__ << ", new child node "
           << NodePath(*active_unwrapped_lines_) << ": "
@@ -318,7 +318,7 @@ TreeUnwrapper::VisitIndentedChildren(const SyntaxTreeNode& node,
   // See StartNewUnwrappedLine().
 }
 
-void TreeUnwrapper::VisitIndentedSection(const SyntaxTreeNode& node,
+void TreeUnwrapper::VisitIndentedSection(const SyntaxTreeNode &node,
                                          int indentation_delta,
                                          PartitionPolicyEnum partitioning) {
   const auto last_ftoken_iter =
@@ -334,8 +334,8 @@ void TreeUnwrapper::VisitIndentedSection(const SyntaxTreeNode& node,
   StartNewUnwrappedLine(PartitionPolicyEnum::kUninitialized, nullptr);
 }
 
-std::ostream& operator<<(std::ostream& stream, const TreeUnwrapper& unwrapper) {
-  for (const auto& uwline : unwrapper.FullyPartitionedUnwrappedLines()) {
+std::ostream &operator<<(std::ostream &stream, const TreeUnwrapper &unwrapper) {
+  for (const auto &uwline : unwrapper.FullyPartitionedUnwrappedLines()) {
     stream << uwline << std::endl;
   }
   return stream;

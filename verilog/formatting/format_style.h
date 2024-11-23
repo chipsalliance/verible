@@ -28,7 +28,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   FormatStyle() { over_column_limit_penalty = 10000; }
 
-  FormatStyle(const FormatStyle&) = default;
+  FormatStyle(const FormatStyle &) = default;
 
   /*
    * InitializeFromFlags() [format_style_init.h] provides flags that are

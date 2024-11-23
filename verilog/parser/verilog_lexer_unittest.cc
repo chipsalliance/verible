@@ -37,7 +37,7 @@ class FilteredVerilogLexer : public VerilogLexer {
  public:
   explicit FilteredVerilogLexer(absl::string_view code) : VerilogLexer(code) {}
 
-  const TokenInfo& DoNextToken() final {
+  const TokenInfo &DoNextToken() final {
     do {
       VerilogLexer::DoNextToken();
     } while (!VerilogLexer::KeepSyntaxTreeTokens(GetLastToken()));
@@ -53,13 +53,13 @@ using LexerTestData = verible::SynthesizedLexerTestData;
 
 // Forwarding function to the template test driver function.
 template <typename... Args>
-static void TestLexer(Args&&... args) {
+static void TestLexer(Args &&...args) {
   verible::TestLexer<VerilogLexer>(std::forward<Args>(args)...);
 }
 
 // Forwarding function to the template test driver function.
 template <typename... Args>
-static void TestFilteredLexer(Args&&... args) {
+static void TestFilteredLexer(Args &&...args) {
   verible::TestLexer<FilteredVerilogLexer>(std::forward<Args>(args)...);
 }
 
@@ -2358,7 +2358,7 @@ TEST(RecursiveLexTextTest, Basic) {
   constexpr absl::string_view text("hello;");
   std::vector<TokenInfo> tokens;
   RecursiveLexText(text,
-                   [&tokens](const TokenInfo& t) { tokens.push_back(t); });
+                   [&tokens](const TokenInfo &t) { tokens.push_back(t); });
   EXPECT_THAT(tokens,
               ElementsAre(TokenInfo(SymbolIdentifier, text.substr(0, 5)),
                           TokenInfo(';', text.substr(5, 1))));

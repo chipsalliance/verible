@@ -42,8 +42,8 @@
 
 namespace verible {
 
-void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
-                                TokenPartitionTree* node) {
+void OptimizeTokenPartitionTree(const BasicFormatStyle &style,
+                                TokenPartitionTree *node) {
   CHECK_NOTNULL(node);
   VLOG(4) << __FUNCTION__ << ", before:\n"
           << verible::TokenPartitionTreePrinter(*node);
@@ -61,19 +61,19 @@ namespace {
 // Adopts sublayouts of 'source' into 'destination' if 'source' and
 // 'destination' types are equal and 'source' doesn't have extra indentation.
 // Otherwise adopts whole 'source'.
-void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
-                                     LayoutTree* destination) {
+void AdoptLayoutAndFlattenIfSameType(const LayoutTree &source,
+                                     LayoutTree *destination) {
   CHECK_NOTNULL(destination);
-  const auto& src_item = source.Value();
-  const auto& dst_item = destination->Value();
+  const auto &src_item = source.Value();
+  const auto &dst_item = destination->Value();
   if (!verible::is_leaf(source) && src_item.Type() == dst_item.Type() &&
       src_item.IndentationSpaces() == 0) {
-    const auto& first_subitem = source.Children().front().Value();
+    const auto &first_subitem = source.Children().front().Value();
     CHECK(src_item.MustWrap() == first_subitem.MustWrap());
     CHECK(src_item.SpacesBefore() == first_subitem.SpacesBefore());
     destination->Children().reserve(destination->Children().size() +
                                     source.Children().size());
-    for (const auto& sublayout : source.Children()) {
+    for (const auto &sublayout : source.Children()) {
       AdoptSubtree(*destination, sublayout);
     }
   } else {
@@ -81,7 +81,7 @@ void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
   }
 }
 
-int AlreadyFormattedPartitionLength(const TokenPartitionTree& partition) {
+int AlreadyFormattedPartitionLength(const TokenPartitionTree &partition) {
   auto tokens = partition.Value().TokensRange();
   if (tokens.empty()) return 0;
   int width = 0;
@@ -89,7 +89,7 @@ int AlreadyFormattedPartitionLength(const TokenPartitionTree& partition) {
   width += partition.Value().IndentationSpaces();
   width += tokens.front().Length();
 
-  for (const auto& token : make_range(tokens.begin() + 1, tokens.end())) {
+  for (const auto &token : make_range(tokens.begin() + 1, tokens.end())) {
     // TODO(mglb): either handle tokens with kPreserve break_decision, or
     // explicitly check for their absence. Preserved space is currently expected
     // to be emulated with kAlreadyFormatted/kInline partitions. Only tabular
@@ -97,10 +97,10 @@ int AlreadyFormattedPartitionLength(const TokenPartitionTree& partition) {
     width += token.before.spaces_required + token.Length();
   }
 
-  for (const auto& child : partition.Children()) {
+  for (const auto &child : partition.Children()) {
     CHECK_EQ(child.Value().PartitionPolicy(), PartitionPolicyEnum::kInline);
     if (child.Value().TokensRange().begin() != tokens.begin()) {
-      const auto& first_token = child.Value().TokensRange().front();
+      const auto &first_token = child.Value().TokensRange().front();
       // Substract spacing added in the loop above
       width -= first_token.before.spaces_required;
     }
@@ -115,7 +115,7 @@ constexpr int kInfinity = std::numeric_limits<int>::max();
 
 }  // namespace
 
-std::ostream& operator<<(std::ostream& stream, LayoutType type) {
+std::ostream &operator<<(std::ostream &stream, LayoutType type) {
   switch (type) {
     case LayoutType::kLine:
       return stream << "line";
@@ -128,7 +128,7 @@ std::ostream& operator<<(std::ostream& stream, LayoutType type) {
   return stream << "???";
 }
 
-std::ostream& operator<<(std::ostream& stream, const LayoutItem& layout) {
+std::ostream &operator<<(std::ostream &stream, const LayoutItem &layout) {
   if (layout.Type() == LayoutType::kLine) {
     stream << "[ " << layout.Text() << " ]"
            << ", length: " << layout.Length();
@@ -141,8 +141,8 @@ std::ostream& operator<<(std::ostream& stream, const LayoutItem& layout) {
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream,
-                         const LayoutFunctionSegment& segment) {
+std::ostream &operator<<(std::ostream &stream,
+                         const LayoutFunctionSegment &segment) {
   stream << "[" << std::setw(3) << std::setfill(' ') << segment.column << "] ("
          << std::fixed << std::setprecision(3) << segment.intercept << " + "
          << segment.gradient << "*x), span: " << segment.span << ", layout:\n";
@@ -150,11 +150,11 @@ std::ostream& operator<<(std::ostream& stream,
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const LayoutFunction& lf) {
+std::ostream &operator<<(std::ostream &stream, const LayoutFunction &lf) {
   if (lf.empty()) return stream << "{}";
 
   stream << "{\n";
-  for (const auto& segment : lf) {
+  for (const auto &segment : lf) {
     stream << "  [" << std::setw(3) << std::setfill(' ') << segment.column
            << "] (" << std::fixed << std::setprecision(3) << std::setw(8)
            << std::setfill(' ') << segment.intercept << " + " << std::setw(4)
@@ -189,7 +189,7 @@ LayoutFunction::const_iterator LayoutFunction::AtOrToTheLeftOf(
   if (empty()) return end();
 
   const auto it = std::lower_bound(
-      begin(), end(), column, [](const LayoutFunctionSegment& s, int column) {
+      begin(), end(), column, [](const LayoutFunctionSegment &s, int column) {
         return s.column <= column;
       });
   CHECK_NE(it, begin());
@@ -197,7 +197,7 @@ LayoutFunction::const_iterator LayoutFunction::AtOrToTheLeftOf(
 }
 
 LayoutFunction LayoutFunctionFactory::WrappedLine(
-    const UnwrappedLine& uwline) const {
+    const UnwrappedLine &uwline) const {
   const auto tokens = uwline.TokensRange();
   auto token_lfs = absl::FixedArray<LayoutFunction>(tokens.size());
 
@@ -211,7 +211,7 @@ LayoutFunction LayoutFunctionFactory::WrappedLine(
   return Wrap(token_lfs.begin(), token_lfs.end(), true, style_.wrap_spaces);
 }
 
-LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine& uwline) const {
+LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine &uwline) const {
   auto layout = LayoutTree(LayoutItem(uwline));
   const auto span = layout.Value().Length();
 
@@ -231,7 +231,7 @@ LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine& uwline) const {
   };
 }
 
-LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
+LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction &lf,
                                              int indent) const {
   CHECK(!lf.empty());
   CHECK_GE(indent, 0);
@@ -270,7 +270,7 @@ LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
 }
 
 LayoutFunction LayoutFunctionFactory::Juxtaposition(
-    const LayoutFunction& left, const LayoutFunction& right) const {
+    const LayoutFunction &left, const LayoutFunction &right) const {
   CHECK(!left.empty());
   CHECK(!right.empty());
 
@@ -281,7 +281,7 @@ LayoutFunction LayoutFunctionFactory::Juxtaposition(
     // Do not crash, fallback to stack layout. Set huge penalty to let the
     // layout be dropped in Choice() operator if it ends up in one.
     auto result = Stack({left, right});
-    for (auto& segment : result) segment.intercept += 2e6;
+    for (auto &segment : result) segment.intercept += 2e6;
     return result;
   }
 
@@ -304,8 +304,8 @@ LayoutFunction LayoutFunctionFactory::Juxtaposition(
         segment_l->gradient + segment_r->gradient -
         (columns_over_limit >= 0 ? style_.over_column_limit_penalty : 0);
 
-    const auto& layout_l = segment_l->layout;
-    const auto& layout_r = segment_r->layout;
+    const auto &layout_l = segment_l->layout;
+    const auto &layout_r = segment_r->layout;
     auto new_layout = LayoutTree(LayoutItem(LayoutType::kJuxtaposition,
                                             layout_l.Value().SpacesBefore(),
                                             layout_l.Value().MustWrap()));
@@ -351,7 +351,7 @@ LayoutFunction LayoutFunctionFactory::Juxtaposition(
 }
 
 LayoutFunction LayoutFunctionFactory::Stack(
-    absl::FixedArray<LayoutFunction::const_iterator>* segments) const {
+    absl::FixedArray<LayoutFunction::const_iterator> *segments) const {
   CHECK(!segments->empty());
 
   LayoutFunction result;
@@ -364,12 +364,12 @@ LayoutFunction LayoutFunctionFactory::Stack(
   int current_column = 0;
   do {
     // Point iterators to segments under current column.
-    for (auto& segment_it : *segments) {
+    for (auto &segment_it : *segments) {
       segment_it.MoveToKnotAtOrToTheLeftOf(current_column);
     }
 
     // Use first line's spacing for new layouts.
-    const auto& first_layout_item = segments->front()->layout.Value();
+    const auto &first_layout_item = segments->front()->layout.Value();
     const auto spaces_before = first_layout_item.SpacesBefore();
     const auto break_decision = first_layout_item.MustWrap();
     // Use last line's span for new layouts. Other lines won't be modified by
@@ -382,7 +382,7 @@ LayoutFunction LayoutFunctionFactory::Stack(
             LayoutItem(LayoutType::kStack, spaces_before, break_decision)),
         span, line_breaks_penalty, 0};
 
-    for (const auto& segment_it : *segments) {
+    for (const auto &segment_it : *segments) {
       new_segment.intercept += segment_it->CostAt(current_column);
       new_segment.gradient += segment_it->gradient;
       AdoptLayoutAndFlattenIfSameType(segment_it->layout, &new_segment.layout);
@@ -406,7 +406,7 @@ LayoutFunction LayoutFunctionFactory::Stack(
 }
 
 LayoutFunction LayoutFunctionFactory::Choice(
-    absl::FixedArray<LayoutFunction::const_iterator>* segments) {
+    absl::FixedArray<LayoutFunction::const_iterator> *segments) {
   CHECK(!segments->empty());
 
   LayoutFunction result;
@@ -423,7 +423,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
     // Starting column of the next closest segment.
     int next_knot = kInfinity;
 
-    for (auto& segment_it : *segments) {
+    for (auto &segment_it : *segments) {
       segment_it.MoveToKnotAtOrToTheLeftOf(current_column);
 
       const int column =
@@ -434,7 +434,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
     do {
       const LayoutFunction::const_iterator min_cost_segment = *std::min_element(
           segments->begin(), segments->end(),
-          [current_column](const auto& a, const auto& b) {
+          [current_column](const auto &a, const auto &b) {
             if (a->CostAt(current_column) != b->CostAt(current_column)) {
               return (a->CostAt(current_column) < b->CostAt(current_column));
             }
@@ -453,7 +453,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
 
       // Find closest crossover point located before next knot.
       int next_column = next_knot;
-      for (const auto& segment : *segments) {
+      for (const auto &segment : *segments) {
         if (segment->gradient >= min_cost_segment->gradient) continue;
         float gamma = (segment->CostAt(current_column) -
                        min_cost_segment->CostAt(current_column)) /
@@ -472,7 +472,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
 }
 
 void TokenPartitionsLayoutOptimizer::Optimize(int indentation,
-                                              TokenPartitionTree* node) const {
+                                              TokenPartitionTree *node) const {
   CHECK_NOTNULL(node);
   CHECK_GE(indentation, 0);
 
@@ -491,7 +491,7 @@ void TokenPartitionsLayoutOptimizer::Optimize(int indentation,
 }
 
 LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
-    const TokenPartitionTree& node) const {
+    const TokenPartitionTree &node) const {
   if (is_leaf(node)) {
     // Wrapping complexity is n*(n+1)/2.
     constexpr int kWrapTokensLimit = 25;
@@ -516,7 +516,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
     case PartitionPolicyEnum::kJuxtapositionOrIndentedStack: {
       std::transform(node.Children().begin(), node.Children().end(),
-                     layouts.begin(), [this](const TokenPartitionTree& n) {
+                     layouts.begin(), [this](const TokenPartitionTree &n) {
                        return this->CalculateOptimalLayout(n);
                      });
       break;
@@ -528,7 +528,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       const int indentation = node.Value().IndentationSpaces();
       std::transform(
           node.Children().begin(), node.Children().end(), layouts.begin(),
-          [this, &node, indentation](const TokenPartitionTree& n) {
+          [this, &node, indentation](const TokenPartitionTree &n) {
             const int relative_indentation =
                 n.Value().IndentationSpaces() - indentation;
             if (relative_indentation < 0) {
@@ -566,7 +566,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kWrap: {
       if (VLOG_IS_ON(0) && node.Children().size() > 2) {
         const int indentation = node.Children()[1].Value().IndentationSpaces();
-        for (const auto& child : iterator_range(node.Children().begin() + 2,
+        for (const auto &child : iterator_range(node.Children().begin() + 2,
                                                 node.Children().end())) {
           if (child.Value().IndentationSpaces() != indentation) {
             VLOG(1) << "Indentations of subpartitions from the second to the "
@@ -594,7 +594,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       LayoutFunction juxtaposition;
       const bool juxtaposition_allowed =
           !std::any_of(layouts.begin() + 1, layouts.end(),
-                       [](const LayoutFunction& lf) { return lf.MustWrap(); });
+                       [](const LayoutFunction &lf) { return lf.MustWrap(); });
       if (juxtaposition_allowed) {
         juxtaposition = factory_.Juxtaposition(layouts.begin(), layouts.end());
       }
@@ -627,7 +627,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       // policy. Pack them horizontally.
       const bool all_children_are_inlines =
           std::all_of(node.Children().begin(), node.Children().end(),
-                      [](const TokenPartitionTree& child) {
+                      [](const TokenPartitionTree &child) {
                         return child.Value().PartitionPolicy() ==
                                PartitionPolicyEnum::kInline;
                       });
@@ -669,8 +669,8 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
   return factory_.Stack(layouts.begin(), layouts.end());
 }
 
-void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
-  const auto& layout = layout_tree.Value();
+void TreeReconstructor::TraverseTree(const LayoutTree &layout_tree) {
+  const auto &layout = layout_tree.Value();
   const auto relative_indentation = layout.IndentationSpaces();
   const ValueSaver<int> indent_saver(
       &current_indentation_spaces_,
@@ -698,7 +698,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
 
         current_node_->Value().SpanUpToToken(tokens.end());
 
-        auto& slices = current_node_->Children();
+        auto &slices = current_node_->Children();
         // TODO(mglb): add support for break_decision == Preserve
         if (layout.SpacesBefore() == tokens.front().before.spaces_required) {
           // No need for separate inline partition
@@ -727,7 +727,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
 
     case LayoutType::kJuxtaposition: {
       // Append all children
-      for (const auto& child : layout_tree.Children()) {
+      for (const auto &child : layout_tree.Children()) {
         TraverseTree(child);
       }
       return;
@@ -755,7 +755,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
       // Put remaining children in their own (indented) lines
       const ValueSaver<int> indent_saver(&current_indentation_spaces_,
                                          indentation);
-      for (const auto& child : make_range(layout_tree.Children().begin() + 1,
+      for (const auto &child : make_range(layout_tree.Children().begin() + 1,
                                           layout_tree.Children().end())) {
         current_node_ = nullptr;
         TraverseTree(child);
@@ -766,15 +766,15 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
 }
 
 void TreeReconstructor::ReplaceTokenPartitionTreeNode(
-    TokenPartitionTree* node) {
+    TokenPartitionTree *node) {
   CHECK_NOTNULL(node);
   CHECK(!tree_.Children().empty());
 
   if (tree_.Children().size() == 1) {
     *node = std::move(tree_.Children().front());
   } else {
-    const auto& first_line = tree_.Children().front().Value();
-    const auto& last_line = tree_.Children().back().Value();
+    const auto &first_line = tree_.Children().front().Value();
+    const auto &last_line = tree_.Children().back().Value();
 
     node->Value() = UnwrappedLine(current_indentation_spaces_,
                                   first_line.TokensRange().begin(),

@@ -40,7 +40,7 @@ namespace verilog {
 
 using ParserTestData = verible::TokenInfoTestData;
 
-using ParserTestCaseArray = std::initializer_list<const char*>;
+using ParserTestCaseArray = std::initializer_list<const char *>;
 
 static constexpr VerilogPreprocess::Config kDefaultPreprocess;
 
@@ -6243,17 +6243,17 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
 namespace {
 
 // Tests that valid code is accepted.
-static void TestVerilogParser(const ParserTestCaseArray& data) {
+static void TestVerilogParser(const ParserTestCaseArray &data) {
   int i = 0;
-  for (const auto& code : data) {
+  for (const auto &code : data) {
     verible::TestParserAcceptValid<VerilogAnalyzer>(code, i);
     ++i;
   }
 }
 
-static void TestVerilogLibraryParser(const ParserTestCaseArray& data) {
+static void TestVerilogLibraryParser(const ParserTestCaseArray &data) {
   int i = 0;
-  for (const auto& code : data) {
+  for (const auto &code : data) {
     VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
     // TODO(fangism): refactor TestParserAcceptValid to accept a lambda
     const auto analyzer =
@@ -6261,7 +6261,7 @@ static void TestVerilogLibraryParser(const ParserTestCaseArray& data) {
     const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->ParseStatus();
     if (!status.ok()) {
       // Print more detailed error message.
-      const auto& rejected_tokens = analyzer->GetRejectedTokens();
+      const auto &rejected_tokens = analyzer->GetRejectedTokens();
       if (!rejected_tokens.empty()) {
         EXPECT_TRUE(status.ok())
             << "Rejected valid code:\n"
@@ -6280,7 +6280,7 @@ static void TestVerilogLibraryParser(const ParserTestCaseArray& data) {
 static void TestVerilogParserReject(
     std::initializer_list<ParserTestData> data) {
   int i = 0;
-  for (const auto& test_case : data) {
+  for (const auto &test_case : data) {
     verible::TestParserRejectInvalid<VerilogAnalyzer>(test_case, i);
     ++i;
   }
@@ -6290,24 +6290,24 @@ template <int N>
 static void TestVerilogParserErrorRecovery(
     const verible::ErrorRecoveryTestCase (&data)[N]) {
   int i = 0;
-  for (const auto& test : data) {
+  for (const auto &test : data) {
     verible::TestParserErrorRecovered<VerilogAnalyzer>(test, i);
     ++i;
   }
 }
 
-static void TestVerilogParserMatchAll(const ParserTestCaseArray& data) {
+static void TestVerilogParserMatchAll(const ParserTestCaseArray &data) {
   int i = 0;
-  for (const auto& code : data) {
+  for (const auto &code : data) {
     verible::TestParserAllMatched<VerilogAnalyzer>(code, i);
     ++i;
   }
 }
 
-static void TestVerilogLibraryParserMatchAll(const ParserTestCaseArray& data) {
+static void TestVerilogLibraryParserMatchAll(const ParserTestCaseArray &data) {
   using verible::Symbol;
   int i = 0;
-  for (const auto& code : data) {
+  for (const auto &code : data) {
     VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
 
     // TODO(fangism): refactor TestParserAllMatched to accept a lambda
@@ -6318,10 +6318,10 @@ static void TestVerilogLibraryParserMatchAll(const ParserTestCaseArray& data) {
         << status.message()
         << "\nRejected: " << analyzer->GetRejectedTokens().front().token_info;
 
-    const Symbol* tree_ptr = analyzer->SyntaxTree().get();
+    const Symbol *tree_ptr = analyzer->SyntaxTree().get();
     EXPECT_NE(tree_ptr, nullptr) << "Missing syntax tree with input:\n" << code;
     if (tree_ptr == nullptr) return;  // Already failed, abort this test case.
-    const Symbol& root = *tree_ptr;
+    const Symbol &root = *tree_ptr;
 
     verible::ParserVerifier verifier(root,
                                      analyzer->Data().GetTokenStreamView());
@@ -6424,12 +6424,12 @@ TEST(VerilogParserTest, TokenizeTerimnatesEOFRange) {
     VerilogAnalyzer analyzer(code, "<<inline-text>>");
     auto status = analyzer.Tokenize();
     EXPECT_TRUE(status.ok());
-    const auto& tokens = analyzer.Data().TokenStream();
+    const auto &tokens = analyzer.Data().TokenStream();
     ASSERT_FALSE(tokens.empty());
-    const auto& eof_token = tokens.back();
+    const auto &eof_token = tokens.back();
     EXPECT_EQ(eof_token.token_enum(), verible::TK_EOF);
     const auto eof_text = eof_token.text();
-    const auto& contents = analyzer.Data().Contents();
+    const auto &contents = analyzer.Data().Contents();
     EXPECT_EQ(eof_text.begin(), contents.end());
     EXPECT_EQ(eof_text.end(), contents.end());
   }

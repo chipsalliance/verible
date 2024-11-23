@@ -44,7 +44,7 @@ VERILOG_REGISTER_LINT_RULE(ConstraintNameStyleRule);
 static constexpr absl::string_view kMessage =
     "Constraint names must by styled with lower_snake_case and end with _c.";
 
-const LintRuleDescriptor& ConstraintNameStyleRule::GetDescriptor() {
+const LintRuleDescriptor &ConstraintNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "constraint-name-style",
       .topic = "constraints",
@@ -55,13 +55,13 @@ const LintRuleDescriptor& ConstraintNameStyleRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& ConstraintMatcher() {
+static const Matcher &ConstraintMatcher() {
   static const Matcher matcher(NodekConstraintDeclaration());
   return matcher;
 }
 
-void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
-                                           const SyntaxTreeContext& context) {
+void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
+                                           const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (ConstraintMatcher().Matches(symbol, &manager)) {
     // Since an out-of-line definition is always followed by a forward
@@ -72,7 +72,7 @@ void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
       return;
     }
 
-    const auto* identifier_token =
+    const auto *identifier_token =
         GetSymbolIdentifierFromConstraintDeclaration(symbol);
     if (!identifier_token) return;
 

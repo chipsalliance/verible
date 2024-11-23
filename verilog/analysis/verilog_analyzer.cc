@@ -64,8 +64,8 @@ absl::Status VerilogAnalyzer::Tokenize() {
 }
 
 absl::string_view VerilogAnalyzer::ScanParsingModeDirective(
-    const TokenSequence& raw_tokens) {
-  for (const auto& token : raw_tokens) {
+    const TokenSequence &raw_tokens) {
+  for (const auto &token : raw_tokens) {
     const auto vtoken_enum = verilog_tokentype(token.token_enum());
     if (IsComment(vtoken_enum)) {
       const absl::string_view comment_text =
@@ -127,8 +127,8 @@ static absl::string_view FailingTokenKeywordToParsingMode(
 }
 
 std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
-    const std::shared_ptr<verible::MemBlock>& text, absl::string_view name,
-    const VerilogPreprocess::Config& preprocess_config) {
+    const std::shared_ptr<verible::MemBlock> &text, absl::string_view name,
+    const VerilogPreprocess::Config &preprocess_config) {
   VLOG(2) << __FUNCTION__;
   auto analyzer =
       std::make_unique<VerilogAnalyzer>(text, name, preprocess_config);
@@ -158,9 +158,9 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
     // If there was a syntax error, look at the first rejected token
     // and try to infer whether or not to attempt to re-parse using
     // a different mode.
-    const auto& rejected_tokens = analyzer->GetRejectedTokens();
+    const auto &rejected_tokens = analyzer->GetRejectedTokens();
     if (!rejected_tokens.empty()) {
-      const auto& first_reject = rejected_tokens.front();
+      const auto &first_reject = rejected_tokens.front();
       const absl::string_view retry_parse_mode =
           FailingTokenKeywordToParsingMode(
               verilog_tokentype(first_reject.token_info.token_enum()));
@@ -178,10 +178,10 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
         }
         // Compare the location of first errors, and return the analyzer that
         // got farther before encountering the first error.
-        const auto& retry_rejected_tokens = retry_analyzer->GetRejectedTokens();
+        const auto &retry_rejected_tokens = retry_analyzer->GetRejectedTokens();
         if (!retry_rejected_tokens.empty()) {
           VLOG(1) << "Retrying parsing found at least one error.";
-          const auto& first_retry_reject = retry_rejected_tokens.front();
+          const auto &first_retry_reject = retry_rejected_tokens.front();
           const int retry_error_offset = first_retry_reject.token_info.left(
               retry_analyzer->Data().Contents());
           // When comparing failure location, compensate position for prolog.
@@ -203,7 +203,7 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
 
 std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
     absl::string_view text, absl::string_view name,
-    const VerilogPreprocess::Config& preprocess_config) {
+    const VerilogPreprocess::Config &preprocess_config) {
   return AnalyzeAutomaticMode(std::make_shared<verible::StringMemBlock>(text),
                               name, preprocess_config);
 }
@@ -259,7 +259,7 @@ absl::Status VerilogAnalyzer::Analyze() {
     VerilogPreprocess preprocessor(preprocess_config_);
     preprocessor_data_ = preprocessor.ScanStream(Data().GetTokenStreamView());
     if (!preprocessor_data_.errors.empty()) {
-      for (const auto& error : preprocessor_data_.errors) {
+      for (const auto &error : preprocessor_data_.errors) {
         rejected_tokens_.push_back(verible::RejectedToken{
             error.token_info, verible::AnalysisPhase::kPreprocessPhase,
             error.error_message});
@@ -268,7 +268,7 @@ absl::Status VerilogAnalyzer::Analyze() {
       return parse_status_;
     }
 
-    for (const auto& warning : preprocessor_data_.warnings) {
+    for (const auto &warning : preprocessor_data_.warnings) {
       const verible::RejectedToken warn_token{
           warning.token_info, verible::AnalysisPhase::kPreprocessPhase,
           warning.error_message, verible::ErrorSeverity::kWarning};
@@ -313,15 +313,15 @@ using verible::TokenInfo;
 class MacroCallArgExpander : public MutableTreeVisitorRecursive {
  public:
   MacroCallArgExpander(absl::string_view outer_filename, absl::string_view text,
-                       const VerilogPreprocess::Config& pre_config)
+                       const VerilogPreprocess::Config &pre_config)
       : outer_filename_(outer_filename),
         full_text_(text),
         preprocess_config_(pre_config) {}
 
-  void Visit(const SyntaxTreeNode&, SymbolPtr*) final {}
+  void Visit(const SyntaxTreeNode &, SymbolPtr *) final {}
 
-  void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr* leaf_owner) final {
-    const TokenInfo& token(leaf.get());
+  void Visit(const SyntaxTreeLeaf &leaf, SymbolPtr *leaf_owner) final {
+    const TokenInfo &token(leaf.get());
     if (token.token_enum() == MacroArg) {
       VLOG(3) << "MacroCallArgExpander: examining token: " << token;
       // Attempt to parse text as an expression.
@@ -345,14 +345,14 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
       if (ABSL_DIE_IF_NULL(expr_analyzer)->LexStatus().ok() &&
           expr_analyzer->ParseStatus().ok()) {
         VLOG(3) << "  ... content is parse-able, saving for expansion.";
-        const auto& token_sequence = expr_analyzer->Data().TokenStream();
+        const auto &token_sequence = expr_analyzer->Data().TokenStream();
         const verible::TokenInfo::Context token_context{
-            expr_analyzer->Data().Contents(), [](std::ostream& stream, int e) {
+            expr_analyzer->Data().Contents(), [](std::ostream &stream, int e) {
               stream << verilog_symbol_name(e);
             }};
         if (VLOG_IS_ON(4)) {
           LOG(INFO) << "macro call-arg's lexed tokens: ";
-          for (const auto& t : token_sequence) {
+          for (const auto &t : token_sequence) {
             LOG(INFO) << verible::TokenWithContext{t, token_context};
           }
         }
@@ -361,7 +361,7 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
         // Defer in-place expansion until all expansions have been collected
         // (for efficiency, avoiding inserting into middle of a vector,
         // and causing excessive reallocation).
-        TextStructureView::DeferredExpansion& analysis_slot =
+        TextStructureView::DeferredExpansion &analysis_slot =
             InsertKeyOrDie(&subtrees_to_splice_, token.left(full_text_));
         CHECK(analysis_slot.subanalysis.get() == nullptr)
             << "Cannot expand the same location twice.  Token: " << token;
@@ -374,12 +374,12 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
     }
   }
 
-  MacroCallArgExpander(const MacroCallArgExpander&) = delete;
-  MacroCallArgExpander(MacroCallArgExpander&&) = delete;
-  MacroCallArgExpander& operator=(const MacroCallArgExpander&) = delete;
+  MacroCallArgExpander(const MacroCallArgExpander &) = delete;
+  MacroCallArgExpander(MacroCallArgExpander &&) = delete;
+  MacroCallArgExpander &operator=(const MacroCallArgExpander &) = delete;
 
   // Process accumulated DeferredExpansions.
-  void ExpandSubtrees(VerilogAnalyzer* analyzer) {
+  void ExpandSubtrees(VerilogAnalyzer *analyzer) {
     if (!subtrees_to_splice_.empty()) {
       analyzer->MutableData().ExpandSubtrees(&subtrees_to_splice_);
     }
@@ -396,7 +396,7 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
 
   // Full text from which tokens were lexed, for calculating byte offsets.
   const absl::string_view full_text_;
-  const VerilogPreprocess::Config& preprocess_config_;
+  const VerilogPreprocess::Config &preprocess_config_;
 };
 
 }  // namespace

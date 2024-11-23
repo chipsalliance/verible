@@ -47,10 +47,10 @@ using verible::TokenStreamView;
 using verible::container::FindOrNull;
 using verible::container::InsertOrUpdate;
 
-VerilogPreprocess::VerilogPreprocess(const Config& config)
+VerilogPreprocess::VerilogPreprocess(const Config &config)
     : VerilogPreprocess(config, nullptr) {}
 
-VerilogPreprocess::VerilogPreprocess(const Config& config, FileOpener opener)
+VerilogPreprocess::VerilogPreprocess(const Config &config, FileOpener opener)
     : config_(config), file_opener_(std::move(opener)) {
   // To avoid having to check at every place if the stack is empty, we always
   // place a toplevel 'conditional' that is always selected.
@@ -61,7 +61,7 @@ VerilogPreprocess::VerilogPreprocess(const Config& config, FileOpener opener)
 }
 
 TokenStreamView::const_iterator VerilogPreprocess::GenerateBypassWhiteSpaces(
-    const StreamIteratorGenerator& generator) {
+    const StreamIteratorGenerator &generator) {
   auto iterator =
       generator();  // iterator should be pointing to a non-whitespace token;
   while (verilog::VerilogLexer::KeepSyntaxTreeTokens(**iterator) == 0) {
@@ -71,7 +71,7 @@ TokenStreamView::const_iterator VerilogPreprocess::GenerateBypassWhiteSpaces(
 }
 
 absl::StatusOr<TokenStreamView::const_iterator>
-VerilogPreprocess::ExtractMacroName(const StreamIteratorGenerator& generator) {
+VerilogPreprocess::ExtractMacroName(const StreamIteratorGenerator &generator) {
   // Next token to expect is macro definition name.
   TokenStreamView::const_iterator token_iter =
       GenerateBypassWhiteSpaces(generator);
@@ -80,7 +80,7 @@ VerilogPreprocess::ExtractMacroName(const StreamIteratorGenerator& generator) {
         **token_iter, "unexpected EOF where expecting macro name");
     return absl::InvalidArgumentError("Unexpected EOF");
   }
-  const auto& macro_name = *token_iter;
+  const auto &macro_name = *token_iter;
   if (macro_name->token_enum() != PP_Identifier) {
     preprocess_data_.errors.emplace_back(
         **token_iter,
@@ -95,7 +95,7 @@ VerilogPreprocess::ExtractMacroName(const StreamIteratorGenerator& generator) {
 // Assumes that the last token of a definition is the un-lexed definition body.
 // Tokens are copied from the 'generator' into 'define_tokens'.
 absl::Status VerilogPreprocess::ConsumeMacroDefinition(
-    const StreamIteratorGenerator& generator, TokenStreamView* define_tokens) {
+    const StreamIteratorGenerator &generator, TokenStreamView *define_tokens) {
   auto macro_name_extract = ExtractMacroName(generator);
   if (!macro_name_extract.ok()) {
     return macro_name_extract.status();
@@ -125,9 +125,9 @@ absl::Status VerilogPreprocess::ConsumeMacroDefinition(
 // Interprets a single macro definition parameter.
 // Tokens are scanned by advancing the token_scan iterator (by-reference).
 std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroParameter(
-    TokenStreamView::const_iterator* token_scan,
-    MacroParameterInfo* macro_parameter) {
-  auto advance = [](TokenStreamView::const_iterator* scan) { return *++*scan; };
+    TokenStreamView::const_iterator *token_scan,
+    MacroParameterInfo *macro_parameter) {
+  auto advance = [](TokenStreamView::const_iterator *scan) { return *++*scan; };
   auto token_iter = **token_scan;
   // Extract macro name.
   if (token_iter->token_enum() != PP_Identifier) {
@@ -186,7 +186,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroParameter(
 // The span of tokens that covers a macro definition is expected to
 // be in define_tokens.
 std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
-    const TokenStreamView& define_tokens, MacroDefinition* macro_definition) {
+    const TokenStreamView &define_tokens, MacroDefinition *macro_definition) {
   auto token_scan = define_tokens.begin() + 2;  // skip `define and the name
   auto token_iter = *token_scan;
   if (token_iter->token_enum() == '(') {
@@ -224,8 +224,8 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
 // Parses a callable macro actual parameters, and saves it into a MacroCall
 absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
     TokenStreamView::const_iterator iter,
-    const StreamIteratorGenerator& generator, verible::MacroCall* macro_call,
-    const verible::MacroDefinition& macro_definition) {
+    const StreamIteratorGenerator &generator, verible::MacroCall *macro_call,
+    const verible::MacroDefinition &macro_definition) {
   // Parsing the macro .
   const absl::string_view macro_name_str = (*iter)->text().substr(1);
   verible::TokenInfo macro_name_token(MacroCallId, macro_name_str);
@@ -283,13 +283,13 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
     const TokenStreamView::const_iterator
         iter  // points to `MACROIDENTIFIER token
     ,
-    const StreamIteratorGenerator& generator, bool forward = true) {
+    const StreamIteratorGenerator &generator, bool forward = true) {
   // Note: since this function is called we know that config_.expand_macros is
   // true.
 
   // Finding the macro definition.
   const absl::string_view sv = (*iter)->text();
-  const auto* found =
+  const auto *found =
       FindOrNull(preprocess_data_.macro_definitions, sv.substr(1));
   if (!found) {
     preprocess_data_.errors.emplace_back(
@@ -305,7 +305,7 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
         ConsumeAndParseMacroCall(iter, generator, &macro_call, *found));
     RETURN_IF_ERROR(ExpandMacro(macro_call, found));
   }
-  auto& lexed = preprocess_data_.lexed_macros_backup.back();
+  auto &lexed = preprocess_data_.lexed_macros_backup.back();
   if (!forward) return absl::OkStatus();
   auto iter_generator = verible::MakeConstIteratorStreamer(lexed);
   const auto it_end = lexed.end();
@@ -317,7 +317,7 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
 
 // Stores a macro definition for later use.
 void VerilogPreprocess::RegisterMacroDefinition(
-    const MacroDefinition& definition) {
+    const MacroDefinition &definition) {
   // For now, unconditionally register the macro definition, keeping the last
   // definition if macro is re-defined.
   const bool inserted = InsertOrUpdate(&preprocess_data_.macro_definitions,
@@ -333,7 +333,7 @@ void VerilogPreprocess::RegisterMacroDefinition(
 // preprocess_data_.lexed_macros_backup Can be accessed directly after expansion
 // as: preprocess_data_.lexed_macros_backup.back()
 absl::Status VerilogPreprocess::ExpandText(
-    const absl::string_view& definition_text) {
+    const absl::string_view &definition_text) {
   VerilogLexer lexer(definition_text);
   verible::TokenSequence lexed_sequence;
   verible::TokenSequence expanded_lexed_sequence;
@@ -351,7 +351,7 @@ absl::Status VerilogPreprocess::ExpandText(
 
   // Token-pulling loop.
   for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
-    auto& last_token = **iter;
+    auto &last_token = **iter;
     // TODO: handle lexical error
     if (lexer.GetLastToken().token_enum() == TK_SPACE) {
       continue;  // don't forward spaces
@@ -365,8 +365,8 @@ absl::Status VerilogPreprocess::ExpandText(
         last_token.token_enum() == MacroCallId) {
       RETURN_IF_ERROR(HandleMacroIdentifier(iter, iter_generator, false));
       // merge the expanded macro tokens into 'expanded_lexed_sequence'
-      auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
-      for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
+      auto &expanded_child = preprocess_data_.lexed_macros_backup.back();
+      for (auto &u : expanded_child) expanded_lexed_sequence.push_back(u);
       continue;
     }
     expanded_lexed_sequence.push_back(last_token);
@@ -378,9 +378,9 @@ absl::Status VerilogPreprocess::ExpandText(
 // This method expands a callable macro call, that follows this form:
 // `MACRO([param1],[param2],...)
 absl::Status VerilogPreprocess::ExpandMacro(
-    const verible::MacroCall& macro_call,
-    const verible::MacroDefinition* macro_definition) {
-  const auto& actual_parameters = macro_call.positional_arguments;
+    const verible::MacroCall &macro_call,
+    const verible::MacroDefinition *macro_definition) {
+  const auto &actual_parameters = macro_call.positional_arguments;
 
   std::map<absl::string_view, verible::DefaultTokenInfo> subs_map;
   if (macro_definition->IsCallable()) {
@@ -406,7 +406,7 @@ absl::Status VerilogPreprocess::ExpandMacro(
   // Token-pulling loop.
   for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
     // TODO: handle lexical error
-    auto& last_token = **iter;
+    auto &last_token = **iter;
     if (last_token.token_enum() == TK_SPACE) continue;  // don't forward spaces
     // If the expanded token is another macro identifier that needs to be
     // expanded.
@@ -417,18 +417,18 @@ absl::Status VerilogPreprocess::ExpandMacro(
         last_token.token_enum() == MacroCallId) {
       RETURN_IF_ERROR(HandleMacroIdentifier(iter, iter_generator, false));
       // merge the expanded macro tokens into 'expanded_lexed_sequence'
-      auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
-      for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
+      auto &expanded_child = preprocess_data_.lexed_macros_backup.back();
+      for (auto &u : expanded_child) expanded_lexed_sequence.push_back(u);
       continue;
     }
     if (macro_definition->IsCallable()) {
       // Check if the last token is a formal parameter
-      const auto* replacement = FindOrNull(subs_map, last_token.text());
+      const auto *replacement = FindOrNull(subs_map, last_token.text());
       if (replacement) {
         RETURN_IF_ERROR(ExpandText(replacement->text()));
         // merge the expanded macro tokens into 'expanded_lexed_sequence'
-        auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
-        for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
+        auto &expanded_child = preprocess_data_.lexed_macros_backup.back();
+        for (auto &u : expanded_child) expanded_lexed_sequence.push_back(u);
         continue;
       }
     }
@@ -442,7 +442,7 @@ absl::Status VerilogPreprocess::ExpandMacro(
 // for use within the same file.
 absl::Status VerilogPreprocess::HandleDefine(
     const TokenStreamView::const_iterator iter,  // points to `define token
-    const StreamIteratorGenerator& generator) {
+    const StreamIteratorGenerator &generator) {
   TokenStreamView define_tokens;
   define_tokens.push_back(*iter);
   RETURN_IF_ERROR(ConsumeMacroDefinition(generator, &define_tokens));
@@ -465,7 +465,7 @@ absl::Status VerilogPreprocess::HandleDefine(
     RegisterMacroDefinition(macro_definition);
 
     // For now, forward all definition tokens.
-    for (const auto& token : define_tokens) {
+    for (const auto &token : define_tokens) {
       preprocess_data_.preprocessed_token_stream.push_back(token);
     }
   }
@@ -475,12 +475,12 @@ absl::Status VerilogPreprocess::HandleDefine(
 
 absl::Status VerilogPreprocess::HandleUndef(
     TokenStreamView::const_iterator undef_it,
-    const StreamIteratorGenerator& generator) {
+    const StreamIteratorGenerator &generator) {
   auto macro_name_extract = ExtractMacroName(generator);
   if (!macro_name_extract.ok()) {
     return macro_name_extract.status();
   }
-  const auto& macro_name = *macro_name_extract.value();
+  const auto &macro_name = *macro_name_extract.value();
   preprocess_data_.macro_definitions.erase(macro_name->text());
 
   // For now, forward all `undef tokens.
@@ -493,7 +493,7 @@ absl::Status VerilogPreprocess::HandleUndef(
 
 absl::Status VerilogPreprocess::HandleIf(
     const TokenStreamView::const_iterator ifpos,  // `ifdef, `ifndef, `elseif
-    const StreamIteratorGenerator& generator) {
+    const StreamIteratorGenerator &generator) {
   if (!config_.filter_branches) {  // nothing to do.
     preprocess_data_.preprocessed_token_stream.push_back(*ifpos);
     return absl::OkStatus();
@@ -503,9 +503,9 @@ absl::Status VerilogPreprocess::HandleIf(
   if (!macro_name_extract.ok()) {
     return macro_name_extract.status();
   }
-  const auto& macro_name = *macro_name_extract.value();
+  const auto &macro_name = *macro_name_extract.value();
   const bool negative_if = (*ifpos)->token_enum() == PP_ifndef;
-  const auto& defs = preprocess_data_.macro_definitions;
+  const auto &defs = preprocess_data_.macro_definitions;
   const bool name_is_defined = defs.find(macro_name->text()) != defs.end();
   const bool condition_met = (name_is_defined ^ negative_if);
 
@@ -580,7 +580,7 @@ absl::Status VerilogPreprocess::HandleEndif(
 
 absl::Status VerilogPreprocess::HandleInclude(
     TokenStreamView::const_iterator iter,
-    const StreamIteratorGenerator& generator) {
+    const StreamIteratorGenerator &generator) {
   if (!file_opener_) {
     return absl::FailedPreconditionError("file_opener_ is not defined");
   }
@@ -597,7 +597,7 @@ absl::Status VerilogPreprocess::HandleInclude(
     return absl::InvalidArgumentError("Expected a path to a SV file.");
   }
   // Currently the file path looks like "path", we need to remove "" or <>
-  const auto& token_text = file_token_iter->text();
+  const auto &token_text = file_token_iter->text();
 
   std::filesystem::path file_path =
       std::string(token_text.substr(1, token_text.size() - 2));
@@ -622,11 +622,11 @@ absl::Status VerilogPreprocess::HandleInclude(
   // TODO(karimtera): limit number of nested includes, detect cycles? maybe.
   preprocess_data_.included_text_structure.emplace_back(
       new verible::TextStructure(source_contents));
-  verible::TextStructure& included_structure =
+  verible::TextStructure &included_structure =
       *preprocess_data_.included_text_structure.back();
 
   // "included_sequence" should contain the lexed token sequence.
-  verible::TokenSequence& included_sequence =
+  verible::TokenSequence &included_sequence =
       included_structure.MutableData().MutableTokenStream();
 
   // Lexing the included file content, and storing it in "included_sequence".
@@ -653,12 +653,12 @@ absl::Status VerilogPreprocess::HandleInclude(
 
   // Need to move the text structures of the child preprocessor to avoid
   // destruction.
-  for (auto& u : child_preprocessed_data.included_text_structure) {
+  for (auto &u : child_preprocessed_data.included_text_structure) {
     preprocess_data_.included_text_structure.push_back(std::move(u));
   }
 
   // Forwarding the included preprocessed view.
-  for (const auto& u : child_preprocessed_data.preprocessed_token_stream) {
+  for (const auto &u : child_preprocessed_data.preprocessed_token_stream) {
     preprocess_data_.preprocessed_token_stream.push_back(u);
   }
 
@@ -669,7 +669,7 @@ absl::Status VerilogPreprocess::HandleInclude(
 // object and possibly transform the input token stream.
 absl::Status VerilogPreprocess::HandleTokenIterator(
     TokenStreamView::const_iterator iter,
-    const StreamIteratorGenerator& generator) {
+    const StreamIteratorGenerator &generator) {
   switch ((*iter)->token_enum()) {
     case PP_define:
       return HandleDefine(iter, generator);
@@ -706,11 +706,11 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
 }
 
 void VerilogPreprocess::setPreprocessingInfo(
-    const verilog::FileList::PreprocessingInfo& preprocess_info) {
+    const verilog::FileList::PreprocessingInfo &preprocess_info) {
   preprocess_info_ = preprocess_info;
 
   // Adding defines.
-  for (const auto& define : preprocess_info_.defines) {
+  for (const auto &define : preprocess_info_.defines) {
     // manually create the tokens to save them into a MacroDefinition.
     verible::TokenInfo macro_directive(PP_define, "`define");
     verible::TokenInfo macro_name(PP_Identifier, define.name);
@@ -726,7 +726,7 @@ void VerilogPreprocess::setPreprocessingInfo(
 }
 
 VerilogPreprocessData VerilogPreprocess::ScanStream(
-    const TokenStreamView& token_stream) {
+    const TokenStreamView &token_stream) {
   preprocess_data_.preprocessed_token_stream.reserve(token_stream.size());
   auto iter_generator = verible::MakeConstIteratorStreamer(token_stream);
   const auto end = token_stream.end();

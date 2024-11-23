@@ -150,7 +150,7 @@ TEST(LineLengthRuleTest, AcceptsTextExceptions) {
        "ooooooooooooooooooooooooooooogle_com\n"},
   };
   // Make sure that these lines would normally be flagged by this rule.
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << "TEST: " << test.code;
     EXPECT_TRUE(test.code.length() > LineLengthRule::kDefaultLineLength)
         << "code:\n"

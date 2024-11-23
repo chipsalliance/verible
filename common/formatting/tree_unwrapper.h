@@ -42,22 +42,22 @@ class TreeUnwrapper : public TreeContextVisitor {
   using preformatted_tokens_type = std::vector<verible::PreFormatToken>;
 
  public:
-  explicit TreeUnwrapper(const TextStructureView& view,
-                         const preformatted_tokens_type&);
+  explicit TreeUnwrapper(const TextStructureView &view,
+                         const preformatted_tokens_type &);
 
   // Deleted standard interfaces:
   TreeUnwrapper() = delete;
-  TreeUnwrapper(const TreeUnwrapper&) = delete;
-  TreeUnwrapper(TreeUnwrapper&&) = delete;
-  TreeUnwrapper& operator=(const TreeUnwrapper&) = delete;
-  TreeUnwrapper& operator=(TreeUnwrapper&&) = delete;
+  TreeUnwrapper(const TreeUnwrapper &) = delete;
+  TreeUnwrapper(TreeUnwrapper &&) = delete;
+  TreeUnwrapper &operator=(const TreeUnwrapper &) = delete;
+  TreeUnwrapper &operator=(TreeUnwrapper &&) = delete;
 
   ~TreeUnwrapper() override = default;  // not yet final.
 
   // Partitions the token stream (in text_structure_view_) into
   // unwrapped_lines_ by traversing the syntax tree representation.
   // TODO(fangism): rename this Partition.
-  const TokenPartitionTree* Unwrap();
+  const TokenPartitionTree *Unwrap();
 
   // Returns a flattened copy of all of the deepest nodes in the tree of
   // unwrapped lines, which represents maximal partitioning into the smallest
@@ -71,13 +71,13 @@ class TreeUnwrapper : public TreeContextVisitor {
   virtual void CollectTrailingFilteredTokens() = 0;
 
   // Refers to the UnwrappedLine that is currently being built (const).
-  const UnwrappedLine& CurrentUnwrappedLine() const;
+  const UnwrappedLine &CurrentUnwrappedLine() const;
 
-  const TokenPartitionTree* CurrentTokenPartition() const {
+  const TokenPartitionTree *CurrentTokenPartition() const {
     return active_unwrapped_lines_;
   }
 
-  TokenPartitionTree* CurrentTokenPartition() {
+  TokenPartitionTree *CurrentTokenPartition() {
     return active_unwrapped_lines_;
   }
 
@@ -87,31 +87,31 @@ class TreeUnwrapper : public TreeContextVisitor {
   // Transformation
 
   // Apply a mutating transformation to this class tree, pre-order traversal.
-  void ApplyPreOrder(const std::function<void(TokenPartitionTree&)>& f) {
+  void ApplyPreOrder(const std::function<void(TokenPartitionTree &)> &f) {
     verible::ApplyPreOrder(unwrapped_lines_, f);
   }
 
   // Apply a mutating transformation to this class tree, post-order traversal.
-  void ApplyPostOrder(const std::function<void(TokenPartitionTree&)>& f) {
+  void ApplyPostOrder(const std::function<void(TokenPartitionTree &)> &f) {
     verible::ApplyPostOrder(unwrapped_lines_, f);
   }
 
  protected:
   // Begins a new UnwrappedLine to span a new sub-range of format tokens.
   void StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
-                             const Symbol* origin);
+                             const Symbol *origin);
 
   // Traverses the children of a node in postorder, recursively accepting this
   // visitor.
-  void TraverseChildren(const verible::SyntaxTreeNode& node);
+  void TraverseChildren(const verible::SyntaxTreeNode &node);
 
   // Override-able hook for actions that should be taken while in the
   // context of traversing children.
-  virtual void InterChildNodeHook(const verible::SyntaxTreeNode&) {}
+  virtual void InterChildNodeHook(const verible::SyntaxTreeNode &) {}
 
   // Visits a subtree with (possibly) additional indentation.
   // TODO(fangism): NOW: rename this to VisitSubPartition.
-  void VisitIndentedSection(const verible::SyntaxTreeNode& node,
+  void VisitIndentedSection(const verible::SyntaxTreeNode &node,
                             int indentation_delta, PartitionPolicyEnum);
 
   // Adds a token to CurrentUnwrappedLine() by advancing the end-iterator
@@ -122,7 +122,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   void AddTokenToCurrentUnwrappedLine();
 
   // Refers to the UnwrappedLine that is currently being built (mutable).
-  UnwrappedLine& CurrentUnwrappedLine();
+  UnwrappedLine &CurrentUnwrappedLine();
 
   // Iterator pointing to the most recent position in the preformatted_tokens_
   // array, that is accounted for in the CurrentUnwrappedLine().
@@ -138,7 +138,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   // Skip over uninteresting tokens, those for which the predicate is true.
   // For example, this could be used to skip over spaces, but not newlines.
   void SkipUnfilteredTokens(
-      const std::function<bool(const verible::TokenInfo&)>& predicate);
+      const std::function<bool(const verible::TokenInfo &)> &predicate);
 
   // Returns true of next_unfiltered_tokens_ points to a token that was kept
   // in preformatted_tokens_.
@@ -157,11 +157,11 @@ class TreeUnwrapper : public TreeContextVisitor {
 
  private:
   // Removes subtrees that represent empty token ranges, from the back.
-  static void RemoveTrailingEmptyPartitions(TokenPartitionTree*);
+  static void RemoveTrailingEmptyPartitions(TokenPartitionTree *);
 
   // Maintain invariant that parent range's end is equal to last-child's end.
   static void CloseUnwrappedLineTreeNode(
-      TokenPartitionTree*, preformatted_tokens_type::const_iterator);
+      TokenPartitionTree *, preformatted_tokens_type::const_iterator);
 
   // Finalizes an UnwrappedLine, prior to starting the next one.
   void FinishUnwrappedLine();
@@ -169,7 +169,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   // Returns the last iterator position from visiting a set of children.
   // This automatically restores active_unwrapped_lines_ on return.
   preformatted_tokens_type::const_iterator VisitIndentedChildren(
-      const verible::SyntaxTreeNode& node, int indentation_delta,
+      const verible::SyntaxTreeNode &node, int indentation_delta,
       PartitionPolicyEnum);
 
   // Verifies parent-child token range equivalence in the entire tree of
@@ -182,7 +182,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   // The TextStructureView includes all of the information about the contents
   // of the file, including a syntax tree, raw token stream, and filtered
   // token stream
-  const TextStructureView& text_structure_view_;
+  const TextStructureView &text_structure_view_;
 
   // This is an annotated representation of tokens that require formatting
   // decisions, such as spaces and line breaks.  UnwrappedLines (in
@@ -190,7 +190,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   // (thus, this member should outlive those UnwrappedLines).
   // CurrentFormatTokenIterator() always points to iterators in this
   // container's range.
-  const preformatted_tokens_type& preformatted_tokens_;
+  const preformatted_tokens_type &preformatted_tokens_;
 
   // Iterator pointing into text_structure_view_.TokenStream().
   // This covers non-whitespace tokens like comments and attributes
@@ -220,11 +220,11 @@ class TreeUnwrapper : public TreeContextVisitor {
   // tree traversal.
   // No container is actually needed because popping the stack is a matter
   // of replacing this pointer with its Parent().
-  TokenPartitionTree* active_unwrapped_lines_ = nullptr;
+  TokenPartitionTree *active_unwrapped_lines_ = nullptr;
 };
 
 // Prints all of the unwrapped_lines_.  Used for diagnostics only.
-std::ostream& operator<<(std::ostream&, const TreeUnwrapper&);
+std::ostream &operator<<(std::ostream &, const TreeUnwrapper &);
 
 }  // namespace verible
 

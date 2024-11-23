@@ -27,7 +27,7 @@ namespace verible {
 
 namespace {
 
-bool PartitionsEqual(const UnwrappedLine& left, const UnwrappedLine& right) {
+bool PartitionsEqual(const UnwrappedLine &left, const UnwrappedLine &right) {
   return (left.TokensRange() == right.TokensRange()) &&
          (left.IndentationSpaces() == right.IndentationSpaces()) &&
          (left.PartitionPolicy() == right.PartitionPolicy()) &&
@@ -37,17 +37,17 @@ bool PartitionsEqual(const UnwrappedLine& left, const UnwrappedLine& right) {
 }  // namespace
 
 TokenPartitionTree TokenPartitionTreeBuilder::build(
-    const std::vector<verible::PreFormatToken>& tokens) const {
+    const std::vector<verible::PreFormatToken> &tokens) const {
   TokenPartitionTree node;
 
   node.Children().reserve(children_.size());
-  for (const auto& child : children_) {
+  for (const auto &child : children_) {
     node.Children().push_back(child.build(tokens));
   }
 
   FormatTokenRange node_tokens;
   if (token_indexes_range_.first < 0) {
-    const auto& child_nodes = node.Children();
+    const auto &child_nodes = node.Children();
     CHECK(!child_nodes.empty());
     CHECK_LT(token_indexes_range_.second, 0);
     node_tokens.set_begin(child_nodes.front().Value().TokensRange().begin());
@@ -64,8 +64,8 @@ TokenPartitionTree TokenPartitionTreeBuilder::build(
 }
 
 ::testing::AssertionResult TokenPartitionTreesEqualPredFormat(
-    const char* actual_expr, const char* expected_expr,
-    const TokenPartitionTree& actual, const TokenPartitionTree& expected) {
+    const char *actual_expr, const char *expected_expr,
+    const TokenPartitionTree &actual, const TokenPartitionTree &expected) {
   const auto diff = DeepEqual(actual, expected, PartitionsEqual);
   if (diff.left != nullptr) {
     return ::testing::AssertionFailure()

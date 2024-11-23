@@ -72,12 +72,12 @@ class VectorTree {
   VectorTree() : children_(*this) {}
 
   // Deep copy-constructor.
-  VectorTree(const this_type& other)
+  VectorTree(const this_type &other)
       : node_value_(other.node_value_),
         parent_(other.parent_),
         children_(*this, other.children_) {}
 
-  VectorTree(this_type&& other) noexcept
+  VectorTree(this_type &&other) noexcept
       : node_value_(std::move(other.node_value_)),
         parent_(other.parent_),
         children_(*this, std::move(other.children_)) {}
@@ -91,14 +91,14 @@ class VectorTree {
   //        FooNode({value-initializer}, /* children nodes... */ )
   //   );
   template <typename... Args>
-  explicit VectorTree(const value_type& v, Args&&... args)
+  explicit VectorTree(const value_type &v, Args &&...args)
       : node_value_(v), children_(*this) {
     children_.reserve(sizeof...(args));
     (children_.emplace_back(std::forward<Args>(args)), ...);
   }
 
   template <typename... Args>
-  explicit VectorTree(value_type&& v, Args&&... args)
+  explicit VectorTree(value_type &&v, Args &&...args)
       : node_value_(std::move(v)), children_(*this) {
     children_.reserve(sizeof...(args));
     (children_.emplace_back(std::forward<Args>(args)), ...);
@@ -111,14 +111,14 @@ class VectorTree {
   // This operation is safe when the two nodes share a common ancestor,
   // excluding the case where one node is a direct ancestor of the other.
   // TODO(fangism): Add a proper check for this property, and test.
-  void swap(this_type& other) noexcept {
+  void swap(this_type &other) noexcept {
     std::swap(node_value_, other.node_value_);
     children_.swap(other.children_);  // efficient O(1) vector::swap
                                       // + O(|children|) linking to parent
   }
 
   // Copy value and children, but relink new children to this node.
-  VectorTree& operator=(const this_type& source) {
+  VectorTree &operator=(const this_type &source) {
     if (this == &source) return *this;
     node_value_ = source.node_value_;
     children_ = source.children_;
@@ -127,7 +127,7 @@ class VectorTree {
 
   // Explicit move-assignability needed for vector::erase()
   // No need to change parent links when children keep same parent.
-  VectorTree& operator=(this_type&& source) noexcept {
+  VectorTree &operator=(this_type &&source) noexcept {
     node_value_ = std::move(source.node_value_);
     children_ = std::move(source.children_);
     return *this;
@@ -135,22 +135,22 @@ class VectorTree {
 
   // Accessors
 
-  T& Value() { return node_value_; }
+  T &Value() { return node_value_; }
 
-  const T& Value() const { return node_value_; }
+  const T &Value() const { return node_value_; }
 
-  this_type* Parent() { return parent_; }
+  this_type *Parent() { return parent_; }
 
-  const this_type* Parent() const { return parent_; }
+  const this_type *Parent() const { return parent_; }
 
-  ChildrenList& Children() { return children_; }
+  ChildrenList &Children() { return children_; }
 
-  const ChildrenList& Children() const { return children_; }
+  const ChildrenList &Children() const { return children_; }
 
  private:
   // Returns true if parent-child links are valid in entire tree.
   bool CheckIntegrity() const {
-    for (const auto& child : children_) {
+    for (const auto &child : children_) {
       CHECK_EQ(child.Parent(), this)
           << "Inconsistency: child's parent does not point back to this node!";
       if (!child.CheckIntegrity()) return false;
@@ -185,8 +185,8 @@ class VectorTree {
    protected:
     // ContainerProxy interface
 
-    container_type& underlying_container() { return container_; }
-    const container_type& underlying_container() const { return container_; }
+    container_type &underlying_container() { return container_; }
+    const container_type &underlying_container() const { return container_; }
 
     void ElementsInserted(iterator first, iterator last) {
       LinkChildrenToParent(iterator_range(first, last));
@@ -203,8 +203,8 @@ class VectorTree {
    private:
     // Sets parent pointer of nodes from `children` range to address of `node_`.
     template <class Range>
-    void LinkChildrenToParent(Range&& children) {
-      for (auto& child : children) {
+    void LinkChildrenToParent(Range &&children) {
+      for (auto &child : children) {
         child.parent_ = &node_;
       }
     }
@@ -216,27 +216,27 @@ class VectorTree {
     // Hide constructors and assignments from the world. This object is created
     // and assigned-to only in VectorTree.
 
-    explicit ChildrenList(VectorTree& node) : node_(node) {}
+    explicit ChildrenList(VectorTree &node) : node_(node) {}
 
-    ChildrenList(VectorTree& node, const ChildrenList& other)
+    ChildrenList(VectorTree &node, const ChildrenList &other)
         : node_(node), container_(other.container_) {
       LinkChildrenToParent(container_);
     }
 
-    ChildrenList& operator=(const ChildrenList& other) {
+    ChildrenList &operator=(const ChildrenList &other) {
       container_ = other.container_;
       LinkChildrenToParent(container_);
       return *this;
     }
 
-    ChildrenList(VectorTree& node, ChildrenList&& other) noexcept
+    ChildrenList(VectorTree &node, ChildrenList &&other) noexcept
         : node_(node), container_(std::move(other.container_)) {
       // Note: `other` is not notified about the change because it ends up in
       // undefined state as a result of the move.
       LinkChildrenToParent(container_);
     }
 
-    ChildrenList& operator=(ChildrenList&& other) noexcept {
+    ChildrenList &operator=(ChildrenList &&other) noexcept {
       // Note: `other` is not notified about the change because it ends up in
       // undefined state as a result of the move.
       container_ = std::move(other.container_);
@@ -250,17 +250,17 @@ class VectorTree {
     // https://github.com/chipsalliance/verible/pull/1252#discussion_r825196108
     // Also look at MapTree::KeyValuePair() - `offsetof` is already used there
     // so it could be user here too.
-    VectorTree& node_;
+    VectorTree &node_;
 
     // Actual data container where the nodes are stored.
     subnodes_type container_;
 
    public:  // deleted members need to be public.
     // Construction requires parent node reference.
-    ChildrenList(const ChildrenList&) = delete;
+    ChildrenList(const ChildrenList &) = delete;
 
     // Construction requires parent node reference.
-    ChildrenList(ChildrenList&&) = delete;
+    ChildrenList(ChildrenList &&) = delete;
   };
 
   // Singular value stored at this node.
@@ -270,7 +270,7 @@ class VectorTree {
   // Only the root node of a tree has a nullptr parent_.
   // This value is managed by ChildrenList, constructors, and
   // operator=(). There should be no need to set it manually in other places.
-  this_type* parent_ = nullptr;
+  this_type *parent_ = nullptr;
 
   // Array of nodes/subtrees.
   ChildrenList children_;
@@ -278,7 +278,7 @@ class VectorTree {
 
 // Provide ADL-enabled overload for use by swap implementations.
 template <class T>
-void swap(VectorTree<T>& left, VectorTree<T>& right) noexcept {
+void swap(VectorTree<T> &left, VectorTree<T> &right) noexcept {
   left.swap(right);
 }
 

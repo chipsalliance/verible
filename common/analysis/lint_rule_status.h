@@ -42,13 +42,13 @@ namespace verible {
 // ReplacementEdit differs from editscript's Edit in that it stores a
 // replacement string, so it doesn't need the "after" text to be useful.
 struct ReplacementEdit {
-  ReplacementEdit(absl::string_view fragment, const std::string& replacement)
+  ReplacementEdit(absl::string_view fragment, const std::string &replacement)
       : fragment(fragment), replacement(replacement) {}
 
-  ReplacementEdit(const TokenInfo& token, const std::string& replacement)
+  ReplacementEdit(const TokenInfo &token, const std::string &replacement)
       : fragment(token.text()), replacement(replacement) {}
 
-  bool operator<(const ReplacementEdit& other) const {
+  bool operator<(const ReplacementEdit &other) const {
     // Check that the fragment is located before the other's fragment. When they
     // overlap, `this<other` and `other<this` return false, which makes them
     // equivalent in std::set.
@@ -63,8 +63,8 @@ struct ReplacementEdit {
 class AutoFix {
  public:
   AutoFix() = default;
-  AutoFix(const AutoFix& other) = default;
-  AutoFix(AutoFix&& other) = default;
+  AutoFix(const AutoFix &other) = default;
+  AutoFix(AutoFix &&other) = default;
 
   AutoFix(absl::string_view description,
           std::initializer_list<ReplacementEdit> edits)
@@ -72,16 +72,16 @@ class AutoFix {
     CHECK_EQ(edits_.size(), edits.size()) << "Edits must not overlap.";
   }
 
-  AutoFix(absl::string_view description, const ReplacementEdit& edit)
+  AutoFix(absl::string_view description, const ReplacementEdit &edit)
       : AutoFix(description, {edit}) {}
 
   // Applies the fix on a `base` and returns modified text.
   std::string Apply(absl::string_view base) const;
 
-  bool AddEdits(const std::set<ReplacementEdit>& new_edits);
+  bool AddEdits(const std::set<ReplacementEdit> &new_edits);
 
-  const std::set<ReplacementEdit>& Edits() const { return edits_; }
-  const std::string& Description() const { return description_; }
+  const std::set<ReplacementEdit> &Edits() const { return edits_; }
+  const std::string &Description() const { return description_; }
 
  private:
   std::string description_;
@@ -91,9 +91,9 @@ class AutoFix {
 // LintViolation is a class that represents a single rule violation.
 struct LintViolation {
   // This construct records a token stream lint violation.
-  LintViolation(const TokenInfo& token, absl::string_view reason,
-                const std::vector<AutoFix>& autofixes = {},
-                const std::vector<TokenInfo>& related_tokens = {})
+  LintViolation(const TokenInfo &token, absl::string_view reason,
+                const std::vector<AutoFix> &autofixes = {},
+                const std::vector<TokenInfo> &related_tokens = {})
       : token(token),
         reason(reason),
         context(),
@@ -102,16 +102,16 @@ struct LintViolation {
 
   // This construct records a token stream lint violation.
   // with additional tokens that might be related somehow with vulnerable token
-  LintViolation(const TokenInfo& token, absl::string_view reason,
-                const std::vector<TokenInfo>& tokens)
+  LintViolation(const TokenInfo &token, absl::string_view reason,
+                const std::vector<TokenInfo> &tokens)
       : token(token), reason(reason), context(), related_tokens(tokens) {}
 
   // This construct records a syntax tree lint violation.
   // Use this variation when the violation can be localized to a single token.
-  LintViolation(const TokenInfo& token, absl::string_view reason,
-                const SyntaxTreeContext& context,
-                const std::vector<AutoFix>& autofixes = {},
-                const std::vector<TokenInfo>& related_tokens = {})
+  LintViolation(const TokenInfo &token, absl::string_view reason,
+                const SyntaxTreeContext &context,
+                const std::vector<AutoFix> &autofixes = {},
+                const std::vector<TokenInfo> &related_tokens = {})
       : token(token),
         reason(reason),
         context(context),
@@ -122,15 +122,15 @@ struct LintViolation {
   // Use this variation when the range of violation is a subtree that spans
   // multiple tokens.  The violation will be reported at the location of
   // the left-most leaf of the subtree.
-  LintViolation(const Symbol& root, absl::string_view reason,
-                const SyntaxTreeContext& context,
-                const std::vector<AutoFix>& autofixes = {},
-                const std::vector<TokenInfo>& related_tokens = {});
+  LintViolation(const Symbol &root, absl::string_view reason,
+                const SyntaxTreeContext &context,
+                const std::vector<AutoFix> &autofixes = {},
+                const std::vector<TokenInfo> &related_tokens = {});
 
   // root is a reference into original ConcreteSyntaxTree that
   // linter was run against. LintViolations should not outlive this tree.
   // It should point to the root symbol that the linter failed on.
-  const Symbol* root = nullptr;
+  const Symbol *root = nullptr;
 
   // The token at which the error occurs, which includes location information.
   const TokenInfo token;
@@ -147,7 +147,7 @@ struct LintViolation {
   // Additional tokens that are related somehow to offending token.
   const std::vector<TokenInfo> related_tokens;
 
-  bool operator<(const LintViolation& r) const {
+  bool operator<(const LintViolation &r) const {
     // compares addresses of violations, which correspond to substring
     // locations
     return token.text().data() < r.token.text().data();
@@ -158,27 +158,27 @@ struct LintViolation {
 struct LintRuleStatus {
   LintRuleStatus() = default;
 
-  LintRuleStatus(const std::set<LintViolation>& vs, absl::string_view rule_name,
-                 const std::string& url)
+  LintRuleStatus(const std::set<LintViolation> &vs, absl::string_view rule_name,
+                 const std::string &url)
       : lint_rule_name(rule_name), url(url), violations(vs) {}
 
   // TODO(hzeller): the LintRuleDescriptor is in verilog/analysis namespace,
   // don't want to move that to common in first step. So making this a
   // template for it to be a 'source code compatible' adaption.
   template <typename Descriptor>
-  LintRuleStatus(const std::set<LintViolation>& vs,
-                 const Descriptor& descriptor)
+  LintRuleStatus(const std::set<LintViolation> &vs,
+                 const Descriptor &descriptor)
       : lint_rule_name(descriptor.name),
         url(GetStyleGuideCitation(descriptor.topic)),
         violations(vs) {}
 
-  explicit LintRuleStatus(const std::set<LintViolation>& vs) : violations(vs) {}
+  explicit LintRuleStatus(const std::set<LintViolation> &vs) : violations(vs) {}
 
   bool isOk() const { return violations.empty(); }
 
   // Remove subset of violations that is waived from report.
   // If `is_waived`() is true, remove the finding from the set of violations.
-  void WaiveViolations(std::function<bool(const LintViolation&)>&& is_waived);
+  void WaiveViolations(std::function<bool(const LintViolation &)> &&is_waived);
 
   // Name of the lint rule that produced this status.
   absl::string_view lint_rule_name;
@@ -191,13 +191,13 @@ struct LintRuleStatus {
 };
 
 struct LintViolationWithStatus {
-  const LintViolation* violation;
-  const LintRuleStatus* status;
+  const LintViolation *violation;
+  const LintRuleStatus *status;
 
-  LintViolationWithStatus(const LintViolation* v, const LintRuleStatus* s)
+  LintViolationWithStatus(const LintViolation *v, const LintRuleStatus *s)
       : violation(v), status(s) {}
 
-  bool operator<(const LintViolationWithStatus& r) const {
+  bool operator<(const LintViolationWithStatus &r) const {
     // compares addresses which correspond to locations within the same string
     return violation->token.text().data() < r.violation->token.text().data();
   }
@@ -223,7 +223,7 @@ class LintStatusFormatter {
   // contained in status.
   // Base is the string_view of the entire contents, used only for byte offset
   // calculation.
-  void FormatLintRuleStatus(std::ostream* stream, const LintRuleStatus& status,
+  void FormatLintRuleStatus(std::ostream *stream, const LintRuleStatus &status,
                             absl::string_view base,
                             absl::string_view path) const;
 
@@ -236,16 +236,16 @@ class LintStatusFormatter {
   // Base is the string_view of the entire contents, used only for byte offset
   // calculation.
   void FormatLintRuleStatuses(
-      std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
+      std::ostream *stream, const std::vector<LintRuleStatus> &statuses,
       absl::string_view base, absl::string_view path,
-      const std::vector<absl::string_view>& lines) const;
+      const std::vector<absl::string_view> &lines) const;
 
   // Formats and outputs violation on stream.
   // Path is file path of original file and url is a link to the ratified rule
   // that is being violated.
   // Base is the string_view of the entire contents, used only for byte offset
   // calculation.
-  void FormatViolation(std::ostream* stream, const LintViolation& violation,
+  void FormatViolation(std::ostream *stream, const LintViolation &violation,
                        absl::string_view base, absl::string_view path,
                        absl::string_view url,
                        absl::string_view rule_name) const;
@@ -254,8 +254,8 @@ class LintStatusFormatter {
   // --waiver_files flag. Path is file path of original file that is being
   // violated. Base is the string_view of the entire contents, used only for
   // byte offset calculation.
-  void FormatViolationWaiver(std::ostream* stream,
-                             const LintViolation& violation,
+  void FormatViolationWaiver(std::ostream *stream,
+                             const LintViolation &violation,
                              absl::string_view base, absl::string_view path,
                              absl::string_view rule_name) const;
   // Substitute the markers \@ with tokens location
@@ -264,7 +264,7 @@ class LintStatusFormatter {
   // vulnerable token. It is important to note that all the tokens
   // must come from the same file.
   std::string FormatWithRelatedTokens(
-      const std::vector<verible::TokenInfo>& tokens, absl::string_view message,
+      const std::vector<verible::TokenInfo> &tokens, absl::string_view message,
       absl::string_view path, absl::string_view base) const;
 
  private:

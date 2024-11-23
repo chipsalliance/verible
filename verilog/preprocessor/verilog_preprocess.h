@@ -61,8 +61,8 @@ struct VerilogPreprocessError {
   verible::TokenInfo token_info;  // offending token
   std::string error_message;
 
-  VerilogPreprocessError(const verible::TokenInfo& token,
-                         const std::string& message)
+  VerilogPreprocessError(const verible::TokenInfo &token,
+                         const std::string &message)
       : token_info(token), error_message(message) {}
 };
 
@@ -118,8 +118,8 @@ class VerilogPreprocess {
     // TODO(hzeller): Provide a map of command-line provided +define+'s
   };
 
-  explicit VerilogPreprocess(const Config& config);
-  VerilogPreprocess(const Config& config, FileOpener opener);
+  explicit VerilogPreprocess(const Config &config);
+  VerilogPreprocess(const Config &config, FileOpener opener);
 
   // Initialize preprocessing with safe default options
   // TODO(hzeller): remove this constructor once all places using the
@@ -129,14 +129,14 @@ class VerilogPreprocess {
   // ScanStream reads in a stream of tokens returns the result as a move
   // of preprocessor_data_.  preprocessor_data_ should not be accessed
   // after this returns.
-  VerilogPreprocessData ScanStream(const TokenStreamView& token_stream);
+  VerilogPreprocessData ScanStream(const TokenStreamView &token_stream);
 
   // TODO(fangism): ExpandMacro, ExpandMacroCall
   // TODO(b/111544845): ExpandEvalStringLiteral
 
   // Sets the preprocessing information containing defines and incdirs.
   void setPreprocessingInfo(
-      const verilog::FileList::PreprocessingInfo& preprocess_info);
+      const verilog::FileList::PreprocessingInfo &preprocess_info);
 
  private:
   using StreamIteratorGenerator =
@@ -146,49 +146,48 @@ class VerilogPreprocess {
   // iterator of macro name or a failure status.
   // Updates error messages on failure.
   absl::StatusOr<TokenStreamView::const_iterator> ExtractMacroName(
-      const StreamIteratorGenerator&);
+      const StreamIteratorGenerator &);
 
   absl::Status HandleTokenIterator(TokenStreamView::const_iterator,
-                                   const StreamIteratorGenerator&);
+                                   const StreamIteratorGenerator &);
   absl::Status HandleMacroIdentifier(TokenStreamView::const_iterator,
-                                     const StreamIteratorGenerator&,
+                                     const StreamIteratorGenerator &,
                                      bool forward);
 
   absl::Status HandleDefine(TokenStreamView::const_iterator,
-                            const StreamIteratorGenerator&);
+                            const StreamIteratorGenerator &);
   absl::Status HandleUndef(TokenStreamView::const_iterator,
-                           const StreamIteratorGenerator&);
+                           const StreamIteratorGenerator &);
 
   absl::Status HandleIf(TokenStreamView::const_iterator ifpos,
-                        const StreamIteratorGenerator&);
+                        const StreamIteratorGenerator &);
   absl::Status HandleElse(TokenStreamView::const_iterator else_pos);
   absl::Status HandleEndif(TokenStreamView::const_iterator endif_pos);
 
-  static absl::Status ConsumeAndParseMacroCall(TokenStreamView::const_iterator,
-                                               const StreamIteratorGenerator&,
-                                               verible::MacroCall*,
-                                               const verible::MacroDefinition&);
+  static absl::Status ConsumeAndParseMacroCall(
+      TokenStreamView::const_iterator, const StreamIteratorGenerator &,
+      verible::MacroCall *, const verible::MacroDefinition &);
 
   // The following functions return nullptr when there is no error:
-  absl::Status ConsumeMacroDefinition(const StreamIteratorGenerator&,
-                                      TokenStreamView*);
+  absl::Status ConsumeMacroDefinition(const StreamIteratorGenerator &,
+                                      TokenStreamView *);
 
   static std::unique_ptr<VerilogPreprocessError> ParseMacroDefinition(
-      const TokenStreamView&, MacroDefinition*);
+      const TokenStreamView &, MacroDefinition *);
 
   static std::unique_ptr<VerilogPreprocessError> ParseMacroParameter(
-      TokenStreamView::const_iterator*, MacroParameterInfo*);
+      TokenStreamView::const_iterator *, MacroParameterInfo *);
 
-  void RegisterMacroDefinition(const MacroDefinition&);
-  absl::Status ExpandText(const absl::string_view&);
-  absl::Status ExpandMacro(const verible::MacroCall&,
-                           const verible::MacroDefinition*);
+  void RegisterMacroDefinition(const MacroDefinition &);
+  absl::Status ExpandText(const absl::string_view &);
+  absl::Status ExpandMacro(const verible::MacroCall &,
+                           const verible::MacroDefinition *);
   absl::Status HandleInclude(TokenStreamView::const_iterator,
-                             const StreamIteratorGenerator&);
+                             const StreamIteratorGenerator &);
 
   // Generate a const_iterator to a non-whitespace token.
   static TokenStreamView::const_iterator GenerateBypassWhiteSpaces(
-      const StreamIteratorGenerator&);
+      const StreamIteratorGenerator &);
 
   const Config config_;
 
@@ -198,7 +197,7 @@ class VerilogPreprocess {
   class BranchBlock {
    public:
     BranchBlock(bool is_enabled, bool condition,
-                const verible::TokenInfo& token)
+                const verible::TokenInfo &token)
         : outer_scope_enabled_(is_enabled), branch_token_(token) {
       UpdateCondition(token, condition);
     }
@@ -210,7 +209,7 @@ class VerilogPreprocess {
 
     // Update condition e.g. in `elsif. Return 'false' if already in an
     // else clause.
-    bool UpdateCondition(const verible::TokenInfo& token, bool condition) {
+    bool UpdateCondition(const verible::TokenInfo &token, bool condition) {
       if (in_else_) return false;
       branch_token_ = token;
       // Only the first in a row of matching conditions will select block.
@@ -222,7 +221,7 @@ class VerilogPreprocess {
     // Start an `else block. Uses its internal state to determine if
     // this will put is InSelectedBranch().
     // Returns 'false' if already in an else block.
-    bool StartElse(const verible::TokenInfo& token) {
+    bool StartElse(const verible::TokenInfo &token) {
       if (in_else_) return false;
       in_else_ = true;
       branch_token_ = token;
@@ -230,7 +229,7 @@ class VerilogPreprocess {
       return true;
     }
 
-    const verible::TokenInfo& token() const { return branch_token_; }
+    const verible::TokenInfo &token() const { return branch_token_; }
 
    private:
     const bool outer_scope_enabled_;

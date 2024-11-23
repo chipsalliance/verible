@@ -46,7 +46,7 @@ struct SymbolInfo;  // forward declaration, defined below
 using SymbolTableNode =
     verible::MapTree<absl::string_view, SymbolInfo, verible::StringViewCompare>;
 
-std::ostream& SymbolTableNodeFullPath(std::ostream&, const SymbolTableNode&);
+std::ostream &SymbolTableNodeFullPath(std::ostream &, const SymbolTableNode &);
 
 // Classify what type of element a particular symbol is defining.
 enum class SymbolMetaType {
@@ -72,7 +72,7 @@ enum class SymbolMetaType {
   kCallable,     // matches only kFunction or kTask
 };
 
-std::ostream& operator<<(std::ostream&, SymbolMetaType);
+std::ostream &operator<<(std::ostream &, SymbolMetaType);
 
 absl::string_view SymbolMetaTypeAsString(SymbolMetaType type);
 
@@ -100,7 +100,7 @@ enum class ReferenceType {
   kMemberOfTypeOfParent,
 };
 
-std::ostream& operator<<(std::ostream&, ReferenceType);
+std::ostream &operator<<(std::ostream &, ReferenceType);
 
 // References may form "trees" of dependencies (ReferenceComponentNode).
 // ReferenceComponent is the data portion of each node an a reference tree.
@@ -137,26 +137,26 @@ struct ReferenceComponent {
   // merges are done before attempting symbol resolution.
   // This should only be set by ResolveSymbol().
   // TODO: privatize this member.
-  const SymbolTableNode* resolved_symbol = nullptr;
+  const SymbolTableNode *resolved_symbol = nullptr;
 
  public:
   absl::Status MatchesMetatype(SymbolMetaType) const;
 
   // Resolves this symbol and verifies that metatypes are compatible, which is
   // reflected in the returned Status.
-  absl::Status ResolveSymbol(const SymbolTableNode&);
+  absl::Status ResolveSymbol(const SymbolTableNode &);
 
   // Only print ref_type and identifier.
-  std::ostream& PrintPathComponent(std::ostream&) const;
+  std::ostream &PrintPathComponent(std::ostream &) const;
 
   // Print everything, showing symbol path if it is resolved.
-  std::ostream& PrintVerbose(std::ostream&) const;
+  std::ostream &PrintVerbose(std::ostream &) const;
 
   // Structural consistency check.
-  void VerifySymbolTableRoot(const SymbolTableNode* root) const;
+  void VerifySymbolTableRoot(const SymbolTableNode *root) const;
 };
 
-std::ostream& operator<<(std::ostream&, const ReferenceComponent&);
+std::ostream &operator<<(std::ostream &, const ReferenceComponent &);
 
 // A node in a tree of *dependent* hierchical references.
 // An expression like "x.y.z" will form a linear chain, where resolving 'y'
@@ -166,8 +166,8 @@ std::ostream& operator<<(std::ostream&, const ReferenceComponent&);
 using ReferenceComponentNode = verible::VectorTree<ReferenceComponent>;
 
 // Human-readable representation of a node's path from root.
-std::ostream& ReferenceNodeFullPath(std::ostream&,
-                                    const ReferenceComponentNode&);
+std::ostream &ReferenceNodeFullPath(std::ostream &,
+                                    const ReferenceComponentNode &);
 
 // View a ReferenceComponentNode's children as an ordered map, keyed by
 // reference string. A single node may have multiple references to the same
@@ -175,10 +175,10 @@ std::ostream& ReferenceNodeFullPath(std::ostream&,
 // arbitrarily chosen to be included in the map, while the others are dropped.
 // Primarily for debugging and visualization.
 using ReferenceComponentMap =
-    std::map<absl::string_view, const ReferenceComponentNode*,
+    std::map<absl::string_view, const ReferenceComponentNode *,
              verible::StringViewCompare>;
 ReferenceComponentMap ReferenceComponentNodeMapView(
-    const ReferenceComponentNode&);
+    const ReferenceComponentNode &);
 
 // Represents any (chained) qualified or unqualified reference.
 struct DependentReferences {
@@ -193,59 +193,59 @@ struct DependentReferences {
       std::unique_ptr<ReferenceComponentNode> components)
       : components(std::move(components)) {}
   // move-only
-  DependentReferences(const DependentReferences&) = delete;
-  DependentReferences(DependentReferences&&) = default;
-  DependentReferences& operator=(const DependentReferences&) = delete;
-  DependentReferences& operator=(DependentReferences&&) = delete;
+  DependentReferences(const DependentReferences &) = delete;
+  DependentReferences(DependentReferences &&) = default;
+  DependentReferences &operator=(const DependentReferences &) = delete;
+  DependentReferences &operator=(DependentReferences &&) = delete;
 
   // Returns true of no references were collected.
   bool Empty() const { return components == nullptr; }
 
   // Returns the current terminal descendant.
-  const ReferenceComponentNode* LastLeaf() const;
+  const ReferenceComponentNode *LastLeaf() const;
 
   // Returns the last type component of a reference tree.
   // e.g. from "A#(.B())::C#(.D())" -> "C"
-  const ReferenceComponentNode* LastTypeComponent() const;
-  ReferenceComponentNode* LastTypeComponent();
+  const ReferenceComponentNode *LastTypeComponent() const;
+  ReferenceComponentNode *LastTypeComponent();
 
   // Structural consistency check.
   // When traversing an unqualified or qualified reference, use this to grow a
   // new leaf node in the reference tree.
   // Returns a pointer to the new node.
-  ReferenceComponentNode* PushReferenceComponent(
-      const ReferenceComponent& component);
+  ReferenceComponentNode *PushReferenceComponent(
+      const ReferenceComponent &component);
 
   // Structural consistency check.
-  void VerifySymbolTableRoot(const SymbolTableNode* root) const;
+  void VerifySymbolTableRoot(const SymbolTableNode *root) const;
 
   // Attempt to resolve all symbol references.
-  void Resolve(const SymbolTableNode& context,
-               std::vector<absl::Status>* diagnostics) const;
+  void Resolve(const SymbolTableNode &context,
+               std::vector<absl::Status> *diagnostics) const;
 
   // Attempt to resolve only local symbol references.
-  void ResolveLocally(const SymbolTableNode& context) const;
+  void ResolveLocally(const SymbolTableNode &context) const;
 
   // Attempt to only resolve the base of the reference (the first component).
-  absl::StatusOr<SymbolTableNode*> ResolveOnlyBaseLocally(
-      SymbolTableNode* context);
+  absl::StatusOr<SymbolTableNode *> ResolveOnlyBaseLocally(
+      SymbolTableNode *context);
 };
 
-std::ostream& operator<<(std::ostream&, const DependentReferences&);
+std::ostream &operator<<(std::ostream &, const DependentReferences &);
 
 // Contains information about a type used to declare data/instances/variables.
 struct DeclarationTypeInfo {
   // Pointer to the syntax tree origin, e.g. a NodeEnum::kDataType node.
   // This is useful for diagnostic that detail the relevant text,
   // which can be recovered by StringSpanOfSymbol(const verible::Symbol&).
-  const verible::Symbol* syntax_origin = nullptr;
+  const verible::Symbol *syntax_origin = nullptr;
 
   // holds optional string_view describing direction of the port
   absl::string_view direction = "";
 
   // holds additional type specifications, used mostly in multiline definitions
   // of ports
-  std::vector<const verible::Symbol*> type_specifications;
+  std::vector<const verible::Symbol *> type_specifications;
 
   // Pointer to the reference node that represents a user-defined type, if
   // applicable.
@@ -262,7 +262,7 @@ struct DeclarationTypeInfo {
   // This pointer must remain stable, even as reference trees grow, which
   // mandates reserve()-ing ReferenceComponentNodes' children one-time in
   // advance, and only ever moving ReferenceComponents, never copying them.
-  const ReferenceComponentNode* user_defined_type = nullptr;
+  const ReferenceComponentNode *user_defined_type = nullptr;
 
   // Indicates that this is implicit declaration.
   // FIXME(ldk): Check if this could be replaced by user_defined_type pointing
@@ -271,10 +271,10 @@ struct DeclarationTypeInfo {
 
  public:
   // Structural consistency check.
-  void VerifySymbolTableRoot(const SymbolTableNode* root) const;
+  void VerifySymbolTableRoot(const SymbolTableNode *root) const;
 };
 
-std::ostream& operator<<(std::ostream&, const DeclarationTypeInfo&);
+std::ostream &operator<<(std::ostream &, const DeclarationTypeInfo &);
 
 // This data type holds information about what each SystemVerilog symbol is.
 // An alternative implementation could be done using an abstract base class,
@@ -289,12 +289,12 @@ struct SymbolInfo {
   // In which file is this considered "defined"?
   // Technically, this can be recovered by looking up a string_view range of
   // text in VerilogProject (StringSpanOfSymbol(*syntax_origin)).
-  const VerilogSourceFile* file_origin = nullptr;
+  const VerilogSourceFile *file_origin = nullptr;
 
   // Pointer to the syntax tree origin.
   // An easy way to view this text is StringSpanOfSymbol(*syntax_origin).
   // Reminder: Parts of the syntax tree may originate from included files.
-  const verible::Symbol* syntax_origin = nullptr;
+  const verible::Symbol *syntax_origin = nullptr;
 
   // vector to additional definition entries, e.g. for port definitions
   // TODO (glatosinski): I guess we should include more information here rather
@@ -349,8 +349,8 @@ struct SymbolInfo {
  public:  // methods
   SymbolInfo() = default;
   explicit SymbolInfo(SymbolMetaType metatype,
-                      const VerilogSourceFile* file_origin = {},
-                      const verible::Symbol* syntax_origin = {},
+                      const VerilogSourceFile *file_origin = {},
+                      const verible::Symbol *syntax_origin = {},
                       DeclarationTypeInfo declared_type = {})
       : metatype(metatype),
         file_origin(file_origin),
@@ -358,49 +358,49 @@ struct SymbolInfo {
         declared_type(std::move(declared_type)) {}
 
   // move-only
-  SymbolInfo(const SymbolInfo&) = delete;
-  SymbolInfo(SymbolInfo&&) = default;
-  SymbolInfo& operator=(const SymbolInfo&) = delete;
-  SymbolInfo& operator=(SymbolInfo&&) = delete;
+  SymbolInfo(const SymbolInfo &) = delete;
+  SymbolInfo(SymbolInfo &&) = default;
+  SymbolInfo &operator=(const SymbolInfo &) = delete;
+  SymbolInfo &operator=(SymbolInfo &&) = delete;
 
   // Generate a scope name whose string memory lives and moves with this object.
   // 'base' is used as part of the generated name.
   absl::string_view CreateAnonymousScope(absl::string_view base);
 
   // Attempt to resolve all symbol references.
-  void Resolve(const SymbolTableNode& context,
-               std::vector<absl::Status>* diagnostics);
+  void Resolve(const SymbolTableNode &context,
+               std::vector<absl::Status> *diagnostics);
 
   // Attempt to resolve only symbols local to 'context' (no upward search).
-  void ResolveLocally(const SymbolTableNode& context);
+  void ResolveLocally(const SymbolTableNode &context);
 
   // Internal consistency check.
-  void VerifySymbolTableRoot(const SymbolTableNode* root) const;
+  void VerifySymbolTableRoot(const SymbolTableNode *root) const;
 
   // Show definition info of this symbol.
-  std::ostream& PrintDefinition(std::ostream& stream, size_t indent = 0) const;
+  std::ostream &PrintDefinition(std::ostream &stream, size_t indent = 0) const;
 
   // Show references that are to be resolved starting with this node's scope.
-  std::ostream& PrintReferences(std::ostream& stream, size_t indent = 0) const;
+  std::ostream &PrintReferences(std::ostream &stream, size_t indent = 0) const;
 
   // Functor to compare string starting address, for positional sorting.
   struct StringAddressCompare {
     using is_transparent = void;  // heterogeneous lookup
 
     static absl::string_view ToString(absl::string_view s) { return s; }
-    static absl::string_view ToString(const DependentReferences* ref) {
+    static absl::string_view ToString(const DependentReferences *ref) {
       return ref->components->Value().identifier;
     }
 
     template <typename L, typename R>
     bool operator()(L l, R r) const {
-      static constexpr std::less<const void*> compare_address;
+      static constexpr std::less<const void *> compare_address;
       return compare_address(ToString(l).begin(), ToString(r).begin());
     }
   };
 
   using address_ordered_set_type =
-      std::set<const DependentReferences*, StringAddressCompare>;
+      std::set<const DependentReferences *, StringAddressCompare>;
 
   using references_map_view_type =
       std::map<absl::string_view, address_ordered_set_type,
@@ -449,21 +449,21 @@ class SymbolTable {
  public:
   // If 'project' is nullptr, caller assumes responsibility for managing files
   // and string memory, otherwise string memory is owned by 'project'.
-  explicit SymbolTable(VerilogProject* project)
+  explicit SymbolTable(VerilogProject *project)
       : project_(project),
         symbol_table_root_(SymbolInfo{SymbolMetaType::kRoot}) {}
 
   // can become move-able when needed
-  SymbolTable(const SymbolTable&) = delete;
-  SymbolTable(SymbolTable&&) = delete;
-  SymbolTable& operator=(const SymbolTable&) = delete;
-  SymbolTable& operator=(SymbolTable&&) = delete;
+  SymbolTable(const SymbolTable &) = delete;
+  SymbolTable(SymbolTable &&) = delete;
+  SymbolTable &operator=(const SymbolTable &) = delete;
+  SymbolTable &operator=(SymbolTable &&) = delete;
 
   ~SymbolTable() { CheckIntegrity(); }
 
-  const SymbolTableNode& Root() const { return symbol_table_root_; }
+  const SymbolTableNode &Root() const { return symbol_table_root_; }
 
-  const VerilogProject* Project() const { return project_; }
+  const VerilogProject *Project() const { return project_; }
 
   // TODO(fangism): multi-translation-unit merge operation,
   // to be done before any symbol resolution
@@ -474,18 +474,18 @@ class SymbolTable {
   // will not change the symbol table structure, but will give duplicate symbol
   // diagnostics.
   void BuildSingleTranslationUnit(absl::string_view referenced_file_name,
-                                  std::vector<absl::Status>* diagnostics);
+                                  std::vector<absl::Status> *diagnostics);
 
   // Construct symbol table definitions and references hierarchically, but do
   // not attempt to resolve the symbols.
   // The ordering of translation units processing is implementation defined,
   // and should not be relied upon, but this only maatters when there are
   // duplicate definitions among translation units.
-  void Build(std::vector<absl::Status>* diagnostics);
+  void Build(std::vector<absl::Status> *diagnostics);
 
   // Lookup all symbol references, and bind references where successful.
   // Only attempt to resolve after merging symbol tables.
-  void Resolve(std::vector<absl::Status>* diagnostics);
+  void Resolve(std::vector<absl::Status> *diagnostics);
 
   // A "weaker" version of Resolve() that only attempts to resolve symbol
   // references to definitions belonging to the same scope as the reference
@@ -498,16 +498,16 @@ class SymbolTable {
 
   // Print only the information about symbols defined (no references).
   // This will print the results of Build().
-  std::ostream& PrintSymbolDefinitions(std::ostream&) const;
+  std::ostream &PrintSymbolDefinitions(std::ostream &) const;
 
   // Print only the information about symbol references, and possibly resolved
   // links to definitions.
   // This will print the results of Build() or Resolve().
-  std::ostream& PrintSymbolReferences(std::ostream&) const;
+  std::ostream &PrintSymbolReferences(std::ostream &) const;
 
  protected:  // methods
   // Direct mutation is only intended for the Builder implementation.
-  SymbolTableNode& MutableRoot() { return symbol_table_root_; }
+  SymbolTableNode &MutableRoot() { return symbol_table_root_; }
 
   // Verify internal structural and pointer consistency.
   void CheckIntegrity() const;
@@ -520,7 +520,7 @@ class SymbolTable {
   // encountered during tree traversal.
   // TODO(fangism): once a preprocessor is implemented, includes can be expanded
   // before symbol table construction, and this can become read-only.
-  VerilogProject* const project_;
+  VerilogProject *const project_;
 
   // Global symbol table root for SystemVerilog language elements:
   // modules, packages, classes, tasks, functions, interfaces, etc.
@@ -540,9 +540,9 @@ class SymbolTable {
 // be accessed.
 // If 'project' is provided, then it can be used to open preprocessing-included
 // files, otherwise include directives will be ignored.
-std::vector<absl::Status> BuildSymbolTable(const VerilogSourceFile& source,
-                                           SymbolTable* symbol_table,
-                                           VerilogProject* project = nullptr);
+std::vector<absl::Status> BuildSymbolTable(const VerilogSourceFile &source,
+                                           SymbolTable *symbol_table,
+                                           VerilogProject *project = nullptr);
 
 }  // namespace verilog
 

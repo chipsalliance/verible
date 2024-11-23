@@ -84,25 +84,25 @@ using partition_node_type = VectorTree<TreeViewNodeInfo<TokenPartitionTree>>;
 // Takes a TextStructureView and FormatStyle, and formats UnwrappedLines.
 class Formatter {
  public:
-  Formatter(const verible::TextStructureView& text_structure,
-            const FormatStyle& style)
+  Formatter(const verible::TextStructureView &text_structure,
+            const FormatStyle &style)
       : text_structure_(text_structure), style_(style) {}
 
   // Formats the source code
-  Status Format(const ExecutionControl&);
+  Status Format(const ExecutionControl &);
 
   Status Format() { return Format(ExecutionControl()); }
 
-  void SelectLines(const LineNumberSet& lines);
+  void SelectLines(const LineNumberSet &lines);
 
   // Outputs all of the FormattedExcerpt lines to stream.
   // If "include_disabled" is false, does not contain the disabled ranges.
-  void Emit(bool include_disabled, std::ostream& stream) const;
+  void Emit(bool include_disabled, std::ostream &stream) const;
 
  private:
   // Contains structural information about the code to format, such as
   // TokenSequence from lexing, and ConcreteSyntaxTree from parsing
-  const verible::TextStructureView& text_structure_;
+  const verible::TextStructureView &text_structure_;
 
   // The style configuration for the formatter
   FormatStyle style_;
@@ -115,7 +115,7 @@ class Formatter {
 };
 
 // TODO(b/148482625): make this public/re-usable for general content comparison.
-Status VerifyFormatting(const verible::TextStructureView& text_structure,
+Status VerifyFormatting(const verible::TextStructureView &text_structure,
                         absl::string_view formatted_output,
                         absl::string_view filename) {
   // Verify that the formatted output creates the same lexical
@@ -130,7 +130,7 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
   const auto reparse_status = reanalyzer->ParseStatus();
 
   if (!relex_status.ok() || !reparse_status.ok()) {
-    const auto& token_errors = reanalyzer->TokenErrorMessages();
+    const auto &token_errors = reanalyzer->TokenErrorMessages();
     // Only print the first error.
     if (!token_errors.empty()) {
       return absl::DataLossError(
@@ -166,9 +166,9 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
 static Status ReformatVerilogIncrementally(absl::string_view original_text,
                                            absl::string_view formatted_text,
                                            absl::string_view filename,
-                                           const FormatStyle& style,
-                                           std::ostream& reformat_stream,
-                                           const ExecutionControl& control) {
+                                           const FormatStyle &style,
+                                           std::ostream &reformat_stream,
+                                           const ExecutionControl &control) {
   // Differences from the first formatting.
   const verible::LineDiffs formatting_diffs(original_text, formatted_text);
   // Added lines will be re-applied to incremental re-formatting.
@@ -187,10 +187,10 @@ static Status ReformatVerilogIncrementally(absl::string_view original_text,
 static Status ReformatVerilog(absl::string_view original_text,
                               absl::string_view formatted_text,
                               absl::string_view filename,
-                              const FormatStyle& style,
-                              std::ostream& reformat_stream,
-                              const LineNumberSet& lines,
-                              const ExecutionControl& control) {
+                              const FormatStyle &style,
+                              std::ostream &reformat_stream,
+                              const LineNumberSet &lines,
+                              const ExecutionControl &control) {
   // Disable reformat check to terminate recursion.
   ExecutionControl convergence_control(control);
   convergence_control.verify_convergence = false;
@@ -220,7 +220,7 @@ static absl::StatusOr<std::unique_ptr<VerilogAnalyzer>> ParseWithStatus(
       constexpr bool with_diagnostic_context = false;
       const std::vector<std::string> syntax_error_messages(
           analyzer->LinterTokenErrorMessages(with_diagnostic_context));
-      for (const auto& message : syntax_error_messages) {
+      for (const auto &message : syntax_error_messages) {
         errstream << message << std::endl;
       }
       // Don't bother printing original code
@@ -230,11 +230,11 @@ static absl::StatusOr<std::unique_ptr<VerilogAnalyzer>> ParseWithStatus(
   return analyzer;
 }
 
-absl::Status FormatVerilog(const verible::TextStructureView& text_structure,
-                           absl::string_view filename, const FormatStyle& style,
-                           std::string* formatted_text,
-                           const verible::LineNumberSet& lines,
-                           const ExecutionControl& control) {
+absl::Status FormatVerilog(const verible::TextStructureView &text_structure,
+                           absl::string_view filename, const FormatStyle &style,
+                           std::string *formatted_text,
+                           const verible::LineNumberSet &lines,
+                           const ExecutionControl &control) {
   Formatter fmt(text_structure, style);
   fmt.SelectLines(lines);
 
@@ -270,13 +270,13 @@ absl::Status FormatVerilog(const verible::TextStructureView& text_structure,
 }
 
 Status FormatVerilog(absl::string_view text, absl::string_view filename,
-                     const FormatStyle& style, std::ostream& formatted_stream,
-                     const LineNumberSet& lines,
-                     const ExecutionControl& control) {
+                     const FormatStyle &style, std::ostream &formatted_stream,
+                     const LineNumberSet &lines,
+                     const ExecutionControl &control) {
   const auto analyzer = ParseWithStatus(text, filename);
   if (!analyzer.ok()) return analyzer.status();
 
-  const verible::TextStructureView& text_structure = analyzer->get()->Data();
+  const verible::TextStructureView &text_structure = analyzer->get()->Data();
   std::string formatted_text;
   Status format_status = FormatVerilog(text_structure, filename, style,
                                        &formatted_text, lines, control);
@@ -295,18 +295,18 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
         !reformat_status.ok()) {
       return reformat_status;
     }
-    const std::string& reformatted_text(reformat_stream.str());
+    const std::string &reformatted_text(reformat_stream.str());
     return verible::ReformatMustMatch(text, lines, formatted_text,
                                       reformatted_text);
   }
   return format_status;
 }
 
-absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
-                                const FormatStyle& style,
-                                std::string* formatted_text,
-                                const verible::Interval<int>& line_range,
-                                const ExecutionControl& control) {
+absl::Status FormatVerilogRange(const verible::TextStructureView &structure,
+                                const FormatStyle &style,
+                                std::string *formatted_text,
+                                const verible::Interval<int> &line_range,
+                                const ExecutionControl &control) {
   if (line_range.empty()) {
     return absl::OkStatus();
   }
@@ -335,7 +335,7 @@ absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
   // beginning of the original range, erase it in the formatted output.
   // TODO(hzeller): This can go when whitespace handling is revisited.
   //                (Emit(), FormatWhitespaceWithDisabledByteRanges())
-  const auto& text_lines = structure.Lines();
+  const auto &text_lines = structure.Lines();
   const char unformatted_begin = *text_lines[line_range.min - 1].begin();
   if (!formatted_text->empty() && (*formatted_text)[0] == '\n' &&
       unformatted_begin != '\n') {
@@ -351,10 +351,10 @@ absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
 
 absl::Status FormatVerilogRange(absl::string_view full_content,
                                 absl::string_view filename,
-                                const FormatStyle& style,
-                                std::string* formatted_text,
-                                const verible::Interval<int>& line_range,
-                                const ExecutionControl& control) {
+                                const FormatStyle &style,
+                                std::string *formatted_text,
+                                const verible::Interval<int> &line_range,
+                                const ExecutionControl &control) {
   const auto analyzer = ParseWithStatus(full_content, filename);
   if (!analyzer.ok()) return analyzer.status();
   return FormatVerilogRange(analyzer->get()->Data(), style, formatted_text,
@@ -373,12 +373,12 @@ static verible::Interval<int> DisableByteOffsetRange(
 // Decided at each node in UnwrappedLine partition tree whether or not
 // it should be expanded or unexpanded.
 static void DeterminePartitionExpansion(
-    partition_node_type* node,
-    std::vector<verible::PreFormatToken>* preformatted_tokens,
-    absl::string_view full_text, const ByteOffsetSet& disabled_ranges,
-    const FormatStyle& style) {
-  auto& node_view = node->Value();
-  const UnwrappedLine& uwline = node_view.Value();
+    partition_node_type *node,
+    std::vector<verible::PreFormatToken> *preformatted_tokens,
+    absl::string_view full_text, const ByteOffsetSet &disabled_ranges,
+    const FormatStyle &style) {
+  auto &node_view = node->Value();
+  const UnwrappedLine &uwline = node_view.Value();
   VLOG(3) << "unwrapped line: " << uwline;
   const verible::FormatTokenRange ftoken_range(uwline.TokensRange());
   const auto partition_policy = uwline.PartitionPolicy();
@@ -412,9 +412,9 @@ static void DeterminePartitionExpansion(
   // If any children are expanded, then this node must be expanded,
   // regardless of the UnwrappedLine's chosen policy.
   // Thus, this function must be executed with a post-order traversal.
-  const auto& children = node->Children();
+  const auto &children = node->Children();
   if (std::any_of(children.begin(), children.end(),
-                  [](const partition_node_type& child) {
+                  [](const partition_node_type &child) {
                     return child.Value().IsExpanded();
                   })) {
     VLOG(3) << "Child forces parent to expand.";
@@ -460,8 +460,8 @@ static void DeterminePartitionExpansion(
         // Check whether the whole function call fits on one line. If possible,
         // unexpand and fit into one line. Otherwise expand argument list with
         // tabular alignment.
-        auto& node_view_parent = node->Parent()->Value();
-        const UnwrappedLine& uwline_parent = node_view_parent.Value();
+        auto &node_view_parent = node->Parent()->Value();
+        const UnwrappedLine &uwline_parent = node_view_parent.Value();
         if (verible::FitsOnLine(uwline_parent, style).fits) {
           node_view.Unexpand();
           break;
@@ -516,10 +516,10 @@ static void DeterminePartitionExpansion(
         //   value = function_name(8'hA, signal,
         //                         signal_1234);
         // end
-        const auto& children_tmp = node->Children();
-        auto look_for_arglist = [](const partition_node_type& child) {
-          const auto& node_view_child = child.Value();
-          const UnwrappedLine& uwline_child = node_view_child.Value();
+        const auto &children_tmp = node->Children();
+        auto look_for_arglist = [](const partition_node_type &child) {
+          const auto &node_view_child = child.Value();
+          const UnwrappedLine &uwline_child = node_view_child.Value();
           return (uwline_child.Origin() &&
                   uwline_child.Origin()->Kind() == verible::SymbolKind::kNode &&
                   verible::SymbolCastToNode(*uwline_child.Origin())
@@ -558,10 +558,10 @@ static void DeterminePartitionExpansion(
 
 // Produce a worklist of independently formattable UnwrappedLines.
 static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
-    const FormatStyle& style, absl::string_view full_text,
-    const ByteOffsetSet& disabled_ranges,
-    const TokenPartitionTree& format_tokens_partitions,
-    std::vector<verible::PreFormatToken>* preformatted_tokens) {
+    const FormatStyle &style, absl::string_view full_text,
+    const ByteOffsetSet &disabled_ranges,
+    const TokenPartitionTree &format_tokens_partitions,
+    std::vector<verible::PreFormatToken> *preformatted_tokens) {
   // Initialize a tree view that treats partitions as fully-expanded.
   ExpandableTreeView<TokenPartitionTree> format_tokens_partition_view(
       format_tokens_partitions);
@@ -571,7 +571,7 @@ static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
   // so must all of its parents (and transitively, ancestors).
   format_tokens_partition_view.ApplyPostOrder(
       [&full_text, &disabled_ranges, &style,
-       preformatted_tokens](partition_node_type& node) {
+       preformatted_tokens](partition_node_type &node) {
         DeterminePartitionExpansion(&node, preformatted_tokens, full_text,
                                     disabled_ranges, style);
       });
@@ -586,15 +586,15 @@ static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
 }
 
 static void PrintLargestPartitions(
-    std::ostream& stream, const TokenPartitionTree& token_partitions,
-    size_t max_partitions, const verible::LineColumnMap& line_column_map,
+    std::ostream &stream, const TokenPartitionTree &token_partitions,
+    size_t max_partitions, const verible::LineColumnMap &line_column_map,
     absl::string_view base_text) {
   stream << "Showing the " << max_partitions
          << " largest (leaf) token partitions:" << std::endl;
   const auto ranked_partitions =
       FindLargestPartitions(token_partitions, max_partitions);
   const verible::Spacer hline(80, '=');
-  for (const auto& partition : ranked_partitions) {
+  for (const auto &partition : ranked_partitions) {
     stream << hline << "\n[" << partition->Size() << " tokens";
     if (!partition->IsEmpty()) {
       stream << ", starting at line:col "
@@ -607,11 +607,11 @@ static void PrintLargestPartitions(
   stream << hline << std::endl;
 }
 
-std::ostream& ExecutionControl::Stream() const {
+std::ostream &ExecutionControl::Stream() const {
   return (stream != nullptr) ? *stream : std::cout;
 }
 
-void Formatter::SelectLines(const LineNumberSet& lines) {
+void Formatter::SelectLines(const LineNumberSet &lines) {
   disabled_ranges_ = EnabledLinesToDisabledByteRanges(
       lines, text_structure_.GetLineColumnMap());
 }
@@ -620,9 +620,9 @@ void Formatter::SelectLines(const LineNumberSet& lines) {
 // of text from formatting.  This provides an easy way to preserve spacing on
 // selected syntax subtrees to reduce formatter harm while allowing
 // development to progress.
-static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
-                                     const verible::Symbol& root,
-                                     const FormatStyle& style,
+static void DisableSyntaxBasedRanges(ByteOffsetSet *disabled_ranges,
+                                     const verible::Symbol &root,
+                                     const FormatStyle &style,
                                      absl::string_view full_text) {
   /**
   // Basic template:
@@ -656,7 +656,7 @@ class ContinuationCommentAligner {
   static constexpr int kMaxColumnDifference = 1;
 
  public:
-  ContinuationCommentAligner(const verible::LineColumnMap& line_column_map,
+  ContinuationCommentAligner(const verible::LineColumnMap &line_column_map,
                              const absl::string_view base_text)
       : line_column_map_(line_column_map), base_text_(base_text) {}
 
@@ -669,8 +669,8 @@ class ContinuationCommentAligner {
   // Return value informs whether the line has been formatted and added
   // to already_formatted_lines.
   bool HandleLine(
-      const UnwrappedLine& uwline,
-      std::vector<verible::FormattedExcerpt>* already_formatted_lines) {
+      const UnwrappedLine &uwline,
+      std::vector<verible::FormattedExcerpt> *already_formatted_lines) {
     VLOG(4) << __FUNCTION__ << ": " << uwline;
 
     if (already_formatted_lines->empty()) {
@@ -687,7 +687,7 @@ class ContinuationCommentAligner {
       return false;
     }
 
-    const auto& previous_line = already_formatted_lines->back();
+    const auto &previous_line = already_formatted_lines->back();
     VLOG(4) << __FUNCTION__ << ": previous line: " << previous_line;
     if (original_column_ == kInvalidColumn) {
       if (previous_line.Tokens().size() <= 1) {
@@ -695,7 +695,7 @@ class ContinuationCommentAligner {
                 << "too few tokens in previous line.";
         return false;
       }
-      const auto* previous_comment = previous_line.Tokens().back().token;
+      const auto *previous_comment = previous_line.Tokens().back().token;
       if (previous_comment->token_enum() != verilog_tokentype::TK_EOL_COMMENT) {
         VLOG(4) << "Not a continuation comment line: "
                 << "no EOL comment in previous line.";
@@ -704,7 +704,7 @@ class ContinuationCommentAligner {
       original_column_ = GetTokenColumn(previous_comment);
     }
 
-    const auto* comment = uwline.TokensRange().back().token;
+    const auto *comment = uwline.TokensRange().back().token;
     const int comment_column = GetTokenColumn(comment);
 
     VLOG(4) << "Original column: " << original_column_ << " vs. "
@@ -729,7 +729,7 @@ class ContinuationCommentAligner {
   }
 
  private:
-  int GetTokenColumn(const verible::TokenInfo* token) {
+  int GetTokenColumn(const verible::TokenInfo *token) {
     CHECK_NOTNULL(token);
     const int column =
         line_column_map_.GetLineColAtOffset(base_text_, token->left(base_text_))
@@ -739,7 +739,7 @@ class ContinuationCommentAligner {
   }
 
   static void AdjustColumnUsingTokenSpacing(
-      const verible::FormattedToken& token, int* column) {
+      const verible::FormattedToken &token, int *column) {
     switch (token.before.action) {
       case verible::SpacingDecision::kPreserve: {
         if (token.before.preserved_space_start != nullptr) {
@@ -759,9 +759,9 @@ class ContinuationCommentAligner {
     }
   }
 
-  static int CalculateEolCommentColumn(const verible::FormattedExcerpt& line) {
+  static int CalculateEolCommentColumn(const verible::FormattedExcerpt &line) {
     int column = 0;
-    const auto& front = line.Tokens().front();
+    const auto &front = line.Tokens().front();
 
     if (front.before.action != verible::SpacingDecision::kPreserve) {
       column += line.IndentationSpaces();
@@ -771,7 +771,7 @@ class ContinuationCommentAligner {
     }
     column += front.token->text().length();
 
-    for (const auto& ftoken : verible::make_range(line.Tokens().begin() + 1,
+    for (const auto &ftoken : verible::make_range(line.Tokens().begin() + 1,
                                                   line.Tokens().end() - 1)) {
       AdjustColumnUsingTokenSpacing(ftoken, &column);
       column += ftoken.token->text().length();
@@ -782,7 +782,7 @@ class ContinuationCommentAligner {
     return column;
   }
 
-  const verible::LineColumnMap& line_column_map_;
+  const verible::LineColumnMap &line_column_map_;
   const absl::string_view base_text_;
 
   // Used when the most recenly handled line can't have a continuation comment.
@@ -794,9 +794,9 @@ class ContinuationCommentAligner {
   int formatted_column_ = kInvalidColumn;
 };
 
-Status Formatter::Format(const ExecutionControl& control) {
+Status Formatter::Format(const ExecutionControl &control) {
   const absl::string_view full_text(text_structure_.Contents());
-  const auto& token_stream(text_structure_.TokenStream());
+  const auto &token_stream(text_structure_.TokenStream());
 
   // Initialize auxiliary data needed for TreeUnwrapper.
   UnwrapperData unwrapper_data(token_stream);
@@ -805,7 +805,7 @@ Status Formatter::Format(const ExecutionControl& control) {
   TreeUnwrapper tree_unwrapper(text_structure_, style_,
                                unwrapper_data.preformatted_tokens);
 
-  const TokenPartitionTree* format_tokens_partitions = nullptr;
+  const TokenPartitionTree *format_tokens_partitions = nullptr;
   // TODO(fangism): The following block could be parallelized because
   // full-partitioning does not depend on format annotations.
   {
@@ -821,7 +821,7 @@ Status Formatter::Format(const ExecutionControl& control) {
     // Find disabled formatting ranges for specific syntax tree node types.
     // These are typically temporary workarounds for sections that users
     // habitually prefer to format themselves.
-    if (const auto& root = text_structure_.SyntaxTree()) {
+    if (const auto &root = text_structure_.SyntaxTree()) {
       DisableSyntaxBasedRanges(&disabled_ranges_, *root, style_, full_text);
     }
 
@@ -854,8 +854,8 @@ Status Formatter::Format(const ExecutionControl& control) {
 
   {  // In this pass, perform additional modifications to the partitions and
      // spacings.
-    tree_unwrapper.ApplyPreOrder([&](TokenPartitionTree& node) {
-      const auto& uwline = node.Value();
+    tree_unwrapper.ApplyPreOrder([&](TokenPartitionTree &node) {
+      const auto &uwline = node.Value();
       const auto partition_policy = uwline.PartitionPolicy();
 
       switch (partition_policy) {
@@ -885,7 +885,7 @@ Status Formatter::Format(const ExecutionControl& control) {
   // Apply token spacing from partitions to tokens. This is permanent, so it
   // must be done after all reshaping is done.
   {
-    auto* root = tree_unwrapper.CurrentTokenPartition();
+    auto *root = tree_unwrapper.CurrentTokenPartition();
     auto node_iter = VectorTreeLeavesIterator(&LeftmostDescendant(*root));
     const auto end = ++VectorTreeLeavesIterator(&RightmostDescendant(*root));
 
@@ -898,7 +898,7 @@ Status Formatter::Format(const ExecutionControl& control) {
         verible::ApplyAlreadyFormattedPartitionPropertiesToTokens(
             &(*node_iter), &unwrapper_data.preformatted_tokens);
       } else if (partition_policy == PartitionPolicyEnum::kInline) {
-        auto* parent = node_iter->Parent();
+        auto *parent = node_iter->Parent();
         CHECK_NOTNULL(parent);
         CHECK_EQ(parent->Value().PartitionPolicy(),
                  PartitionPolicyEnum::kAlreadyFormatted);
@@ -920,11 +920,11 @@ Status Formatter::Format(const ExecutionControl& control) {
   // For each UnwrappedLine: minimize total penalty of wrap/break decisions.
   // TODO(fangism): This could be parallelized if results are written
   // to their own 'slots'.
-  std::vector<const UnwrappedLine*> partially_formatted_lines;
+  std::vector<const UnwrappedLine *> partially_formatted_lines;
   formatted_lines_.reserve(unwrapped_lines.size());
   ContinuationCommentAligner continuation_comment_aligner(
       text_structure_.GetLineColumnMap(), text_structure_.Contents());
-  for (const auto& uwline : unwrapped_lines) {
+  for (const auto &uwline : unwrapped_lines) {
     // TODO(fangism): Use different formatting strategies depending on
     // uwline.PartitionPolicy().
     if (continuation_comment_aligner.HandleLine(uwline, &formatted_lines_)) {
@@ -957,7 +957,7 @@ Status Formatter::Format(const ExecutionControl& control) {
     err_stream << "*** Some token partitions failed to complete within the "
                   "search limit:"
                << std::endl;
-    for (const auto* line : partially_formatted_lines) {
+    for (const auto *line : partially_formatted_lines) {
       err_stream << *line << std::endl;
     }
     err_stream << "*** end of partially formatted partition list" << std::endl;
@@ -968,19 +968,19 @@ Status Formatter::Format(const ExecutionControl& control) {
   return absl::OkStatus();
 }
 
-void Formatter::Emit(bool include_disabled, std::ostream& stream) const {
+void Formatter::Emit(bool include_disabled, std::ostream &stream) const {
   const absl::string_view full_text(text_structure_.Contents());
-  std::function<bool(const verible::TokenInfo&)> include_token_p;
+  std::function<bool(const verible::TokenInfo &)> include_token_p;
   if (include_disabled) {
-    include_token_p = [](const verible::TokenInfo&) { return true; };
+    include_token_p = [](const verible::TokenInfo &) { return true; };
   } else {
-    include_token_p = [this, &full_text](const verible::TokenInfo& tok) {
+    include_token_p = [this, &full_text](const verible::TokenInfo &tok) {
       return !disabled_ranges_.Contains(tok.left(full_text));
     };
   }
 
   int position = 0;  // tracks with the position in the original full_text
-  for (const verible::FormattedExcerpt& line : formatted_lines_) {
+  for (const verible::FormattedExcerpt &line : formatted_lines_) {
     // TODO(fangism): The handling of preserved spaces before tokens is messy:
     // some of it is handled here, some of it is inside FormattedToken.
     // TODO(mglb): Test empty line handling when this method becomes testable.

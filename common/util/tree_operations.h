@@ -131,10 +131,10 @@ struct TreeNodeParentTraits : FeatureTraits {};
 // BirthRank implementation supporting any container.
 // This overload is a linear-time operation.
 template <class T>
-size_t BirthRank(const T& node, std::input_iterator_tag) {
+size_t BirthRank(const T &node, std::input_iterator_tag) {
   if (node.Parent() != nullptr) {
     size_t index = 0;
-    for (const auto& child : node.Parent()->Children()) {
+    for (const auto &child : node.Parent()->Children()) {
       if (&node == &child) return index;
       ++index;
     }
@@ -144,7 +144,7 @@ size_t BirthRank(const T& node, std::input_iterator_tag) {
 
 // BirthRank optimized for random access containers.
 template <class T>
-size_t BirthRank(const T& node, std::random_access_iterator_tag) {
+size_t BirthRank(const T &node, std::random_access_iterator_tag) {
   if (node.Parent() != nullptr) {
     return std::distance(&*(node.Parent()->Children().begin()), &node);
   }
@@ -155,7 +155,7 @@ size_t BirthRank(const T& node, std::random_access_iterator_tag) {
 
 // Calls `container.reserve(new_cap)` if container supports this method.
 template <class Container>
-auto /* void */ ReserveIfSupported(Container& container,
+auto /* void */ ReserveIfSupported(Container &container,
                                    typename Container::size_type new_cap)
     -> std::void_t<decltype(container.reserve(new_cap))> {
   container.reserve(new_cap);
@@ -163,7 +163,7 @@ auto /* void */ ReserveIfSupported(Container& container,
 
 // No-op candidate used when Container doesn't provide `reserve()` method.
 template <class Container>
-void ReserveIfSupported(Container&, ...) {}
+void ReserveIfSupported(Container &, ...) {}
 
 }  // namespace tree_operations_internal
 
@@ -189,8 +189,8 @@ struct TreeNodeTraits : FeatureTraits {
 
 // Returns true when `node` is a leaf, false otherwise.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
-bool is_leaf(const T& node) {
+          std::enable_if_t<TreeNodeTraits<T>::available> * = nullptr>
+bool is_leaf(const T &node) {
   return node.Children().empty();
 }
 
@@ -201,11 +201,11 @@ bool is_leaf(const T& node) {
 // The const-ness of the returned reference matches the const-ness of the node
 // argument.
 template <class T, class Iterator,  //
-          std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
-T& DescendPath(T& node, Iterator start, Iterator end) {
-  auto* current_node = &node;
+          std::enable_if_t<TreeNodeTraits<T>::available> * = nullptr>
+T &DescendPath(T &node, Iterator start, Iterator end) {
+  auto *current_node = &node;
   for (auto iter = start; iter != end; ++iter) {
-    auto& children = current_node->Children();
+    auto &children = current_node->Children();
     const std::size_t index = *iter;
     CHECK_LT(index, std::size(children));
     current_node = &*std::next(children.begin(), index);  // descend
@@ -217,9 +217,9 @@ T& DescendPath(T& node, Iterator start, Iterator end) {
 // The const-ness of the returned reference matches the const-ness of the node
 // argumnent.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
-T& LeftmostDescendant(T& node) {
-  T* leaf = &node;
+          std::enable_if_t<TreeNodeTraits<T>::available> * = nullptr>
+T &LeftmostDescendant(T &node) {
+  T *leaf = &node;
   while (!leaf->Children().empty()) {
     leaf = &*leaf->Children().begin();
   }
@@ -231,11 +231,12 @@ T& LeftmostDescendant(T& node) {
 // argumnent.
 //
 // Requires `back()` method in the children container.
-template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr,
-          std::void_t<decltype(std::declval<T>().Children().back())>* = nullptr>
-T& RightmostDescendant(T& node) {
-  T* leaf = &node;
+template <
+    class T,  //
+    std::enable_if_t<TreeNodeTraits<T>::available> * = nullptr,
+    std::void_t<decltype(std::declval<T>().Children().back())> * = nullptr>
+T &RightmostDescendant(T &node) {
+  T *leaf = &node;
   while (!leaf->Children().empty()) {
     leaf = &leaf->Children().back();
   }
@@ -244,8 +245,8 @@ T& RightmostDescendant(T& node) {
 
 // std::function type representing a printer function in PrintTree.
 template <class Node>
-using PrintTreePrinterFunction = std::function<std::ostream&(
-    std::ostream&, typename TreeNodeTraits<Node>::Value::const_reference)>;
+using PrintTreePrinterFunction = std::function<std::ostream &(
+    std::ostream &, typename TreeNodeTraits<Node>::Value::const_reference)>;
 
 // Pretty-print in tree-form.  Value() is enclosed in parens, and the whole
 // node is enclosed in braces.
@@ -253,16 +254,16 @@ using PrintTreePrinterFunction = std::function<std::ostream&(
 //
 // Requires `Value()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
-std::ostream& PrintTree(const T& node, std::ostream* stream,
-                        const PrintTreePrinterFunction<T>& printer,
+          std::enable_if_t<TreeNodeTraits<T>::Value::available> * = nullptr>
+std::ostream &PrintTree(const T &node, std::ostream *stream,
+                        const PrintTreePrinterFunction<T> &printer,
                         size_t indent = 0) {
   printer(*stream << Spacer(indent) << "{ (", node.Value()) << ')';
   if (node.Children().empty()) {
     *stream << " }";
   } else {
     *stream << '\n';
-    for (const auto& child : node.Children()) {
+    for (const auto &child : node.Children()) {
       PrintTree(child, stream, printer, indent + 2) << '\n';
     }
     *stream << Spacer(indent) << '}';
@@ -275,13 +276,13 @@ std::ostream& PrintTree(const T& node, std::ostream* stream,
 //
 // Requires `Value()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
-std::ostream& PrintTree(const T& node, std::ostream* stream,
+          std::enable_if_t<TreeNodeTraits<T>::Value::available> * = nullptr>
+std::ostream &PrintTree(const T &node, std::ostream *stream,
                         size_t indent = 0) {
   using ConstValueRef = typename TreeNodeTraits<T>::Value::const_reference;
   return PrintTree(
       node, stream,
-      [](std::ostream& s, ConstValueRef v) -> std::ostream& { return s << v; },
+      [](std::ostream &s, ConstValueRef v) -> std::ostream & { return s << v; },
       indent);
 }
 
@@ -289,8 +290,8 @@ std::ostream& PrintTree(const T& node, std::ostream* stream,
 //
 // Requires `Value()` method in the node.
 template <typename T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
-std::ostream& operator<<(std::ostream& stream, const T& node) {
+          std::enable_if_t<TreeNodeTraits<T>::Value::available> * = nullptr>
+std::ostream &operator<<(std::ostream &stream, const T &node) {
   return PrintTree(node, &stream);
 }
 
@@ -310,18 +311,18 @@ using ApplyOnNodeFunction =
 // Visits all tree nodes in pre-order traversal applying function to all nodes.
 // Useful for checking invariants between parents and their children.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
-void ApplyPreOrder(T& node, const ApplyOnNodeFunction<T>& f) {
+          std::enable_if_t<TreeNodeTraits<T>::available> * = nullptr>
+void ApplyPreOrder(T &node, const ApplyOnNodeFunction<T> &f) {
   f(node);
-  for (auto& child : node.Children()) ApplyPreOrder(child, f);
+  for (auto &child : node.Children()) ApplyPreOrder(child, f);
 }
 
 // Visits all tree nodes in post-order traversal applying function to all nodes.
 // Useful for checking invariants between parents and their children.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
-void ApplyPostOrder(T& node, const ApplyOnNodeFunction<T>& f) {
-  for (auto& child : node.Children()) ApplyPostOrder(child, f);
+          std::enable_if_t<TreeNodeTraits<T>::available> * = nullptr>
+void ApplyPostOrder(T &node, const ApplyOnNodeFunction<T> &f) {
+  for (auto &child : node.Children()) ApplyPostOrder(child, f);
   f(node);
 }
 
@@ -336,10 +337,10 @@ using ApplyOnNodeValueFunction =
 //
 // Requires `Value()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
-void ApplyPreOrder(T& node, const ApplyOnNodeValueFunction<T>& f) {
+          std::enable_if_t<TreeNodeTraits<T>::Value::available> * = nullptr>
+void ApplyPreOrder(T &node, const ApplyOnNodeValueFunction<T> &f) {
   f(node.Value());
-  for (auto& child : node.Children()) ApplyPreOrder(child, f);
+  for (auto &child : node.Children()) ApplyPreOrder(child, f);
 }
 
 // This variant of ApplyPostOrder expects a function on the underlying
@@ -347,12 +348,12 @@ void ApplyPreOrder(T& node, const ApplyOnNodeValueFunction<T>& f) {
 //
 // Requires `Value()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
+          std::enable_if_t<TreeNodeTraits<T>::Value::available> * = nullptr>
 void ApplyPostOrder(
-    T& node,
-    const std::function<void(typename TreeNodeTraits<T>::Value::reference)>&
-        f) {
-  for (auto& child : node.Children()) ApplyPostOrder(child, f);
+    T &node,
+    const std::function<void(typename TreeNodeTraits<T>::Value::reference)>
+        &f) {
+  for (auto &child : node.Children()) ApplyPostOrder(child, f);
   f(node.Value());
 }
 
@@ -364,8 +365,8 @@ void ApplyPostOrder(
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-size_t BirthRank(const T& node) {
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+size_t BirthRank(const T &node) {
   using Iterator = decltype(node.Parent()->Children().begin());
   return tree_operations_internal::BirthRank(
       node, typename std::iterator_traits<Iterator>::iterator_category());
@@ -375,10 +376,10 @@ size_t BirthRank(const T& node) {
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-size_t NumAncestors(const T& node) {
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+size_t NumAncestors(const T &node) {
   size_t depth = 0;
-  for (const T* p = node.Parent(); p != nullptr; p = p->Parent()) {
+  for (const T *p = node.Parent(); p != nullptr; p = p->Parent()) {
     ++depth;
   }
   return depth;
@@ -392,10 +393,10 @@ size_t NumAncestors(const T& node) {
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-bool HasAncestor(const T& node, const T* other) {
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+bool HasAncestor(const T &node, const T *other) {
   if (other == nullptr) return false;
-  for (const auto* p = node.Parent(); p != nullptr; p = p->Parent()) {
+  for (const auto *p = node.Parent(); p != nullptr; p = p->Parent()) {
     if (p == other) return true;
   }
   return false;
@@ -405,8 +406,8 @@ bool HasAncestor(const T& node, const T* other) {
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-constexpr bool HasAncestor(const T& node, std::nullptr_t) {
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+constexpr bool HasAncestor(const T &node, std::nullptr_t) {
   return false;
 }
 
@@ -416,9 +417,9 @@ constexpr bool HasAncestor(const T& node, std::nullptr_t) {
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-T& Root(T& node) {
-  T* root = &node;
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+T &Root(T &node) {
+  T *root = &node;
   while (root->Parent() != nullptr) {
     root = root->Parent();
   }
@@ -431,11 +432,11 @@ T& Root(T& node) {
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-T* NearestCommonAncestor(T& node_a, T& node_b) {
-  T* a = &node_a;
-  T* b = &node_b;
-  std::set<T*> ancestors_a, ancestors_b;
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+T *NearestCommonAncestor(T &node_a, T &node_b) {
+  T *a = &node_a;
+  T *b = &node_b;
+  std::set<T *> ancestors_a, ancestors_b;
   // In alternation, insert a/b into its respective set of ancestors,
   // and check for membership in the other ancestor set.
   // Return as soon as one is found in the other's set of ancestors.
@@ -463,8 +464,8 @@ T* NearestCommonAncestor(T& node_a, T& node_b) {
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-bool IsFirstChild(const T& node) {
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+bool IsFirstChild(const T &node) {
   if (node.Parent() == nullptr) return true;
   return &*node.Parent()->Children().begin() == &node;
 }
@@ -474,11 +475,11 @@ bool IsFirstChild(const T& node) {
 //
 // Requires `back()` method in the children container.
 // Requires `Parent()` method in the node.
-template <
-    class T,  //
-    std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr,
-    std::void_t<decltype(std::declval<const T>().Children().back())>* = nullptr>
-bool IsLastChild(const T& node) {
+template <class T,  //
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr,
+          std::void_t<decltype(std::declval<const T>().Children().back())> * =
+              nullptr>
+bool IsLastChild(const T &node) {
   if (node.Parent() == nullptr) return true;
   return &node.Parent()->Children().back() == &node;
 }
@@ -490,16 +491,16 @@ bool IsLastChild(const T& node) {
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-T* NextLeaf(T& node) {
-  auto* parent = node.Parent();
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+T *NextLeaf(T &node) {
+  auto *parent = node.Parent();
   if (parent == nullptr) {
     // Root node has no next sibling, this is the end().
     return nullptr;
   }
 
   // Find the next sibling, if there is one.
-  auto& siblings = parent->Children();
+  auto &siblings = parent->Children();
   const size_t birth_rank = BirthRank(node);
   const size_t next_rank = birth_rank + 1;
   if (next_rank != std::size(siblings)) {
@@ -510,7 +511,7 @@ T* NextLeaf(T& node) {
   // This is the last child of the group.
   // Find the nearest parent that has a next child (ascending).
   // TODO(fangism): rewrite without recursion
-  auto* next_ancestor = NextLeaf(*parent);
+  auto *next_ancestor = NextLeaf(*parent);
   if (next_ancestor == nullptr) return nullptr;
 
   // next_ancestor is the NearestCommonAncestor() to the original
@@ -525,16 +526,16 @@ T* NextLeaf(T& node) {
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-T* PreviousLeaf(T& node) {
-  auto* parent = node.Parent();
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+T *PreviousLeaf(T &node) {
+  auto *parent = node.Parent();
   if (parent == nullptr) {
     // Root node has no previous sibling, this is the reverse-end().
     return nullptr;
   }
 
   // Find the next sibling, if there is one.
-  auto& siblings = parent->Children();
+  auto &siblings = parent->Children();
   const size_t birth_rank = BirthRank(node);
   if (birth_rank > 0) {
     // More children precede this one.
@@ -544,7 +545,7 @@ T* PreviousLeaf(T& node) {
   // This is the first child of the group.
   // Find the nearest parent that has a previous child (descending).
   // TODO(fangism): rewrite without recursion
-  auto* prev_ancestor = PreviousLeaf(*parent);
+  auto *prev_ancestor = PreviousLeaf(*parent);
   if (prev_ancestor == nullptr) return nullptr;
 
   // prev_ancestor is the NearestCommonAncestor() to the original
@@ -558,8 +559,8 @@ T* PreviousLeaf(T& node) {
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-T* NextSibling(T& node) {
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+T *NextSibling(T &node) {
   if (node.Parent() == nullptr) {
     return nullptr;
   }
@@ -578,8 +579,8 @@ T* NextSibling(T& node) {
 //
 // Requires `Parent()` method in the node.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-T* PreviousSibling(T& node) {
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+T *PreviousSibling(T &node) {
   if (node.Parent() == nullptr) {
     return nullptr;
   }
@@ -604,9 +605,9 @@ T* PreviousSibling(T& node) {
 // Requires `erase()` method in the children container.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available &&
-                           !std::is_const_v<T>>* = nullptr>
-void RemoveSelfFromParent(T& node) {
-  auto& siblings = ABSL_DIE_IF_NULL(node.Parent())->Children();
+                           !std::is_const_v<T>> * = nullptr>
+void RemoveSelfFromParent(T &node) {
+  auto &siblings = ABSL_DIE_IF_NULL(node.Parent())->Children();
   auto self_iter = std::next(siblings.begin(), verible::BirthRank(node));
   CHECK_EQ(&*self_iter, &node);
   siblings.erase(self_iter);
@@ -620,7 +621,7 @@ void RemoveSelfFromParent(T& node) {
 template <class T, typename... AdoptedNodeN>
 std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T> &&
                  (std::is_convertible_v<std::decay_t<AdoptedNodeN>, T> && ...)>
-AdoptSubtree(T& node, AdoptedNodeN&&... node_n) {
+AdoptSubtree(T &node, AdoptedNodeN &&...node_n) {
   using tree_operations_internal::ReserveIfSupported;
   ReserveIfSupported(node.Children(),
                      std::size(node.Children()) + sizeof...(node_n));
@@ -632,14 +633,14 @@ AdoptSubtree(T& node, AdoptedNodeN&&... node_n) {
 //
 // Requires `push_back()` and `clear()` method in the children container.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available &&
-                           !std::is_const_v<T>>* = nullptr>
-void AdoptSubtreesFrom(T& node, T* other) {
+          std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T>>
+              * = nullptr>
+void AdoptSubtreesFrom(T &node, T *other) {
   using tree_operations_internal::ReserveIfSupported;
-  auto& src_children = other->Children();
+  auto &src_children = other->Children();
   ReserveIfSupported(node.Children(),
                      std::size(node.Children()) + std::size(src_children));
-  for (auto& src_child : src_children) {
+  for (auto &src_child : src_children) {
     node.Children().push_back(std::move(src_child));
   }
   other->Children().clear();
@@ -656,16 +657,16 @@ void AdoptSubtreesFrom(T& node, T* other) {
 template <
     class DstTree, class SrcTree, class SrcNodeToDstValueFunc,
     class DstValue_ =
-        std::invoke_result_t<SrcNodeToDstValueFunc, const SrcTree&>,  //
+        std::invoke_result_t<SrcNodeToDstValueFunc, const SrcTree &>,  //
     std::enable_if_t<TreeNodeTraits<DstTree>::available &&
                      TreeNodeTraits<SrcTree>::available &&
-                     std::is_constructible_v<DstTree, DstValue_>>* = nullptr>
-DstTree Transform(const SrcTree& src_node, const SrcNodeToDstValueFunc& f) {
+                     std::is_constructible_v<DstTree, DstValue_>> * = nullptr>
+DstTree Transform(const SrcTree &src_node, const SrcNodeToDstValueFunc &f) {
   using tree_operations_internal::ReserveIfSupported;
   // Using invoke() to allow passing SrcTree's method pointers as `f`
   DstTree dst_node(std::invoke(f, src_node));
   ReserveIfSupported(dst_node.Children(), std::size(src_node.Children()));
-  for (const auto& child : src_node.Children()) {
+  for (const auto &child : src_node.Children()) {
     AdoptSubtree(dst_node, Transform<DstTree>(child, f));
   }
   return dst_node;
@@ -674,9 +675,9 @@ DstTree Transform(const SrcTree& src_node, const SrcNodeToDstValueFunc& f) {
 // If this node has exactly one child, replace this node with that child
 // and return true, otherwise, do nothing and return false.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available &&
-                           !std::is_const_v<T>>* = nullptr>
-bool HoistOnlyChild(T& node) {
+          std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T>>
+              * = nullptr>
+bool HoistOnlyChild(T &node) {
   if (std::size(node.Children()) != 1) return false;
   // Can't do this directly, as assignment to node destroys its child
   // (`only`) before it is moved.
@@ -698,10 +699,10 @@ bool HoistOnlyChild(T& node) {
 // Requires `push_back()` and `erase()` methods in the children container.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Value::available &&
-                           !std::is_const_v<T>>* = nullptr>
+                           !std::is_const_v<T>> * = nullptr>
 void MergeConsecutiveSiblings(
-    T& node, size_t N,
-    std::function<void(typename TreeNodeTraits<T>::Value::type*,
+    T &node, size_t N,
+    std::function<void(typename TreeNodeTraits<T>::Value::type *,
                        typename TreeNodeTraits<T>::Value::const_reference)>
         joiner) {
   CHECK_LT(N + 1, std::size(node.Children()));
@@ -723,12 +724,12 @@ void MergeConsecutiveSiblings(
 //
 // Requires `insert()` and `erase()` methods in the children container.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available &&
-                           !std::is_const_v<T>>* = nullptr>
-void FlattenOnce(T& node) {
+          std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T>>
+              * = nullptr>
+void FlattenOnce(T &node) {
   const int grandchildren_count = std::transform_reduce(
       node.Children().begin(), node.Children().end(), 0, std::plus<>(),
-      [](const T& gc) { return std::size(gc.Children()); });
+      [](const T &gc) { return std::size(gc.Children()); });
   using tree_operations_internal::ReserveIfSupported;
 
   // Build new children list in a standalone container, then move-assign it to
@@ -737,8 +738,8 @@ void FlattenOnce(T& node) {
   Container grandchildren;
   ReserveIfSupported(grandchildren, grandchildren_count);
 
-  for (auto& child : node.Children()) {
-    for (auto& grandchild : child.Children()) {
+  for (auto &child : node.Children()) {
+    for (auto &grandchild : child.Children()) {
       grandchildren.push_back(std::move(grandchild));
     }
   }
@@ -754,13 +755,13 @@ void FlattenOnce(T& node) {
 //
 // Requires `push_back()` method in the children container.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available &&
-                           !std::is_const_v<T>>* = nullptr>
+          std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T>>
+              * = nullptr>
 void FlattenOnlyChildrenWithChildren(
-    T& node, std::vector<size_t>* new_offsets = nullptr) {
+    T &node, std::vector<size_t> *new_offsets = nullptr) {
   const int new_children_count = std::transform_reduce(
       node.Children().begin(), node.Children().end(), 0, std::plus<>(),
-      [](const T& gc) {
+      [](const T &gc) {
         return std::max<size_t>(std::size(gc.Children()), 1u);
       });
   using tree_operations_internal::ReserveIfSupported;
@@ -778,7 +779,7 @@ void FlattenOnlyChildrenWithChildren(
   }
 
   size_t new_index = 0;
-  for (auto& child : node.Children()) {
+  for (auto &child : node.Children()) {
     if (new_offsets) new_offsets->push_back(new_index);
     if (child.Children().empty()) {
       // Use child node
@@ -786,7 +787,7 @@ void FlattenOnlyChildrenWithChildren(
       ++new_index;
     } else {
       // Use grandchildren
-      for (auto& grandchild : child.Children()) {
+      for (auto &grandchild : child.Children()) {
         new_children.push_back(std::move(grandchild));
         ++new_index;
       }
@@ -800,9 +801,9 @@ void FlattenOnlyChildrenWithChildren(
 //
 // Requires `insert()` and `erase()` methods in the children container.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available &&
-                           !std::is_const_v<T>>* = nullptr>
-void FlattenOneChild(T& node, size_t i) {
+          std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T>>
+              * = nullptr>
+void FlattenOneChild(T &node, size_t i) {
   const size_t original_size = std::size(node.Children());
   CHECK_LT(i, original_size);
 
@@ -834,8 +835,8 @@ void FlattenOneChild(T& node, size_t i) {
 //
 // Requires `Parent()` method in the node.
 template <class T, class PathType,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-void Path(const T& node, PathType& path) {
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+void Path(const T &node, PathType &path) {
   if (node.Parent() != nullptr) {
     Path(*node.Parent(), path);
     path.push_back(verible::BirthRank(node));
@@ -849,14 +850,14 @@ void Path(const T& node, PathType& path) {
 // Requires `Parent()` method in the node.
 struct NodePath {
   template <class T,
-            std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-  explicit NodePath(const T& node) {
+            std::enable_if_t<TreeNodeTraits<T>::Parent::available> * = nullptr>
+  explicit NodePath(const T &node) {
     verible::Path(node, path);
   }
   std::vector<size_t> path;
 };
 
-std::ostream& operator<<(std::ostream& stream, const NodePath& p);
+std::ostream &operator<<(std::ostream &stream, const NodePath &p);
 
 // Binary operations
 
@@ -872,12 +873,12 @@ std::ostream& operator<<(std::ostream& stream, const NodePath& p);
 // traversal.
 template <typename LT, typename RT,
           std::enable_if_t<TreeNodeTraits<LT>::available &&
-                           TreeNodeTraits<RT>::available>* = nullptr>
+                           TreeNodeTraits<RT>::available> * = nullptr>
 struct TreeNodePair {
   TreeNodePair() = default;
-  TreeNodePair(const LT* l, const RT* r) : left(l), right(r) {}
-  const LT* left = nullptr;
-  const RT* right = nullptr;
+  TreeNodePair(const LT *l, const RT *r) : left(l), right(r) {}
+  const LT *left = nullptr;
+  const RT *right = nullptr;
 };
 
 // Recursively compares two trees node-for-node, checking their values
@@ -894,12 +895,12 @@ struct TreeNodePair {
 // Requires `Value()` method in the node.
 template <typename LT, typename RT,
           std::enable_if_t<TreeNodeTraits<LT>::Value::available &&
-                           TreeNodeTraits<RT>::Value::available>* = nullptr>
+                           TreeNodeTraits<RT>::Value::available> * = nullptr>
 TreeNodePair<LT, RT> DeepEqual(
-    const LT& left, const RT& right,
+    const LT &left, const RT &right,
     const std::function<
         bool(typename TreeNodeTraits<LT>::Value::const_reference,
-             typename TreeNodeTraits<RT>::Value::const_reference)>& comp) {
+             typename TreeNodeTraits<RT>::Value::const_reference)> &comp) {
   using result_type = TreeNodePair<LT, RT>;
   // Node value comparison at current level.
   if (!comp(left.Value(), right.Value())) {
@@ -908,8 +909,8 @@ TreeNodePair<LT, RT> DeepEqual(
 
   // Subtree comparison: check number of children first, returning early if
   // different.
-  const auto& left_children = left.Children();
-  const auto& right_children = right.Children();
+  const auto &left_children = left.Children();
+  const auto &right_children = right.Children();
   if (std::size(left_children) != std::size(right_children)) {
     return result_type{&left, &right};
   }
@@ -920,7 +921,7 @@ TreeNodePair<LT, RT> DeepEqual(
   result_type first_diff;  // initially nullptrs
   (void)std::mismatch(left_children.begin(), left_children.end(),
                       right_children.begin(),
-                      [&comp, &first_diff](const LT& l, const RT& r) -> bool {
+                      [&comp, &first_diff](const LT &l, const RT &r) -> bool {
                         const auto result = DeepEqual(l, r, comp);
                         if (result.left == nullptr) {
                           return true;
@@ -942,8 +943,8 @@ TreeNodePair<LT, RT> DeepEqual(
 // Requires `Value()` method in the node.
 template <typename LT, typename RT,
           std::enable_if_t<TreeNodeTraits<LT>::Value::available &&
-                           TreeNodeTraits<RT>::Value::available>* = nullptr>
-TreeNodePair<LT, RT> DeepEqual(const LT& left, const RT& right) {
+                           TreeNodeTraits<RT>::Value::available> * = nullptr>
+TreeNodePair<LT, RT> DeepEqual(const LT &left, const RT &right) {
   using LValueRef = typename TreeNodeTraits<LT>::Value::const_reference;
   using RValueRef = typename TreeNodeTraits<RT>::Value::const_reference;
   return DeepEqual(left, right,
@@ -959,8 +960,8 @@ TreeNodePair<LT, RT> DeepEqual(const LT& left, const RT& right) {
 // Requires `Value()` method in the node.
 template <typename LT, typename RT,
           std::enable_if_t<TreeNodeTraits<LT>::Value::available &&
-                           TreeNodeTraits<RT>::Value::available>* = nullptr>
-TreeNodePair<LT, RT> StructureEqual(const LT& left, const RT& right) {
+                           TreeNodeTraits<RT>::Value::available> * = nullptr>
+TreeNodePair<LT, RT> StructureEqual(const LT &left, const RT &right) {
   using LValueRef = typename TreeNodeTraits<LT>::Value::const_reference;
   using RValueRef = typename TreeNodeTraits<RT>::Value::const_reference;
   // Ignore node values by always treating them as equal.

@@ -58,10 +58,10 @@ struct ExecutionControl {
   // Output stream for diagnostic feedback (not formatting output).
   // This is useful for seeing diagnostics without waiting for a Status
   // to be returned.
-  std::ostream* stream = nullptr;
+  std::ostream *stream = nullptr;
 
   // Returns *stream or a default stream like std::cout.
-  std::ostream& Stream() const;
+  std::ostream &Stream() const;
 
   bool AnyStop() const {
     return show_largest_token_partitions != 0 || show_token_partition_tree;
@@ -74,17 +74,17 @@ struct ExecutionControl {
 // Does verification of the resulting format (re-parse and compare) and
 // convergence test (if enabled in "control")
 absl::Status FormatVerilog(absl::string_view text, absl::string_view filename,
-                           const FormatStyle& style,
-                           std::ostream& formatted_stream,
-                           const verible::LineNumberSet& lines = {},
-                           const ExecutionControl& control = {});
+                           const FormatStyle &style,
+                           std::ostream &formatted_stream,
+                           const verible::LineNumberSet &lines = {},
+                           const ExecutionControl &control = {});
 // Ditto, but with TextStructureView as input and std::string as output.
 // This does verification of the resulting format, but _no_ convergence test.
-absl::Status FormatVerilog(const verible::TextStructureView& text_structure,
-                           absl::string_view filename, const FormatStyle& style,
-                           std::string* formatted_text,
-                           const verible::LineNumberSet& lines = {},
-                           const ExecutionControl& control = {});
+absl::Status FormatVerilog(const verible::TextStructureView &text_structure,
+                           absl::string_view filename, const FormatStyle &style,
+                           std::string *formatted_text,
+                           const verible::LineNumberSet &lines = {},
+                           const ExecutionControl &control = {});
 
 // Format only lines in line_range interval [min, max) in "full_content"
 // using "style". Emits _only_ the formatted code in the range
@@ -93,16 +93,16 @@ absl::Status FormatVerilog(const verible::TextStructureView& text_structure,
 // tests.
 absl::Status FormatVerilogRange(absl::string_view full_content,
                                 absl::string_view filename,
-                                const FormatStyle& style,
-                                std::string* formatted_text,
-                                const verible::Interval<int>& line_range,
-                                const ExecutionControl& control = {});
+                                const FormatStyle &style,
+                                std::string *formatted_text,
+                                const verible::Interval<int> &line_range,
+                                const ExecutionControl &control = {});
 // Ditto, with TextStructureView as input.
-absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
-                                const FormatStyle& style,
-                                std::string* formatted_text,
-                                const verible::Interval<int>& line_range,
-                                const ExecutionControl& control = {});
+absl::Status FormatVerilogRange(const verible::TextStructureView &structure,
+                                const FormatStyle &style,
+                                std::string *formatted_text,
+                                const verible::Interval<int> &line_range,
+                                const ExecutionControl &control = {});
 
 }  // namespace formatter
 }  // namespace verilog

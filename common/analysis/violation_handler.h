@@ -39,7 +39,7 @@ class ViolationHandler {
   // located at `path`. It can be called multiple times with statuses generated
   // from different files. `base` contains source code from the file.
   virtual void HandleViolations(
-      const std::set<verible::LintViolationWithStatus>& violations,
+      const std::set<verible::LintViolationWithStatus> &violations,
       absl::string_view base, absl::string_view path) = 0;
 };
 
@@ -47,33 +47,33 @@ class ViolationHandler {
 // messages.
 class ViolationPrinter : public ViolationHandler {
  public:
-  explicit ViolationPrinter(std::ostream* stream) : stream_(stream) {}
+  explicit ViolationPrinter(std::ostream *stream) : stream_(stream) {}
 
   void HandleViolations(
-      const std::set<verible::LintViolationWithStatus>& violations,
+      const std::set<verible::LintViolationWithStatus> &violations,
       absl::string_view base, absl::string_view path) final;
 
  protected:
-  std::ostream* const stream_;
-  verible::LintStatusFormatter* formatter_ = nullptr;
+  std::ostream *const stream_;
+  verible::LintStatusFormatter *formatter_ = nullptr;
 };
 
 // ViolationHandler that prints all violations in a format required by
 // --waiver_files flag
 class ViolationWaiverPrinter : public ViolationHandler {
  public:
-  explicit ViolationWaiverPrinter(std::ostream* message_stream_,
-                                  std::ostream* waiver_stream_)
+  explicit ViolationWaiverPrinter(std::ostream *message_stream_,
+                                  std::ostream *waiver_stream_)
       : message_stream_(message_stream_), waiver_stream_(waiver_stream_) {}
 
   void HandleViolations(
-      const std::set<verible::LintViolationWithStatus>& violations,
+      const std::set<verible::LintViolationWithStatus> &violations,
       absl::string_view base, absl::string_view path) final;
 
  protected:
-  std::ostream* const message_stream_;
-  std::ostream* const waiver_stream_;
-  verible::LintStatusFormatter* formatter_ = nullptr;
+  std::ostream *const message_stream_;
+  std::ostream *const waiver_stream_;
+  verible::LintStatusFormatter *formatter_ = nullptr;
 };
 
 // ViolationHandler that prints all violations and gives an option to fix those
@@ -117,46 +117,46 @@ class ViolationFixer : public verible::ViolationHandler {
   };
 
   using AnswerChooser =
-      std::function<Answer(const verible::LintViolation&, absl::string_view)>;
+      std::function<Answer(const verible::LintViolation &, absl::string_view)>;
 
   // Violation fixer with user-chosen answer chooser.
-  ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream,
-                 const AnswerChooser& answer_chooser)
+  ViolationFixer(std::ostream *message_stream, std::ostream *patch_stream,
+                 const AnswerChooser &answer_chooser)
       : ViolationFixer(message_stream, patch_stream, answer_chooser, false) {}
 
   // Violation fixer with interactive answer choice.
-  ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream)
+  ViolationFixer(std::ostream *message_stream, std::ostream *patch_stream)
       : ViolationFixer(message_stream, patch_stream, InteractiveAnswerChooser,
                        true) {}
 
   void HandleViolations(
-      const std::set<verible::LintViolationWithStatus>& violations,
+      const std::set<verible::LintViolationWithStatus> &violations,
       absl::string_view base, absl::string_view path) final;
 
  private:
-  ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream,
-                 const AnswerChooser& answer_chooser, bool is_interactive)
+  ViolationFixer(std::ostream *message_stream, std::ostream *patch_stream,
+                 const AnswerChooser &answer_chooser, bool is_interactive)
       : message_stream_(message_stream),
         patch_stream_(patch_stream),
         answer_chooser_(answer_chooser),
         is_interactive_(is_interactive),
         ultimate_answer_({AnswerChoice::kUnknown, 0}) {}
 
-  void HandleViolation(const verible::LintViolation& violation,
+  void HandleViolation(const verible::LintViolation &violation,
                        absl::string_view base, absl::string_view path,
                        absl::string_view url, absl::string_view rule_name,
-                       const verible::LintStatusFormatter& formatter,
-                       verible::AutoFix* fix);
+                       const verible::LintStatusFormatter &formatter,
+                       verible::AutoFix *fix);
 
   static Answer InteractiveAnswerChooser(
-      const verible::LintViolation& violation, absl::string_view rule_name);
+      const verible::LintViolation &violation, absl::string_view rule_name);
 
   void CommitFixes(absl::string_view source_content,
                    absl::string_view source_path,
-                   const verible::AutoFix& fix) const;
+                   const verible::AutoFix &fix) const;
 
-  std::ostream* const message_stream_;
-  std::ostream* const patch_stream_;
+  std::ostream *const message_stream_;
+  std::ostream *const patch_stream_;
   const AnswerChooser answer_chooser_;
   const bool is_interactive_;
 

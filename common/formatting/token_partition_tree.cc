@@ -44,7 +44,7 @@ namespace verible {
 
 using format_token_iterator = std::vector<PreFormatToken>::const_iterator;
 
-void VerifyTreeNodeFormatTokenRanges(const TokenPartitionTree& node,
+void VerifyTreeNodeFormatTokenRanges(const TokenPartitionTree &node,
                                      format_token_iterator base) {
   VLOG(4) << __FUNCTION__ << " @ node path: " << NodePath(node);
 
@@ -53,13 +53,13 @@ void VerifyTreeNodeFormatTokenRanges(const TokenPartitionTree& node,
     return std::distance(base, iter);
   };
 
-  const auto& children = node.Children();
+  const auto &children = node.Children();
   if (!children.empty()) {
     const TokenPartitionTreePrinter node_printer(node);
     {
       // Hierarchy invariant: parent's range == range spanned by children.
       // Check against first child's begin, and last child's end.
-      const auto& parent_range = node.Value().TokensRange();
+      const auto &parent_range = node.Value().TokensRange();
       // Translates ranges' iterators into positional indices.
       const int parent_begin = TokenIndex(parent_range.begin());
       const int parent_end = TokenIndex(parent_range.end());
@@ -88,27 +88,27 @@ void VerifyTreeNodeFormatTokenRanges(const TokenPartitionTree& node,
   VLOG(4) << __FUNCTION__ << " (verified)";
 }
 
-void VerifyFullTreeFormatTokenRanges(const TokenPartitionTree& tree,
+void VerifyFullTreeFormatTokenRanges(const TokenPartitionTree &tree,
                                      format_token_iterator base) {
   VLOG(4) << __FUNCTION__ << '\n' << TokenPartitionTreePrinter{tree};
-  ApplyPreOrder(tree, [=](const TokenPartitionTree& node) {
+  ApplyPreOrder(tree, [=](const TokenPartitionTree &node) {
     VerifyTreeNodeFormatTokenRanges(node, base);
   });
 }
 
 struct SizeCompare {
-  bool operator()(const UnwrappedLine* left, const UnwrappedLine* right) const {
+  bool operator()(const UnwrappedLine *left, const UnwrappedLine *right) const {
     return left->Size() > right->Size();
   }
 };
 
-std::vector<const UnwrappedLine*> FindLargestPartitions(
-    const TokenPartitionTree& token_partitions, size_t num_partitions) {
+std::vector<const UnwrappedLine *> FindLargestPartitions(
+    const TokenPartitionTree &token_partitions, size_t num_partitions) {
   // Sort UnwrappedLines from leaf partitions by size.
-  using partition_set_type = verible::TopN<const UnwrappedLine*, SizeCompare>;
+  using partition_set_type = verible::TopN<const UnwrappedLine *, SizeCompare>;
   partition_set_type partitions(num_partitions);
   ApplyPreOrder(token_partitions,
-                [&partitions](const TokenPartitionTree& node) {
+                [&partitions](const TokenPartitionTree &node) {
                   if (is_leaf(node)) {  // only look at leaf partitions
                     partitions.push(&node.Value());
                   }
@@ -117,29 +117,29 @@ std::vector<const UnwrappedLine*> FindLargestPartitions(
 }
 
 std::vector<std::vector<int>> FlushLeftSpacingDifferences(
-    const TokenPartitionRange& partitions) {
+    const TokenPartitionRange &partitions) {
   // Compute per-token differences between original spacings and reference-value
   // spacings.
   std::vector<std::vector<int>> flush_left_spacing_deltas;
   flush_left_spacing_deltas.reserve(partitions.size());
-  for (const auto& partition : partitions) {
+  for (const auto &partition : partitions) {
     flush_left_spacing_deltas.emplace_back();
-    std::vector<int>& row(flush_left_spacing_deltas.back());
+    std::vector<int> &row(flush_left_spacing_deltas.back());
     FormatTokenRange ftokens(partition.Value().TokensRange());
     if (ftokens.empty()) continue;
     // Skip the first token, because that represents indentation.
     ftokens.pop_front();
-    for (const auto& ftoken : ftokens) {
+    for (const auto &ftoken : ftokens) {
       row.push_back(ftoken.ExcessSpaces());
     }
   }
   return flush_left_spacing_deltas;
 }
 
-std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
+std::ostream &TokenPartitionTreePrinter::PrintTree(std::ostream &stream,
                                                    int indent) const {
-  const auto& value = node.Value();
-  const auto& children = node.Children();
+  const auto &value = node.Value();
+  const auto &children = node.Children();
   stream << Spacer(indent) << "{ ";
   if (children.empty()) {
     stream << '(';
@@ -160,7 +160,7 @@ std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
     }
     stream << '\n';
     // token range spans all of children nodes
-    for (const auto& child : children) {
+    for (const auto &child : children) {
       TokenPartitionTreePrinter(child, verbose, origin_printer)
               .PrintTree(stream, indent + 2)
           << '\n';
@@ -170,8 +170,8 @@ std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream,
-                         const TokenPartitionTreePrinter& printer) {
+std::ostream &operator<<(std::ostream &stream,
+                         const TokenPartitionTreePrinter &printer) {
   return printer.PrintTree(stream);
 }
 
@@ -180,7 +180,7 @@ std::ostream& operator<<(std::ostream& stream,
 class BlankLineSeparatorDetector {
  public:
   // 'bounds' range must not be empty.
-  explicit BlankLineSeparatorDetector(const TokenPartitionRange& bounds)
+  explicit BlankLineSeparatorDetector(const TokenPartitionRange &bounds)
       : previous_end_(bounds.front()
                           .Value()
                           .TokensRange()
@@ -188,7 +188,7 @@ class BlankLineSeparatorDetector {
                           .token->text()
                           .begin()) {}
 
-  bool operator()(const TokenPartitionTree& node) {
+  bool operator()(const TokenPartitionTree &node) {
     const auto range = node.Value().TokensRange();
     if (range.empty()) return false;
     const auto begin = range.front().token->text().begin();
@@ -208,7 +208,7 @@ class BlankLineSeparatorDetector {
 
 // Subdivides the 'bounds' range into sub-ranges broken up by blank lines.
 static std::vector<TokenPartitionIterator>
-PartitionTokenPartitionRangesAtBlankLines(const TokenPartitionRange& bounds) {
+PartitionTokenPartitionRangesAtBlankLines(const TokenPartitionRange &bounds) {
   VLOG(2) << __FUNCTION__;
   std::vector<TokenPartitionIterator> subpartitions;
   if (bounds.empty()) return subpartitions;
@@ -225,7 +225,7 @@ PartitionTokenPartitionRangesAtBlankLines(const TokenPartitionRange& bounds) {
 }
 
 std::vector<TokenPartitionRange> GetSubpartitionsBetweenBlankLines(
-    const TokenPartitionRange& outer_partition_bounds) {
+    const TokenPartitionRange &outer_partition_bounds) {
   VLOG(2) << __FUNCTION__;
   std::vector<TokenPartitionRange> result;
   {
@@ -246,7 +246,7 @@ std::vector<TokenPartitionRange> GetSubpartitionsBetweenBlankLines(
 }
 
 static absl::string_view StringSpanOfPartitionRange(
-    const TokenPartitionRange& range) {
+    const TokenPartitionRange &range) {
   CHECK(!range.empty());
   const auto front_range = range.front().Value().TokensRange();
   const auto back_range = range.back().Value().TokensRange();
@@ -258,7 +258,7 @@ static absl::string_view StringSpanOfPartitionRange(
 
 bool AnyPartitionSubRangeIsDisabled(TokenPartitionRange range,
                                     absl::string_view full_text,
-                                    const ByteOffsetSet& disabled_byte_ranges) {
+                                    const ByteOffsetSet &disabled_byte_ranges) {
   if (range.empty()) return false;
   const absl::string_view span = StringSpanOfPartitionRange(range);
   VLOG(4) << "text spanned: " << AutoTruncate{span, 40};
@@ -269,21 +269,21 @@ bool AnyPartitionSubRangeIsDisabled(TokenPartitionRange range,
   return diff != span_set;
 }
 
-void AdjustIndentationRelative(TokenPartitionTree* tree, int amount) {
-  ApplyPreOrder(*ABSL_DIE_IF_NULL(tree), [&](UnwrappedLine& line) {
+void AdjustIndentationRelative(TokenPartitionTree *tree, int amount) {
+  ApplyPreOrder(*ABSL_DIE_IF_NULL(tree), [&](UnwrappedLine &line) {
     const int new_indent = std::max<int>(line.IndentationSpaces() + amount, 0);
     line.SetIndentationSpaces(new_indent);
   });
 }
 
-void AdjustIndentationAbsolute(TokenPartitionTree* tree, int amount) {
+void AdjustIndentationAbsolute(TokenPartitionTree *tree, int amount) {
   // Compare the indentation difference at the root node.
   const int indent_diff = amount - tree->Value().IndentationSpaces();
   if (indent_diff == 0) return;
   AdjustIndentationRelative(tree, indent_diff);
 }
 
-absl::string_view StringSpanOfTokenRange(const FormatTokenRange& range) {
+absl::string_view StringSpanOfTokenRange(const FormatTokenRange &range) {
   if (range.empty()) return {};
   return make_string_view_range(range.front().Text().begin(),
                                 range.back().Text().end());
@@ -291,8 +291,8 @@ absl::string_view StringSpanOfTokenRange(const FormatTokenRange& range) {
 
 void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
                                    absl::string_view full_text,
-                                   std::vector<PreFormatToken>* ftokens) {
-  for (const auto& partition : partition_range) {
+                                   std::vector<PreFormatToken> *ftokens) {
+  for (const auto &partition : partition_range) {
     const auto token_range = partition.Value().TokensRange();
     const absl::string_view partition_text =
         StringSpanOfTokenRange(token_range);
@@ -306,15 +306,15 @@ void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
 }
 
 void ApplyAlreadyFormattedPartitionPropertiesToTokens(
-    TokenPartitionTree* already_formatted_partition_node,
-    std::vector<PreFormatToken>* ftokens) {
+    TokenPartitionTree *already_formatted_partition_node,
+    std::vector<PreFormatToken> *ftokens) {
   CHECK_NOTNULL(already_formatted_partition_node);
   CHECK_NOTNULL(ftokens);
 
   VLOG(4) << __FUNCTION__ << ": partition:\n"
           << TokenPartitionTreePrinter(*already_formatted_partition_node, true);
 
-  const auto& uwline = already_formatted_partition_node->Value();
+  const auto &uwline = already_formatted_partition_node->Value();
   CHECK_EQ(uwline.PartitionPolicy(), PartitionPolicyEnum::kAlreadyFormatted)
       << *already_formatted_partition_node;
   if (uwline.IsEmpty()) {
@@ -329,7 +329,7 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
   mutable_tokens_begin->before.break_decision =
       verible::SpacingOptions::kMustWrap;
 
-  for (auto& child : already_formatted_partition_node->Children()) {
+  for (auto &child : already_formatted_partition_node->Children()) {
     auto slice = child.Value();
     if (slice.PartitionPolicy() != PartitionPolicyEnum::kInline) {
       VLOG(1) << "Partition policy is not kInline - ignoring. Parent "
@@ -348,8 +348,8 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
   auto mutable_tokens_end =
       ConvertToMutableIterator(uwline.TokensRange().end(), ftokens->begin());
 
-  for (auto& token : make_range(mutable_tokens_begin, mutable_tokens_end)) {
-    auto& decision = token.before.break_decision;
+  for (auto &token : make_range(mutable_tokens_begin, mutable_tokens_end)) {
+    auto &decision = token.before.break_decision;
     if (decision == verible::SpacingOptions::kUndecided) {
       decision = verible::SpacingOptions::kMustAppend;
     }
@@ -360,11 +360,11 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
           << TokenPartitionTreePrinter(*already_formatted_partition_node, true);
 }
 
-void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
+void MergeConsecutiveSiblings(TokenPartitionTree *tree, size_t pos) {
   CHECK_NOTNULL(tree);
   CHECK_LT(pos + 1, tree->Children().size());
-  const auto& current = tree->Children()[pos];
-  const auto& next = tree->Children()[pos + 1];
+  const auto &current = tree->Children()[pos];
+  const auto &next = tree->Children()[pos + 1];
   // Merge of a non-leaf partition and a leaf partition produces a non-leaf
   // partition with token range wider than concatenated token ranges of its
   // children.
@@ -372,7 +372,7 @@ void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
                                            << current << "\nright:" << next;
   // Effectively concatenate unwrapped line ranges of sibling subpartitions.
   MergeConsecutiveSiblings(
-      *tree, pos, [](UnwrappedLine* left, const UnwrappedLine& right) {
+      *tree, pos, [](UnwrappedLine *left, const UnwrappedLine &right) {
         // Verify token range continuity.
         CHECK(left->TokensRange().end() == right.TokensRange().begin());
         left->SpanUpToToken(right.TokensRange().end());
@@ -381,10 +381,10 @@ void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
 
 // From leaf node's parent upwards, update the left bound of the UnwrappedLine's
 // TokenRange.  Stop as soon as a node is not a (leftmost) first child.
-static void UpdateTokenRangeLowerBound(TokenPartitionTree* leaf,
-                                       TokenPartitionTree* last,
+static void UpdateTokenRangeLowerBound(TokenPartitionTree *leaf,
+                                       TokenPartitionTree *last,
                                        format_token_iterator token_iter) {
-  for (auto* node = leaf; node != nullptr && node != last;
+  for (auto *node = leaf; node != nullptr && node != last;
        node = node->Parent()) {
     node->Value().SpanBackToToken(token_iter);
   }
@@ -392,24 +392,24 @@ static void UpdateTokenRangeLowerBound(TokenPartitionTree* leaf,
 
 // From leaf node upwards, update the right bound of the UnwrappedLine's
 // TokenRange.  Stop as soon as a node is not a (rightmost) last child.
-static void UpdateTokenRangeUpperBound(TokenPartitionTree* leaf,
-                                       TokenPartitionTree* last,
+static void UpdateTokenRangeUpperBound(TokenPartitionTree *leaf,
+                                       TokenPartitionTree *last,
                                        format_token_iterator token_iter) {
-  for (auto* node = leaf; node != nullptr && node != last;
+  for (auto *node = leaf; node != nullptr && node != last;
        node = node->Parent()) {
     node->Value().SpanUpToToken(token_iter);
   }
 }
 
-TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
+TokenPartitionTree *GroupLeafWithPreviousLeaf(TokenPartitionTree *leaf) {
   CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
-  auto* previous_leaf = PreviousLeaf(*leaf);
+  auto *previous_leaf = PreviousLeaf(*leaf);
   if (previous_leaf == nullptr) return nullptr;
   VLOG(4) << "previous leaf:\n" << *previous_leaf;
 
   // If there is no common ancestor, do nothing and return.
-  auto& common_ancestor =
+  auto &common_ancestor =
       *ABSL_DIE_IF_NULL(NearestCommonAncestor(*leaf, *previous_leaf));
   VLOG(4) << "common ancestor:\n" << common_ancestor;
 
@@ -417,7 +417,7 @@ TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
   CHECK(previous_leaf->Value().TokensRange().end() ==
         leaf->Value().TokensRange().begin());
 
-  auto* leaf_parent = leaf->Parent();
+  auto *leaf_parent = leaf->Parent();
   {
     // Extend the upper-bound of the previous leaf partition to cover the
     // partition that is about to be removed.
@@ -451,15 +451,15 @@ TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
 }
 
 // Note: this destroys leaf
-TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
+TokenPartitionTree *MergeLeafIntoPreviousLeaf(TokenPartitionTree *leaf) {
   CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
-  auto* target_leaf = PreviousLeaf(*leaf);
+  auto *target_leaf = PreviousLeaf(*leaf);
   if (target_leaf == nullptr) return nullptr;
   VLOG(4) << "target leaf:\n" << *target_leaf;
 
   // If there is no common ancestor, do nothing and return.
-  auto& common_ancestor =
+  auto &common_ancestor =
       *ABSL_DIE_IF_NULL(NearestCommonAncestor(*leaf, *target_leaf));
   VLOG(4) << "common ancestor:\n" << common_ancestor;
 
@@ -467,7 +467,7 @@ TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
   CHECK(target_leaf->Value().TokensRange().end() ==
         leaf->Value().TokensRange().begin());
 
-  auto* leaf_parent = leaf->Parent();
+  auto *leaf_parent = leaf->Parent();
   {
     // Extend the upper-bound of the previous leaf partition to cover the
     // partition that is about to be removed.
@@ -497,15 +497,15 @@ TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
 }
 
 // Note: this destroys leaf
-TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
+TokenPartitionTree *MergeLeafIntoNextLeaf(TokenPartitionTree *leaf) {
   CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
-  auto* target_leaf = NextLeaf(*leaf);
+  auto *target_leaf = NextLeaf(*leaf);
   if (target_leaf == nullptr) return nullptr;
   VLOG(4) << "target leaf:\n" << *target_leaf;
 
   // If there is no common ancestor, do nothing and return.
-  auto& common_ancestor =
+  auto &common_ancestor =
       *ABSL_DIE_IF_NULL(NearestCommonAncestor(*leaf, *target_leaf));
   VLOG(4) << "common ancestor:\n" << common_ancestor;
 
@@ -513,7 +513,7 @@ TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
   CHECK(target_leaf->Value().TokensRange().begin() ==
         leaf->Value().TokensRange().end());
 
-  auto* leaf_parent = leaf->Parent();
+  auto *leaf_parent = leaf->Parent();
   {
     // Extend the lower-bound of the next leaf partition to cover the
     // partition that is about to be removed.
@@ -551,12 +551,12 @@ TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
 class TokenPartitionTreeWrapper {
  public:
   /* implicit */ TokenPartitionTreeWrapper(  // NOLINT
-      const TokenPartitionTree& node)
+      const TokenPartitionTree &node)
       : node_(&node) {}
 
   // Grouping node with no corresponding TokenPartitionTree node
   /* implicit */ TokenPartitionTreeWrapper(  // NOLINT
-      const UnwrappedLine& unwrapped_line)
+      const UnwrappedLine &unwrapped_line)
       : node_(nullptr) {
     unwrapped_line_ = std::make_unique<UnwrappedLine>(unwrapped_line);
   }
@@ -564,7 +564,7 @@ class TokenPartitionTreeWrapper {
   // At least one of node_ or unwrapped_line_ should not be nullptr
   TokenPartitionTreeWrapper() = delete;
 
-  TokenPartitionTreeWrapper(const TokenPartitionTreeWrapper& other) {
+  TokenPartitionTreeWrapper(const TokenPartitionTreeWrapper &other) {
     CHECK((other.node_ != nullptr) || (other.unwrapped_line_ != nullptr));
 
     if (other.node_) {
@@ -576,12 +576,12 @@ class TokenPartitionTreeWrapper {
   }
 
   // Return wrapped node value or concatenation of subnodes values
-  const UnwrappedLine& Value() const {
+  const UnwrappedLine &Value() const {
     return node_ ? node_->Value() : *unwrapped_line_;
   }
 
   // Concatenate subnodes value with other node value
-  UnwrappedLine Value(const TokenPartitionTree& other) const {
+  UnwrappedLine Value(const TokenPartitionTree &other) const {
     CHECK((node_ == nullptr) && (unwrapped_line_ != nullptr));
     UnwrappedLine uw = *unwrapped_line_;
     uw.SpanUpToToken(other.Value().TokensRange().end());
@@ -589,9 +589,9 @@ class TokenPartitionTreeWrapper {
   }
 
   // Update concatenated value of subnodes
-  void Update(const VectorTree<TokenPartitionTreeWrapper>* child) {
-    const auto& token_partition_tree_wrapper = child->Value();
-    const auto& uwline = token_partition_tree_wrapper.Value();
+  void Update(const VectorTree<TokenPartitionTreeWrapper> *child) {
+    const auto &token_partition_tree_wrapper = child->Value();
+    const auto &uwline = token_partition_tree_wrapper.Value();
 
     unwrapped_line_->SpanUpToToken(uwline.TokensRange().end());
   }
@@ -603,11 +603,11 @@ class TokenPartitionTreeWrapper {
   }
 
   // Return address to wrapped node
-  const TokenPartitionTree* Node() const { return node_; }
+  const TokenPartitionTree *Node() const { return node_; }
 
  private:
   // Wrapped node
-  const TokenPartitionTree* node_;
+  const TokenPartitionTree *node_;
 
   // Concatenated value of subnodes
   std::unique_ptr<UnwrappedLine> unwrapped_line_;
@@ -649,9 +649,9 @@ struct AppendFittingSubpartitionsResult {
 //     <SUBPARTITION 3><SUBPARTITION 3>
 // <TRAILER>
 static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
-    VectorTree<TokenPartitionTreeWrapper>* fitted_partitions,
-    const TokenPartitionTree& header, const partition_range& subpartitions,
-    const TokenPartitionTree* trailer, const BasicFormatStyle& style,
+    VectorTree<TokenPartitionTreeWrapper> *fitted_partitions,
+    const TokenPartitionTree &header, const partition_range &subpartitions,
+    const TokenPartitionTree *trailer, const BasicFormatStyle &style,
     bool one_per_line, bool wrap_first_subpartition) {
   // at least one argument
   CHECK_GE(subpartitions.size(), 1);
@@ -659,14 +659,14 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
   // Create first partition group
   // and populate it with function name (e.g. { [function foo (] })
   fitted_partitions->Children().emplace_back(header.Value());
-  auto* group = &fitted_partitions->Children().back();
+  auto *group = &fitted_partitions->Children().back();
   group->Children().emplace_back(header);
 
   int indent;
 
   // Try appending first argument
 
-  const TokenPartitionTree& first_arg = subpartitions.front();
+  const TokenPartitionTree &first_arg = subpartitions.front();
   verible::UnwrappedLine first_line = group->Value().Value(first_arg);
   if (trailer && subpartitions.size() == 1) {
     first_line.SpanUpToToken(trailer->Value().TokensRange().end());
@@ -679,7 +679,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
       wrap_first_subpartition || !fit_result.fits;
   if (!wrapped_first_subpartition) {
     // Compute new indentation level based on first partition
-    const UnwrappedLine& uwline = group->Value().Value();
+    const UnwrappedLine &uwline = group->Value().Value();
     indent = FitsOnLine(uwline, style).final_column;
 
     // Append first argument to current group
@@ -696,7 +696,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     // Use original indentation of the subpartition
     indent = first_arg.Value().IndentationSpaces();
     // wrap line
-    auto& siblings = group->Parent()->Children();
+    auto &siblings = group->Parent()->Children();
     siblings.emplace_back(first_arg.Value());
     group = &siblings.back();
     group->Children().emplace_back(first_arg);
@@ -709,7 +709,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
 
   const auto remaining_args =
       make_container_range(subpartitions.begin() + 1, subpartitions.end());
-  for (const auto& arg : remaining_args) {
+  for (const auto &arg : remaining_args) {
     // Every group should have at least one child
     CHECK(!group->Children().empty());
 
@@ -732,7 +732,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     }
 
     // Forced one per line or does not fit, start new group with current child
-    auto& siblings = group->Parent()->Children();
+    auto &siblings = group->Parent()->Children();
     siblings.emplace_back(arg.Value());
     group = &siblings.back();
     group->Children().emplace_back(arg);
@@ -747,7 +747,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
   }
   if (trailer) {
     if (wrapped_first_subpartition) {
-      auto& siblings = group->Parent()->Children();
+      auto &siblings = group->Parent()->Children();
       siblings.emplace_back(trailer->Value());
       group = &siblings.back();
       group->Children().emplace_back(*trailer);
@@ -783,10 +783,10 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
 //
 // When "subpartitions" group has kAlwaysExpand policy, line break is forced
 // between each subpartition from the group.
-void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
-                                 TokenPartitionTree* node) {
+void ReshapeFittingSubpartitions(const BasicFormatStyle &style,
+                                 TokenPartitionTree *node) {
   VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
-  VectorTree<TokenPartitionTreeWrapper>* fitted_tree = nullptr;
+  VectorTree<TokenPartitionTreeWrapper> *fitted_tree = nullptr;
 
   // Leaf or simple node, e.g. '[function foo ( ) ;]'
   if (node->Children().size() < 2) {
@@ -795,11 +795,11 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
   }
 
   // Partition with arguments should have at least one argument
-  const auto& children = node->Children();
-  const auto& header = children[0];
-  const auto& args_partition = children[1];
-  const auto& subpartitions = args_partition.Children();
-  const auto* trailer = children.size() > 2 ? &children[2] : nullptr;
+  const auto &children = node->Children();
+  const auto &header = children[0];
+  const auto &args_partition = children[1];
+  const auto &subpartitions = args_partition.Children();
+  const auto *trailer = children.size() > 2 ? &children[2] : nullptr;
 
   const bool one_per_line = args_partition.Value().PartitionPolicy() ==
                             PartitionPolicyEnum::kAlwaysExpand;
@@ -855,7 +855,7 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
   TokenPartitionTree temporary_tree(node->Value());
 
   // Iterate over partition groups
-  for (const auto& itr : fitted_tree->Children()) {
+  for (const auto &itr : fitted_tree->Children()) {
     auto uwline = itr.Value().Value();
     // Partitions groups should fit in line but we're
     // leaving final decision to ExpandableTreeView
@@ -863,12 +863,12 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
 
     // Create new grouping node
     temporary_tree.Children().emplace_back(uwline);
-    auto* group = &temporary_tree.Children().back();
+    auto *group = &temporary_tree.Children().back();
 
     // Iterate over partitions in group
-    for (const auto& partition : itr.Children()) {
+    for (const auto &partition : itr.Children()) {
       // access partition_node_type
-      const auto* node = partition.Value().Node();
+      const auto *node = partition.Value().Node();
 
       // Append child (warning contains original indentation)
       group->Children().push_back(*node);
@@ -877,8 +877,8 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
 
   // Update grouped childrens indentation in case of expanding grouping
   // partitions
-  for (auto& group : temporary_tree.Children()) {
-    for (auto& subpart : group.Children()) {
+  for (auto &group : temporary_tree.Children()) {
+    for (auto &subpart : group.Children()) {
       AdjustIndentationAbsolute(&subpart, group.Value().IndentationSpaces());
     }
   }

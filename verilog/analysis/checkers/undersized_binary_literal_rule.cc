@@ -54,7 +54,7 @@ using verible::matcher::Matcher;
 // Register UndersizedBinaryLiteralRule
 VERILOG_REGISTER_LINT_RULE(UndersizedBinaryLiteralRule);
 
-const LintRuleDescriptor& UndersizedBinaryLiteralRule::GetDescriptor() {
+const LintRuleDescriptor &UndersizedBinaryLiteralRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "undersized-binary-literal",
       .topic = "number-literals",
@@ -79,7 +79,7 @@ const LintRuleDescriptor& UndersizedBinaryLiteralRule::GetDescriptor() {
 // Broadly, start by matching all number nodes with a
 // constant width and based literal.
 
-static const Matcher& NumberMatcher() {
+static const Matcher &NumberMatcher() {
   static const Matcher matcher(
       NodekNumber(NumberHasConstantWidth().Bind("width"),
                   NumberHasBasedLiteral().Bind("literal")));
@@ -87,21 +87,21 @@ static const Matcher& NumberMatcher() {
 }
 
 void UndersizedBinaryLiteralRule::HandleSymbol(
-    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (!NumberMatcher().Matches(symbol, &manager)) return;
-  const auto* width_leaf = manager.GetAs<SyntaxTreeLeaf>("width");
-  const auto* literal_node = manager.GetAs<SyntaxTreeNode>("literal");
+  const auto *width_leaf = manager.GetAs<SyntaxTreeLeaf>("width");
+  const auto *literal_node = manager.GetAs<SyntaxTreeNode>("literal");
   if (!width_leaf || !literal_node) return;
 
   const auto width_text = width_leaf->get().text();
   size_t width;
   if (!absl::SimpleAtoi(width_text, &width)) return;
 
-  const auto* base_leaf =
-      down_cast<const SyntaxTreeLeaf*>((*literal_node)[0].get());
-  const auto* digits_leaf =
-      down_cast<const SyntaxTreeLeaf*>((*literal_node)[1].get());
+  const auto *base_leaf =
+      down_cast<const SyntaxTreeLeaf *>((*literal_node)[0].get());
+  const auto *digits_leaf =
+      down_cast<const SyntaxTreeLeaf *>((*literal_node)[1].get());
 
   const auto base_text = base_leaf->get().text();
   const auto digits_text = digits_leaf->get().text();

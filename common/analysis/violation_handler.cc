@@ -34,16 +34,16 @@
 namespace verible {
 namespace {
 
-void PrintFix(std::ostream& stream, absl::string_view text,
-              const verible::AutoFix& fix) {
+void PrintFix(std::ostream &stream, absl::string_view text,
+              const verible::AutoFix &fix) {
   std::string after = fix.Apply(text);
   verible::LineDiffs diff(text, after);
 
   verible::LineDiffsToUnifiedDiff(stream, diff, 1);
 }
 
-void PrintFixAlternatives(std::ostream& stream, absl::string_view text,
-                          const std::vector<verible::AutoFix>& fixes) {
+void PrintFixAlternatives(std::ostream &stream, absl::string_view text,
+                          const std::vector<verible::AutoFix> &fixes) {
   const bool print_alternative_number = fixes.size() > 1;
   for (size_t i = 0; i < fixes.size(); ++i) {
     if (print_alternative_number) {
@@ -61,7 +61,7 @@ void PrintFixAlternatives(std::ostream& stream, absl::string_view text,
 }  // namespace
 
 void ViolationPrinter::HandleViolations(
-    const std::set<LintViolationWithStatus>& violations, absl::string_view base,
+    const std::set<LintViolationWithStatus> &violations, absl::string_view base,
     absl::string_view path) {
   verible::LintStatusFormatter formatter(base);
   for (auto violation : violations) {
@@ -73,7 +73,7 @@ void ViolationPrinter::HandleViolations(
 }
 
 void ViolationWaiverPrinter::HandleViolations(
-    const std::set<LintViolationWithStatus>& violations, absl::string_view base,
+    const std::set<LintViolationWithStatus> &violations, absl::string_view base,
     absl::string_view path) {
   verible::LintStatusFormatter formatter(base);
   for (auto violation : violations) {
@@ -90,7 +90,7 @@ void ViolationWaiverPrinter::HandleViolations(
 
 void ViolationFixer::CommitFixes(absl::string_view source_content,
                                  absl::string_view source_path,
-                                 const verible::AutoFix& fix) const {
+                                 const verible::AutoFix &fix) const {
   if (fix.Edits().empty()) {
     return;
   }
@@ -111,7 +111,7 @@ void ViolationFixer::CommitFixes(absl::string_view source_content,
 }
 
 void ViolationFixer::HandleViolations(
-    const std::set<LintViolationWithStatus>& violations, absl::string_view base,
+    const std::set<LintViolationWithStatus> &violations, absl::string_view base,
     absl::string_view path) {
   verible::AutoFix fix;
   verible::LintStatusFormatter formatter(base);
@@ -124,9 +124,9 @@ void ViolationFixer::HandleViolations(
 }
 
 void ViolationFixer::HandleViolation(
-    const verible::LintViolation& violation, absl::string_view base,
+    const verible::LintViolation &violation, absl::string_view base,
     absl::string_view path, absl::string_view url, absl::string_view rule_name,
-    const verible::LintStatusFormatter& formatter, verible::AutoFix* fix) {
+    const verible::LintStatusFormatter &formatter, verible::AutoFix *fix) {
   std::stringstream violation_message;
   formatter.FormatViolation(&violation_message, violation, base, path, url,
                             rule_name);
@@ -198,7 +198,7 @@ void ViolationFixer::HandleViolation(
 }
 
 ViolationFixer::Answer ViolationFixer::InteractiveAnswerChooser(
-    const verible::LintViolation& violation, absl::string_view rule_name) {
+    const verible::LintViolation &violation, absl::string_view rule_name) {
   static absl::string_view fixed_help_message =
       "n - reject fix\n"
       "a - apply this and all remaining fixes for violations of this rule\n"

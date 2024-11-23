@@ -41,13 +41,13 @@ class iterator_range {
   explicit iterator_range(std::pair<Iter, Iter> p)
       : begin_(std::move(p.first)), end_(std::move(p.second)) {}
 
-  iterator_range(const iterator_range&) = default;
-  iterator_range(iterator_range&&) noexcept = default;
-  iterator_range& operator=(const iterator_range&) = default;
-  iterator_range& operator=(iterator_range&&) noexcept = default;
+  iterator_range(const iterator_range &) = default;
+  iterator_range(iterator_range &&) noexcept = default;
+  iterator_range &operator=(const iterator_range &) = default;
+  iterator_range &operator=(iterator_range &&) noexcept = default;
 
-  const iterator& begin() const { return begin_; }
-  const iterator& end() const { return end_; }
+  const iterator &begin() const { return begin_; }
+  const iterator &end() const { return end_; }
 
  private:
   iterator begin_;

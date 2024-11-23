@@ -61,7 +61,7 @@ class TextStructureView {
   // TODO(b/136014603): Replace with expandable token stream view abstraction.
   struct DeferredExpansion {
     // Position in the syntax tree to expand (leaf or node).
-    SymbolPtr* expansion_point;
+    SymbolPtr *expansion_point;
 
     // Analysis of the substring that corresponds to the expansion_point.
     std::unique_ptr<TextStructure> subanalysis;
@@ -78,32 +78,32 @@ class TextStructureView {
   ~TextStructureView();
 
   // Do not copy/assign.  This contains pointers/iterators to internals.
-  TextStructureView(const TextStructureView&) = delete;
-  TextStructureView& operator=(const TextStructureView&) = delete;
+  TextStructureView(const TextStructureView &) = delete;
+  TextStructureView &operator=(const TextStructureView &) = delete;
 
   absl::string_view Contents() const { return contents_; }
 
-  const std::vector<absl::string_view>& Lines() const {
+  const std::vector<absl::string_view> &Lines() const {
     return lazy_lines_info_.Get(contents_).lines;
   }
 
-  const ConcreteSyntaxTree& SyntaxTree() const { return syntax_tree_; }
+  const ConcreteSyntaxTree &SyntaxTree() const { return syntax_tree_; }
 
-  ConcreteSyntaxTree& MutableSyntaxTree() { return syntax_tree_; }
+  ConcreteSyntaxTree &MutableSyntaxTree() { return syntax_tree_; }
 
-  const TokenSequence& TokenStream() const { return tokens_; }
+  const TokenSequence &TokenStream() const { return tokens_; }
 
-  TokenSequence& MutableTokenStream() { return tokens_; }
+  TokenSequence &MutableTokenStream() { return tokens_; }
 
-  const TokenStreamView& GetTokenStreamView() const { return tokens_view_; }
+  const TokenStreamView &GetTokenStreamView() const { return tokens_view_; }
 
-  TokenStreamView& MutableTokenStreamView() { return tokens_view_; }
+  TokenStreamView &MutableTokenStreamView() { return tokens_view_; }
 
   // Creates a stream of modifiable iterators to the filtered tokens.
   // Uses tokens_view_ to create the iterators.
   TokenStreamReferenceView MakeTokenStreamReferenceView();
 
-  const LineColumnMap& GetLineColumnMap() const {
+  const LineColumnMap &GetLineColumnMap() const {
     return *lazy_lines_info_.Get(contents_).line_column_map;
   }
 
@@ -114,7 +114,7 @@ class TextStructureView {
   }
 
   // Convenience function: Given the token, return the range it covers.
-  LineColumnRange GetRangeForToken(const TokenInfo& token) const;
+  LineColumnRange GetRangeForToken(const TokenInfo &token) const;
 
   // Convenience function: Given a text snippet, that needs to be a substring
   // of Contents(), return the range it covers.
@@ -123,11 +123,11 @@ class TextStructureView {
   // checks if a given text belongs to the TextStructure
   bool ContainsText(absl::string_view text) const;
 
-  const std::vector<TokenSequence::const_iterator>& GetLineTokenMap() const;
+  const std::vector<TokenSequence::const_iterator> &GetLineTokenMap() const;
 
   // Given line/column, find token that is available there. If this is out of
   // range, returns EOF.
-  TokenInfo FindTokenAt(const LineColumn& pos) const;
+  TokenInfo FindTokenAt(const LineColumn &pos) const;
 
   // Create the EOF token given the contents.
   TokenInfo EOFToken() const;
@@ -147,11 +147,11 @@ class TextStructureView {
 
   // Filter out tokens from token stream view before parsing.
   // Can be called successively with different predicates.
-  void FilterTokens(const TokenFilterPredicate&);
+  void FilterTokens(const TokenFilterPredicate &);
 
   // Apply the same transformation to the token sequence, and the tokens
   // that were copied into the syntax tree.
-  void MutateTokens(const LeafMutator& mutator);
+  void MutateTokens(const LeafMutator &mutator);
 
   // Update tokens to point their text into new (superstring) owner.
   // This is done to prepare for transfer of ownership of syntax_tree_
@@ -170,7 +170,7 @@ class TextStructureView {
   // subtrees that result from other analyses.  Memory ownership of the
   // analysis results passed through the expansions is transferred (consumed)
   // by this function.
-  void ExpandSubtrees(NodeExpansionMap* expansions);
+  void ExpandSubtrees(NodeExpansionMap *expansions);
 
   // All of this class's consistency checks combined.
   absl::Status InternalConsistencyCheck() const;
@@ -193,7 +193,7 @@ class TextStructureView {
     // Map to translate byte-offsets to line and column for diagnostics.
     std::unique_ptr<LineColumnMap> line_column_map;
 
-    const LinesInfo& Get(absl::string_view contents);
+    const LinesInfo &Get(absl::string_view contents);
   };
   // Mutable as we fill it lazily on request; conceptually the data is const.
   mutable LinesInfo lazy_lines_info_;
@@ -219,10 +219,10 @@ class TextStructureView {
   void TrimContents(int left_offset, int length);
 
   void ConsumeDeferredExpansion(
-      TokenSequence::const_iterator* next_token_iter,
-      TokenStreamView::const_iterator* next_token_view_iter,
-      DeferredExpansion* expansion, TokenSequence* combined_tokens,
-      std::vector<int>* token_view_indices, const char* offset);
+      TokenSequence::const_iterator *next_token_iter,
+      TokenStreamView::const_iterator *next_token_view_iter,
+      DeferredExpansion *expansion, TokenSequence *combined_tokens,
+      std::vector<int> *token_view_indices, const char *offset);
 
   // Resets all fields. Only needed in tests.
   void Clear();
@@ -275,19 +275,19 @@ class TextStructure {
   explicit TextStructure(absl::string_view contents);
 
  public:
-  TextStructure(const TextStructure&) = delete;
-  TextStructure& operator=(const TextStructure&) = delete;
-  TextStructure(TextStructure&&) = delete;
-  TextStructure& operator=(TextStructure&&) = delete;
+  TextStructure(const TextStructure &) = delete;
+  TextStructure &operator=(const TextStructure &) = delete;
+  TextStructure(TextStructure &&) = delete;
+  TextStructure &operator=(TextStructure &&) = delete;
 
   // DeferredExpansion::subanalysis requires this destructor to be virtual.
   virtual ~TextStructure();
 
-  const TextStructureView& Data() const { return data_; }
+  const TextStructureView &Data() const { return data_; }
 
-  TextStructureView& MutableData() { return data_; }
+  TextStructureView &MutableData() { return data_; }
 
-  const ConcreteSyntaxTree& SyntaxTree() const { return data_.SyntaxTree(); }
+  const ConcreteSyntaxTree &SyntaxTree() const { return data_.SyntaxTree(); }
 
   // Verify that string_views are inside memory owned by owned_contents_.
   absl::Status StringViewConsistencyCheck() const;

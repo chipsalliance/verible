@@ -43,7 +43,7 @@ struct UnwrapperData {
   // Array of PreFormatTokens that will be partitioned into UnwrappedLines.
   std::vector<verible::PreFormatToken> preformatted_tokens;
 
-  explicit UnwrapperData(const verible::TokenSequence&);
+  explicit UnwrapperData(const verible::TokenSequence &);
 };
 
 enum class ContextHint;
@@ -53,18 +53,18 @@ enum class ContextHint;
 // Verilog and SystemVerilog code.
 class TreeUnwrapper final : public verible::TreeUnwrapper {
  public:
-  explicit TreeUnwrapper(const verible::TextStructureView& view,
-                         const FormatStyle& style,
-                         const preformatted_tokens_type&);
+  explicit TreeUnwrapper(const verible::TextStructureView &view,
+                         const FormatStyle &style,
+                         const preformatted_tokens_type &);
 
   ~TreeUnwrapper() final;
 
   // Deleted standard interfaces:
   TreeUnwrapper() = delete;
-  TreeUnwrapper(const TreeUnwrapper&) = delete;
-  TreeUnwrapper(TreeUnwrapper&&) = delete;
-  TreeUnwrapper& operator=(const TreeUnwrapper&) = delete;
-  TreeUnwrapper& operator=(TreeUnwrapper&&) = delete;
+  TreeUnwrapper(const TreeUnwrapper &) = delete;
+  TreeUnwrapper(TreeUnwrapper &&) = delete;
+  TreeUnwrapper &operator=(const TreeUnwrapper &) = delete;
+  TreeUnwrapper &operator=(TreeUnwrapper &&) = delete;
 
   using verible::TreeUnwrapper::Unwrap;
 
@@ -78,11 +78,11 @@ class TreeUnwrapper final : public verible::TreeUnwrapper {
   // next_unfiltered_token_ up until the TokenInfo referenced by leaf.
   // \postcondition next_unfiltered_token_ points to token corresponding to
   // leaf.
-  void CatchUpToCurrentLeaf(const verible::TokenInfo& leaf_token);
+  void CatchUpToCurrentLeaf(const verible::TokenInfo &leaf_token);
 
   void LookAheadBeyondCurrentLeaf();
   void LookAheadBeyondCurrentNode();
-  void InterChildNodeHook(const verible::SyntaxTreeNode&) final;
+  void InterChildNodeHook(const verible::SyntaxTreeNode &) final;
 
   void CollectLeadingFilteredTokens() final;
 
@@ -90,23 +90,23 @@ class TreeUnwrapper final : public verible::TreeUnwrapper {
   // next_unfiltered_token_ until EOF.
   void CollectTrailingFilteredTokens() final;
 
-  void Visit(const verible::SyntaxTreeLeaf& leaf) final;
-  void Visit(const verible::SyntaxTreeNode& node) final;
+  void Visit(const verible::SyntaxTreeLeaf &leaf) final;
+  void Visit(const verible::SyntaxTreeNode &node) final;
 
-  void SetIndentationsAndCreatePartitions(const verible::SyntaxTreeNode& node);
+  void SetIndentationsAndCreatePartitions(const verible::SyntaxTreeNode &node);
 
-  void ReshapeTokenPartitions(const verible::SyntaxTreeNode& node,
-                              const FormatStyle& style,
-                              verible::TokenPartitionTree* recent_partition);
+  void ReshapeTokenPartitions(const verible::SyntaxTreeNode &node,
+                              const FormatStyle &style,
+                              verible::TokenPartitionTree *recent_partition);
 
   // Visits a node which requires a new UnwrappedLine, followed by
   // traversing all children
-  void VisitNewUnwrappedLine(const verible::SyntaxTreeNode& node);
+  void VisitNewUnwrappedLine(const verible::SyntaxTreeNode &node);
 
   // Visits a node which requires a new UnwrappedLine, followed by
   // traversing all children. The new UnwrappedLine is *not* indented,
   // which is used for flush-left constructs.
-  void VisitNewUnindentedUnwrappedLine(const verible::SyntaxTreeNode& node);
+  void VisitNewUnindentedUnwrappedLine(const verible::SyntaxTreeNode &node);
 
   // Advance next_unfiltered_token_ past any TK_SPACE tokens.
   // This is a stop-gap to help account for the change in
@@ -124,16 +124,16 @@ class TreeUnwrapper final : public verible::TreeUnwrapper {
   void AdvanceLastVisitedLeaf();
 
   // For print debugging.
-  verible::TokenWithContext VerboseToken(const verible::TokenInfo&) const;
+  verible::TokenWithContext VerboseToken(const verible::TokenInfo &) const;
 
   // For print debugging.
   verible::TokenPartitionTreePrinter VerilogPartitionPrinter(
-      const verible::TokenPartitionTree& partition) const;
+      const verible::TokenPartitionTree &partition) const;
 
   // Data members:
 
   // Formatting style configuration.
-  const FormatStyle& style_;
+  const FormatStyle &style_;
 
   // State machine for visiting non-syntax-tree tokens between leaves.
   // This determines placement of comments on unwrapped lines.
@@ -145,7 +145,7 @@ class TreeUnwrapper final : public verible::TreeUnwrapper {
     return std::find(context_hints_.rbegin(), context_hints_.rend(), hint) !=
            context_hints_.rend();
   }
-  const std::vector<ContextHint>& ContextHints() const {
+  const std::vector<ContextHint> &ContextHints() const {
     return context_hints_;
   }
   std::vector<ContextHint> context_hints_;

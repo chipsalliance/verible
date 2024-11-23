@@ -103,7 +103,7 @@ TEST(Sha256, IncrementallyAddedDigestsAreEqual) {
   auto digest = context.BuildAndReset();
 
   std::string actual = absl::BytesToHexString(absl::string_view(
-      reinterpret_cast<const char*>(digest.data()), digest.size()));
+      reinterpret_cast<const char *>(digest.data()), digest.size()));
   EXPECT_EQ(actual, kOpenSslSha256BananaDigest);
 }
 

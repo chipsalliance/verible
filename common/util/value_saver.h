@@ -22,20 +22,20 @@ namespace verible {
 template <typename T>
 class ValueSaver {
  public:
-  ValueSaver(T* p, const T& newval) : ptr_(p), oldval_(*ptr_) {
+  ValueSaver(T *p, const T &newval) : ptr_(p), oldval_(*ptr_) {
     *ptr_ = newval;
   }
   // The one-arg version just uses the current value as newval.
-  explicit ValueSaver(T* p) : ptr_(p), oldval_(*ptr_) {}
+  explicit ValueSaver(T *p) : ptr_(p), oldval_(*ptr_) {}
 
   ~ValueSaver() { *ptr_ = oldval_; }
 
-  ValueSaver(ValueSaver&&) = delete;
-  ValueSaver(const ValueSaver&) = delete;
-  ValueSaver& operator=(const ValueSaver&) = delete;
+  ValueSaver(ValueSaver &&) = delete;
+  ValueSaver(const ValueSaver &) = delete;
+  ValueSaver &operator=(const ValueSaver &) = delete;
 
  private:
-  T* const ptr_;
+  T *const ptr_;
   const T oldval_;
 };
 

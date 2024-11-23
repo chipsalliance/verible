@@ -49,7 +49,7 @@ using verible::matcher::Matcher;
 static constexpr absl::string_view kMessageStruct = "Struct names";
 static constexpr absl::string_view kMessageUnion = "Union names";
 
-const LintRuleDescriptor& StructUnionNameStyleRule::GetDescriptor() {
+const LintRuleDescriptor &StructUnionNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "struct-union-name-style",
       .topic = "struct-union-conventions",
@@ -63,13 +63,13 @@ const LintRuleDescriptor& StructUnionNameStyleRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& TypedefMatcher() {
+static const Matcher &TypedefMatcher() {
   static const Matcher matcher(NodekTypeDeclaration());
   return matcher;
 }
 
-void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
-                                            const SyntaxTreeContext& context) {
+void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
+                                            const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (TypedefMatcher().Matches(symbol, &manager)) {
     // TODO: This can be changed to checking type of child (by index) when we
@@ -78,7 +78,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     if (!is_struct && FindAllUnionTypes(symbol).empty()) return;
     const absl::string_view msg = is_struct ? kMessageStruct : kMessageUnion;
 
-    const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
+    const auto *identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
 
     if (!absl::EndsWith(name, "_t")) {
@@ -93,7 +93,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
       return;
     }
 
-    for (const auto& ns : absl::StrSplit(name, '_')) {
+    for (const auto &ns : absl::StrSplit(name, '_')) {
       if (std::all_of(ns.begin(), ns.end(), [](char c) {
             return absl::ascii_islower(c) || absl::ascii_isdigit(c);
           })) {
@@ -108,7 +108,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
       if (exceptions_.find(std::string(ns)) != exceptions_.end()) {
         continue;  // number + unit exception found
       }
-      const auto& alpha =
+      const auto &alpha =
           std::find_if(ns.begin(), ns.end(), absl::ascii_isalpha);
       const auto ns_substr = std::string(alpha, ns.end());
       if (exceptions_.find(ns_substr) == exceptions_.end()) {
@@ -132,23 +132,23 @@ absl::Status StructUnionNameStyleRule::Configure(
   if (!status.ok()) return status;
 
   if (!raw_tokens.empty()) {
-    const auto& exceptions = absl::StrSplit(raw_tokens, ',');
-    for (const auto& ex : exceptions) {
-      const auto& e =
+    const auto &exceptions = absl::StrSplit(raw_tokens, ',');
+    for (const auto &ex : exceptions) {
+      const auto &e =
           std::find_if_not(ex.begin(), ex.end(), absl::ascii_isalnum);
       if (e != ex.end()) {
         return absl::Status(absl::StatusCode::kInvalidArgument,
                             "The exception can be composed of digits and "
                             "alphabetic characters only");
       }
-      const auto& alpha =
+      const auto &alpha =
           std::find_if(ex.begin(), ex.end(), absl::ascii_isalpha);
       if (alpha == ex.end()) {
         return absl::Status(
             absl::StatusCode::kInvalidArgument,
             "The exception has to contain at least one alphabetic character");
       }
-      const auto& digit = std::find_if(alpha, ex.end(), absl::ascii_isdigit);
+      const auto &digit = std::find_if(alpha, ex.end(), absl::ascii_isdigit);
       if (digit != ex.end()) {
         return absl::Status(absl::StatusCode::kInvalidArgument,
                             "Digits after the unit are not allowed");

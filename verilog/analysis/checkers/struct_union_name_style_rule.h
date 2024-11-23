@@ -35,10 +35,10 @@ class StructUnionNameStyleRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
-  void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) final;
+  void HandleSymbol(const verible::Symbol &symbol,
+                    const verible::SyntaxTreeContext &context) final;
 
   absl::Status Configure(absl::string_view configuration) final;
 

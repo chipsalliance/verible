@@ -60,7 +60,7 @@ static bool ContainsAnyWhitespace(absl::string_view s) {
 }
 #endif
 
-const LintRuleDescriptor& LineLengthRule::GetDescriptor() {
+const LintRuleDescriptor &LineLengthRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "line-length",
       .topic = "line-length",
@@ -162,10 +162,10 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
   return false;
 }
 
-void LineLengthRule::Lint(const TextStructureView& text_structure,
+void LineLengthRule::Lint(const TextStructureView &text_structure,
                           absl::string_view) {
   size_t lineno = 0;
-  for (const auto& line : text_structure.Lines()) {
+  for (const auto &line : text_structure.Lines()) {
     const int observed_line_length = verible::utf8_len(line);
     if (observed_line_length > line_length_limit_) {
       const auto token_range = text_structure.TokenRangeOnLine(lineno);

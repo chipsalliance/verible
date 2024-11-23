@@ -53,7 +53,7 @@ namespace verilog {
 namespace formatter {
 
 // private, extern function in formatter.cc, directly tested here.
-absl::Status VerifyFormatting(const verible::TextStructureView& text_structure,
+absl::Status VerifyFormatting(const verible::TextStructureView &text_structure,
                               absl::string_view formatted_output,
                               absl::string_view filename);
 
@@ -72,7 +72,7 @@ TEST(VerifyFormattingTest, NoError) {
   const absl::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
-  const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
+  const auto &text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const auto status = VerifyFormatting(text_structure, code, "<filename>");
   EXPECT_OK(status);
 }
@@ -82,7 +82,7 @@ TEST(VerifyFormattingTest, LexError) {
   const absl::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
-  const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
+  const auto &text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const absl::string_view bad_code("1class c;endclass\n");  // lexical error
   const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
   EXPECT_FALSE(status.ok());
@@ -94,7 +94,7 @@ TEST(VerifyFormattingTest, ParseError) {
   const absl::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
-  const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
+  const auto &text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const absl::string_view bad_code("classc;endclass\n");  // syntax error
   const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
   EXPECT_FALSE(status.ok());
@@ -106,7 +106,7 @@ TEST(VerifyFormattingTest, LexicalDifference) {
   const absl::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
-  const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
+  const auto &text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const absl::string_view bad_code("class c;;endclass\n");  // different tokens
   const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
   EXPECT_FALSE(status.ok());
@@ -135,7 +135,7 @@ TEST(FormatterTest, FormatCustomStyleTest) {
   style.column_limit = 40;
   style.indentation_spaces = 10;  // unconventional indentation
   style.wrap_spaces = 4;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -15502,7 +15502,7 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  for (const auto& test_case : kFormatterTestCases) {
+  for (const auto &test_case : kFormatterTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -16483,7 +16483,7 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
   // Override some settings to test auto-inferred alignment.
   style.ApplyToAllAlignmentPolicies(AlignmentPolicy::kInferUserIntent);
 
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -16585,7 +16585,7 @@ TEST(FormatterEndToEndTest, VerilogFormatWideTest) {
   style.column_limit = 60;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  for (const auto& test_case : kFormatterWideTestCases) {
+  for (const auto &test_case : kFormatterWideTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -16635,7 +16635,7 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.port_declarations_alignment = verible::AlignmentPolicy::kPreserve;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -16729,7 +16729,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
   // Testing preservation of spaces
   style.named_parameter_alignment = AlignmentPolicy::kPreserve;
   style.named_port_alignment = AlignmentPolicy::kPreserve;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -16838,7 +16838,7 @@ TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.try_wrap_long_lines = false;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -16898,7 +16898,7 @@ TEST(FormatterEndToEndTest, ModulePortDeclarationsIndentNotWrap) {
   style.wrap_spaces = 4;
   // Indent 2 spaces instead of wrapping 4 spaces.
   style.port_declarations_indentation = IndentationStyle::kIndent;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -16946,7 +16946,7 @@ TEST(FormatterEndToEndTest, NamedPortConnectionsIndentNotWrap) {
   style.wrap_spaces = 4;
   // Indent 2 spaces instead of wrapping 4 spaces.
   style.named_port_indentation = IndentationStyle::kIndent;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -16989,7 +16989,7 @@ TEST(FormatterEndToEndTest, WrapEndElseStatements) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.wrap_end_else_clauses = true;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -17060,7 +17060,7 @@ TEST(FormatterEndToEndTest, FormalParametersIndentNotWrap) {
   style.wrap_spaces = 4;
   // Indent 2 spaces instead of wrapping 4 spaces.
   style.formal_parameters_indentation = IndentationStyle::kIndent;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -17135,7 +17135,7 @@ TEST(FormatterEndToEndTest, NamedParametersIndentNotWrap) {
   style.wrap_spaces = 4;
   // Indent 2 spaces instead of wrapping 4 spaces.
   style.named_parameter_indentation = IndentationStyle::kIndent;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -17351,7 +17351,7 @@ TEST(FormatterEndToEndTest, SelectLines) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
@@ -17479,7 +17479,7 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
       },
   };
   FormatStyle style;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -17729,7 +17729,7 @@ TEST(FormatterEndToEndTest, FormatElseStatements) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  for (const auto& test_case : kFormatterTestCasesElseStatements) {
+  for (const auto &test_case : kFormatterTestCasesElseStatements) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -17822,7 +17822,7 @@ TEST(FormatterEndToEndTest, ConstraintExpressions) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.port_declarations_alignment = verible::AlignmentPolicy::kPreserve;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -17913,7 +17913,7 @@ TEST(FormatterEndToEndTest, FormatAlignEnumDeclarations) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.enum_assignment_statement_alignment = AlignmentPolicy::kInferUserIntent;
-  for (const auto& test_case : kFormatterTestCasesEnumDeclarations) {
+  for (const auto &test_case : kFormatterTestCasesEnumDeclarations) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -17929,7 +17929,7 @@ TEST(FormatterEndToEndTest, DiagnosticShowFullTree) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  for (const auto& test_case : kFormatterTestCases) {
+  for (const auto &test_case : kFormatterTestCases) {
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
     control.stream = &debug_stream;
@@ -17948,7 +17948,7 @@ TEST(FormatterEndToEndTest, DiagnosticLargestPartitions) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  for (const auto& test_case : kFormatterTestCases) {
+  for (const auto &test_case : kFormatterTestCases) {
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
     control.stream = &debug_stream;
@@ -17967,7 +17967,7 @@ TEST(FormatterEndToEndTest, DiagnosticEquallyOptimalWrappings) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  for (const auto& test_case : kFormatterTestCases) {
+  for (const auto &test_case : kFormatterTestCases) {
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
     control.stream = &debug_stream;
@@ -18048,7 +18048,7 @@ TEST(FormatterEndToEndTest, OnelineFormatBaselineTest) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   style.expand_coverpoints = false;
-  for (const auto& test_case : kOnelineFormatBaselineTestCases) {
+  for (const auto &test_case : kOnelineFormatBaselineTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18059,7 +18059,7 @@ TEST(FormatterEndToEndTest, OnelineFormatBaselineTest) {
   }
   // Test again with the switch, should not affect formatting
   style.expand_coverpoints = true;
-  for (const auto& test_case : kOnelineFormatBaselineTestCases) {
+  for (const auto &test_case : kOnelineFormatBaselineTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18128,7 +18128,7 @@ TEST(FormatterEndToEndTest, OnelineFormatReferenceTest) {
   style.wrap_spaces = 4;
   style.expand_coverpoints = false;
 
-  for (const auto& test_case : kOnelineFormatReferenceTestCases) {
+  for (const auto &test_case : kOnelineFormatReferenceTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18149,7 +18149,7 @@ TEST(FormatterEndToEndTest, OnelineFormatExpandTest) {
   style.wrap_spaces = 4;
   style.expand_coverpoints = true;
 
-  for (const auto& test_case : kOnelineFormatExpandTestCases) {
+  for (const auto &test_case : kOnelineFormatExpandTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18287,10 +18287,10 @@ TEST(FormatterEndToEndTest, PortDeclarationDimensionsAlignmentTest) {
   static const bool right_align_combinations[][2] = {
       {false, false}, {false, true}, {true, false}, {true, true}};
 
-  for (const auto& test_case : kPortDeclarationDimensionsAlignmentTestCases) {
+  for (const auto &test_case : kPortDeclarationDimensionsAlignmentTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     size_t expected_index = 0;
-    for (const auto& right_align : right_align_combinations) {
+    for (const auto &right_align : right_align_combinations) {
       VLOG(1) << "style variant:\n"
               << "port_declarations_right_align_packed_dimensions: "
               << right_align[0] << "\n"
@@ -18348,7 +18348,7 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases40ColumnsLimit) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
 
-  for (const auto& test_case : kNestedFunctionsTestCases40ColumnsLimit) {
+  for (const auto &test_case : kNestedFunctionsTestCases40ColumnsLimit) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18392,7 +18392,7 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases60ColumnsLimit) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
 
-  for (const auto& test_case : kNestedFunctionsTestCases60ColumnsLimit) {
+  for (const auto &test_case : kNestedFunctionsTestCases60ColumnsLimit) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18446,7 +18446,7 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases80ColumnsLimit) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
 
-  for (const auto& test_case : kNestedFunctionsTestCases80ColumnsLimit) {
+  for (const auto &test_case : kNestedFunctionsTestCases80ColumnsLimit) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18517,7 +18517,7 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases100ColumnsLimit) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
 
-  for (const auto& test_case : kNestedFunctionsTestCases100ColumnsLimit) {
+  for (const auto &test_case : kNestedFunctionsTestCases100ColumnsLimit) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18546,7 +18546,7 @@ TEST(FormatterEndToEndTest, compactIndexingAndSelectionsTestCases) {
   style.wrap_spaces = 4;
   style.compact_indexing_and_selections = false;
 
-  for (const auto& test_case : noCompactIndexingAndSelectionsTestCases) {
+  for (const auto &test_case : noCompactIndexingAndSelectionsTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18607,7 +18607,7 @@ TEST(FormatterEndToEndTest, FunctionCallsWithComments) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
 
-  for (const auto& test_case : kFunctionCallsWithComments) {
+  for (const auto &test_case : kFunctionCallsWithComments) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18623,7 +18623,7 @@ TEST(FormatterEndToEndTest, FunctionCallsWithComments) {
 std::string NLCountAndfirstWord(absl::string_view str) {
   std::string result;
   int newline_count = 0;
-  const char* begin = str.begin();
+  const char *begin = str.begin();
   for (/**/; begin < str.end(); ++begin) {
     if (!isspace(*begin)) break;
     newline_count += (*begin == '\n');
@@ -18631,7 +18631,7 @@ std::string NLCountAndfirstWord(absl::string_view str) {
   // Emit number of newlines seen up to first token.
   result.append(1,
                 static_cast<char>(newline_count + '0'));  // single digit itoa
-  const char* end_str = begin;
+  const char *end_str = begin;
   for (/**/; end_str < str.end() && !isspace(*end_str); ++end_str) {
   }
   result.append(begin, end_str);
@@ -18643,13 +18643,13 @@ std::string NLCountAndfirstWord(absl::string_view str) {
 std::string lastWordAndNLCount(absl::string_view str) {
   std::string result;
   int newline_count = 0;
-  const char* back = str.end() - 1;
+  const char *back = str.end() - 1;
   for (/**/; back >= str.begin(); --back) {
     if (!isspace(*back)) break;
     newline_count += (*back == '\n');
   }
 
-  const char* start_str = back;
+  const char *start_str = back;
   for (/**/; start_str >= str.begin() && !isspace(*start_str); --start_str) {
   }
   result.append(start_str + 1, back - start_str);

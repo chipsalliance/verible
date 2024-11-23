@@ -54,9 +54,9 @@ class TokenInfo {
   TokenInfo(int token_enum, absl::string_view text)
       : token_enum_(token_enum), text_(text) {}
 
-  TokenInfo(const TokenInfo&) = default;
-  TokenInfo(TokenInfo&&) = default;
-  TokenInfo& operator=(const TokenInfo&) = default;
+  TokenInfo(const TokenInfo &) = default;
+  TokenInfo(TokenInfo &&) = default;
+  TokenInfo &operator=(const TokenInfo &) = default;
 
   // Context contains the information needed to display meaningful information
   // about a TokenInfo.
@@ -66,12 +66,12 @@ class TokenInfo {
     absl::string_view base;
 
     // Prints a human-readable interpretation form of a token enumeration.
-    std::function<void(std::ostream&, int)> token_enum_translator;
+    std::function<void(std::ostream &, int)> token_enum_translator;
 
     explicit Context(absl::string_view b);
 
     Context(absl::string_view b,
-            std::function<void(std::ostream&, int)> translator)
+            std::function<void(std::ostream &, int)> translator)
         : base(b), token_enum_translator(std::move(translator)) {}
   };
 
@@ -99,13 +99,13 @@ class TokenInfo {
   }
 
   // Writes a human-readable string representation of the token.
-  std::ostream& ToStream(std::ostream&, const Context& context) const;
+  std::ostream &ToStream(std::ostream &, const Context &context) const;
 
   // Prints token representation without byte offsets.
-  std::ostream& ToStream(std::ostream&) const;
+  std::ostream &ToStream(std::ostream &) const;
 
   // Returns a human-readable string representation of the token.
-  std::string ToString(const Context&) const;
+  std::string ToString(const Context &) const;
 
   // Prints token representation without byte offsets.
   std::string ToString() const;
@@ -123,7 +123,7 @@ class TokenInfo {
   // same length as the current string_view.
   // string_view::iterator happens to be const char*, but don't rely on that
   // fact as it can be implementation-dependent.
-  void RebaseStringView(const char* new_text) {
+  void RebaseStringView(const char *new_text) {
     RebaseStringView(absl::string_view(new_text, text_.length()));
   }
 
@@ -133,17 +133,17 @@ class TokenInfo {
   // string_views will be abutting *subranges* of 'out', and their left/right
   // offsets will be updated to be relative to out->begin().
   // This is very useful for lexer test case construction.
-  static void Concatenate(std::string* out, std::vector<TokenInfo>* tokens);
+  static void Concatenate(std::string *out, std::vector<TokenInfo> *tokens);
 
   // The default comparison operator requires that not only the contents
   // of the internal string_view be equal, but that they point to the
   // same buffer range.  See EquivalentWithoutLocation() for the variant that
   // doesn't require range equality.
-  bool operator==(const TokenInfo& token) const;
-  bool operator!=(const TokenInfo& token) const { return !(*this == token); }
+  bool operator==(const TokenInfo &token) const;
+  bool operator!=(const TokenInfo &token) const { return !(*this == token); }
 
   // Returns true if tokens are considered equivalent, ignoring location.
-  bool EquivalentWithoutLocation(const TokenInfo& token) const {
+  bool EquivalentWithoutLocation(const TokenInfo &token) const {
     return token_enum_ == token.token_enum_ &&
            (token_enum_ == TK_EOF || text_ == token.text_);
   }
@@ -151,7 +151,7 @@ class TokenInfo {
   // Returns true if tokens have equal enum and equal string length (but
   // otherwise ignoring string contents).  This is useful for verifying
   // space-preserving obfuscation transformations.
-  bool EquivalentBySpace(const TokenInfo& token) const {
+  bool EquivalentBySpace(const TokenInfo &token) const {
     return token_enum_ == token.token_enum_ &&
            (token_enum_ == TK_EOF || text_.length() == token.text_.length());
   }
@@ -165,7 +165,7 @@ class TokenInfo {
   absl::string_view text_;
 };
 
-std::ostream& operator<<(std::ostream&, const TokenInfo&);
+std::ostream &operator<<(std::ostream &, const TokenInfo &);
 
 // Streamable structure that combines a token with its detailed context.
 struct TokenWithContext {
@@ -173,7 +173,7 @@ struct TokenWithContext {
   TokenInfo::Context context;
 };
 
-std::ostream& operator<<(std::ostream&, const TokenWithContext&);
+std::ostream &operator<<(std::ostream &, const TokenWithContext &);
 
 // Joins a range of TokenInfo-like objects to form a string whose contents
 // match those of the elements's ranges, and also points the elements
@@ -182,13 +182,13 @@ std::ostream& operator<<(std::ostream&, const TokenWithContext&);
 // TokenInfo's element type must have the same interface as TokenInfo,
 // e.g. a (public) subclass of TokenInfo.
 template <class TokenIter>
-void ConcatenateTokenInfos(std::string* out, TokenIter begin, TokenIter end) {
+void ConcatenateTokenInfos(std::string *out, TokenIter begin, TokenIter end) {
   // Inspired by absl::StrCat implementation details.
 
   // Calculate total string length, used to allocate one-time.
   const auto token_range = make_range(begin, end);
   size_t total_length = 0;
-  for (const auto& token : token_range) {
+  for (const auto &token : token_range) {
     total_length += token.text().length();
   }
   out->resize(total_length);
@@ -197,7 +197,7 @@ void ConcatenateTokenInfos(std::string* out, TokenIter begin, TokenIter end) {
   // Copy text into new buffer.
   auto code_iter = out->begin();  // writeable iterator (like char*)
   int offset = 0;
-  for (auto& token : token_range) {
+  for (auto &token : token_range) {
     // Expect library/compiler to optimize this to a strcpy()/memcpy().
     code_iter = std::copy(token.text().begin(), token.text().end(), code_iter);
     const auto new_text = out_view.substr(offset, token.text().length());

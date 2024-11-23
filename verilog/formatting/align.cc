@@ -78,9 +78,9 @@ static const SyntaxTreePath::value_type kMaxPathIndex =
     std::numeric_limits<SyntaxTreePath::value_type>::max() - 1;
 
 template <class T>
-static bool TokensAreAllCommentsOrAttributes(const T& tokens) {
+static bool TokensAreAllCommentsOrAttributes(const T &tokens) {
   return std::all_of(
-      tokens.begin(), tokens.end(), [](const typename T::value_type& token) {
+      tokens.begin(), tokens.end(), [](const typename T::value_type &token) {
         const auto tag = static_cast<verilog_tokentype>(token.TokenEnum());
         return IsComment(verilog_tokentype(tag)) ||
                tag == verilog_tokentype::TK_ATTRIBUTE;
@@ -88,16 +88,16 @@ static bool TokensAreAllCommentsOrAttributes(const T& tokens) {
 }
 
 template <class T>
-static bool TokensHaveParenthesis(const T& tokens) {
+static bool TokensHaveParenthesis(const T &tokens) {
   return std::any_of(tokens.begin(), tokens.end(),
-                     [](const typename T::value_type& token) {
+                     [](const typename T::value_type &token) {
                        return token.TokenEnum() == '(';
                      });
 }
 
 static bool IgnoreCommentsAndPreprocessingDirectives(
-    const TokenPartitionTree& partition) {
-  const auto& uwline = partition.Value();
+    const TokenPartitionTree &partition) {
+  const auto &uwline = partition.Value();
 
   // ignore partitions with only non-tree tokens (comments, comma-only lines)
   if (!uwline.Origin()) return true;
@@ -113,8 +113,8 @@ static bool IgnoreCommentsAndPreprocessingDirectives(
 }
 
 static bool IgnoreWithinPortDeclarationPartitionGroup(
-    const TokenPartitionTree& partition) {
-  const auto& uwline = partition.Value();
+    const TokenPartitionTree &partition) {
+  const auto &uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
   CHECK(!token_range.empty());
   if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
@@ -128,8 +128,8 @@ static bool IgnoreWithinPortDeclarationPartitionGroup(
 }
 
 static bool IgnoreWithinStructUnionMemberPartitionGroup(
-    const TokenPartitionTree& partition) {
-  const auto& uwline = partition.Value();
+    const TokenPartitionTree &partition) {
+  const auto &uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
   CHECK(!token_range.empty());
   // TODO(mglb): Verify whether `IgnoreCommentsAndPreprocessingDirectives` can
@@ -149,7 +149,7 @@ static bool IgnoreWithinStructUnionMemberPartitionGroup(
 
   // ignore nested structs/unions
   if (verible::FindFirstSubtree(
-          partition.Value().Origin(), [](const Symbol& symbol) {
+          partition.Value().Origin(), [](const Symbol &symbol) {
             return symbol.Tag() ==
                    verible::NodeTag(NodeEnum::kStructUnionMemberList);
           }) != nullptr) {
@@ -160,11 +160,11 @@ static bool IgnoreWithinStructUnionMemberPartitionGroup(
 }
 
 static bool IgnoreWithinActualNamedParameterPartitionGroup(
-    const TokenPartitionTree& partition) {
+    const TokenPartitionTree &partition) {
   if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
 
   // ignore everything that isn't passing a parameter by name
-  const auto& uwline = partition.Value();
+  const auto &uwline = partition.Value();
   CHECK_NOTNULL(uwline.Origin());
   return !(uwline.Origin()->Kind() == verible::SymbolKind::kNode &&
            verible::SymbolCastToNode(*uwline.Origin())
@@ -172,10 +172,10 @@ static bool IgnoreWithinActualNamedParameterPartitionGroup(
 }
 
 static bool IgnoreWithinActualNamedPortPartitionGroup(
-    const TokenPartitionTree& partition) {
+    const TokenPartitionTree &partition) {
   if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
 
-  const auto& uwline = partition.Value();
+  const auto &uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
 
   // ignore wildcard connections .*
@@ -203,7 +203,7 @@ static bool IgnoreWithinActualNamedPortPartitionGroup(
   return false;
 }
 
-static bool TokenForcesLineBreak(const PreFormatToken& ftoken) {
+static bool TokenForcesLineBreak(const PreFormatToken &ftoken) {
   switch (ftoken.TokenEnum()) {
     case verilog_tokentype::TK_begin:
     case verilog_tokentype::TK_fork:
@@ -213,10 +213,10 @@ static bool TokenForcesLineBreak(const PreFormatToken& ftoken) {
   }
 }
 
-static bool IgnoreMultilineCaseStatements(const TokenPartitionTree& partition) {
+static bool IgnoreMultilineCaseStatements(const TokenPartitionTree &partition) {
   if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
 
-  const auto& uwline = partition.Value();
+  const auto &uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
 
   // Scan for any tokens that would force a line break.
@@ -226,27 +226,27 @@ static bool IgnoreMultilineCaseStatements(const TokenPartitionTree& partition) {
 
 class VerilogColumnSchemaScanner : public ColumnSchemaScanner {
  public:
-  explicit VerilogColumnSchemaScanner(const FormatStyle& style)
+  explicit VerilogColumnSchemaScanner(const FormatStyle &style)
       : style_(style) {}
 
  protected:
-  const FormatStyle& style_;
+  const FormatStyle &style_;
 };
 
 template <class ScannerType>
-std::function<verible::AlignmentCellScannerFunction(const FormatStyle&)>
+std::function<verible::AlignmentCellScannerFunction(const FormatStyle &)>
 UnstyledAlignmentCellScannerGenerator() {
-  return [](const FormatStyle& vstyle) {
+  return [](const FormatStyle &vstyle) {
     return AlignmentCellScannerGenerator<ScannerType>(
         [vstyle] { return ScannerType(vstyle); });
   };
 }
 
 template <class ScannerType>
-std::function<verible::AlignmentCellScannerFunction(const FormatStyle&)>
+std::function<verible::AlignmentCellScannerFunction(const FormatStyle &)>
 UnstyledAlignmentCellScannerGenerator(
-    const verible::NonTreeTokensScannerFunction& non_tree_column_scanner) {
-  return [non_tree_column_scanner](const FormatStyle& vstyle) {
+    const verible::NonTreeTokensScannerFunction &non_tree_column_scanner) {
+  return [non_tree_column_scanner](const FormatStyle &vstyle) {
     return AlignmentCellScannerGenerator<ScannerType>(
         [vstyle] { return ScannerType(vstyle); }, non_tree_column_scanner);
   };
@@ -257,10 +257,10 @@ UnstyledAlignmentCellScannerGenerator(
 class ActualNamedParameterColumnSchemaScanner
     : public VerilogColumnSchemaScanner {
  public:
-  explicit ActualNamedParameterColumnSchemaScanner(const FormatStyle& style)
+  explicit ActualNamedParameterColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -288,10 +288,10 @@ class ActualNamedParameterColumnSchemaScanner
 // e.g. ".port_name(net_name)"
 class ActualNamedPortColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  explicit ActualNamedPortColumnSchemaScanner(const FormatStyle& style)
+  explicit ActualNamedPortColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -319,10 +319,10 @@ class ActualNamedPortColumnSchemaScanner : public VerilogColumnSchemaScanner {
 // e.g. "input wire clk,"
 class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  explicit PortDeclarationColumnSchemaScanner(const FormatStyle& style)
+  explicit PortDeclarationColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -374,7 +374,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
         }
 
         const verible::AlignmentColumnProperties no_border(false, 0);
-        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(
+        auto *column = ABSL_DIE_IF_NULL(ReserveNewColumn(
             current_dimensions_group_, node,
             right_align ? no_border : FlushLeft, dimension_path));
 
@@ -400,11 +400,11 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
 
         const verible::AlignmentColumnProperties no_border(false, 0);
 
-        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(
+        auto *column = ABSL_DIE_IF_NULL(ReserveNewColumn(
             current_dimensions_group_, node,
             right_align ? no_border : FlushLeft, dimension_path));
 
-        const auto& column_path = column->Value().path;
+        const auto &column_path = column->Value().path;
         // Value can be empty - set paths explicitly
         ReserveNewColumn(column, *node[0], right_align ? no_border : FlushLeft,
                          GetSubpath(column_path, {0}));  // '['
@@ -442,7 +442,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     const int tag = leaf.get().token_enum();
@@ -488,17 +488,17 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
   }
 
  private:
-  verible::ColumnPositionTree* current_dimensions_group_ = nullptr;
+  verible::ColumnPositionTree *current_dimensions_group_ = nullptr;
 };
 
 // This class marks up token-subranges in struct/union members for alignment.
 // e.g. bit [31:0] member_name;
 class StructUnionMemberColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  explicit StructUnionMemberColumnSchemaScanner(const FormatStyle& style)
+  explicit StructUnionMemberColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -524,7 +524,7 @@ class StructUnionMemberColumnSchemaScanner : public VerilogColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     const int tag = leaf.get().token_enum();
@@ -548,13 +548,13 @@ class StructUnionMemberColumnSchemaScanner : public VerilogColumnSchemaScanner {
   }
 };
 
-static bool IsAlignableDeclaration(const SyntaxTreeNode& node) {
+static bool IsAlignableDeclaration(const SyntaxTreeNode &node) {
   // A data/net/variable declaration is alignable if:
   // * it is not a module instance
   // * it declares exactly one identifier
   switch (static_cast<NodeEnum>(node.Tag().tag)) {
     case NodeEnum::kDataDeclaration: {
-      const SyntaxTreeNode* instances(GetInstanceListFromDataDeclaration(node));
+      const SyntaxTreeNode *instances(GetInstanceListFromDataDeclaration(node));
       if (!instances) return false;
       if (FindAllRegisterVariables(*instances).size() > 1) return false;
       return FindAllGateInstances(*instances).empty();
@@ -598,19 +598,19 @@ static AlignedPartitionClassification AlignClassify(
 }
 
 static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
-    const TokenPartitionRange& partitions) {
+    const TokenPartitionRange &partitions) {
   VLOG(2) << __FUNCTION__;
   return GetPartitionAlignmentSubranges(
       partitions,  //
-      [](const TokenPartitionTree& partition)
+      [](const TokenPartitionTree &partition)
           -> AlignedPartitionClassification {
-        const Symbol* origin = partition.Value().Origin();
+        const Symbol *origin = partition.Value().Origin();
         if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return AlignClassify(AlignmentGroupAction::kIgnore);
         }
-        const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
+        const SyntaxTreeNode &node = verible::SymbolCastToNode(*origin);
         // Align net/variable declarations.
         if (IsAlignableDeclaration(node)) {
           return AlignClassify(AlignmentGroupAction::kMatch,
@@ -626,19 +626,19 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
 }
 
 static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
-    const TokenPartitionRange& partitions) {
+    const TokenPartitionRange &partitions) {
   VLOG(2) << __FUNCTION__;
   return GetPartitionAlignmentSubranges(
       partitions,  //
-      [](const TokenPartitionTree& partition)
+      [](const TokenPartitionTree &partition)
           -> AlignedPartitionClassification {
-        const Symbol* origin = partition.Value().Origin();
+        const Symbol *origin = partition.Value().Origin();
         if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return {AlignmentGroupAction::kIgnore};
         }
-        const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
+        const SyntaxTreeNode &node = verible::SymbolCastToNode(*origin);
         // Align class member variables.
         return AlignClassify(IsAlignableDeclaration(node)
                                  ? AlignmentGroupAction::kMatch
@@ -648,19 +648,19 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
 }
 
 static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
-    const TokenPartitionRange& partitions) {
+    const TokenPartitionRange &partitions) {
   VLOG(2) << __FUNCTION__;
   return GetPartitionAlignmentSubranges(
       partitions,  //
-      [](const TokenPartitionTree& partition)
+      [](const TokenPartitionTree &partition)
           -> AlignedPartitionClassification {
-        const Symbol* origin = partition.Value().Origin();
+        const Symbol *origin = partition.Value().Origin();
         if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return AlignClassify(AlignmentGroupAction::kIgnore);
         }
-        const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
+        const SyntaxTreeNode &node = verible::SymbolCastToNode(*origin);
         // Align local variable declarations.
         if (IsAlignableDeclaration(node)) {
           return AlignClassify(AlignmentGroupAction::kMatch,
@@ -691,10 +691,10 @@ static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
 // TODO(fangism): refactor out common logic
 class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  explicit DataDeclarationColumnSchemaScanner(const FormatStyle& style)
+  explicit DataDeclarationColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -735,7 +735,7 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
       }
       case NodeEnum::kDimensionScalar: {
         CHECK_EQ(node.size(), 3);
-        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
+        auto *column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
 
         ReserveNewColumn(column, *node[0], FlushLeft);   // '['
         ReserveNewColumn(column, *node[1], FlushRight);  // value
@@ -744,7 +744,7 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
       }
       case NodeEnum::kDimensionRange: {
         CHECK_EQ(node.size(), 5);
-        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushRight));
+        auto *column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushRight));
 
         // The value returned from this call can be used to
         // center the ranges instead of right-align which
@@ -798,7 +798,7 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
     VLOG(2) << "end of " << __FUNCTION__ << ", node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     if (new_column_after_open_bracket_) {
@@ -838,10 +838,10 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
 // re-use the same column scanner as data/variable/net declarations.
 class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  explicit ClassPropertyColumnSchemaScanner(const FormatStyle& style)
+  explicit ClassPropertyColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -863,7 +863,7 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
       }
       case NodeEnum::kDimensionScalar: {
         CHECK_EQ(node.size(), 3);
-        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
+        auto *column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
 
         ReserveNewColumn(column, *node[0], FlushLeft);   // '['
         ReserveNewColumn(column, *node[1], FlushRight);  // value
@@ -872,12 +872,12 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
       }
       case NodeEnum::kDimensionRange: {
         CHECK_EQ(node.size(), 5);
-        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
+        auto *column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
 
         SyntaxTreePath np;
         ReserveNewColumn(column, *node[0], FlushLeft);  // '['
 
-        auto* value_subcolumn =
+        auto *value_subcolumn =
             ABSL_DIE_IF_NULL(ReserveNewColumn(column, *node[1], FlushRight));
         ReserveNewColumn(value_subcolumn, *node[1], FlushRight);  // LHS value
         ReserveNewColumn(value_subcolumn, *node[2], FlushLeft);   // ':'
@@ -893,7 +893,7 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
     VLOG(2) << "end of " << __FUNCTION__ << ", node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     const int tag = leaf.get().token_enum();
@@ -914,10 +914,10 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
 class ParameterDeclarationColumnSchemaScanner
     : public VerilogColumnSchemaScanner {
  public:
-  explicit ParameterDeclarationColumnSchemaScanner(const FormatStyle& style)
+  explicit ParameterDeclarationColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -956,7 +956,7 @@ class ParameterDeclarationColumnSchemaScanner
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
 
@@ -1049,7 +1049,7 @@ class ParameterDeclarationColumnSchemaScanner
 // items.
 class CaseItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  explicit CaseItemColumnSchemaScanner(const FormatStyle& style)
+  explicit CaseItemColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
   bool ParentContextIsCaseItem() const {
@@ -1058,7 +1058,7 @@ class CaseItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
          NodeEnum::kGenerateCaseItem, NodeEnum::kDefaultItem});
   }
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -1088,7 +1088,7 @@ class CaseItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     const int tag = leaf.get().token_enum();
@@ -1116,10 +1116,10 @@ class CaseItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
 // * foo <= bar;
 class AssignmentColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  explicit AssignmentColumnSchemaScanner(const FormatStyle& style)
+  explicit AssignmentColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -1142,7 +1142,7 @@ class AssignmentColumnSchemaScanner : public VerilogColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     const int tag = leaf.get().token_enum();
@@ -1174,10 +1174,10 @@ class AssignmentColumnSchemaScanner : public VerilogColumnSchemaScanner {
 class EnumWithAssignmentsColumnSchemaScanner
     : public VerilogColumnSchemaScanner {
  public:
-  explicit EnumWithAssignmentsColumnSchemaScanner(const FormatStyle& style)
+  explicit EnumWithAssignmentsColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -1201,7 +1201,7 @@ class EnumWithAssignmentsColumnSchemaScanner
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
 
@@ -1218,10 +1218,10 @@ class EnumWithAssignmentsColumnSchemaScanner
 // Distribution items should align on the :/ and := operators.
 class DistItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  explicit DistItemColumnSchemaScanner(const FormatStyle& style)
+  explicit DistItemColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     const auto tag = NodeEnum(node.Tag().tag);
     switch (tag) {
       case NodeEnum::kDistributionItem:
@@ -1254,7 +1254,7 @@ class DistItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
     TreeContextPathVisitor::Visit(node);  // Recurse down.
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     switch (leaf.get().token_enum()) {
       case verilog_tokentype::TK_COLON_EQ:
       case verilog_tokentype::TK_COLON_DIV: {
@@ -1267,13 +1267,13 @@ class DistItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
   }
 
  private:
-  verible::ColumnPositionTree* item_column_ = nullptr;
+  verible::ColumnPositionTree *item_column_ = nullptr;
 };
 
 static std::function<
-    std::vector<TaggedTokenPartitionRange>(const TokenPartitionRange&)>
+    std::vector<TaggedTokenPartitionRange>(const TokenPartitionRange &)>
 PartitionBetweenBlankLines(AlignableSyntaxSubtype subtype) {
-  return [subtype](const TokenPartitionRange& range) {
+  return [subtype](const TokenPartitionRange &range) {
     return verible::GetSubpartitionsBetweenBlankLinesSingleTag(
         range, static_cast<int>(subtype));
   };
@@ -1282,9 +1282,9 @@ PartitionBetweenBlankLines(AlignableSyntaxSubtype subtype) {
 // Each alignment group subtype maps to a set of functions.
 struct AlignmentGroupHandlers {
   std::function<verible::AlignmentCellScannerFunction(
-      const FormatStyle& vstyle)>
+      const FormatStyle &vstyle)>
       column_scanner_func;
-  std::function<verible::AlignmentPolicy(const FormatStyle& vstyle)>
+  std::function<verible::AlignmentPolicy(const FormatStyle &vstyle)>
       policy_func;
 };
 
@@ -1292,9 +1292,9 @@ struct AlignmentGroupHandlers {
 // Returns the referenced member by value.
 // TODO(fangism): move this to an STL-style util/functional library
 template <typename MemberType, typename StructType>
-std::function<MemberType(const StructType&)> function_from_pointer_to_member(
+std::function<MemberType(const StructType &)> function_from_pointer_to_member(
     MemberType StructType::*member) {
-  return [member](const StructType& obj) { return obj.*member; };
+  return [member](const StructType &obj) { return obj.*member; };
 }
 
 using AlignmentHandlerMapType =
@@ -1303,7 +1303,7 @@ using AlignmentHandlerMapType =
 static void non_tree_column_scanner(
     verible::FormatTokenRange leading_tokens,
     verible::FormatTokenRange trailing_tokens,
-    verible::ColumnPositionTree* column_entries) {
+    verible::ColumnPositionTree *column_entries) {
   static const SyntaxTreePath kLeadingTokensPath = {
       kLeadingNonTreeTokenPathIndex};
   static const SyntaxTreePath kTrailingCommaPath = {
@@ -1325,7 +1325,7 @@ static void non_tree_column_scanner(
 
   const auto separator_it =
       std::find_if(trailing_tokens.begin(), trailing_tokens.end(),
-                   [](const PreFormatToken& tok) {
+                   [](const PreFormatToken &tok) {
                      return tok.TokenEnum() == ',' || tok.TokenEnum() == ':';
                    });
 
@@ -1353,8 +1353,8 @@ static void non_tree_column_scanner(
 // This organization lets the same handlers be re-used in multiple
 // syntactic contexts, e.g. data declarations can be module items and
 // generate items and block statement items.
-static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
-  static const auto* handler_map = new AlignmentHandlerMapType{
+static const AlignmentHandlerMapType &AlignmentHandlerLibrary() {
+  static const auto *handler_map = new AlignmentHandlerMapType{
       {AlignableSyntaxSubtype::kDataDeclaration,
        {UnstyledAlignmentCellScannerGenerator<
             DataDeclarationColumnSchemaScanner>(),
@@ -1418,16 +1418,16 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
 }
 
 static verible::AlignmentCellScannerFunction AlignmentColumnScannerSelector(
-    const FormatStyle& vstyle, int subtype) {
-  static const auto& handler_map = AlignmentHandlerLibrary();
+    const FormatStyle &vstyle, int subtype) {
+  static const auto &handler_map = AlignmentHandlerLibrary();
   const auto iter = handler_map.find(AlignableSyntaxSubtype(subtype));
   CHECK(iter != handler_map.end()) << "subtype: " << subtype;
   return iter->second.column_scanner_func(vstyle);
 }
 
 static verible::AlignmentPolicy AlignmentPolicySelector(
-    const FormatStyle& vstyle, int subtype) {
-  static const auto& handler_map = AlignmentHandlerLibrary();
+    const FormatStyle &vstyle, int subtype) {
+  static const auto &handler_map = AlignmentHandlerLibrary();
   const auto iter = handler_map.find(AlignableSyntaxSubtype(subtype));
   CHECK(iter != handler_map.end()) << "subtype: " << subtype;
   return iter->second.policy_func(vstyle);
@@ -1435,14 +1435,14 @@ static verible::AlignmentPolicy AlignmentPolicySelector(
 
 static std::vector<AlignablePartitionGroup> ExtractAlignablePartitionGroups(
     const std::function<std::vector<TaggedTokenPartitionRange>(
-        const TokenPartitionRange&)>& group_extractor,
-    const verible::IgnoreAlignmentRowPredicate& ignore_group_predicate,
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+        const TokenPartitionRange &)> &group_extractor,
+    const verible::IgnoreAlignmentRowPredicate &ignore_group_predicate,
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   const std::vector<TaggedTokenPartitionRange> ranges(
       group_extractor(full_range));
   std::vector<AlignablePartitionGroup> groups;
   groups.reserve(ranges.size());
-  for (const auto& range : ranges) {
+  for (const auto &range : ranges) {
     // Use the alignment scanner and policy that correspond to the
     // match_subtype.  This supports aligning a heterogenous collection of
     // alignable partition groups from the same parent partition (full_range).
@@ -1457,24 +1457,24 @@ static std::vector<AlignablePartitionGroup> ExtractAlignablePartitionGroups(
 
 using AlignSyntaxGroupsFunction =
     std::function<std::vector<AlignablePartitionGroup>(
-        const TokenPartitionRange& range, const FormatStyle& style)>;
+        const TokenPartitionRange &range, const FormatStyle &style)>;
 
 static std::vector<AlignablePartitionGroup> AlignPortDeclarations(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kPortDeclaration),
       &IgnoreWithinPortDeclarationPartitionGroup, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignStructUnionMembers(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kStructUnionMember),
       &IgnoreWithinStructUnionMemberPartitionGroup, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(
           AlignableSyntaxSubtype::kNamedActualParameters),
@@ -1482,14 +1482,14 @@ static std::vector<AlignablePartitionGroup> AlignActualNamedParameters(
 }
 
 static std::vector<AlignablePartitionGroup> AlignActualNamedPorts(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kNamedActualPorts),
       &IgnoreWithinActualNamedPortPartitionGroup, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignModuleItems(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   // Currently, this only handles data/net/variable declarations.
   // TODO(b/161814377): align continuous assignments
   return ExtractAlignablePartitionGroups(
@@ -1498,7 +1498,7 @@ static std::vector<AlignablePartitionGroup> AlignModuleItems(
 }
 
 static std::vector<AlignablePartitionGroup> AlignClassItems(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   // TODO(fangism): align other class items besides member variables.
   return ExtractAlignablePartitionGroups(
       &GetConsecutiveClassItemGroups, &IgnoreCommentsAndPreprocessingDirectives,
@@ -1506,56 +1506,56 @@ static std::vector<AlignablePartitionGroup> AlignClassItems(
 }
 
 static std::vector<AlignablePartitionGroup> AlignCaseItems(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kCaseLikeItems),
       &IgnoreMultilineCaseStatements, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignEnumItems(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kEnumListAssignment),
       &IgnoreCommentsAndPreprocessingDirectives, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kParameterDeclaration),
       &IgnoreWithinPortDeclarationPartitionGroup, full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignStatements(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   return ExtractAlignablePartitionGroups(
       &GetAlignableStatementGroups, &IgnoreCommentsAndPreprocessingDirectives,
       full_range, vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignDistItems(
-    const TokenPartitionRange& full_range, const FormatStyle& vstyle) {
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   return ExtractAlignablePartitionGroups(
       PartitionBetweenBlankLines(AlignableSyntaxSubtype::kDistItem),
       &IgnoreCommentsAndPreprocessingDirectives, full_range, vstyle);
 }
 
-void TabularAlignTokenPartitions(const FormatStyle& style,
+void TabularAlignTokenPartitions(const FormatStyle &style,
                                  absl::string_view full_text,
-                                 const ByteOffsetSet& disabled_byte_ranges,
-                                 TokenPartitionTree* partition_ptr) {
+                                 const ByteOffsetSet &disabled_byte_ranges,
+                                 TokenPartitionTree *partition_ptr) {
   VLOG(1) << __FUNCTION__;
-  auto& partition = *partition_ptr;
-  auto& uwline = partition.Value();
-  const auto* origin = uwline.Origin();
+  auto &partition = *partition_ptr;
+  auto &uwline = partition.Value();
+  const auto *origin = uwline.Origin();
   VLOG(2) << "origin is nullptr? " << (origin == nullptr);
   if (origin == nullptr) return;
-  const auto* node = down_cast<const SyntaxTreeNode*>(origin);
+  const auto *node = down_cast<const SyntaxTreeNode *>(origin);
   VLOG(2) << "origin is node? " << (node != nullptr);
   if (node == nullptr) return;
   // Dispatch aligning function based on syntax tree node type.
 
-  static const auto* const kAlignHandlers =
+  static const auto *const kAlignHandlers =
       new std::map<NodeEnum, AlignSyntaxGroupsFunction>{
           {NodeEnum::kPortDeclarationList, &AlignPortDeclarations},
           {NodeEnum::kPortList, &AlignPortDeclarations},
@@ -1580,7 +1580,7 @@ void TabularAlignTokenPartitions(const FormatStyle& style,
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
 
-  const AlignSyntaxGroupsFunction& alignment_partitioner = handler_iter->second;
+  const AlignSyntaxGroupsFunction &alignment_partitioner = handler_iter->second;
   const ExtractAlignmentGroupsFunction extract_alignment_groups =
       std::bind(alignment_partitioner, std::placeholders::_1, style);
 

@@ -49,8 +49,8 @@ using FTT = FormatTokenType;
 // This value must be negative.
 static constexpr int kUnhandledSpacesRequired = -1;
 
-static bool IsUnaryPrefixExpressionOperand(const PreFormatToken& left,
-                                           const SyntaxTreeContext& context) {
+static bool IsUnaryPrefixExpressionOperand(const PreFormatToken &left,
+                                           const SyntaxTreeContext &context) {
   return (IsUnaryOperator(verilog_tokentype(left.TokenEnum())) &&
           context.IsInsideFirst({NodeEnum::kUnaryPrefixExpression},
                                 {NodeEnum::kExpression})) ||
@@ -58,8 +58,8 @@ static bool IsUnaryPrefixExpressionOperand(const PreFormatToken& left,
          left.TokenEnum() == verilog_tokentype::TK_POUNDPOUND;
 }
 
-static bool IsInsideNumericLiteral(const PreFormatToken& left,
-                                   const PreFormatToken& right) {
+static bool IsInsideNumericLiteral(const PreFormatToken &left,
+                                   const PreFormatToken &right) {
   return (left.format_token_enum == FormatTokenType::numeric_literal &&
           right.format_token_enum == FormatTokenType::numeric_base) ||
          left.format_token_enum == FormatTokenType::numeric_base;
@@ -102,25 +102,25 @@ static bool IsKeywordCallable(verilog_tokentype e) {
 //   number id/kw : would result in a bad identifier (lexer)
 //   id/kw number : would result in a (different) identifier
 //   id/kw id/kw : would result in a (different) identifier
-static bool PairwiseNonmergeable(const PreFormatToken& ftoken) {
+static bool PairwiseNonmergeable(const PreFormatToken &ftoken) {
   return ftoken.TokenEnum() == TK_DecNumber ||
          ftoken.format_token_enum == FormatTokenType::identifier ||
          ftoken.format_token_enum == FormatTokenType::keyword;
 }
 
-static bool InDeclaredDimensions(const SyntaxTreeContext& context) {
+static bool InDeclaredDimensions(const SyntaxTreeContext &context) {
   return context.IsInsideFirst(
       {NodeEnum::kPackedDimensions, NodeEnum::kUnpackedDimensions}, {});
 }
 
-static bool InRangeLikeContext(const SyntaxTreeContext& context) {
+static bool InRangeLikeContext(const SyntaxTreeContext &context) {
   return context.IsInsideFirst(
       {NodeEnum::kDimensionScalar, NodeEnum::kDimensionRange,
        NodeEnum::kDimensionSlice, NodeEnum::kCycleDelayRange},
       {});
 }
 
-static bool IsAnySemicolon(const PreFormatToken& ftoken) {
+static bool IsAnySemicolon(const PreFormatToken &ftoken) {
   // These are just syntactically disambiguated versions of ';'.
   return ftoken.TokenEnum() == ';' ||
          ftoken.TokenEnum() ==
@@ -131,9 +131,9 @@ static bool IsAnySemicolon(const PreFormatToken& ftoken) {
 // Returning kUnhandledSpacesRequired means the case was not explicitly
 // handled, and it is up to the caller to decide what to do when this happens.
 static WithReason<int> SpacesRequiredBetween(
-    const PreFormatToken& left, const PreFormatToken& right,
-    const SyntaxTreeContext& left_context,
-    const SyntaxTreeContext& right_context, const FormatStyle& style) {
+    const PreFormatToken &left, const PreFormatToken &right,
+    const SyntaxTreeContext &left_context,
+    const SyntaxTreeContext &right_context, const FormatStyle &style) {
   VLOG(3) << "Spacing between " << verilog_symbol_name(left.TokenEnum())
           << " and " << verilog_symbol_name(right.TokenEnum());
   // Higher precedence rules should be handled earlier in this function.
@@ -561,9 +561,9 @@ struct SpacePolicy {
 };
 
 static SpacePolicy SpacesRequiredBetween(
-    const FormatStyle& style, const PreFormatToken& left,
-    const PreFormatToken& right, const SyntaxTreeContext& left_context,
-    const SyntaxTreeContext& right_context) {
+    const FormatStyle &style, const PreFormatToken &left,
+    const PreFormatToken &right, const SyntaxTreeContext &left_context,
+    const SyntaxTreeContext &right_context) {
   // Default for unhandled cases, 1 space to be conservative.
   constexpr int kUnhandledSpacesDefault = 1;
   const auto spaces =
@@ -583,7 +583,7 @@ static SpacePolicy SpacesRequiredBetween(
 
 // Context-independent break penalty factor.
 static WithReason<int> BreakPenaltyBetweenTokens(
-    const verible::PreFormatToken& left, const verible::PreFormatToken& right) {
+    const verible::PreFormatToken &left, const verible::PreFormatToken &right) {
   // Higher precedence rules should be handled earlier in this function.
   if (left.format_token_enum == FormatTokenType::identifier &&
       right.format_token_enum == FormatTokenType::open_group) {
@@ -634,13 +634,13 @@ static WithReason<int> BreakPenaltyBetweenTokens(
   return {0, "no further adjustment (default)"};
 }
 
-static int CommonAncestors(const SyntaxTreeContext& left,
-                           const SyntaxTreeContext& right) {
+static int CommonAncestors(const SyntaxTreeContext &left,
+                           const SyntaxTreeContext &right) {
   // TODO(fangism): re-check of common ancestry is slow (linear-time),
   // and could be avoided by memoizing the point of common ancestry between
   // leaves *during* the traversal.
-  const auto* shorter = &left;
-  const auto* longer = &right;
+  const auto *shorter = &left;
+  const auto *longer = &right;
   // For C++11 compatibility, we use the 3-iterator form of std::mismatch().
   if (shorter->size() > longer->size()) std::swap(shorter, longer);
   const auto first_mismatches =
@@ -655,8 +655,8 @@ static int CommonAncestors(const SyntaxTreeContext& left,
 }
 
 // Token-independent break penalty factor.
-static int ContextBasedPenalty(const SyntaxTreeContext& left_context,
-                               const SyntaxTreeContext& right_context) {
+static int ContextBasedPenalty(const SyntaxTreeContext &left_context,
+                               const SyntaxTreeContext &right_context) {
   // This factor takes into account syntax tree depth, favoring keeping
   // elements deeper in the tree closer together.
   // The current simple model gives equal weight to every element in the
@@ -669,9 +669,9 @@ static int ContextBasedPenalty(const SyntaxTreeContext& left_context,
 }
 
 static WithReason<int> TokensWithContextBreakPenalty(
-    const verible::PreFormatToken& left, const verible::PreFormatToken& right,
-    const SyntaxTreeContext& left_context,
-    const SyntaxTreeContext& right_context) {
+    const verible::PreFormatToken &left, const verible::PreFormatToken &right,
+    const SyntaxTreeContext &left_context,
+    const SyntaxTreeContext &right_context) {
   const verilog_tokentype left_type =
       static_cast<verilog_tokentype>(left.TokenEnum());
   const verilog_tokentype right_type =
@@ -699,9 +699,9 @@ static WithReason<int> TokensWithContextBreakPenalty(
 
 // Returns the split penalty for line-breaking before the right token.
 static WithReason<int> BreakPenaltyBetween(
-    const verible::PreFormatToken& left, const verible::PreFormatToken& right,
-    const SyntaxTreeContext& left_context,
-    const SyntaxTreeContext& right_context) {
+    const verible::PreFormatToken &left, const verible::PreFormatToken &right,
+    const SyntaxTreeContext &left_context,
+    const SyntaxTreeContext &right_context) {
   VLOG(3) << "Inter-token penalty between "
           << verilog_symbol_name(left.TokenEnum()) << " and "
           << verilog_symbol_name(right.TokenEnum());
@@ -732,9 +732,9 @@ static WithReason<int> BreakPenaltyBetween(
 
 // Returns decision whether to break, not break, or evaluate both choices.
 static WithReason<SpacingOptions> BreakDecisionBetween(
-    const FormatStyle& style, const PreFormatToken& left,
-    const PreFormatToken& right, const SyntaxTreeContext& left_context,
-    const SyntaxTreeContext& right_context) {
+    const FormatStyle &style, const PreFormatToken &left,
+    const PreFormatToken &right, const SyntaxTreeContext &left_context,
+    const SyntaxTreeContext &right_context) {
   // For now, leave everything inside [dimensions] alone.
   if (InDeclaredDimensions(right_context)) {
     // ... except for the spacing immediately around '[' and ']',
@@ -922,11 +922,11 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
 // Extern linkage for sake of direct testing, though not exposed in public
 // headers.
 // TODO(fangism): could move this to a -internal.h header.
-void AnnotateFormatToken(const FormatStyle& style,
-                         const PreFormatToken& prev_token,
-                         PreFormatToken* curr_token,
-                         const SyntaxTreeContext& prev_context,
-                         const SyntaxTreeContext& curr_context) {
+void AnnotateFormatToken(const FormatStyle &style,
+                         const PreFormatToken &prev_token,
+                         PreFormatToken *curr_token,
+                         const SyntaxTreeContext &prev_context,
+                         const SyntaxTreeContext &curr_context) {
   const auto p = SpacesRequiredBetween(style, prev_token, *curr_token,
                                        prev_context, curr_context);
   curr_token->before.spaces_required = p.spaces_required;
@@ -948,8 +948,8 @@ void AnnotateFormatToken(const FormatStyle& style,
 }
 
 void AnnotateFormattingInformation(
-    const FormatStyle& style, const verible::TextStructureView& text_structure,
-    std::vector<verible::PreFormatToken>* format_tokens) {
+    const FormatStyle &style, const verible::TextStructureView &text_structure,
+    std::vector<verible::PreFormatToken> *format_tokens) {
   // This interface just forwards the relevant information from text_structure.
   AnnotateFormattingInformation(style, text_structure.Contents().begin(),
                                 text_structure.SyntaxTree().get(),
@@ -957,10 +957,10 @@ void AnnotateFormattingInformation(
 }
 
 void AnnotateFormattingInformation(
-    const FormatStyle& style, const char* buffer_start,
-    const verible::Symbol* syntax_tree_root,
-    const verible::TokenInfo& eof_token,
-    std::vector<verible::PreFormatToken>* format_tokens) {
+    const FormatStyle &style, const char *buffer_start,
+    const verible::Symbol *syntax_tree_root,
+    const verible::TokenInfo &eof_token,
+    std::vector<verible::PreFormatToken> *format_tokens) {
   if (format_tokens->empty()) {
     return;
   }
@@ -975,9 +975,9 @@ void AnnotateFormattingInformation(
   AnnotateFormatTokensUsingSyntaxContext(
       syntax_tree_root, eof_token, format_tokens->begin(), format_tokens->end(),
       // lambda: bind the FormatStyle, forwarding all other arguments
-      [&style](const PreFormatToken& prev_token, PreFormatToken* curr_token,
-               const SyntaxTreeContext& prev_context,
-               const SyntaxTreeContext& current_context) {
+      [&style](const PreFormatToken &prev_token, PreFormatToken *curr_token,
+               const SyntaxTreeContext &prev_context,
+               const SyntaxTreeContext &current_context) {
         AnnotateFormatToken(style, prev_token, curr_token, prev_context,
                             current_context);
       });

@@ -46,24 +46,24 @@ namespace verible {
 namespace {
 
 template <typename T>
-std::string ToString(const T& value) {
+std::string ToString(const T &value) {
   std::ostringstream s;
   s << value;
   return s.str();
 }
 
-std::ostream& PrintIndented(std::ostream& stream, absl::string_view str,
+std::ostream &PrintIndented(std::ostream &stream, absl::string_view str,
                             int indentation) {
-  for (const auto& line : verible::SplitLinesKeepLineTerminator(str)) {
+  for (const auto &line : verible::SplitLinesKeepLineTerminator(str)) {
     stream << verible::Spacer(indentation) << line;
   }
   return stream;
 }
 
 template <typename Value>
-void PrintInvalidValueMessage(std::ostream& stream,
-                              absl::string_view value_name, const Value& actual,
-                              const Value& expected, int indentation = 0,
+void PrintInvalidValueMessage(std::ostream &stream,
+                              absl::string_view value_name, const Value &actual,
+                              const Value &expected, int indentation = 0,
                               bool multiline = false) {
   using ::testing::PrintToString;
   using verible::Spacer;
@@ -80,8 +80,8 @@ void PrintInvalidValueMessage(std::ostream& stream,
   }
 }
 
-void ExpectLayoutFunctionsEqual(const LayoutFunction& actual,
-                                const LayoutFunction& expected, int line_no) {
+void ExpectLayoutFunctionsEqual(const LayoutFunction &actual,
+                                const LayoutFunction &expected, int line_no) {
   using ::testing::PrintToString;
   std::ostringstream msg;
   if (actual.size() != expected.size()) {
@@ -146,7 +146,7 @@ TEST(LayoutTypeTest, ToString) {
   EXPECT_EQ(ToString(static_cast<LayoutType>(-1)), "???");
 }
 
-bool TokenRangeEqual(const UnwrappedLine& left, const UnwrappedLine& right) {
+bool TokenRangeEqual(const UnwrappedLine &left, const UnwrappedLine &right) {
   return left.TokensRange() == right.TokensRange();
 }
 
@@ -382,7 +382,7 @@ TEST_F(LayoutFunctionTest, Iteration) {
     EXPECT_EQ(it->column, 0);
 
     auto column_it = columns.begin();
-    for (auto& segment : layout_function_) {
+    for (auto &segment : layout_function_) {
       EXPECT_EQ(segment.column, *column_it);
       EXPECT_NE(column_it, columns.end());
       ++column_it;
@@ -396,7 +396,7 @@ TEST_F(LayoutFunctionTest, Iteration) {
     EXPECT_EQ(it->column, 0);
 
     auto column_it = columns.begin();
-    for (auto& segment : const_layout_function_) {
+    for (auto &segment : const_layout_function_) {
       EXPECT_EQ(segment.column, *column_it);
       EXPECT_NE(column_it, columns.end());
       ++column_it;
@@ -408,7 +408,7 @@ TEST_F(LayoutFunctionTest, Iteration) {
 
     auto it = empty_layout_function.begin();
     EXPECT_EQ(it, empty_layout_function.end());
-    for (auto& segment [[maybe_unused]] : empty_layout_function) {
+    for (auto &segment [[maybe_unused]] : empty_layout_function) {
       EXPECT_FALSE(true);
     }
   }
@@ -701,7 +701,7 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
     // Setup pointers for OriginalLeadingSpaces()
     auto must_wrap_token = must_wrap_pre_format_tokens.begin();
     auto joinable_token = joinable_pre_format_tokens.begin();
-    const char* buffer_start = sample_.data();
+    const char *buffer_start = sample_.data();
     for (size_t i = 0; i < number_of_tokens_in_set; ++i) {
       must_wrap_token->before.preserved_space_start = buffer_start;
       joinable_token->before.preserved_space_start = buffer_start;
@@ -721,8 +721,8 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
 
   static void ProcessTokensAndCreateUnwrappedLines(
       bool first_on_line_must_wrap,
-      verible::iterator_range<PreFormatTokensIterator>* pftokens,
-      std::vector<UnwrappedLine>* uwlines) {
+      verible::iterator_range<PreFormatTokensIterator> *pftokens,
+      std::vector<UnwrappedLine> *uwlines) {
     uwlines->emplace_back(0, pftokens->begin());
     for (auto token = pftokens->begin(); token != pftokens->end(); ++token) {
       const auto leading_spaces = token->OriginalLeadingSpaces();
@@ -750,19 +750,19 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
 
   // Wrapper for UnwrappedLine vector with readable getter for each line
   struct NamedUnwrappedLines {
-    const UnwrappedLine& Short() const { return uwlines_.at(0); }
-    const UnwrappedLine& Long() const { return uwlines_.at(1); }
-    const UnwrappedLine& Indented() const { return uwlines_.at(2); }
+    const UnwrappedLine &Short() const { return uwlines_.at(0); }
+    const UnwrappedLine &Long() const { return uwlines_.at(1); }
+    const UnwrappedLine &Indented() const { return uwlines_.at(2); }
 
-    const UnwrappedLine& OneUnder40Limit() const { return uwlines_.at(3); }
-    const UnwrappedLine& ExactlyAt40Limit() const { return uwlines_.at(4); }
-    const UnwrappedLine& OneOver40Limit() const { return uwlines_.at(5); }
+    const UnwrappedLine &OneUnder40Limit() const { return uwlines_.at(3); }
+    const UnwrappedLine &ExactlyAt40Limit() const { return uwlines_.at(4); }
+    const UnwrappedLine &OneOver40Limit() const { return uwlines_.at(5); }
 
-    const UnwrappedLine& OneUnder30Limit() const { return uwlines_.at(6); }
-    const UnwrappedLine& ExactlyAt30Limit() const { return uwlines_.at(7); }
-    const UnwrappedLine& OneOver30Limit() const { return uwlines_.at(8); }
+    const UnwrappedLine &OneUnder30Limit() const { return uwlines_.at(6); }
+    const UnwrappedLine &ExactlyAt30Limit() const { return uwlines_.at(7); }
+    const UnwrappedLine &OneOver30Limit() const { return uwlines_.at(8); }
 
-    const UnwrappedLine& Exactly10Columns() const { return uwlines_.at(9); }
+    const UnwrappedLine &Exactly10Columns() const { return uwlines_.at(9); }
 
     std::vector<UnwrappedLine> uwlines_;
   };
@@ -842,7 +842,7 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
   {
     const auto line = factory_.Line(lines_.Short());
     const auto lf = factory_.Stack({line});
-    const auto& expected_lf = line;
+    const auto &expected_lf = line;
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
@@ -1108,7 +1108,7 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
   {
     const auto line = factory_.Line(lines_.Short());
     const auto lf = factory_.Juxtaposition({line});
-    const auto& expected_lf = line;
+    const auto &expected_lf = line;
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
@@ -1456,7 +1456,7 @@ TEST_F(LayoutFunctionFactoryTest, Choice) {
        }},
   };
 
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     const LayoutFunction choice_result = factory_.Choice(test_case.choices);
     ExpectLayoutFunctionsEqual(choice_result, test_case.expected,
                                test_case.line_no);
@@ -2403,7 +2403,7 @@ class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
                                                &pre_format_tokens_);
 
     // Set token properties
-    for (auto& token : pre_format_tokens_) {
+    for (auto &token : pre_format_tokens_) {
       const auto leading_spaces = token.OriginalLeadingSpaces();
 
       // First token in a line
