@@ -773,6 +773,8 @@ KeywordIdentifier
     { $$ = std::move($1); }
   | TK_discrete
     { $$ = std::move($1); }
+  | TK_analog
+    { $$ = std::move($1); }
   /* TK_sample is in SystemVerilog coverage_event */
   | TK_sample
     { $$ = std::move($1); }
