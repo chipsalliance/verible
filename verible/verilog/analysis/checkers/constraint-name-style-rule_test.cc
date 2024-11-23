@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
 // Tests that ConstraintNameStyleRule correctly accepts valid names.
@@ -47,6 +48,27 @@ TEST(ConstraintNameStyleRuleTest, AcceptTests) {
       {"constraint classname::MyConstraint { a <= b; }"},
   };
   RunLintTestCases<VerilogAnalyzer, ConstraintNameStyleRule>(kTestCases);
+}
+
+TEST(ConstraintNameStyleRuleTest, VariousPrefixTests) {
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"class foo; rand logic a; constraint c_foo { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint c_a { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint c_foo_bar { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint ",
+       {kToken, "c_"},
+       " { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint ",
+       {kToken, "no_suffix"},
+       " { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint ",
+       {kToken, "suffix_ok_but_we_want_prefix_c"},
+       " { a == 16; } endclass"},
+  };
+  // Lower snake case, starts with `c_`
+  RunConfiguredLintTestCases<VerilogAnalyzer, ConstraintNameStyleRule>(
+      kTestCases, "pattern:c+(_[a-z0-9]+)+");
 }
 
 // Tests that ConstraintNameStyleRule rejects invalid names.
