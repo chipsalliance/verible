@@ -189,8 +189,8 @@ bazel build -c opt //...
 
 You can access the generated artifacts under `bazel-bin/`. For instance the
 syntax checker will be at
-`bazel-bin/verilog/tools/syntax/verible-verilog-syntax` (corresponding to the
-target name `//verilog/tools/syntax:verible-verilog-syntax`).
+`bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax` (corresponding to the
+target name `//verible/verilog/tools/syntax:verible-verilog-syntax`).
 
 Moreover, if you need statically linked executables that don't depend on your
 shared libraries, you can use custom config

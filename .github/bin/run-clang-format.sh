@@ -25,14 +25,9 @@ ${CLANG_FORMAT} --version
 
 # Run on all files.
 
-# For now, we only use the Google style, without enforcing the pointer
-# alignment. The toplevel .clang-format will over time make files people
-# edit and locally format adhere to the style.
-# (TODO: once there is a quiet phase with not much PRs open, do a bulk format).
-
 find . -name "*.h" -o -name "*.cc" \
   | egrep -v 'third_party/|external_libs/|.github/' \
-  | xargs -P2 ${CLANG_FORMAT} --style="Google" -i
+  | xargs -P2 ${CLANG_FORMAT} -i
 
 # If we have buildifier installed, use that on BUILD files
 if command -v ${BUILDIFIER} >/dev/null; then

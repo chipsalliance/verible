@@ -147,7 +147,7 @@ Real world [TreeUnwrapper] example:
 echo 'module m; initial a = b + c; endmodule' | \
   VERIBLE_LOGTHRESHOLD=0 \
   VERIBLE_VLOG_DETAIL=8 \
-  bazel run //verilog/tools/formatter:verible-verilog-format -- -show_token_partition_tree -
+  bazel run //verible/verilog/tools/formatter:verible-verilog-format -- -show_token_partition_tree -
 ```
 
 ### Alignment

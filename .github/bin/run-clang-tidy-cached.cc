@@ -114,8 +114,8 @@ static constexpr ConfigValues kConfig = {
   .cache_prefix = "verible_",
   .file_exclude_re = ".git/|.github/"  // stuff we're not interested in
   "|vscode/"                           // some generated code in there
-  "|tree_operations_test"              // very slow to process.
-  "|symbol_table_test",                // ...
+  "|tree-operations_test"              // very slow to process.
+  "|symbol-table_test",                // ...
   .toplevel_build_file = "MODULE.bazel",
   .is_bazel_project = true,
 };

@@ -97,4 +97,4 @@ Checks: >
 
 CheckOptions:
   - key:    misc-include-cleaner.IgnoreHeaders
-    value:  .*_linter_test_utils\.h
+    value:  .*-linter-test-utils\.h

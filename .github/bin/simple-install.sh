@@ -15,7 +15,7 @@ fi
 TARGET_DIR=$1
 mkdir -p "${TARGET_DIR}"
 
-BASE_DIR=bazel-bin/verilog/tools
+BASE_DIR=bazel-bin/verible/verilog/tools
 
 for f in diff/verible-verilog-diff \
            formatter/verible-verilog-format \
