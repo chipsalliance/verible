@@ -3,6 +3,9 @@
 # LSP is using JSON-PRC [2] for the RPC protocol, the transport layer chunks
 # messages with header+body blocks, similar to HTTP.
 #
+# All libraries needed to build a language server have the public visibility
+# as they are very useful in itself to build language servers in other projects.
+#
 # [1]: https://microsoft.github.io/language-server-protocol/specification
 # [2]: https://www.jsonrpc.org/specification
 
@@ -20,6 +23,7 @@ cc_library(
     name = "message-stream-splitter",
     srcs = ["message-stream-splitter.cc"],
     hdrs = ["message-stream-splitter.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//verible/common/util:status-macros",
         "@com_google_absl//absl/status",
@@ -50,6 +54,7 @@ cc_library(
         "//conditions:default": ["-fexceptions"],
     }),
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
+    visibility = ["//visibility:public"],
     deps = [
         "//verible/common/util:logging",
         "@com_google_absl//absl/strings:string_view",
@@ -85,17 +90,20 @@ genrule(
 cc_library(
     name = "lsp-protocol",
     hdrs = ["lsp-protocol.h"],
+    visibility = ["//visibility:public"],
     deps = ["@jsonhpp//:singleheader-json"],
 )
 
 cc_library(
     name = "lsp-protocol-enums",
     hdrs = ["lsp-protocol-enums.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "lsp-protocol-operators",
     hdrs = ["lsp-protocol-operators.h"],
+    visibility = ["//visibility:public"],
     deps = [":lsp-protocol"],
 )
 
@@ -114,6 +122,7 @@ cc_library(
     name = "lsp-text-buffer",
     srcs = ["lsp-text-buffer.cc"],
     hdrs = ["lsp-text-buffer.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":json-rpc-dispatcher",
         ":lsp-protocol",
@@ -142,6 +151,7 @@ cc_library(
     name = "lsp-file-utils",
     srcs = ["lsp-file-utils.cc"],
     hdrs = ["lsp-file-utils.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
