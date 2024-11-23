@@ -16,19 +16,18 @@
 
 #include <algorithm>
 #include <cctype>
-#include <charconv>
 #include <cstdint>
 #include <iterator>
 #include <optional>
 #include <set>
 #include <string>
-#include <system_error>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -388,16 +387,9 @@ DffNameStyleRule::ExtractPipelineStage(absl::string_view id) {
   if (num_digits == 0 || num_digits == id.size()) return {id, {}};
 
   // Extract the integer value for the pipeline stage
+  const absl::string_view pipe_stage_str = id.substr(id.size() - num_digits);
   uint64_t pipe_stage;
-  std::from_chars_result result = std::from_chars(
-      id.cbegin() + id.size() - num_digits, id.cend(), pipe_stage);
-
-  // https://en.cppreference.com/w/cpp/utility/from_chars
-  // Check whether:
-  // - There are errors parsing the string
-  // - There are non-numeric characters inside the range (shouldn't!)
-  // - The pipeline stage number is in the valid range
-  if (result.ec != std::errc() || result.ptr != id.end() ||
+  if (!absl::SimpleAtoi(pipe_stage_str, &pipe_stage) ||
       pipe_stage < kFirstValidPipeStage) {
     return {id, {}};
   }
