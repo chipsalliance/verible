@@ -53,7 +53,7 @@ readonly TERM_RED=$'\033[1;31m'
 readonly TERM_BOLD=$'\033[1m'
 readonly TERM_RESET=$'\033[0m'
 
-readonly BINARY_BASE_DIR=bazel-bin/verilog/tools
+readonly BINARY_BASE_DIR=bazel-bin/verible/verilog/tools
 
 readonly ISSUE_PREFIX="https://github.com/chipsalliance/verible/issues"
 
@@ -138,10 +138,11 @@ ExpectedFailCount[lint:ibex]=14
 ExpectedFailCount[project:ibex]=211
 ExpectedFailCount[preprocessor:ibex]=385
 
-ExpectedFailCount[syntax:opentitan]=53
-ExpectedFailCount[lint:opentitan]=53
-ExpectedFailCount[project:opentitan]=868
-ExpectedFailCount[preprocessor:opentitan]=2381
+ExpectedFailCount[syntax:opentitan]=61
+ExpectedFailCount[lint:opentitan]=61
+ExpectedFailCount[project:opentitan]=943
+ExpectedFailCount[formatter:opentitan]=1
+ExpectedFailCount[preprocessor:opentitan]=2555
 
 ExpectedFailCount[syntax:sv-tests]=77
 ExpectedFailCount[lint:sv-tests]=76
@@ -181,10 +182,10 @@ ExpectedFailCount[lint:XilinxUnisimLibrary]=4
 ExpectedFailCount[project:XilinxUnisimLibrary]=22
 ExpectedFailCount[preprocessor:XilinxUnisimLibrary]=96
 
-ExpectedFailCount[syntax:black-parrot]=160
-ExpectedFailCount[lint:black-parrot]=160
-ExpectedFailCount[project:black-parrot]=175
-ExpectedFailCount[preprocessor:black-parrot]=176
+ExpectedFailCount[syntax:black-parrot]=154
+ExpectedFailCount[lint:black-parrot]=154
+ExpectedFailCount[project:black-parrot]=169
+ExpectedFailCount[preprocessor:black-parrot]=170
 
 ExpectedFailCount[syntax:ivtest]=166
 ExpectedFailCount[lint:ivtest]=166
@@ -210,11 +211,11 @@ ExpectedFailCount[preprocessor:scr1]=46
 ExpectedFailCount[project:serv]=1
 ExpectedFailCount[preprocessor:serv]=1
 
-ExpectedFailCount[syntax:basejump_stl]=474
-ExpectedFailCount[lint:basejump_stl]=474
-ExpectedFailCount[project:basejump_stl]=588
+ExpectedFailCount[syntax:basejump_stl]=478
+ExpectedFailCount[lint:basejump_stl]=478
+ExpectedFailCount[project:basejump_stl]=593
 ExpectedFailCount[formatter:basejump_stl]=1
-ExpectedFailCount[preprocessor:basejump_stl]=623
+ExpectedFailCount[preprocessor:basejump_stl]=629
 
 ExpectedFailCount[syntax:opl3_fpga]=3
 ExpectedFailCount[lint:opl3_fpga]=3

@@ -23,26 +23,26 @@ license(
 filegroup(
     name = "install-binaries",
     srcs = [
-        "//common/tools:verible-patch-tool",
-        "//verilog/tools/diff:verible-verilog-diff",
-        "//verilog/tools/formatter:verible-verilog-format",
-        "//verilog/tools/kythe:verible-verilog-kythe-extractor",
-        "//verilog/tools/kythe:verible-verilog-kythe-kzip-writer",
-        "//verilog/tools/lint:verible-verilog-lint",
-        "//verilog/tools/ls:verible-verilog-ls",
-        "//verilog/tools/obfuscator:verible-verilog-obfuscate",
-        "//verilog/tools/preprocessor:verible-verilog-preprocessor",
-        "//verilog/tools/project:verible-verilog-project",
-        "//verilog/tools/syntax:verible-verilog-syntax",
+        "//verible/common/tools:verible-patch-tool",
+        "//verible/verilog/tools/diff:verible-verilog-diff",
+        "//verible/verilog/tools/formatter:verible-verilog-format",
+        "//verible/verilog/tools/kythe:verible-verilog-kythe-extractor",
+        "//verible/verilog/tools/kythe:verible-verilog-kythe-kzip-writer",
+        "//verible/verilog/tools/lint:verible-verilog-lint",
+        "//verible/verilog/tools/ls:verible-verilog-ls",
+        "//verible/verilog/tools/obfuscator:verible-verilog-obfuscate",
+        "//verible/verilog/tools/preprocessor:verible-verilog-preprocessor",
+        "//verible/verilog/tools/project:verible-verilog-project",
+        "//verible/verilog/tools/syntax:verible-verilog-syntax",
     ],
 )
 
 filegroup(
     name = "install-scripts",
     srcs = [
-        "//common/tools:verible-transform-interactive",
-        "//verilog/tools/formatter:git-verilog-format",
-        "//verilog/tools/formatter:verible-verilog-format-changed-lines-interactive",
+        "//verible/common/tools:verible-transform-interactive",
+        "//verible/verilog/tools/formatter:git-verilog-format",
+        "//verible/verilog/tools/formatter:verible-verilog-format-changed-lines-interactive",
     ],
 )
 
@@ -55,9 +55,9 @@ alias(
 genrule(
     name = "lint_doc",
     outs = ["documentation_verible_lint_rules.md"],
-    cmd = "$(location //verilog/tools/lint:verible-verilog-lint) " +
+    cmd = "$(location //verible/verilog/tools/lint:verible-verilog-lint) " +
           "--generate_markdown > $(OUTS)",
     tools = [
-        "//verilog/tools/lint:verible-verilog-lint",
+        "//verible/verilog/tools/lint:verible-verilog-lint",
     ],
 )

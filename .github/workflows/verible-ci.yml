@@ -141,10 +141,10 @@ jobs:
           # that makes it into the compile. Use bant itself to find genrules.
           bazel fetch ...
           bazel build $(bin/bant -q genrule-outputs | awk '{print $2}') \
-              //common/analysis:command-file-lexer \
-              //verilog/parser:verilog-lex \
-              //verilog/parser:verilog-y \
-              //verilog/parser:verilog-y-final
+              //verible/common/analysis:command-file-lexer \
+              //verible/verilog/parser:verilog-lex \
+              //verible/verilog/parser:verilog-y \
+              //verible/verilog/parser:verilog-y-final
 
       - name: Run bant build-cleaner
         run: |
@@ -386,7 +386,7 @@ jobs:
 
   MacOsBuild:
     # New MacOS has a broken patch utility:
-    # //verilog/tools/lint:lint-tool_test trips over a no-newline-at-end-of-file
+    # //verible/verilog/tools/lint:lint-tool_test trips over a no-newline-at-end-of-file
     runs-on: macos-12
     steps:
 

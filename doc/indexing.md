@@ -52,7 +52,7 @@ renaming isn’t needed here but you can add the renaming you find suitable.
 bazel test --experimental_action_listener=:extract_cxx  //...
 
 # run on specific target (e.g. some cc_binary or cc_library)
-bazel test --experimental_action_listener=:extract_cxx //verilog/analysis:default_rules
+bazel test --experimental_action_listener=:extract_cxx //verible/verilog/analysis:default_rules
 ```
 
 Extracted kzip files will be in
