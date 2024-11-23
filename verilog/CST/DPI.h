@@ -23,15 +23,15 @@
 #include <utility>
 #include <vector>
 
-#include "common/analysis/syntax_tree_search.h"
-#include "common/text/concrete_syntax_tree.h"  // IWYU pragma: export
+#include "common/analysis/syntax-tree-search.h"
+#include "common/text/concrete-syntax-tree.h"  // IWYU pragma: export
+#include "common/text/symbol-ptr.h"            // IWYU pragma: export
 #include "common/text/symbol.h"                // IWYU pragma: export
-#include "common/text/symbol_ptr.h"            // IWYU pragma: export
-#include "common/text/tree_utils.h"
+#include "common/text/tree-utils.h"
 #include "common/util/logging.h"
-#include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/parser/verilog_token_classifications.h"
-#include "verilog/parser/verilog_token_enum.h"
+#include "verilog/CST/verilog-nonterminals.h"
+#include "verilog/parser/verilog-token-classifications.h"
+#include "verilog/parser/verilog-token-enum.h"
 
 namespace verilog {
 

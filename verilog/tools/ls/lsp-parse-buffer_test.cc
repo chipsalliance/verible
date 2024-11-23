@@ -19,7 +19,7 @@
 
 #include "absl/strings/match.h"
 #include "common/lsp/lsp-text-buffer.h"
-#include "common/text/text_structure.h"
+#include "common/text/text-structure.h"
 #include "gtest/gtest.h"
 
 namespace verilog {

@@ -12,7 +12,7 @@ package(
 
 cc_binary(
     name = "verible-verilog-preprocessor",
-    srcs = ["verilog_preprocessor.cc"],
+    srcs = ["verilog-preprocessor.cc"],
     features = STATIC_EXECUTABLES_FEATURE,
     visibility = ["//visibility:public"],
     deps = [

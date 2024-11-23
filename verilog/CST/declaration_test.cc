@@ -16,13 +16,13 @@
 
 #include <vector>
 
-#include "common/analysis/syntax_tree_search.h"
-#include "common/analysis/syntax_tree_search_test_utils.h"
-#include "common/text/text_structure.h"
-#include "common/text/tree_utils.h"
+#include "common/analysis/syntax-tree-search-test-utils.h"
+#include "common/analysis/syntax-tree-search.h"
+#include "common/text/text-structure.h"
+#include "common/text/tree-utils.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/match_test_utils.h"
+#include "verilog/CST/match-test-utils.h"
 
 #undef ASSERT_OK
 #define ASSERT_OK(value) ASSERT_TRUE((value).ok())

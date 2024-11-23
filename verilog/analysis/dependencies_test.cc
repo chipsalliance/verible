@@ -20,12 +20,12 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "common/util/file_util.h"
+#include "common/util/file-util.h"
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "verilog/analysis/symbol_table.h"
-#include "verilog/analysis/verilog_project.h"
+#include "verilog/analysis/symbol-table.h"
+#include "verilog/analysis/verilog-project.h"
 
 namespace verilog {
 namespace {

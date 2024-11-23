@@ -27,9 +27,9 @@ cc_library(
     name = "verilog-lexer",
     srcs = [
         "verilog.yy.cc",
-        "verilog_lexer.cc",
+        "verilog-lexer.cc",
     ],
-    hdrs = ["verilog_lexer.h"],
+    hdrs = ["verilog-lexer.h"],
     copts = select({
         "@platforms//os:windows": [],
         "//conditions:default": [
@@ -46,9 +46,9 @@ cc_library(
 )
 
 cc_test(
-    name = "verilog-lexer_unittest",
+    name = "verilog-lexer_test",
     size = "small",
-    srcs = ["verilog_lexer_unittest.cc"],
+    srcs = ["verilog-lexer_test.cc"],
     deps = [
         ":verilog-lexer",
         ":verilog-token-enum",
@@ -69,7 +69,7 @@ cc_test(
 genrule(
     name = "gen-verilog-token-enum",
     srcs = ["verilog.tab.hh"],
-    outs = ["verilog_token_enum.h"],
+    outs = ["verilog-token-enum.h"],
     # Needs own include-guard.
     cmd = "{ echo '#ifndef VERIBLE_VERILOG_TOKEN_ENUM_H_' ; " +
           "echo '#define VERIBLE_VERILOG_TOKEN_ENUM_H_' ; " +
@@ -81,13 +81,13 @@ genrule(
 
 cc_library(
     name = "verilog-token-enum",
-    hdrs = ["verilog_token_enum.h"],
+    hdrs = ["verilog-token-enum.h"],
 )
 
 genrule(
     name = "verilog-parse-interface",
     srcs = ["verilog.tab.hh"],
-    outs = ["verilog_parse_interface.h"],
+    outs = ["verilog-parse-interface.h"],
     # Already contains include-guard from verilog.tab.hh
     cmd = "{ echo '// DO NOT EDIT -- generated from $<' ; " +
           # Filter out the enumeration definition.
@@ -126,7 +126,7 @@ cc_library(
     srcs = ["verilog-final.tab.cc"],
     hdrs = [
         "verilog.tab.hh",
-        "verilog_parse_interface.h",
+        "verilog-parse-interface.h",
     ],
     copts = select({
         "@platforms//os:windows": [],
@@ -158,8 +158,8 @@ cc_library(
 
 cc_library(
     name = "verilog-parser",
-    srcs = ["verilog_parser.cc"],
-    hdrs = ["verilog_parser.h"],
+    srcs = ["verilog-parser.cc"],
+    hdrs = ["verilog-parser.h"],
     deps = [
         ":verilog-y-cc",
         "//common/parser:bison-parser-adapter",
@@ -172,8 +172,8 @@ cc_library(
 
 cc_library(
     name = "verilog-lexical-context",
-    srcs = ["verilog_lexical_context.cc"],
-    hdrs = ["verilog_lexical_context.h"],
+    srcs = ["verilog-lexical-context.cc"],
+    hdrs = ["verilog-lexical-context.h"],
     deps = [
         ":verilog-token-enum",
         "//common/text:token-info",
@@ -184,9 +184,9 @@ cc_library(
 )
 
 cc_test(
-    name = "verilog-parser_unittest",
+    name = "verilog-parser_test",
     size = "small",
-    srcs = ["verilog_parser_unittest.cc"],
+    srcs = ["verilog-parser_test.cc"],
     deps = [
         ":verilog-token-enum",
         "//common/parser:bison-parser-common",
@@ -210,7 +210,7 @@ cc_test(
 
 cc_test(
     name = "verilog-lexical-context_test",
-    srcs = ["verilog_lexical_context_test.cc"],
+    srcs = ["verilog-lexical-context_test.cc"],
     deps = [
         ":verilog-lexical-context",
         ":verilog-parser",
@@ -229,8 +229,8 @@ cc_test(
 
 cc_library(
     name = "verilog-token-classifications",
-    srcs = ["verilog_token_classifications.cc"],
-    hdrs = ["verilog_token_classifications.h"],
+    srcs = ["verilog-token-classifications.cc"],
+    hdrs = ["verilog-token-classifications.h"],
     deps = [
         ":verilog-token-enum",
     ],
@@ -238,7 +238,7 @@ cc_library(
 
 cc_test(
     name = "verilog-token-classifications_test",
-    srcs = ["verilog_token_classifications_test.cc"],
+    srcs = ["verilog-token-classifications_test.cc"],
     deps = [
         ":verilog-token-classifications",
         ":verilog-token-enum",
@@ -249,8 +249,8 @@ cc_test(
 
 cc_library(
     name = "verilog-token",
-    srcs = ["verilog_token.cc"],
-    hdrs = ["verilog_token.h"],
+    srcs = ["verilog-token.cc"],
+    hdrs = ["verilog-token.h"],
     deps = [
         ":verilog-parser",
         ":verilog-token-enum",

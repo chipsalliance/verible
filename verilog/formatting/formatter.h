@@ -21,9 +21,9 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/position.h"
-#include "common/text/text_structure.h"
+#include "common/text/text-structure.h"
 #include "common/util/interval.h"
-#include "verilog/formatting/format_style.h"
+#include "verilog/formatting/format-style.h"
 
 namespace verilog {
 namespace formatter {

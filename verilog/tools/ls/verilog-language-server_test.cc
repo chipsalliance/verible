@@ -30,11 +30,11 @@
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"
-#include "common/strings/line_column_map.h"
-#include "common/util/file_util.h"
+#include "common/strings/line-column-map.h"
+#include "common/util/file-util.h"
 #include "gtest/gtest.h"
 #include "nlohmann/json.hpp"
-#include "verilog/analysis/verilog_linter.h"
+#include "verilog/analysis/verilog-linter.h"
 
 #undef ASSERT_OK
 #define ASSERT_OK(value)                             \

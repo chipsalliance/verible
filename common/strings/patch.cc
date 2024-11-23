@@ -36,13 +36,13 @@
 #include "common/strings/position.h"
 #include "common/strings/split.h"
 #include "common/util/algorithm.h"
-#include "common/util/container_iterator_range.h"
-#include "common/util/file_util.h"
-#include "common/util/iterator_adaptors.h"
-#include "common/util/iterator_range.h"
+#include "common/util/container-iterator-range.h"
+#include "common/util/file-util.h"
+#include "common/util/iterator-adaptors.h"
+#include "common/util/iterator-range.h"
 #include "common/util/logging.h"
-#include "common/util/status_macros.h"
-#include "common/util/user_interaction.h"
+#include "common/util/status-macros.h"
+#include "common/util/user-interaction.h"
 
 namespace verible {
 

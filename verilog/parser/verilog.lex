@@ -31,8 +31,8 @@
 
 #include <cstdio>
 
-#include "verilog/parser/verilog_lexer.h"
-#include "verilog/parser/verilog_token_enum.h"
+#include "verilog/parser/verilog-lexer.h"
+#include "verilog/parser/verilog-token-enum.h"
 
 /* When testing unstructured sequences of tokens in the unit-tests,
  * the start-condition stack may be unbalanced.

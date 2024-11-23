@@ -24,9 +24,9 @@
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/lsp/lsp-text-buffer.h"
-#include "common/util/file_util.h"
+#include "common/util/file-util.h"
 #include "gtest/gtest.h"
-#include "verilog/analysis/verilog_project.h"
+#include "verilog/analysis/verilog-project.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
 namespace verilog {

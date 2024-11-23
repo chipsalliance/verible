@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/util/iterator_range.h"
+#include "common/util/iterator-range.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

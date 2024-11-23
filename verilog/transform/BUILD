@@ -45,8 +45,8 @@ cc_test(
 
 cc_library(
     name = "strip-comments",
-    srcs = ["strip_comments.cc"],
-    hdrs = ["strip_comments.h"],
+    srcs = ["strip-comments.cc"],
+    hdrs = ["strip-comments.h"],
     deps = [
         "//common/strings:comment-utils",
         "//common/strings:range",
@@ -64,7 +64,7 @@ cc_library(
 
 cc_test(
     name = "strip-comments_test",
-    srcs = ["strip_comments_test.cc"],
+    srcs = ["strip-comments_test.cc"],
     deps = [
         ":strip-comments",
         "@com_google_absl//absl/strings:string_view",

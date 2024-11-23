@@ -17,7 +17,7 @@ package(
 # SystemVerilog-parser based linter
 cc_binary(
     name = "verible-verilog-lint",
-    srcs = ["verilog_lint.cc"],
+    srcs = ["verilog-lint.cc"],
     features = STATIC_EXECUTABLES_FEATURE +
                select({
                    "//bazel:static_linked_executables": ["-supports_start_end_lib"],

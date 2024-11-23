@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "common/lsp/lsp-protocol.h"
-#include "common/strings/line_column_map.h"
+#include "common/strings/line-column-map.h"
 
 // Simple conversion functions between verible data structures and Language
 // Server Protocol structs.

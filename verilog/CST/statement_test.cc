@@ -18,19 +18,19 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/analysis/matcher/matcher_builders.h"
-#include "common/analysis/syntax_tree_search.h"
-#include "common/analysis/syntax_tree_search_test_utils.h"
-#include "common/text/concrete_syntax_tree.h"
+#include "common/analysis/matcher/matcher-builders.h"
+#include "common/analysis/syntax-tree-search-test-utils.h"
+#include "common/analysis/syntax-tree-search.h"
+#include "common/text/concrete-syntax-tree.h"
 #include "common/text/symbol.h"
-#include "common/text/text_structure.h"
-#include "common/text/tree_utils.h"
+#include "common/text/text-structure.h"
+#include "common/text/tree-utils.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/match_test_utils.h"
-#include "verilog/CST/verilog_matchers.h"
-#include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/CST/match-test-utils.h"
+#include "verilog/CST/verilog-matchers.h"
+#include "verilog/CST/verilog-nonterminals.h"
+#include "verilog/analysis/verilog-analyzer.h"
 
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())

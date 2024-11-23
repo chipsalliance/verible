@@ -20,8 +20,8 @@
 #include <vector>
 
 #include "absl/status/status.h"
-#include "common/text/concrete_syntax_tree.h"
-#include "common/text/token_info.h"
+#include "common/text/concrete-syntax-tree.h"
+#include "common/text/token-info.h"
 
 namespace verible {
 

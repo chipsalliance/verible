@@ -23,12 +23,12 @@
 #include "absl/strings/string_view.h"
 #include "common/strings/obfuscator.h"
 #include "common/strings/random.h"
-#include "common/text/token_info.h"
+#include "common/text/token-info.h"
 #include "common/util/logging.h"
-#include "common/util/status_macros.h"
-#include "verilog/analysis/verilog_equivalence.h"
-#include "verilog/parser/verilog_lexer.h"
-#include "verilog/parser/verilog_token_enum.h"
+#include "common/util/status-macros.h"
+#include "verilog/analysis/verilog-equivalence.h"
+#include "verilog/parser/verilog-lexer.h"
+#include "verilog/parser/verilog-token-enum.h"
 
 namespace verilog {
 

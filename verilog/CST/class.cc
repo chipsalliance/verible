@@ -16,14 +16,14 @@
 
 #include <vector>
 
-#include "common/analysis/syntax_tree_search.h"
-#include "common/text/concrete_syntax_leaf.h"
-#include "common/text/concrete_syntax_tree.h"
+#include "common/analysis/syntax-tree-search.h"
+#include "common/text/concrete-syntax-leaf.h"
+#include "common/text/concrete-syntax-tree.h"
 #include "common/text/symbol.h"
-#include "common/text/tree_utils.h"
+#include "common/text/tree-utils.h"
 #include "verilog/CST/identifier.h"
-#include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
-#include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/CST/verilog-matchers.h"  // IWYU pragma: keep
+#include "verilog/CST/verilog-nonterminals.h"
 
 namespace verilog {
 

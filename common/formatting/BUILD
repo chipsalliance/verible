@@ -68,8 +68,8 @@ cc_test(
 
 cc_library(
     name = "basic-format-style",
-    srcs = ["basic_format_style.cc"],
-    hdrs = ["basic_format_style.h"],
+    srcs = ["basic-format-style.cc"],
+    hdrs = ["basic-format-style.h"],
     deps = [
         "//common/util:enum-flags",
         "@com_google_absl//absl/strings:string_view",
@@ -78,8 +78,8 @@ cc_library(
 
 cc_library(
     name = "basic-format-style-init",
-    srcs = ["basic_format_style_init.cc"],
-    hdrs = ["basic_format_style_init.h"],
+    srcs = ["basic-format-style-init.cc"],
+    hdrs = ["basic-format-style-init.h"],
     deps = [
         ":basic-format-style",
         "@com_google_absl//absl/flags:flag",
@@ -88,7 +88,7 @@ cc_library(
 
 cc_test(
     name = "basic-format-style_test",
-    srcs = ["basic_format_style_test.cc"],
+    srcs = ["basic-format-style_test.cc"],
     deps = [
         ":basic-format-style",
         "@com_google_googletest//:gtest",
@@ -98,8 +98,8 @@ cc_test(
 
 cc_library(
     name = "format-token",
-    srcs = ["format_token.cc"],
-    hdrs = ["format_token.h"],
+    srcs = ["format-token.cc"],
+    hdrs = ["format-token.h"],
     deps = [
         "//common/strings:display-utils",
         "//common/strings:position",
@@ -120,7 +120,7 @@ cc_library(
 
 cc_test(
     name = "format-token_test",
-    srcs = ["format_token_test.cc"],
+    srcs = ["format-token_test.cc"],
     deps = [
         ":format-token",
         ":unwrapped-line-test-utils",
@@ -136,10 +136,10 @@ cc_test(
 cc_library(
     name = "layout-optimizer",
     srcs = [
-        "layout_optimizer.cc",
-        "layout_optimizer_internal.h",
+        "layout-optimizer.cc",
+        "layout-optimizer-internal.h",
     ],
-    hdrs = ["layout_optimizer.h"],
+    hdrs = ["layout-optimizer.h"],
     deps = [
         ":basic-format-style",
         ":format-token",
@@ -161,8 +161,8 @@ cc_library(
 cc_test(
     name = "layout-optimizer_test",
     srcs = [
-        "layout_optimizer_internal.h",
-        "layout_optimizer_test.cc",
+        "layout-optimizer-internal.h",
+        "layout-optimizer_test.cc",
     ],
     deps = [
         ":basic-format-style",
@@ -189,9 +189,9 @@ cc_test(
 
 cc_library(
     name = "token-partition-tree",
-    srcs = ["token_partition_tree.cc"],
+    srcs = ["token-partition-tree.cc"],
     hdrs = [
-        "token_partition_tree.h",
+        "token-partition-tree.h",
     ],
     deps = [
         ":basic-format-style",
@@ -217,8 +217,8 @@ cc_library(
 cc_library(
     name = "token-partition-tree-test-utils",
     testonly = 1,
-    srcs = ["token_partition_tree_test_utils.cc"],
-    hdrs = ["token_partition_tree_test_utils.h"],
+    srcs = ["token-partition-tree-test-utils.cc"],
+    hdrs = ["token-partition-tree-test-utils.h"],
     deps = [
         ":format-token",
         ":token-partition-tree",
@@ -232,7 +232,7 @@ cc_library(
 
 cc_test(
     name = "token-partition-tree_test",
-    srcs = ["token_partition_tree_test.cc"],
+    srcs = ["token-partition-tree_test.cc"],
     deps = [
         ":basic-format-style",
         ":format-token",
@@ -255,9 +255,9 @@ cc_test(
 
 cc_library(
     name = "unwrapped-line",
-    srcs = ["unwrapped_line.cc"],
+    srcs = ["unwrapped-line.cc"],
     hdrs = [
-        "unwrapped_line.h",
+        "unwrapped-line.h",
     ],
     deps = [
         ":format-token",
@@ -276,8 +276,8 @@ cc_library(
 cc_library(
     name = "unwrapped-line-test-utils",
     testonly = 1,
-    srcs = ["unwrapped_line_test_utils.cc"],
-    hdrs = ["unwrapped_line_test_utils.h"],
+    srcs = ["unwrapped-line-test-utils.cc"],
+    hdrs = ["unwrapped-line-test-utils.h"],
     deps = [
         ":format-token",
         ":unwrapped-line",
@@ -289,7 +289,7 @@ cc_library(
 
 cc_test(
     name = "unwrapped-line_test",
-    srcs = ["unwrapped_line_test.cc"],
+    srcs = ["unwrapped-line_test.cc"],
     deps = [
         ":format-token",
         ":unwrapped-line",
@@ -306,9 +306,9 @@ cc_test(
 
 cc_library(
     name = "tree-annotator",
-    srcs = ["tree_annotator.cc"],
+    srcs = ["tree-annotator.cc"],
     hdrs = [
-        "tree_annotator.h",
+        "tree-annotator.h",
     ],
     deps = [
         ":format-token",
@@ -322,7 +322,7 @@ cc_library(
 
 cc_test(
     name = "tree-annotator_test",
-    srcs = ["tree_annotator_test.cc"],
+    srcs = ["tree-annotator_test.cc"],
     deps = [
         ":format-token",
         ":tree-annotator",
@@ -340,9 +340,9 @@ cc_test(
 
 cc_library(
     name = "tree-unwrapper",
-    srcs = ["tree_unwrapper.cc"],
+    srcs = ["tree-unwrapper.cc"],
     hdrs = [
-        "tree_unwrapper.h",
+        "tree-unwrapper.h",
     ],
     deps = [
         ":format-token",
@@ -365,7 +365,7 @@ cc_library(
 
 cc_test(
     name = "tree-unwrapper_test",
-    srcs = ["tree_unwrapper_test.cc"],
+    srcs = ["tree-unwrapper_test.cc"],
     deps = [
         ":format-token",
         ":tree-unwrapper",
@@ -387,9 +387,9 @@ cc_test(
 
 cc_library(
     name = "state-node",
-    srcs = ["state_node.cc"],
+    srcs = ["state-node.cc"],
     hdrs = [
-        "state_node.h",
+        "state-node.h",
     ],
     deps = [
         ":basic-format-style",
@@ -407,8 +407,8 @@ cc_library(
 
 cc_library(
     name = "line-wrap-searcher",
-    srcs = ["line_wrap_searcher.cc"],
-    hdrs = ["line_wrap_searcher.h"],
+    srcs = ["line-wrap-searcher.cc"],
+    hdrs = ["line-wrap-searcher.h"],
     deps = [
         ":basic-format-style",
         ":format-token",
@@ -422,7 +422,7 @@ cc_library(
 
 cc_test(
     name = "state-node_test",
-    srcs = ["state_node_test.cc"],
+    srcs = ["state-node_test.cc"],
     deps = [
         ":basic-format-style",
         ":format-token",
@@ -439,7 +439,7 @@ cc_test(
 
 cc_test(
     name = "line-wrap-searcher_test",
-    srcs = ["line_wrap_searcher_test.cc"],
+    srcs = ["line-wrap-searcher_test.cc"],
     deps = [
         ":basic-format-style",
         ":format-token",

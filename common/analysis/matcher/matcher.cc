@@ -17,7 +17,7 @@
 
 #include <vector>
 
-#include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/bound-symbol-manager.h"
 #include "common/text/symbol.h"
 
 namespace verible {

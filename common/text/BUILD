@@ -18,8 +18,8 @@ package(
 
 cc_library(
     name = "token-info",
-    srcs = ["token_info.cc"],
-    hdrs = ["token_info.h"],
+    srcs = ["token-info.cc"],
+    hdrs = ["token-info.h"],
     deps = [
         ":constants",
         "//common/strings:rebase",
@@ -33,8 +33,8 @@ cc_library(
 
 cc_library(
     name = "token-info-json",
-    srcs = ["token_info_json.cc"],
-    hdrs = ["token_info_json.h"],
+    srcs = ["token-info-json.cc"],
+    hdrs = ["token-info-json.h"],
     deps = [
         ":token-info",
         "@jsonhpp//:singleheader-json",
@@ -44,8 +44,8 @@ cc_library(
 cc_library(
     name = "token-info-test-util",
     testonly = 1,
-    srcs = ["token_info_test_util.cc"],
-    hdrs = ["token_info_test_util.h"],
+    srcs = ["token-info-test-util.cc"],
+    hdrs = ["token-info-test-util.h"],
     deps = [
         ":token-info",
         "//common/util:logging",
@@ -55,8 +55,8 @@ cc_library(
 
 cc_library(
     name = "token-stream-view",
-    srcs = ["token_stream_view.cc"],
-    hdrs = ["token_stream_view.h"],
+    srcs = ["token-stream-view.cc"],
+    hdrs = ["token-stream-view.h"],
     deps = [
         ":token-info",
         "//common/util:iterator-range",
@@ -66,7 +66,7 @@ cc_library(
 
 cc_library(
     name = "symbol-ptr",
-    hdrs = ["symbol_ptr.h"],
+    hdrs = ["symbol-ptr.h"],
 )
 
 cc_library(
@@ -82,8 +82,8 @@ cc_library(
 
 cc_library(
     name = "concrete-syntax-leaf",
-    srcs = ["concrete_syntax_leaf.cc"],
-    hdrs = ["concrete_syntax_leaf.h"],
+    srcs = ["concrete-syntax-leaf.cc"],
+    hdrs = ["concrete-syntax-leaf.h"],
     deps = [
         ":concrete-syntax-tree",
         ":symbol",
@@ -97,7 +97,7 @@ cc_library(
 
 cc_test(
     name = "concrete-syntax-leaf_test",
-    srcs = ["concrete_syntax_leaf_test.cc"],
+    srcs = ["concrete-syntax-leaf_test.cc"],
     deps = [
         ":concrete-syntax-leaf",
         ":token-info",
@@ -109,8 +109,8 @@ cc_test(
 
 cc_library(
     name = "concrete-syntax-tree",
-    srcs = ["concrete_syntax_tree.cc"],
-    hdrs = ["concrete_syntax_tree.h"],
+    srcs = ["concrete-syntax-tree.cc"],
+    hdrs = ["concrete-syntax-tree.h"],
     deps = [
         ":constants",
         ":symbol",
@@ -126,8 +126,8 @@ cc_library(
 
 cc_library(
     name = "config-utils",
-    srcs = ["config_utils.cc"],
-    hdrs = ["config_utils.h"],
+    srcs = ["config-utils.cc"],
+    hdrs = ["config-utils.h"],
     deps = [
         "//common/util:logging",
         "@com_google_absl//absl/status",
@@ -139,7 +139,7 @@ cc_library(
 
 cc_test(
     name = "config-utils_test",
-    srcs = ["config_utils_test.cc"],
+    srcs = ["config-utils_test.cc"],
     deps = [
         ":config-utils",
         "@com_google_absl//absl/status",
@@ -161,7 +161,7 @@ cc_library(
 
 cc_library(
     name = "syntax-tree-context",
-    hdrs = ["syntax_tree_context.h"],
+    hdrs = ["syntax-tree-context.h"],
     deps = [
         ":concrete-syntax-tree",
         "//common/util:auto-pop-stack",
@@ -172,8 +172,8 @@ cc_library(
 
 cc_library(
     name = "tree-compare",
-    srcs = ["tree_compare.cc"],
-    hdrs = ["tree_compare.h"],
+    srcs = ["tree-compare.cc"],
+    hdrs = ["tree-compare.h"],
     deps = [
         ":symbol",
         ":token-info",
@@ -183,7 +183,7 @@ cc_library(
 
 cc_test(
     name = "tree-compare_test",
-    srcs = ["tree_compare_test.cc"],
+    srcs = ["tree-compare_test.cc"],
     deps = [
         ":concrete-syntax-tree",
         ":tree-builder-test-util",
@@ -196,8 +196,8 @@ cc_test(
 
 cc_library(
     name = "tree-context-visitor",
-    srcs = ["tree_context_visitor.cc"],
-    hdrs = ["tree_context_visitor.h"],
+    srcs = ["tree-context-visitor.cc"],
+    hdrs = ["tree-context-visitor.h"],
     deps = [
         ":concrete-syntax-tree",
         ":syntax-tree-context",
@@ -209,7 +209,7 @@ cc_library(
 
 cc_test(
     name = "tree-context-visitor_test",
-    srcs = ["tree_context_visitor_test.cc"],
+    srcs = ["tree-context-visitor_test.cc"],
     deps = [
         ":concrete-syntax-leaf",
         ":concrete-syntax-tree",
@@ -225,8 +225,8 @@ cc_test(
 
 cc_library(
     name = "tree-utils",
-    srcs = ["tree_utils.cc"],
-    hdrs = ["tree_utils.h"],
+    srcs = ["tree-utils.cc"],
+    hdrs = ["tree-utils.h"],
     deps = [
         ":concrete-syntax-leaf",
         ":concrete-syntax-tree",
@@ -248,8 +248,8 @@ cc_library(
 cc_library(
     name = "tree-builder-test-util",
     testonly = 1,
-    srcs = ["tree_builder_test_util.cc"],
-    hdrs = ["tree_builder_test_util.h"],
+    srcs = ["tree-builder-test-util.cc"],
+    hdrs = ["tree-builder-test-util.h"],
     deps = [
         ":concrete-syntax-leaf",
         ":concrete-syntax-tree",
@@ -262,7 +262,7 @@ cc_library(
 
 cc_test(
     name = "tree-builder-test-util_test",
-    srcs = ["tree_builder_test_util_test.cc"],
+    srcs = ["tree-builder-test-util_test.cc"],
     deps = [
         ":symbol-ptr",
         ":tree-builder-test-util",
@@ -274,8 +274,8 @@ cc_test(
 
 cc_library(
     name = "text-structure",
-    srcs = ["text_structure.cc"],
-    hdrs = ["text_structure.h"],
+    srcs = ["text-structure.cc"],
+    hdrs = ["text-structure.h"],
     deps = [
         ":concrete-syntax-leaf",
         ":concrete-syntax-tree",
@@ -298,8 +298,8 @@ cc_library(
 cc_library(
     name = "text-structure-test-utils",
     testonly = 1,
-    srcs = ["text_structure_test_utils.cc"],
-    hdrs = ["text_structure_test_utils.h"],
+    srcs = ["text-structure-test-utils.cc"],
+    hdrs = ["text-structure-test-utils.h"],
     deps = [
         ":concrete-syntax-tree",
         ":text-structure",
@@ -314,8 +314,8 @@ cc_library(
 
 cc_library(
     name = "macro-definition",
-    srcs = ["macro_definition.cc"],
-    hdrs = ["macro_definition.h"],
+    srcs = ["macro-definition.cc"],
+    hdrs = ["macro-definition.h"],
     deps = [
         ":token-info",
         "//common/util:container-util",
@@ -327,8 +327,8 @@ cc_library(
 
 cc_library(
     name = "parser-verifier",
-    srcs = ["parser_verifier.cc"],
-    hdrs = ["parser_verifier.h"],
+    srcs = ["parser-verifier.cc"],
+    hdrs = ["parser-verifier.h"],
     deps = [
         ":concrete-syntax-leaf",
         ":concrete-syntax-tree",
@@ -358,7 +358,7 @@ cc_library(
 
 cc_test(
     name = "tree-utils_test",
-    srcs = ["tree_utils_test.cc"],
+    srcs = ["tree-utils_test.cc"],
     deps = [
         ":concrete-syntax-leaf",
         ":concrete-syntax-tree",
@@ -378,7 +378,7 @@ cc_test(
 
 cc_test(
     name = "concrete-syntax-tree_test",
-    srcs = ["concrete_syntax_tree_test.cc"],
+    srcs = ["concrete-syntax-tree_test.cc"],
     deps = [
         ":concrete-syntax-leaf",
         ":concrete-syntax-tree",
@@ -394,7 +394,7 @@ cc_test(
 
 cc_test(
     name = "token-info_test",
-    srcs = ["token_info_test.cc"],
+    srcs = ["token-info_test.cc"],
     deps = [
         ":constants",
         ":token-info",
@@ -407,7 +407,7 @@ cc_test(
 
 cc_test(
     name = "token-info-json_test",
-    srcs = ["token_info_json_test.cc"],
+    srcs = ["token-info-json_test.cc"],
     deps = [
         ":constants",
         ":token-info",
@@ -421,7 +421,7 @@ cc_test(
 
 cc_test(
     name = "token-info-test-util_test",
-    srcs = ["token_info_test_util_test.cc"],
+    srcs = ["token-info-test-util_test.cc"],
     deps = [
         ":token-info",
         ":token-info-test-util",
@@ -433,7 +433,7 @@ cc_test(
 
 cc_test(
     name = "token-stream-view_test",
-    srcs = ["token_stream_view_test.cc"],
+    srcs = ["token-stream-view_test.cc"],
     deps = [
         ":text-structure",
         ":text-structure-test-utils",
@@ -448,7 +448,7 @@ cc_test(
 
 cc_test(
     name = "syntax-tree-context_test",
-    srcs = ["syntax_tree_context_test.cc"],
+    srcs = ["syntax-tree-context_test.cc"],
     deps = [
         ":concrete-syntax-tree",
         ":syntax-tree-context",
@@ -460,7 +460,7 @@ cc_test(
 
 cc_test(
     name = "text-structure_test",
-    srcs = ["text_structure_test.cc"],
+    srcs = ["text-structure_test.cc"],
     deps = [
         ":concrete-syntax-tree",
         ":constants",
@@ -486,7 +486,7 @@ cc_test(
 
 cc_test(
     name = "macro-definition_test",
-    srcs = ["macro_definition_test.cc"],
+    srcs = ["macro-definition_test.cc"],
     deps = [
         ":macro-definition",
         ":token-info",
@@ -499,7 +499,7 @@ cc_test(
 
 cc_test(
     name = "parser-verifier_test",
-    srcs = ["parser_verifier_test.cc"],
+    srcs = ["parser-verifier_test.cc"],
     deps = [
         ":constants",
         ":parser-verifier",

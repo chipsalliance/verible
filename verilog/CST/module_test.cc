@@ -25,13 +25,13 @@
 #include <memory>
 #include <vector>
 
-#include "common/analysis/syntax_tree_search.h"
-#include "common/analysis/syntax_tree_search_test_utils.h"
-#include "common/text/text_structure.h"
+#include "common/analysis/syntax-tree-search-test-utils.h"
+#include "common/analysis/syntax-tree-search.h"
+#include "common/text/text-structure.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/match_test_utils.h"
-#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/CST/match-test-utils.h"
+#include "verilog/analysis/verilog-analyzer.h"
 
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())

@@ -23,10 +23,10 @@
 
 #include <vector>
 
-#include "common/text/text_structure.h"
+#include "common/text/text-structure.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
-#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog-analyzer.h"
 
 #undef ASSERT_OK
 #define ASSERT_OK(value) ASSERT_TRUE((value).ok())

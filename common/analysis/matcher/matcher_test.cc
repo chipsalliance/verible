@@ -17,13 +17,13 @@
 #include <memory>
 #include <vector>
 
-#include "common/analysis/matcher/bound_symbol_manager.h"
-#include "common/analysis/matcher/inner_match_handlers.h"
-#include "common/analysis/matcher/matcher_builders.h"
-#include "common/text/concrete_syntax_leaf.h"
-#include "common/text/concrete_syntax_tree.h"
+#include "common/analysis/matcher/bound-symbol-manager.h"
+#include "common/analysis/matcher/inner-match-handlers.h"
+#include "common/analysis/matcher/matcher-builders.h"
+#include "common/text/concrete-syntax-leaf.h"
+#include "common/text/concrete-syntax-tree.h"
 #include "common/text/symbol.h"
-#include "common/text/tree_builder_test_util.h"
+#include "common/text/tree-builder-test-util.h"
 #include "common/util/casts.h"
 #include "gtest/gtest.h"
 

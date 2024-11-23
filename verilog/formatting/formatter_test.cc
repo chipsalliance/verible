@@ -32,16 +32,16 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/align.h"
-#include "common/formatting/basic_format_style.h"
-#include "common/strings/display_utils.h"
+#include "common/formatting/basic-format-style.h"
+#include "common/strings/display-utils.h"
 #include "common/strings/position.h"
-#include "common/text/text_structure.h"
+#include "common/text/text-structure.h"
 #include "common/util/interval.h"
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/formatting/format_style.h"
+#include "verilog/analysis/verilog-analyzer.h"
+#include "verilog/formatting/format-style.h"
 
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())

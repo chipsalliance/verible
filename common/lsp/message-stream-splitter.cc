@@ -23,7 +23,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/util/status_macros.h"
+#include "common/util/status-macros.h"
 
 namespace verible {
 namespace lsp {

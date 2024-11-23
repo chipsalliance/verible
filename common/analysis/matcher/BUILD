@@ -13,8 +13,8 @@ package(
 
 cc_library(
     name = "bound-symbol-manager",
-    srcs = ["bound_symbol_manager.cc"],
-    hdrs = ["bound_symbol_manager.h"],
+    srcs = ["bound-symbol-manager.cc"],
+    hdrs = ["bound-symbol-manager.h"],
     deps = [
         "//common/text:symbol",
         "//common/util:casts",
@@ -54,7 +54,7 @@ cc_test(
 
 cc_library(
     name = "core-matchers",
-    hdrs = ["core_matchers.h"],
+    hdrs = ["core-matchers.h"],
     deps = [
         ":inner-match-handlers",
         ":matcher",
@@ -64,7 +64,7 @@ cc_library(
 
 cc_test(
     name = "core-matchers_test",
-    srcs = ["core_matchers_test.cc"],
+    srcs = ["core-matchers_test.cc"],
     deps = [
         ":bound-symbol-manager",
         ":core-matchers",
@@ -80,8 +80,8 @@ cc_test(
 
 cc_library(
     name = "inner-match-handlers",
-    srcs = ["inner_match_handlers.cc"],
-    hdrs = ["inner_match_handlers.h"],
+    srcs = ["inner-match-handlers.cc"],
+    hdrs = ["inner-match-handlers.h"],
     deps = [
         ":bound-symbol-manager",
         ":matcher",
@@ -92,7 +92,7 @@ cc_library(
 
 cc_library(
     name = "matcher-builders",
-    hdrs = ["matcher_builders.h"],
+    hdrs = ["matcher-builders.h"],
     deps = [
         ":descent-path",
         ":inner-match-handlers",
@@ -103,7 +103,7 @@ cc_library(
 
 cc_test(
     name = "matcher-builders_test",
-    srcs = ["matcher_builders_test.cc"],
+    srcs = ["matcher-builders_test.cc"],
     deps = [
         ":bound-symbol-manager",
         ":matcher",
@@ -121,8 +121,8 @@ cc_test(
 
 cc_library(
     name = "descent-path",
-    srcs = ["descent_path.cc"],
-    hdrs = ["descent_path.h"],
+    srcs = ["descent-path.cc"],
+    hdrs = ["descent-path.h"],
     deps = [
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
@@ -132,7 +132,7 @@ cc_library(
 
 cc_test(
     name = "descent-path_test",
-    srcs = ["descent_path_test.cc"],
+    srcs = ["descent-path_test.cc"],
     deps = [
         ":descent-path",
         "//common/text:concrete-syntax-leaf",
@@ -149,8 +149,8 @@ cc_test(
 cc_library(
     name = "matcher-test-utils",
     testonly = 1,
-    srcs = ["matcher_test_utils.cc"],
-    hdrs = ["matcher_test_utils.h"],
+    srcs = ["matcher-test-utils.cc"],
+    hdrs = ["matcher-test-utils.h"],
     deps = [
         ":bound-symbol-manager",
         ":matcher",

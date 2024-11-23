@@ -71,6 +71,13 @@ if [ $? -eq 0 ]; then
   EXIT_CODE=1
 fi
 
+find common verilog -name "*.h" -o -name "*.cc" | grep _ | grep -v _test
+if [ $? -eq 0 ]; then
+  echo "::error:: File naming-convention for c++ files is to use dashes as separator with underscore only in test files; e.g. foo-bar_test.cc"
+  echo
+  EXIT_CODE=1
+fi
+
 # bazelbuild/rules_python is broken as it downloads a dynamically
 # linked pre-built binary - This makes it _very_ platform specific.
 # This should either compile Python from scratch or use the local system Python.

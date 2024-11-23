@@ -80,8 +80,8 @@ cc_library(
 
 cc_library(
     name = "banned-declared-name-patterns-rule",
-    srcs = ["banned_declared_name_patterns_rule.cc"],
-    hdrs = ["banned_declared_name_patterns_rule.h"],
+    srcs = ["banned-declared-name-patterns-rule.cc"],
+    hdrs = ["banned-declared-name-patterns-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -103,7 +103,7 @@ cc_library(
 
 cc_test(
     name = "banned-declared-name-patterns-rule_test",
-    srcs = ["banned_declared_name_patterns_rule_test.cc"],
+    srcs = ["banned-declared-name-patterns-rule_test.cc"],
     deps = [
         ":banned-declared-name-patterns-rule",
         "//common/analysis:linter-test-utils",
@@ -117,8 +117,8 @@ cc_test(
 
 cc_library(
     name = "no-tabs-rule",
-    srcs = ["no_tabs_rule.cc"],
-    hdrs = ["no_tabs_rule.h"],
+    srcs = ["no-tabs-rule.cc"],
+    hdrs = ["no-tabs-rule.h"],
     deps = [
         "//common/analysis:line-lint-rule",
         "//common/analysis:lint-rule-status",
@@ -133,7 +133,7 @@ cc_library(
 
 cc_test(
     name = "no-tabs-rule_test",
-    srcs = ["no_tabs_rule_test.cc"],
+    srcs = ["no-tabs-rule_test.cc"],
     deps = [
         ":no-tabs-rule",
         "//common/analysis:line-linter-test-utils",
@@ -147,8 +147,8 @@ cc_test(
 
 cc_library(
     name = "no-trailing-spaces-rule",
-    srcs = ["no_trailing_spaces_rule.cc"],
-    hdrs = ["no_trailing_spaces_rule.h"],
+    srcs = ["no-trailing-spaces-rule.cc"],
+    hdrs = ["no-trailing-spaces-rule.h"],
     deps = [
         "//common/analysis:line-lint-rule",
         "//common/analysis:lint-rule-status",
@@ -164,7 +164,7 @@ cc_library(
 
 cc_test(
     name = "no-trailing-spaces-rule_test",
-    srcs = ["no_trailing_spaces_rule_test.cc"],
+    srcs = ["no-trailing-spaces-rule_test.cc"],
     deps = [
         ":no-trailing-spaces-rule",
         "//common/analysis:line-linter-test-utils",
@@ -178,8 +178,8 @@ cc_test(
 
 cc_library(
     name = "positive-meaning-parameter-name-rule",
-    srcs = ["positive_meaning_parameter_name_rule.cc"],
-    hdrs = ["positive_meaning_parameter_name_rule.h"],
+    srcs = ["positive-meaning-parameter-name-rule.cc"],
+    hdrs = ["positive-meaning-parameter-name-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -200,7 +200,7 @@ cc_library(
 
 cc_test(
     name = "positive-meaning-parameter-name-rule_test",
-    srcs = ["positive_meaning_parameter_name_rule_test.cc"],
+    srcs = ["positive-meaning-parameter-name-rule_test.cc"],
     deps = [
         ":positive-meaning-parameter-name-rule",
         "//common/analysis:linter-test-utils",
@@ -214,8 +214,8 @@ cc_test(
 
 cc_library(
     name = "posix-eof-rule",
-    srcs = ["posix_eof_rule.cc"],
-    hdrs = ["posix_eof_rule.h"],
+    srcs = ["posix-eof-rule.cc"],
+    hdrs = ["posix-eof-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:text-structure-lint-rule",
@@ -231,7 +231,7 @@ cc_library(
 
 cc_test(
     name = "posix-eof-rule_test",
-    srcs = ["posix_eof_rule_test.cc"],
+    srcs = ["posix-eof-rule_test.cc"],
     deps = [
         ":posix-eof-rule",
         "//common/analysis:linter-test-utils",
@@ -245,8 +245,8 @@ cc_test(
 
 cc_library(
     name = "line-length-rule",
-    srcs = ["line_length_rule.cc"],
-    hdrs = ["line_length_rule.h"],
+    srcs = ["line-length-rule.cc"],
+    hdrs = ["line-length-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:text-structure-lint-rule",
@@ -272,7 +272,7 @@ cc_library(
 
 cc_test(
     name = "line-length-rule_test",
-    srcs = ["line_length_rule_test.cc"],
+    srcs = ["line-length-rule_test.cc"],
     deps = [
         ":line-length-rule",
         "//common/analysis:linter-test-utils",
@@ -289,8 +289,8 @@ cc_test(
 
 cc_library(
     name = "forbid-consecutive-null-statements-rule",
-    srcs = ["forbid_consecutive_null_statements_rule.cc"],
-    hdrs = ["forbid_consecutive_null_statements_rule.h"],
+    srcs = ["forbid-consecutive-null-statements-rule.cc"],
+    hdrs = ["forbid-consecutive-null-statements-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -308,7 +308,7 @@ cc_library(
 
 cc_test(
     name = "forbid-consecutive-null-statements-rule_test",
-    srcs = ["forbid_consecutive_null_statements_rule_test.cc"],
+    srcs = ["forbid-consecutive-null-statements-rule_test.cc"],
     deps = [
         ":forbid-consecutive-null-statements-rule",
         "//common/analysis:linter-test-utils",
@@ -321,8 +321,8 @@ cc_test(
 
 cc_library(
     name = "forbid-defparam-rule",
-    srcs = ["forbid_defparam_rule.cc"],
-    hdrs = ["forbid_defparam_rule.h"],
+    srcs = ["forbid-defparam-rule.cc"],
+    hdrs = ["forbid-defparam-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -345,7 +345,7 @@ cc_library(
 
 cc_test(
     name = "forbid-defparam-rule_test",
-    srcs = ["forbid_defparam_rule_test.cc"],
+    srcs = ["forbid-defparam-rule_test.cc"],
     deps = [
         ":forbid-defparam-rule",
         "//common/analysis:linter-test-utils",
@@ -359,8 +359,8 @@ cc_test(
 
 cc_library(
     name = "mismatched-labels-rule",
-    srcs = ["mismatched_labels_rule.cc"],
-    hdrs = ["mismatched_labels_rule.h"],
+    srcs = ["mismatched-labels-rule.cc"],
+    hdrs = ["mismatched-labels-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -380,7 +380,7 @@ cc_library(
 
 cc_test(
     name = "mismatched-labels-rule_test",
-    srcs = ["mismatched_labels_rule_test.cc"],
+    srcs = ["mismatched-labels-rule_test.cc"],
     deps = [
         ":mismatched-labels-rule",
         "//common/analysis:linter-test-utils",
@@ -394,8 +394,8 @@ cc_test(
 
 cc_library(
     name = "module-begin-block-rule",
-    srcs = ["module_begin_block_rule.cc"],
-    hdrs = ["module_begin_block_rule.h"],
+    srcs = ["module-begin-block-rule.cc"],
+    hdrs = ["module-begin-block-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -413,7 +413,7 @@ cc_library(
 
 cc_test(
     name = "module-begin-block-rule_test",
-    srcs = ["module_begin_block_rule_test.cc"],
+    srcs = ["module-begin-block-rule_test.cc"],
     deps = [
         ":module-begin-block-rule",
         "//common/analysis:linter-test-utils",
@@ -427,8 +427,8 @@ cc_test(
 
 cc_library(
     name = "module-filename-rule",
-    srcs = ["module_filename_rule.cc"],
-    hdrs = ["module_filename_rule.h"],
+    srcs = ["module-filename-rule.cc"],
+    hdrs = ["module-filename-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-search",
@@ -453,7 +453,7 @@ cc_library(
 
 cc_test(
     name = "module-filename-rule_test",
-    srcs = ["module_filename_rule_test.cc"],
+    srcs = ["module-filename-rule_test.cc"],
     deps = [
         ":module-filename-rule",
         "//common/analysis:linter-test-utils",
@@ -468,8 +468,8 @@ cc_test(
 
 cc_library(
     name = "package-filename-rule",
-    srcs = ["package_filename_rule.cc"],
-    hdrs = ["package_filename_rule.h"],
+    srcs = ["package-filename-rule.cc"],
+    hdrs = ["package-filename-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-search",
@@ -490,7 +490,7 @@ cc_library(
 
 cc_test(
     name = "package-filename-rule_test",
-    srcs = ["package_filename_rule_test.cc"],
+    srcs = ["package-filename-rule_test.cc"],
     deps = [
         ":package-filename-rule",
         "//common/analysis:linter-test-utils",
@@ -505,8 +505,8 @@ cc_test(
 
 cc_library(
     name = "module-instantiation-rules",
-    srcs = ["module_instantiation_rules.cc"],
-    hdrs = ["module_instantiation_rules.h"],
+    srcs = ["module-instantiation-rules.cc"],
+    hdrs = ["module-instantiation-rules.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -532,7 +532,7 @@ cc_library(
 
 cc_test(
     name = "module-instantiation-rules_test",
-    srcs = ["module_instantiation_rules_test.cc"],
+    srcs = ["module-instantiation-rules_test.cc"],
     deps = [
         ":module-instantiation-rules",
         "//common/analysis:linter-test-utils",
@@ -546,8 +546,8 @@ cc_test(
 
 cc_library(
     name = "one-module-per-file-rule",
-    srcs = ["one_module_per_file_rule.cc"],
-    hdrs = ["one_module_per_file_rule.h"],
+    srcs = ["one-module-per-file-rule.cc"],
+    hdrs = ["one-module-per-file-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-search",
@@ -566,7 +566,7 @@ cc_library(
 
 cc_test(
     name = "one-module-per-file-rule_test",
-    srcs = ["one_module_per_file_rule_test.cc"],
+    srcs = ["one-module-per-file-rule_test.cc"],
     deps = [
         ":one-module-per-file-rule",
         "//common/analysis:linter-test-utils",
@@ -580,8 +580,8 @@ cc_test(
 
 cc_library(
     name = "endif-comment-rule",
-    srcs = ["endif_comment_rule.cc"],
-    hdrs = ["endif_comment_rule.h"],
+    srcs = ["endif-comment-rule.cc"],
+    hdrs = ["endif-comment-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:token-stream-lint-rule",
@@ -598,7 +598,7 @@ cc_library(
 
 cc_test(
     name = "endif-comment-rule_test",
-    srcs = ["endif_comment_rule_test.cc"],
+    srcs = ["endif-comment-rule_test.cc"],
     deps = [
         ":endif-comment-rule",
         "//common/analysis:linter-test-utils",
@@ -612,8 +612,8 @@ cc_test(
 
 cc_library(
     name = "forbidden-anonymous-enums-rule",
-    srcs = ["forbidden_anonymous_enums_rule.cc"],
-    hdrs = ["forbidden_anonymous_enums_rule.h"],
+    srcs = ["forbidden-anonymous-enums-rule.cc"],
+    hdrs = ["forbidden-anonymous-enums-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -632,7 +632,7 @@ cc_library(
 
 cc_test(
     name = "forbidden-anonymous-enums-rule_test",
-    srcs = ["forbidden_anonymous_enums_rule_test.cc"],
+    srcs = ["forbidden-anonymous-enums-rule_test.cc"],
     deps = [
         ":forbidden-anonymous-enums-rule",
         "//common/analysis:linter-test-utils",
@@ -646,8 +646,8 @@ cc_test(
 
 cc_library(
     name = "enum-name-style-rule",
-    srcs = ["enum_name_style_rule.cc"],
-    hdrs = ["enum_name_style_rule.h"],
+    srcs = ["enum-name-style-rule.cc"],
+    hdrs = ["enum-name-style-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -671,7 +671,7 @@ cc_library(
 
 cc_test(
     name = "enum-name-style-rule_test",
-    srcs = ["enum_name_style_rule_test.cc"],
+    srcs = ["enum-name-style-rule_test.cc"],
     deps = [
         ":enum-name-style-rule",
         "//common/analysis:linter-test-utils",
@@ -685,8 +685,8 @@ cc_test(
 
 cc_library(
     name = "forbidden-macro-rule",
-    srcs = ["forbidden_macro_rule.cc"],
-    hdrs = ["forbidden_macro_rule.h"],
+    srcs = ["forbidden-macro-rule.cc"],
+    hdrs = ["forbidden-macro-rule.h"],
     deps = [
         "//common/analysis:citation",
         "//common/analysis:lint-rule-status",
@@ -708,8 +708,8 @@ cc_library(
 
 cc_library(
     name = "forbidden-anonymous-structs-unions-rule",
-    srcs = ["forbidden_anonymous_structs_unions_rule.cc"],
-    hdrs = ["forbidden_anonymous_structs_unions_rule.h"],
+    srcs = ["forbidden-anonymous-structs-unions-rule.cc"],
+    hdrs = ["forbidden-anonymous-structs-unions-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -730,7 +730,7 @@ cc_library(
 
 cc_test(
     name = "forbidden-anonymous-structs-unions-rule_test",
-    srcs = ["forbidden_anonymous_structs_unions_rule_test.cc"],
+    srcs = ["forbidden-anonymous-structs-unions-rule_test.cc"],
     deps = [
         ":forbidden-anonymous-structs-unions-rule",
         "//common/analysis:linter-test-utils",
@@ -746,7 +746,7 @@ cc_test(
 
 cc_test(
     name = "forbidden-macro-rule_test",
-    srcs = ["forbidden_macro_rule_test.cc"],
+    srcs = ["forbidden-macro-rule_test.cc"],
     deps = [
         ":forbidden-macro-rule",
         "//common/analysis:linter-test-utils",
@@ -760,8 +760,8 @@ cc_test(
 
 cc_library(
     name = "forbidden-symbol-rule",
-    srcs = ["forbidden_symbol_rule.cc"],
-    hdrs = ["forbidden_symbol_rule.h"],
+    srcs = ["forbidden-symbol-rule.cc"],
+    hdrs = ["forbidden-symbol-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -782,7 +782,7 @@ cc_library(
 
 cc_test(
     name = "forbidden-symbol-rule_test",
-    srcs = ["forbidden_symbol_rule_test.cc"],
+    srcs = ["forbidden-symbol-rule_test.cc"],
     deps = [
         ":forbidden-symbol-rule",
         "//common/analysis:linter-test-utils",
@@ -796,8 +796,8 @@ cc_test(
 
 cc_library(
     name = "generate-label-rule",
-    srcs = ["generate_label_rule.cc"],
-    hdrs = ["generate_label_rule.h"],
+    srcs = ["generate-label-rule.cc"],
+    hdrs = ["generate-label-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -816,7 +816,7 @@ cc_library(
 
 cc_test(
     name = "generate-label-rule_test",
-    srcs = ["generate_label_rule_test.cc"],
+    srcs = ["generate-label-rule_test.cc"],
     deps = [
         ":generate-label-rule",
         "//common/analysis:linter-test-utils",
@@ -830,8 +830,8 @@ cc_test(
 
 cc_library(
     name = "generate-label-prefix-rule",
-    srcs = ["generate_label_prefix_rule.cc"],
-    hdrs = ["generate_label_prefix_rule.h"],
+    srcs = ["generate-label-prefix-rule.cc"],
+    hdrs = ["generate-label-prefix-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -854,7 +854,7 @@ cc_library(
 
 cc_test(
     name = "generate-label-prefix-rule_test",
-    srcs = ["generate_label_prefix_rule_test.cc"],
+    srcs = ["generate-label-prefix-rule_test.cc"],
     deps = [
         ":generate-label-prefix-rule",
         "//common/analysis:linter-test-utils",
@@ -868,8 +868,8 @@ cc_test(
 
 cc_library(
     name = "v2001-generate-begin-rule",
-    srcs = ["v2001_generate_begin_rule.cc"],
-    hdrs = ["v2001_generate_begin_rule.h"],
+    srcs = ["v2001-generate-begin-rule.cc"],
+    hdrs = ["v2001-generate-begin-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -890,7 +890,7 @@ cc_library(
 
 cc_test(
     name = "v2001-generate-begin-rule_test",
-    srcs = ["v2001_generate_begin_rule_test.cc"],
+    srcs = ["v2001-generate-begin-rule_test.cc"],
     deps = [
         ":forbidden-symbol-rule",
         ":v2001-generate-begin-rule",
@@ -905,8 +905,8 @@ cc_test(
 
 cc_library(
     name = "void-cast-rule",
-    srcs = ["void_cast_rule.cc"],
-    hdrs = ["void_cast_rule.h"],
+    srcs = ["void-cast-rule.cc"],
+    hdrs = ["void-cast-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -930,7 +930,7 @@ cc_library(
 
 cc_test(
     name = "void-cast-rule_test",
-    srcs = ["void_cast_rule_test.cc"],
+    srcs = ["void-cast-rule_test.cc"],
     deps = [
         ":void-cast-rule",
         "//common/analysis:linter-test-utils",
@@ -944,8 +944,8 @@ cc_test(
 
 cc_library(
     name = "undersized-binary-literal-rule",
-    srcs = ["undersized_binary_literal_rule.cc"],
-    hdrs = ["undersized_binary_literal_rule.h"],
+    srcs = ["undersized-binary-literal-rule.cc"],
+    hdrs = ["undersized-binary-literal-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -971,7 +971,7 @@ cc_library(
 
 cc_test(
     name = "undersized-binary-literal-rule_test",
-    srcs = ["undersized_binary_literal_rule_test.cc"],
+    srcs = ["undersized-binary-literal-rule_test.cc"],
     deps = [
         ":undersized-binary-literal-rule",
         "//common/analysis:linter-test-utils",
@@ -986,8 +986,8 @@ cc_test(
 
 cc_library(
     name = "truncated-numeric-literal-rule",
-    srcs = ["truncated_numeric_literal_rule.cc"],
-    hdrs = ["truncated_numeric_literal_rule.h"],
+    srcs = ["truncated-numeric-literal-rule.cc"],
+    hdrs = ["truncated-numeric-literal-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1011,7 +1011,7 @@ cc_library(
 
 cc_test(
     name = "truncated-numeric-literal-rule_test",
-    srcs = ["truncated_numeric_literal_rule_test.cc"],
+    srcs = ["truncated-numeric-literal-rule_test.cc"],
     deps = [
         ":truncated-numeric-literal-rule",
         "//common/analysis:linter-test-utils",
@@ -1027,8 +1027,8 @@ cc_test(
 
 cc_library(
     name = "create-object-name-match-rule",
-    srcs = ["create_object_name_match_rule.cc"],
-    hdrs = ["create_object_name_match_rule.h"],
+    srcs = ["create-object-name-match-rule.cc"],
+    hdrs = ["create-object-name-match-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1054,7 +1054,7 @@ cc_library(
 
 cc_test(
     name = "create-object-name-match-rule_test",
-    srcs = ["create_object_name_match_rule_test.cc"],
+    srcs = ["create-object-name-match-rule_test.cc"],
     deps = [
         ":create-object-name-match-rule",
         "//common/analysis:linter-test-utils",
@@ -1068,8 +1068,8 @@ cc_test(
 
 cc_library(
     name = "always-comb-rule",
-    srcs = ["always_comb_rule.cc"],
-    hdrs = ["always_comb_rule.h"],
+    srcs = ["always-comb-rule.cc"],
+    hdrs = ["always-comb-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1091,7 +1091,7 @@ cc_library(
 
 cc_test(
     name = "always-comb-rule_test",
-    srcs = ["always_comb_rule_test.cc"],
+    srcs = ["always-comb-rule_test.cc"],
     deps = [
         ":always-comb-rule",
         "//common/analysis:linter-test-utils",
@@ -1105,8 +1105,8 @@ cc_test(
 
 cc_library(
     name = "forbid-line-continuations-rule",
-    srcs = ["forbid_line_continuations_rule.cc"],
-    hdrs = ["forbid_line_continuations_rule.h"],
+    srcs = ["forbid-line-continuations-rule.cc"],
+    hdrs = ["forbid-line-continuations-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1127,7 +1127,7 @@ cc_library(
 
 cc_test(
     name = "forbid-line-continuations-rule_test",
-    srcs = ["forbid_line_continuations_rule_test.cc"],
+    srcs = ["forbid-line-continuations-rule_test.cc"],
     deps = [
         ":forbid-line-continuations-rule",
         "//common/analysis:linter-test-utils",
@@ -1141,8 +1141,8 @@ cc_test(
 
 cc_library(
     name = "suggest-parentheses-rule",
-    srcs = ["suggest_parentheses_rule.cc"],
-    hdrs = ["suggest_parentheses_rule.h"],
+    srcs = ["suggest-parentheses-rule.cc"],
+    hdrs = ["suggest-parentheses-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1163,7 +1163,7 @@ cc_library(
 
 cc_test(
     name = "suggest-parentheses-rule_test",
-    srcs = ["suggest_parentheses_rule_test.cc"],
+    srcs = ["suggest-parentheses-rule_test.cc"],
     deps = [
         ":suggest-parentheses-rule",
         "//common/analysis:linter-test-utils",
@@ -1176,8 +1176,8 @@ cc_test(
 
 cc_library(
     name = "always-comb-blocking-rule",
-    srcs = ["always_comb_blocking_rule.cc"],
-    hdrs = ["always_comb_blocking_rule.h"],
+    srcs = ["always-comb-blocking-rule.cc"],
+    hdrs = ["always-comb-blocking-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1202,7 +1202,7 @@ cc_library(
 
 cc_test(
     name = "always-comb-blocking-rule_test",
-    srcs = ["always_comb_blocking_rule_test.cc"],
+    srcs = ["always-comb-blocking-rule_test.cc"],
     deps = [
         ":always-comb-blocking-rule",
         "//common/analysis:linter-test-utils",
@@ -1216,8 +1216,8 @@ cc_test(
 
 cc_library(
     name = "always-ff-non-blocking-rule",
-    srcs = ["always_ff_non_blocking_rule.cc"],
-    hdrs = ["always_ff_non_blocking_rule.h"],
+    srcs = ["always-ff-non-blocking-rule.cc"],
+    hdrs = ["always-ff-non-blocking-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1243,7 +1243,7 @@ cc_library(
 
 cc_test(
     name = "always-ff-non-blocking-rule_test",
-    srcs = ["always_ff_non_blocking_rule_test.cc"],
+    srcs = ["always-ff-non-blocking-rule_test.cc"],
     deps = [
         ":always-ff-non-blocking-rule",
         "//common/analysis:linter-test-utils",
@@ -1257,8 +1257,8 @@ cc_test(
 
 cc_library(
     name = "explicit-begin-rule",
-    srcs = ["explicit_begin_rule.cc"],
-    hdrs = ["explicit_begin_rule.h"],
+    srcs = ["explicit-begin-rule.cc"],
+    hdrs = ["explicit-begin-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:token-stream-lint-rule",
@@ -1277,7 +1277,7 @@ cc_library(
 
 cc_test(
     name = "explicit-begin-rule_test",
-    srcs = ["explicit_begin_rule_test.cc"],
+    srcs = ["explicit-begin-rule_test.cc"],
     deps = [
         ":explicit-begin-rule",
         "//common/analysis:linter-test-utils",
@@ -1291,8 +1291,8 @@ cc_test(
 
 cc_library(
     name = "explicit-function-lifetime-rule",
-    srcs = ["explicit_function_lifetime_rule.cc"],
-    hdrs = ["explicit_function_lifetime_rule.h"],
+    srcs = ["explicit-function-lifetime-rule.cc"],
+    hdrs = ["explicit-function-lifetime-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1317,7 +1317,7 @@ cc_library(
 
 cc_test(
     name = "explicit-function-lifetime-rule_test",
-    srcs = ["explicit_function_lifetime_rule_test.cc"],
+    srcs = ["explicit-function-lifetime-rule_test.cc"],
     deps = [
         ":explicit-function-lifetime-rule",
         "//common/analysis:linter-test-utils",
@@ -1331,8 +1331,8 @@ cc_test(
 
 cc_library(
     name = "explicit-task-lifetime-rule",
-    srcs = ["explicit_task_lifetime_rule.cc"],
-    hdrs = ["explicit_task_lifetime_rule.h"],
+    srcs = ["explicit-task-lifetime-rule.cc"],
+    hdrs = ["explicit-task-lifetime-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1356,7 +1356,7 @@ cc_library(
 
 cc_test(
     name = "explicit-task-lifetime-rule_test",
-    srcs = ["explicit_task_lifetime_rule_test.cc"],
+    srcs = ["explicit-task-lifetime-rule_test.cc"],
     deps = [
         ":explicit-task-lifetime-rule",
         "//common/analysis:linter-test-utils",
@@ -1370,8 +1370,8 @@ cc_test(
 
 cc_library(
     name = "packed-dimensions-rule",
-    srcs = ["packed_dimensions_rule.cc"],
-    hdrs = ["packed_dimensions_rule.h"],
+    srcs = ["packed-dimensions-rule.cc"],
+    hdrs = ["packed-dimensions-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1396,7 +1396,7 @@ cc_library(
 
 cc_test(
     name = "packed-dimensions-rule_test",
-    srcs = ["packed_dimensions_rule_test.cc"],
+    srcs = ["packed-dimensions-rule_test.cc"],
     deps = [
         ":packed-dimensions-rule",
         "//common/analysis:linter-test-utils",
@@ -1410,8 +1410,8 @@ cc_test(
 
 cc_library(
     name = "unpacked-dimensions-rule",
-    srcs = ["unpacked_dimensions_rule.cc"],
-    hdrs = ["unpacked_dimensions_rule.h"],
+    srcs = ["unpacked-dimensions-rule.cc"],
+    hdrs = ["unpacked-dimensions-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1437,7 +1437,7 @@ cc_library(
 
 cc_test(
     name = "unpacked-dimensions-rule_test",
-    srcs = ["unpacked_dimensions_rule_test.cc"],
+    srcs = ["unpacked-dimensions-rule_test.cc"],
     deps = [
         ":unpacked-dimensions-rule",
         "//common/analysis:linter-test-utils",
@@ -1451,8 +1451,8 @@ cc_test(
 
 cc_library(
     name = "forbid-negative-array-dim",
-    srcs = ["forbid_negative_array_dim.cc"],
-    hdrs = ["forbid_negative_array_dim.h"],
+    srcs = ["forbid-negative-array-dim.cc"],
+    hdrs = ["forbid-negative-array-dim.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1475,7 +1475,7 @@ cc_library(
 
 cc_test(
     name = "forbid-negative-array-dim_test",
-    srcs = ["forbid_negative_array_dim_test.cc"],
+    srcs = ["forbid-negative-array-dim_test.cc"],
     deps = [
         ":forbid-negative-array-dim",
         "//common/analysis:linter-test-utils",
@@ -1489,8 +1489,8 @@ cc_test(
 
 cc_library(
     name = "case-missing-default-rule",
-    srcs = ["case_missing_default_rule.cc"],
-    hdrs = ["case_missing_default_rule.h"],
+    srcs = ["case-missing-default-rule.cc"],
+    hdrs = ["case-missing-default-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1512,7 +1512,7 @@ cc_library(
 
 cc_test(
     name = "case-missing-default-rule_test",
-    srcs = ["case_missing_default_rule_test.cc"],
+    srcs = ["case-missing-default-rule_test.cc"],
     deps = [
         ":case-missing-default-rule",
         "//common/analysis:linter-test-utils",
@@ -1526,8 +1526,8 @@ cc_test(
 
 cc_library(
     name = "constraint-name-style-rule",
-    srcs = ["constraint_name_style_rule.cc"],
-    hdrs = ["constraint_name_style_rule.h"],
+    srcs = ["constraint-name-style-rule.cc"],
+    hdrs = ["constraint-name-style-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1549,7 +1549,7 @@ cc_library(
 
 cc_test(
     name = "constraint-name-style-rule_test",
-    srcs = ["constraint_name_style_rule_test.cc"],
+    srcs = ["constraint-name-style-rule_test.cc"],
     deps = [
         ":constraint-name-style-rule",
         "//common/analysis:linter-test-utils",
@@ -1563,8 +1563,8 @@ cc_test(
 
 cc_library(
     name = "disable-statement-rule",
-    srcs = ["disable_statement_rule.cc"],
-    hdrs = ["disable_statement_rule.h"],
+    srcs = ["disable-statement-rule.cc"],
+    hdrs = ["disable-statement-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1586,7 +1586,7 @@ cc_library(
 
 cc_test(
     name = "disable-statement-rule_test",
-    srcs = ["disable_statement_rule_test.cc"],
+    srcs = ["disable-statement-rule_test.cc"],
     deps = [
         ":disable-statement-rule",
         "//common/analysis:linter-test-utils",
@@ -1600,8 +1600,8 @@ cc_test(
 
 cc_library(
     name = "macro-name-style-rule",
-    srcs = ["macro_name_style_rule.cc"],
-    hdrs = ["macro_name_style_rule.h"],
+    srcs = ["macro-name-style-rule.cc"],
+    hdrs = ["macro-name-style-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:token-stream-lint-rule",
@@ -1622,7 +1622,7 @@ cc_library(
 
 cc_test(
     name = "macro-name-style-rule_test",
-    srcs = ["macro_name_style_rule_test.cc"],
+    srcs = ["macro-name-style-rule_test.cc"],
     deps = [
         ":macro-name-style-rule",
         "//common/analysis:linter-test-utils",
@@ -1636,8 +1636,8 @@ cc_test(
 
 cc_library(
     name = "macro-string-concatenation-rule",
-    srcs = ["macro_string_concatenation_rule.cc"],
-    hdrs = ["macro_string_concatenation_rule.h"],
+    srcs = ["macro-string-concatenation-rule.cc"],
+    hdrs = ["macro-string-concatenation-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:token-stream-lint-rule",
@@ -1655,7 +1655,7 @@ cc_library(
 
 cc_test(
     name = "macro-string-concatenation-rule_test",
-    srcs = ["macro_string_concatenation_rule_test.cc"],
+    srcs = ["macro-string-concatenation-rule_test.cc"],
     deps = [
         ":macro-string-concatenation-rule",
         "//common/analysis:linter-test-utils",
@@ -1669,8 +1669,8 @@ cc_test(
 
 cc_library(
     name = "numeric-format-string-style-rule",
-    srcs = ["numeric_format_string_style_rule.cc"],
-    hdrs = ["numeric_format_string_style_rule.h"],
+    srcs = ["numeric-format-string-style-rule.cc"],
+    hdrs = ["numeric-format-string-style-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:token-stream-lint-rule",
@@ -1688,7 +1688,7 @@ cc_library(
 
 cc_test(
     name = "numeric-format-string-style-rule_test",
-    srcs = ["numeric_format_string_style_rule_test.cc"],
+    srcs = ["numeric-format-string-style-rule_test.cc"],
     deps = [
         ":numeric-format-string-style-rule",
         "//common/analysis:linter-test-utils",
@@ -1702,8 +1702,8 @@ cc_test(
 
 cc_library(
     name = "parameter-name-style-rule",
-    srcs = ["parameter_name_style_rule.cc"],
-    hdrs = ["parameter_name_style_rule.h"],
+    srcs = ["parameter-name-style-rule.cc"],
+    hdrs = ["parameter-name-style-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1728,7 +1728,7 @@ cc_library(
 
 cc_test(
     name = "parameter-name-style-rule_test",
-    srcs = ["parameter_name_style_rule_test.cc"],
+    srcs = ["parameter-name-style-rule_test.cc"],
     deps = [
         ":parameter-name-style-rule",
         "//common/analysis:linter-test-utils",
@@ -1745,8 +1745,8 @@ cc_test(
 
 cc_library(
     name = "parameter-type-name-style-rule",
-    srcs = ["parameter_type_name_style_rule.cc"],
-    hdrs = ["parameter_type_name_style_rule.h"],
+    srcs = ["parameter-type-name-style-rule.cc"],
+    hdrs = ["parameter-type-name-style-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1768,7 +1768,7 @@ cc_library(
 
 cc_test(
     name = "parameter-type-name-style-rule_test",
-    srcs = ["parameter_type_name_style_rule_test.cc"],
+    srcs = ["parameter-type-name-style-rule_test.cc"],
     deps = [
         ":parameter-type-name-style-rule",
         "//common/analysis:linter-test-utils",
@@ -1782,8 +1782,8 @@ cc_test(
 
 cc_library(
     name = "proper-parameter-declaration-rule",
-    srcs = ["proper_parameter_declaration_rule.cc"],
-    hdrs = ["proper_parameter_declaration_rule.h"],
+    srcs = ["proper-parameter-declaration-rule.cc"],
+    hdrs = ["proper-parameter-declaration-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1807,7 +1807,7 @@ cc_library(
 
 cc_test(
     name = "proper-parameter-declaration-rule_test",
-    srcs = ["proper_parameter_declaration_rule_test.cc"],
+    srcs = ["proper-parameter-declaration-rule_test.cc"],
     deps = [
         ":proper-parameter-declaration-rule",
         "//common/analysis:linter-test-utils",
@@ -1821,8 +1821,8 @@ cc_test(
 
 cc_library(
     name = "plusarg-assignment-rule",
-    srcs = ["plusarg_assignment_rule.cc"],
-    hdrs = ["plusarg_assignment_rule.h"],
+    srcs = ["plusarg-assignment-rule.cc"],
+    hdrs = ["plusarg-assignment-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1843,7 +1843,7 @@ cc_library(
 
 cc_test(
     name = "plusarg-assignment-rule_test",
-    srcs = ["plusarg_assignment_rule_test.cc"],
+    srcs = ["plusarg-assignment-rule_test.cc"],
     deps = [
         ":plusarg-assignment-rule",
         "//common/analysis:linter-test-utils",
@@ -1857,8 +1857,8 @@ cc_test(
 
 cc_library(
     name = "port-name-suffix-rule",
-    srcs = ["port_name_suffix_rule.cc"],
-    hdrs = ["port_name_suffix_rule.h"],
+    srcs = ["port-name-suffix-rule.cc"],
+    hdrs = ["port-name-suffix-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1880,7 +1880,7 @@ cc_library(
 
 cc_test(
     name = "port-name-suffix-rule_test",
-    srcs = ["port_name_suffix_rule_test.cc"],
+    srcs = ["port-name-suffix-rule_test.cc"],
     deps = [
         ":port-name-suffix-rule",
         "//common/analysis:linter-test-utils",
@@ -1894,8 +1894,8 @@ cc_test(
 
 cc_library(
     name = "explicit-parameter-storage-type-rule",
-    srcs = ["explicit_parameter_storage_type_rule.cc"],
-    hdrs = ["explicit_parameter_storage_type_rule.h"],
+    srcs = ["explicit-parameter-storage-type-rule.cc"],
+    hdrs = ["explicit-parameter-storage-type-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1921,7 +1921,7 @@ cc_library(
 
 cc_test(
     name = "explicit-parameter-storage-type-rule_test",
-    srcs = ["explicit_parameter_storage_type_rule_test.cc"],
+    srcs = ["explicit-parameter-storage-type-rule_test.cc"],
     deps = [
         ":explicit-parameter-storage-type-rule",
         "//common/analysis:linter-test-utils",
@@ -1937,8 +1937,8 @@ cc_test(
 
 cc_library(
     name = "explicit-function-task-parameter-type-rule",
-    srcs = ["explicit_function_task_parameter_type_rule.cc"],
-    hdrs = ["explicit_function_task_parameter_type_rule.h"],
+    srcs = ["explicit-function-task-parameter-type-rule.cc"],
+    hdrs = ["explicit-function-task-parameter-type-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1959,7 +1959,7 @@ cc_library(
 
 cc_test(
     name = "explicit-function-task-parameter-type-rule_test",
-    srcs = ["explicit_function_task_parameter_type_rule_test.cc"],
+    srcs = ["explicit-function-task-parameter-type-rule_test.cc"],
     deps = [
         ":explicit-function-task-parameter-type-rule",
         "//common/analysis:linter-test-utils",
@@ -1973,8 +1973,8 @@ cc_test(
 
 cc_library(
     name = "signal-name-style-rule",
-    srcs = ["signal_name_style_rule.cc"],
-    hdrs = ["signal_name_style_rule.h"],
+    srcs = ["signal-name-style-rule.cc"],
+    hdrs = ["signal-name-style-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -2002,7 +2002,7 @@ cc_library(
 
 cc_test(
     name = "signal-name-style-rule_test",
-    srcs = ["signal_name_style_rule_test.cc"],
+    srcs = ["signal-name-style-rule_test.cc"],
     deps = [
         ":signal-name-style-rule",
         "//common/analysis:linter-test-utils",
@@ -2016,8 +2016,8 @@ cc_test(
 
 cc_library(
     name = "struct-union-name-style-rule",
-    srcs = ["struct_union_name_style_rule.cc"],
-    hdrs = ["struct_union_name_style_rule.h"],
+    srcs = ["struct-union-name-style-rule.cc"],
+    hdrs = ["struct-union-name-style-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -2040,7 +2040,7 @@ cc_library(
 
 cc_test(
     name = "struct-union-name-style-rule_test",
-    srcs = ["struct_union_name_style_rule_test.cc"],
+    srcs = ["struct-union-name-style-rule_test.cc"],
     deps = [
         ":struct-union-name-style-rule",
         "//common/analysis:linter-test-utils",
@@ -2057,8 +2057,8 @@ cc_test(
 
 cc_library(
     name = "interface-name-style-rule",
-    srcs = ["interface_name_style_rule.cc"],
-    hdrs = ["interface_name_style_rule.h"],
+    srcs = ["interface-name-style-rule.cc"],
+    hdrs = ["interface-name-style-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -2083,7 +2083,7 @@ cc_library(
 
 cc_test(
     name = "interface-name-style-rule_test",
-    srcs = ["interface_name_style_rule_test.cc"],
+    srcs = ["interface-name-style-rule_test.cc"],
     deps = [
         ":interface-name-style-rule",
         "//common/analysis:linter-test-utils",
@@ -2097,8 +2097,8 @@ cc_test(
 
 cc_library(
     name = "instance-shadow-rule",
-    srcs = ["instance_shadow_rule.cc"],
-    hdrs = ["instance_shadow_rule.h"],
+    srcs = ["instance-shadow-rule.cc"],
+    hdrs = ["instance-shadow-rule.h"],
     deps = [
         "//common/analysis:citation",
         "//common/analysis:lint-rule-status",
@@ -2122,7 +2122,7 @@ cc_library(
 
 cc_test(
     name = "instance-shadow-rule-test",
-    srcs = ["instance_shadow_rule_test.cc"],
+    srcs = ["instance-shadow-rule_test.cc"],
     deps = [
         ":instance-shadow-rule",
         "//common/analysis:linter-test-utils",
@@ -2140,8 +2140,8 @@ cc_test(
 
 cc_library(
     name = "legacy-genvar-declaration-rule",
-    srcs = ["legacy_genvar_declaration_rule.cc"],
-    hdrs = ["legacy_genvar_declaration_rule.h"],
+    srcs = ["legacy-genvar-declaration-rule.cc"],
+    hdrs = ["legacy-genvar-declaration-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -2160,7 +2160,7 @@ cc_library(
 
 cc_test(
     name = "legacy-genvar-declaration-rule_test",
-    srcs = ["legacy_genvar_declaration_rule_test.cc"],
+    srcs = ["legacy-genvar-declaration-rule_test.cc"],
     deps = [
         ":legacy-genvar-declaration-rule",
         "//common/analysis:linter-test-utils",
@@ -2174,8 +2174,8 @@ cc_test(
 
 cc_library(
     name = "legacy-generate-region-rule",
-    srcs = ["legacy_generate_region_rule.cc"],
-    hdrs = ["legacy_generate_region_rule.h"],
+    srcs = ["legacy-generate-region-rule.cc"],
+    hdrs = ["legacy-generate-region-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -2196,7 +2196,7 @@ cc_library(
 
 cc_test(
     name = "legacy-generate-region-rule_test",
-    srcs = ["legacy_generate_region_rule_test.cc"],
+    srcs = ["legacy-generate-region-rule_test.cc"],
     deps = [
         ":legacy-generate-region-rule",
         "//common/analysis:linter-test-utils",
@@ -2210,8 +2210,8 @@ cc_test(
 
 cc_library(
     name = "uvm-macro-semicolon-rule",
-    srcs = ["uvm_macro_semicolon_rule.cc"],
-    hdrs = ["uvm_macro_semicolon_rule.h"],
+    srcs = ["uvm-macro-semicolon-rule.cc"],
+    hdrs = ["uvm-macro-semicolon-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -2233,7 +2233,7 @@ cc_library(
 
 cc_test(
     name = "uvm-macro-semicolon-rule_test",
-    srcs = ["uvm_macro_semicolon_rule_test.cc"],
+    srcs = ["uvm-macro-semicolon-rule_test.cc"],
     deps = [
         ":uvm-macro-semicolon-rule",
         "//common/analysis:linter-test-utils",
@@ -2246,8 +2246,8 @@ cc_test(
 
 cc_library(
     name = "suspicious-semicolon-rule",
-    srcs = ["suspicious_semicolon_rule.cc"],
-    hdrs = ["suspicious_semicolon_rule.h"],
+    srcs = ["suspicious-semicolon-rule.cc"],
+    hdrs = ["suspicious-semicolon-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -2267,7 +2267,7 @@ cc_library(
 
 cc_test(
     name = "suspicious-semicolon-rule_test",
-    srcs = ["suspicious_semicolon_rule_test.cc"],
+    srcs = ["suspicious-semicolon-rule_test.cc"],
     deps = [
         ":suspicious-semicolon-rule",
         "//common/analysis:linter-test-utils",
@@ -2280,8 +2280,8 @@ cc_test(
 
 cc_library(
     name = "dff-name-style-rule",
-    srcs = ["dff_name_style_rule.cc"],
-    hdrs = ["dff_name_style_rule.h"],
+    srcs = ["dff-name-style-rule.cc"],
+    hdrs = ["dff-name-style-rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -2312,7 +2312,7 @@ cc_library(
 
 cc_test(
     name = "dff-name-style-rule_test",
-    srcs = ["dff_name_style_rule_test.cc"],
+    srcs = ["dff-name-style-rule_test.cc"],
     deps = [
         ":dff-name-style-rule",
         "//common/analysis:linter-test-utils",

@@ -24,7 +24,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "verilog/preprocessor/verilog_preprocess.h"
+#include "verilog/preprocessor/verilog-preprocess.h"
 
 namespace verilog {
 namespace analysis {

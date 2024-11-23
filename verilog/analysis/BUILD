@@ -13,7 +13,7 @@ package(
 
 cc_library(
     name = "default-rules",
-    hdrs = ["default_rules.h"],
+    hdrs = ["default-rules.h"],
     deps = [
         "//verilog/analysis/checkers:verilog-lint-rules",
     ],
@@ -21,7 +21,7 @@ cc_library(
 
 cc_test(
     name = "default-rules_test",
-    srcs = ["default_rules_test.cc"],
+    srcs = ["default-rules_test.cc"],
     deps = [
         ":default-rules",
         ":lint-rule-registry",
@@ -68,8 +68,8 @@ cc_test(
 
 cc_library(
     name = "json-diagnostics",
-    srcs = ["json_diagnostics.cc"],
-    hdrs = ["json_diagnostics.h"],
+    srcs = ["json-diagnostics.cc"],
+    hdrs = ["json-diagnostics.h"],
     deps = [
         ":verilog-analyzer",
         "//common/analysis:file-analyzer",
@@ -81,8 +81,8 @@ cc_library(
 
 cc_library(
     name = "flow-tree",
-    srcs = ["flow_tree.cc"],
-    hdrs = ["flow_tree.h"],
+    srcs = ["flow-tree.cc"],
+    hdrs = ["flow-tree.h"],
     deps = [
         "//common/text:token-stream-view",
         "//common/util:logging",
@@ -94,7 +94,7 @@ cc_library(
 
 cc_test(
     name = "flow-tree_test",
-    srcs = ["flow_tree_test.cc"],
+    srcs = ["flow-tree_test.cc"],
     deps = [
         ":flow-tree",
         "//common/text:token-stream-view",
@@ -108,8 +108,8 @@ cc_test(
 
 cc_library(
     name = "lint-rule-registry",
-    srcs = ["lint_rule_registry.cc"],
-    hdrs = ["lint_rule_registry.h"],
+    srcs = ["lint-rule-registry.cc"],
+    hdrs = ["lint-rule-registry.h"],
     deps = [
         ":descriptions",
         "//common/analysis:line-lint-rule",
@@ -125,7 +125,7 @@ cc_library(
 
 cc_test(
     name = "json-diagnostics_test",
-    srcs = ["json_diagnostics_test.cc"],
+    srcs = ["json-diagnostics_test.cc"],
     deps = [
         ":json-diagnostics",
         ":verilog-analyzer",
@@ -138,7 +138,7 @@ cc_test(
 
 cc_test(
     name = "lint-rule-registry_test",
-    srcs = ["lint_rule_registry_test.cc"],
+    srcs = ["lint-rule-registry_test.cc"],
     deps = [
         ":descriptions",
         ":lint-rule-registry",
@@ -163,13 +163,13 @@ cc_test(
 cc_library(
     name = "verilog-analyzer",
     srcs = [
-        "verilog_analyzer.cc",
-        "verilog_excerpt_parse.cc",
+        "verilog-analyzer.cc",
+        "verilog-excerpt-parse.cc",
         # paired together because of mutual recursion
     ],
     hdrs = [
-        "verilog_analyzer.h",
-        "verilog_excerpt_parse.h",
+        "verilog-analyzer.h",
+        "verilog-excerpt-parse.h",
     ],
     deps = [
         "//common/analysis:file-analyzer",
@@ -201,8 +201,8 @@ cc_library(
 
 cc_library(
     name = "verilog-equivalence",
-    srcs = ["verilog_equivalence.cc"],
-    hdrs = ["verilog_equivalence.h"],
+    srcs = ["verilog-equivalence.cc"],
+    hdrs = ["verilog-equivalence.h"],
     deps = [
         "//common/lexer:token-stream-adapter",
         "//common/text:token-info",
@@ -219,8 +219,8 @@ cc_library(
 
 cc_library(
     name = "verilog-linter-configuration",
-    srcs = ["verilog_linter_configuration.cc"],
-    hdrs = ["verilog_linter_configuration.h"],
+    srcs = ["verilog-linter-configuration.cc"],
+    hdrs = ["verilog-linter-configuration.h"],
     deps = [
         ":default-rules",
         ":descriptions",
@@ -243,14 +243,14 @@ cc_library(
 
 cc_library(
     name = "verilog-linter-constants",
-    hdrs = ["verilog_linter_constants.h"],
+    hdrs = ["verilog-linter-constants.h"],
     deps = ["@com_google_absl//absl/strings:string_view"],
 )
 
 cc_library(
     name = "verilog-linter",
-    srcs = ["verilog_linter.cc"],
-    hdrs = ["verilog_linter.h"],
+    srcs = ["verilog-linter.cc"],
+    hdrs = ["verilog-linter.h"],
     deps = [
         ":default-rules",
         ":lint-rule-registry",
@@ -285,7 +285,7 @@ cc_library(
 
 cc_test(
     name = "verilog-analyzer_test",
-    srcs = ["verilog_analyzer_test.cc"],
+    srcs = ["verilog-analyzer_test.cc"],
     deps = [
         ":verilog-analyzer",
         "//common/analysis:file-analyzer",
@@ -310,7 +310,7 @@ cc_test(
 
 cc_test(
     name = "verilog-linter-configuration_test",
-    srcs = ["verilog_linter_configuration_test.cc"],
+    srcs = ["verilog-linter-configuration_test.cc"],
     deps = [
         ":default-rules",
         ":descriptions",
@@ -338,7 +338,7 @@ cc_test(
 
 cc_test(
     name = "verilog-linter_test",
-    srcs = ["verilog_linter_test.cc"],
+    srcs = ["verilog-linter_test.cc"],
     deps = [
         ":default-rules",
         ":verilog-analyzer",
@@ -359,7 +359,7 @@ cc_test(
 
 cc_test(
     name = "verilog-equivalence_test",
-    srcs = ["verilog_equivalence_test.cc"],
+    srcs = ["verilog-equivalence_test.cc"],
     deps = [
         ":verilog-equivalence",
         "@com_google_absl//absl/strings",
@@ -372,8 +372,8 @@ cc_test(
 
 cc_library(
     name = "verilog-filelist",
-    srcs = ["verilog_filelist.cc"],
-    hdrs = ["verilog_filelist.h"],
+    srcs = ["verilog-filelist.cc"],
+    hdrs = ["verilog-filelist.h"],
     deps = [
         "//common/util:file-util",
         "//common/util:iterator-range",
@@ -385,7 +385,7 @@ cc_library(
 
 cc_test(
     name = "verilog-filelist_test",
-    srcs = ["verilog_filelist_test.cc"],
+    srcs = ["verilog-filelist_test.cc"],
     deps = [
         ":verilog-filelist",
         "//common/util:file-util",
@@ -397,8 +397,8 @@ cc_test(
 
 cc_library(
     name = "verilog-project",
-    srcs = ["verilog_project.cc"],
-    hdrs = ["verilog_project.h"],
+    srcs = ["verilog-project.cc"],
+    hdrs = ["verilog-project.h"],
     deps = [
         ":verilog-analyzer",
         "//common/strings:mem-block",
@@ -417,7 +417,7 @@ cc_library(
 
 cc_test(
     name = "verilog-project_test",
-    srcs = ["verilog_project_test.cc"],
+    srcs = ["verilog-project_test.cc"],
     deps = [
         ":verilog-analyzer",
         ":verilog-project",
@@ -436,8 +436,8 @@ cc_test(
 
 cc_library(
     name = "symbol-table",
-    srcs = ["symbol_table.cc"],
-    hdrs = ["symbol_table.h"],
+    srcs = ["symbol-table.cc"],
+    hdrs = ["symbol-table.h"],
     deps = [
         ":verilog-project",
         "//common/strings:compare",
@@ -484,7 +484,7 @@ cc_library(
 
 cc_test(
     name = "symbol-table_test",
-    srcs = ["symbol_table_test.cc"],
+    srcs = ["symbol-table_test.cc"],
     deps = [
         ":symbol-table",
         ":verilog-filelist",

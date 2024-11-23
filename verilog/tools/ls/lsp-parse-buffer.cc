@@ -25,13 +25,13 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/lint_rule_status.h"
+#include "common/analysis/lint-rule-status.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-text-buffer.h"
 #include "common/util/logging.h"
-#include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/analysis/verilog_linter.h"
-#include "verilog/analysis/verilog_linter_configuration.h"
+#include "verilog/analysis/verilog-analyzer.h"
+#include "verilog/analysis/verilog-linter-configuration.h"
+#include "verilog/analysis/verilog-linter.h"
 
 namespace verilog {
 static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(

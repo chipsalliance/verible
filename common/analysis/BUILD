@@ -27,8 +27,8 @@ cc_library(
 
 cc_library(
     name = "lint-rule-status",
-    srcs = ["lint_rule_status.cc"],
-    hdrs = ["lint_rule_status.h"],
+    srcs = ["lint-rule-status.cc"],
+    hdrs = ["lint-rule-status.h"],
     deps = [
         ":citation",
         "//common/strings:line-column-map",
@@ -46,7 +46,7 @@ cc_library(
 
 cc_library(
     name = "lint-rule",
-    hdrs = ["lint_rule.h"],
+    hdrs = ["lint-rule.h"],
     deps = [
         ":lint-rule-status",
         "@com_google_absl//absl/status",
@@ -57,17 +57,17 @@ cc_library(
 genlex(
     name = "command-file-lex",
     src = "command_file.lex",
-    out = "command_file.yy.cc",
+    out = "command-file.yy.cc",
 )
 
 cc_library(
     name = "command-file-lexer",
     srcs = [
-        "command_file.yy.cc",
-        "command_file_lexer.cc",
+        "command-file.yy.cc",
+        "command-file-lexer.cc",
     ],
     hdrs = [
-        "command_file_lexer.h",
+        "command-file-lexer.h",
     ],
     copts = select({
         "@platforms//os:windows": [],
@@ -87,8 +87,8 @@ cc_library(
 
 cc_library(
     name = "violation-handler",
-    srcs = ["violation_handler.cc"],
-    hdrs = ["violation_handler.h"],
+    srcs = ["violation-handler.cc"],
+    hdrs = ["violation-handler.h"],
     deps = [
         ":lint-rule-status",
         "//common/strings:diff",
@@ -104,7 +104,7 @@ cc_library(
 cc_test(
     name = "command-file-lexer_test",
     size = "small",
-    srcs = ["command_file_lexer_test.cc"],
+    srcs = ["command-file-lexer_test.cc"],
     deps = [
         ":command-file-lexer",
         "//common/lexer:lexer-test-util",
@@ -119,8 +119,8 @@ cc_test(
 
 cc_library(
     name = "lint-waiver",
-    srcs = ["lint_waiver.cc"],
-    hdrs = ["lint_waiver.h"],
+    srcs = ["lint-waiver.cc"],
+    hdrs = ["lint-waiver.h"],
     deps = [
         ":command-file-lexer",
         "//common/strings:comment-utils",
@@ -145,8 +145,8 @@ cc_library(
 
 cc_library(
     name = "file-analyzer",
-    srcs = ["file_analyzer.cc"],
-    hdrs = ["file_analyzer.h"],
+    srcs = ["file-analyzer.cc"],
+    hdrs = ["file-analyzer.h"],
     deps = [
         "//common/lexer",
         "//common/lexer:token-stream-adapter",
@@ -167,8 +167,8 @@ cc_library(
 cc_library(
     name = "linter-test-utils",
     testonly = 1,
-    srcs = ["linter_test_utils.cc"],
-    hdrs = ["linter_test_utils.h"],
+    srcs = ["linter-test-utils.cc"],
+    hdrs = ["linter-test-utils.h"],
     deps = [
         ":lint-rule-status",
         "//common/text:token-info",
@@ -185,8 +185,8 @@ cc_library(
 cc_library(
     name = "syntax-tree-search-test-utils",
     testonly = 1,
-    srcs = ["syntax_tree_search_test_utils.cc"],
-    hdrs = ["syntax_tree_search_test_utils.h"],
+    srcs = ["syntax-tree-search-test-utils.cc"],
+    hdrs = ["syntax-tree-search-test-utils.h"],
     deps = [
         ":syntax-tree-search",
         "//common/lexer:lexer-test-util",
@@ -201,8 +201,8 @@ cc_library(
 
 cc_library(
     name = "line-linter",
-    srcs = ["line_linter.cc"],
-    hdrs = ["line_linter.h"],
+    srcs = ["line-linter.cc"],
+    hdrs = ["line-linter.h"],
     deps = [
         ":line-lint-rule",
         ":lint-rule-status",
@@ -214,7 +214,7 @@ cc_library(
 cc_library(
     name = "line-linter-test-utils",
     testonly = 1,
-    hdrs = ["line_linter_test_utils.h"],
+    hdrs = ["line-linter-test-utils.h"],
     deps = [
         ":line-lint-rule",
         ":line-linter",
@@ -228,7 +228,7 @@ cc_library(
 
 cc_library(
     name = "line-lint-rule",
-    hdrs = ["line_lint_rule.h"],
+    hdrs = ["line-lint-rule.h"],
     deps = [
         ":lint-rule",
         "@com_google_absl//absl/strings:string_view",
@@ -237,8 +237,8 @@ cc_library(
 
 cc_library(
     name = "syntax-tree-linter",
-    srcs = ["syntax_tree_linter.cc"],
-    hdrs = ["syntax_tree_linter.h"],
+    srcs = ["syntax-tree-linter.cc"],
+    hdrs = ["syntax-tree-linter.h"],
     deps = [
         ":lint-rule-status",
         ":syntax-tree-lint-rule",
@@ -253,7 +253,7 @@ cc_library(
 cc_library(
     name = "syntax-tree-linter-test-utils",
     testonly = 1,
-    hdrs = ["syntax_tree_linter_test_utils.h"],
+    hdrs = ["syntax-tree-linter-test-utils.h"],
     deps = [
         ":lint-rule-status",
         ":linter-test-utils",
@@ -267,7 +267,7 @@ cc_library(
 
 cc_library(
     name = "syntax-tree-lint-rule",
-    hdrs = ["syntax_tree_lint_rule.h"],
+    hdrs = ["syntax-tree-lint-rule.h"],
     deps = [
         ":lint-rule",
         "//common/text:concrete-syntax-leaf",
@@ -279,8 +279,8 @@ cc_library(
 
 cc_library(
     name = "syntax-tree-search",
-    srcs = ["syntax_tree_search.cc"],
-    hdrs = ["syntax_tree_search.h"],
+    srcs = ["syntax-tree-search.cc"],
+    hdrs = ["syntax-tree-search.h"],
     deps = [
         "//common/analysis/matcher",
         "//common/analysis/matcher:bound-symbol-manager",
@@ -294,8 +294,8 @@ cc_library(
 
 cc_library(
     name = "text-structure-linter",
-    srcs = ["text_structure_linter.cc"],
-    hdrs = ["text_structure_linter.h"],
+    srcs = ["text-structure-linter.cc"],
+    hdrs = ["text-structure-linter.h"],
     deps = [
         ":lint-rule-status",
         ":text-structure-lint-rule",
@@ -308,7 +308,7 @@ cc_library(
 cc_library(
     name = "text-structure-linter-test-utils",
     testonly = 1,
-    hdrs = ["text_structure_linter_test_utils.h"],
+    hdrs = ["text-structure-linter-test-utils.h"],
     deps = [
         ":lint-rule-status",
         ":linter-test-utils",
@@ -322,7 +322,7 @@ cc_library(
 
 cc_library(
     name = "text-structure-lint-rule",
-    hdrs = ["text_structure_lint_rule.h"],
+    hdrs = ["text-structure-lint-rule.h"],
     deps = [
         ":lint-rule",
         "//common/text:text-structure",
@@ -332,8 +332,8 @@ cc_library(
 
 cc_library(
     name = "token-stream-linter",
-    srcs = ["token_stream_linter.cc"],
-    hdrs = ["token_stream_linter.h"],
+    srcs = ["token-stream-linter.cc"],
+    hdrs = ["token-stream-linter.h"],
     deps = [
         ":lint-rule-status",
         ":token-stream-lint-rule",
@@ -345,7 +345,7 @@ cc_library(
 cc_library(
     name = "token-stream-linter-test-utils",
     testonly = 1,
-    hdrs = ["token_stream_linter_test_utils.h"],
+    hdrs = ["token-stream-linter-test-utils.h"],
     deps = [
         ":lint-rule-status",
         ":linter-test-utils",
@@ -359,7 +359,7 @@ cc_library(
 
 cc_library(
     name = "token-stream-lint-rule",
-    hdrs = ["token_stream_lint_rule.h"],
+    hdrs = ["token-stream-lint-rule.h"],
     deps = [
         ":lint-rule",
         "//common/text:token-info",
@@ -368,7 +368,7 @@ cc_library(
 
 cc_test(
     name = "lint-rule-status_test",
-    srcs = ["lint_rule_status_test.cc"],
+    srcs = ["lint-rule-status_test.cc"],
     deps = [
         ":lint-rule-status",
         "//common/text:concrete-syntax-tree",
@@ -383,7 +383,7 @@ cc_test(
 
 cc_test(
     name = "lint-waiver_test",
-    srcs = ["lint_waiver_test.cc"],
+    srcs = ["lint-waiver_test.cc"],
     deps = [
         ":lint-waiver",
         "//common/strings:line-column-map",
@@ -399,7 +399,7 @@ cc_test(
 
 cc_test(
     name = "file-analyzer_test",
-    srcs = ["file_analyzer_test.cc"],
+    srcs = ["file-analyzer_test.cc"],
     deps = [
         ":file-analyzer",
         "//common/strings:line-column-map",
@@ -415,7 +415,7 @@ cc_test(
 
 cc_test(
     name = "linter-test-utils_test",
-    srcs = ["linter_test_utils_test.cc"],
+    srcs = ["linter-test-utils_test.cc"],
     deps = [
         ":lint-rule-status",
         ":linter-test-utils",
@@ -429,7 +429,7 @@ cc_test(
 
 cc_test(
     name = "line-linter_test",
-    srcs = ["line_linter_test.cc"],
+    srcs = ["line-linter_test.cc"],
     deps = [
         ":line-lint-rule",
         ":line-linter",
@@ -443,7 +443,7 @@ cc_test(
 
 cc_test(
     name = "syntax-tree-linter_test",
-    srcs = ["syntax_tree_linter_test.cc"],
+    srcs = ["syntax-tree-linter_test.cc"],
     deps = [
         ":lint-rule-status",
         ":syntax-tree-lint-rule",
@@ -463,7 +463,7 @@ cc_test(
 
 cc_test(
     name = "syntax-tree-search_test",
-    srcs = ["syntax_tree_search_test.cc"],
+    srcs = ["syntax-tree-search_test.cc"],
     deps = [
         ":syntax-tree-search",
         "//common/analysis/matcher:matcher-builders",
@@ -478,7 +478,7 @@ cc_test(
 
 cc_test(
     name = "syntax-tree-search-test-utils_test",
-    srcs = ["syntax_tree_search_test_utils_test.cc"],
+    srcs = ["syntax-tree-search-test-utils_test.cc"],
     deps = [
         ":syntax-tree-search",
         ":syntax-tree-search-test-utils",
@@ -493,7 +493,7 @@ cc_test(
 
 cc_test(
     name = "text-structure-linter_test",
-    srcs = ["text_structure_linter_test.cc"],
+    srcs = ["text-structure-linter_test.cc"],
     deps = [
         ":lint-rule-status",
         ":text-structure-lint-rule",
@@ -509,7 +509,7 @@ cc_test(
 
 cc_test(
     name = "token-stream-linter_test",
-    srcs = ["token_stream_linter_test.cc"],
+    srcs = ["token-stream-linter_test.cc"],
     deps = [
         ":lint-rule-status",
         ":token-stream-lint-rule",

@@ -17,7 +17,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "common/util/init_command_line.h"
+#include "common/util/init-command-line.h"
 #include "verilog/tools/ls/verilog-language-server.h"
 
 #ifndef _WIN32

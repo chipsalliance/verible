@@ -12,7 +12,7 @@ package(
 
 cc_binary(
     name = "verible-verilog-project",
-    srcs = ["project_tool.cc"],
+    srcs = ["project-tool.cc"],
     features = STATIC_EXECUTABLES_FEATURE,
     visibility = ["//:__subpackages__"],
     deps = [

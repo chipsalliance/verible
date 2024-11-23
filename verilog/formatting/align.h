@@ -16,9 +16,9 @@
 #define VERIBLE_VERILOG_FORMATTING_ALIGN_H_
 
 #include "absl/strings/string_view.h"
-#include "common/formatting/token_partition_tree.h"
+#include "common/formatting/token-partition-tree.h"
 #include "common/strings/position.h"  // for ByteOffsetSet
-#include "verilog/formatting/format_style.h"
+#include "verilog/formatting/format-style.h"
 
 namespace verilog {
 namespace formatter {
