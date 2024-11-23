@@ -81,6 +81,9 @@ readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
 #
 # There are some known issues which are all recorded in the associative
 # array below, mapping them to Verible issue tracker numbers.
+# TODO(hzeller): there should be a configuration file that contains two
+# columns: URL + hash, so that we can fetch a particular known version not
+# a moving target.
 readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
          https://github.com/lowRISC/opentitan \
          https://github.com/chipsalliance/sv-tests \
