@@ -56,12 +56,9 @@ static constexpr absl::string_view kLocalParamAllowPackageMessage =
     "\'localparam\' declarations should only be within modules, packages or "
     "class definition bodies.";
 
-static absl::string_view kParameterMessage = kParameterNotInPackageMessage;
-static absl::string_view kLocalParamMessage = kLocalParamAllowPackageMessage;
-
-static absl::string_view kAutoFixReplaceParameterWithLocalparam =
+static constexpr absl::string_view kAutoFixReplaceParameterWithLocalparam =
     "Replace 'parameter' with 'localparam'";
-static absl::string_view kAutoFixReplaceLocalparamWithParameter =
+static constexpr absl::string_view kAutoFixReplaceLocalparamWithParameter =
     "Replace 'localparam' with 'parameter'";
 
 const LintRuleDescriptor &ProperParameterDeclarationRule::GetDescriptor() {
@@ -89,6 +86,19 @@ const LintRuleDescriptor &ProperParameterDeclarationRule::GetDescriptor() {
   return d;
 }
 
+ProperParameterDeclarationRule::ProperParameterDeclarationRule() {
+  ChooseMessagesForConfiguration();
+}
+
+void ProperParameterDeclarationRule::ChooseMessagesForConfiguration() {
+  // Message is slightly different depending on configuration
+  parameter_message_ = package_allow_parameter_ ? kParameterAllowPackageMessage
+                                                : kParameterNotInPackageMessage;
+  local_parameter_message_ = package_allow_localparam_
+                                 ? kLocalParamAllowPackageMessage
+                                 : kLocalParamNotInPackageMessage;
+}
+
 absl::Status ProperParameterDeclarationRule::Configure(
     absl::string_view configuration) {
   using verible::config::SetBool;
@@ -99,12 +109,7 @@ absl::Status ProperParameterDeclarationRule::Configure(
           {"package_allow_localparam", SetBool(&package_allow_localparam_)},
       });
 
-  // Change the message slightly
-  kParameterMessage = package_allow_parameter_ ? kParameterAllowPackageMessage
-                                               : kParameterNotInPackageMessage;
-  kLocalParamMessage = package_allow_localparam_
-                           ? kLocalParamAllowPackageMessage
-                           : kLocalParamNotInPackageMessage;
+  ChooseMessagesForConfiguration();
   return status;
 }
 
@@ -124,7 +129,7 @@ void ProperParameterDeclarationRule::AddParameterViolation(
   AutoFix autofix =
       AutoFix(kAutoFixReplaceParameterWithLocalparam, {*token, "localparam"});
   violations_.insert(
-      LintViolation(*token, kParameterMessage, context, {autofix}));
+      LintViolation(*token, parameter_message_, context, {autofix}));
 }
 
 void ProperParameterDeclarationRule::AddLocalparamViolation(
@@ -138,7 +143,7 @@ void ProperParameterDeclarationRule::AddLocalparamViolation(
   AutoFix autofix =
       AutoFix(kAutoFixReplaceLocalparamWithParameter, {*token, "parameter"});
   violations_.insert(
-      LintViolation(*token, kLocalParamMessage, context, {autofix}));
+      LintViolation(*token, local_parameter_message_, context, {autofix}));
 }
 
 // TODO(kathuriac): Also check the 'interface' and 'program' constructs.
