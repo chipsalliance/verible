@@ -67,7 +67,7 @@ would pave the way to making an AST more useful.
 Most CST accessor function tests should follow this outline:
 
 *   Declare an array of test data in the form of
-    [SyntaxTreeSearchTestCase](https://cs.opensource.google/verible/verible/+/master:common/analysis/syntax_tree_search_test_utils.h)
+    [SyntaxTreeSearchTestCase](https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/syntax-tree-search-test-utils.h)
     *   Each element compactly represents the code to analyze, and the set of
         expected findings as annotated subranges of text.
 *   For every function-under-test, establish a function that extracts the
@@ -75,5 +75,5 @@ Most CST accessor function tests should follow this outline:
     simple find-function on a syntax tree or contain any sequence of search
     refinements.
 *   Pass these into the
-    [TestVerilogSyntaxRangeMatches](https://cs.opensource.google/verible/verible/+/master:verilog/CST/match_test_utils.h)
+    [TestVerilogSyntaxRangeMatches](https://cs.opensource.google/verible/verible/+/master:verible/verilog/CST/match-test-utils.h)
     test driver function which compare actual vs. expected subranges.

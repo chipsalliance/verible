@@ -44,18 +44,18 @@ The major classes of text analyses available today are:
 
 *   [LineLintRule] analyzes text one line at a time. Examples:
 
-    *   [no_trailing_spaces_rule](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers/no_trailing_spaces_rule.h)
-    *   [no_tabs_rule](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers/no_tabs_rule.h)
+    *   [no_trailing_spaces_rule](https://cs.opensource.google/verible/verible/+/master:verible/verilog/analysis/checkers/no-trailing-spaces-rule.h)
+    *   [no_tabs_rule](https://cs.opensource.google/verible/verible/+/master:verible/verilog/analysis/checkers/no-tabs-rule.h)
 
 *   [TokenStreamLintRule] scans one token at a time. Examples:
 
-    *   [endif_comment_rule](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers/endif_comment_rule.h)
+    *   [endif_comment_rule](https://cs.opensource.google/verible/verible/+/master:verible/verilog/analysis/checkers/endif-comment-rule.h)
         and
-    *   [macro_name_style_rule](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers/macro_name_style_rule.h)
+    *   [macro_name_style_rule](https://cs.opensource.google/verible/verible/+/master:verible/verilog/analysis/checkers/macro-name-style-rule.h)
 
 *   [SyntaxTreeLintRule] analyzes the syntax trees, examining tree nodes and
     leaves. The
-    [vast majority of SystemVerilog lint rules](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers)
+    [vast majority of SystemVerilog lint rules](https://cs.opensource.google/verible/verible/+/master:verible/verilog/analysis/checkers)
     fall under this category. The [Analysis Tools](#syntax-tree-analysis-tools)
     section describes various syntax tree analysis tools.
 
@@ -69,10 +69,10 @@ The major classes of text analyses available today are:
         aforementioned forms.
 
     Examples:
-    [module_filename_rule](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers/module_filename_rule.h?q=class:%5CbModuleFilenameRule),
-    [line_length_rule](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers/line_length_rule.h?q=class:%5CbLineLengthRule),
+    [module_filename_rule](https://cs.opensource.google/verible/verible/+/master:verible/verilog/analysis/checkers/module-filename-rule.h?q=class:%5CbModuleFilenameRule),
+    [line_length_rule](https://cs.opensource.google/verible/verible/+/master:verible/verilog/analysis/checkers/line-length-rule.h?q=class:%5CbLineLengthRule),
     and
-    [posix_eof_rule](https://cs.opensource.google/verible/verible/+/master:verilog/analysis/checkers/posix_eof_rule.h?q=class:%5CbPosixEOFRule).
+    [posix_eof_rule](https://cs.opensource.google/verible/verible/+/master:verible/verilog/analysis/checkers/posix-eof-rule.h?q=class:%5CbPosixEOFRule).
 
 For complete links to examples of each of the above lint rule classes, click on
 the class definition and navigate to "Extended By" inside the "Cross References"
@@ -113,7 +113,7 @@ Cons:
 
 ### Syntax Tree Searching
 
-[SearchSyntaxTree](https://cs.opensource.google/verible/verible/+/master:common/analysis/syntax_tree_search.h)
+[SearchSyntaxTree](https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/syntax-tree-search.h)
 is a generic search function for identifying all syntax tree nodes that satisfy
 a given predicate. Searching with this function yields TreeSearchMatch objects
 that point to syntax tree nodes/leaves and include the context in which the node
@@ -133,7 +133,7 @@ Cons:
 ### Syntax Tree Pattern Matching
 
 The
-[CST Matcher library](https://cs.opensource.google/verible/verible/+/master:common/analysis/matcher/)
+[CST Matcher library](https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/matcher/)
 provides a convenient way to create matcher objects that describe certain
 syntactic patterns.
 
@@ -244,17 +244,17 @@ Make sure to include negative tests that expect no lint violations.
 <!-- reference links -->
 
 [SV-LRM]: https://ieeexplore.ieee.org/document/8299595
-[LineLintRule]: https://cs.opensource.google/verible/verible/+/master:common/analysis/line_lint_rule.h
-[TokenStreamLintRule]: https://cs.opensource.google/verible/verible/+/master:common/analysis/token_stream_lint_rule.h
-[SyntaxTreeLintRule]: https://cs.opensource.google/verible/verible/+/master:common/analysis/syntax_tree_lint_rule.h
-[TextStructureLintRule]: https://cs.opensource.google/verible/verible/+/master:common/analysis/text_structure_lint_rule.h
-[TextStructureView]: https://cs.opensource.google/verible/verible/+/master:common/text/text_structure.h
-[TreeContextVisitor]: https://cs.opensource.google/verible/verible/+/master:common/text/tree_context_visitor.h
-[LintViolation]: https://cs.opensource.google/verible/verible/+/master:common/analysis/lint_rule_status.h?q=class:%5CbLintViolation%5Cb&ss=verible%2Fverible
-[LintRuleStatus]: https://cs.opensource.google/verible/verible/+/master:common/analysis/lint_rule_status.h?q=class:%5CbLintRuleStatus%5Cb&ss=verible%2Fverible
-[LintTestCase]: https://cs.opensource.google/verible/verible/+/master:common/analysis/linter_test_utils.h?q=class:%5CbLintTestCase%5Cb&ss=verible%2Fverible
-[core_matchers.h]: https://cs.opensource.google/verible/verible/+/master:common/analysis/matcher/core_matchers.h
-[verilog_matchers.h]: https://cs.opensource.google/verible/verible/+/master:verilog/CST/verilog_matchers.h
-[TagMatchBuilder]: https://cs.opensource.google/verible/verible/+/master:common/analysis/matcher/matcher_builders.h?q=class:%5CbTagMatchBuilder%5Cb%20&ss=verible%2Fverible
-[BindableMatcher]: https://cs.opensource.google/verible/verible/+/master:common/analysis/matcher/matcher.h?q=class:%5CbBindableMatcher%5Cb%20&ss=verible%2Fverible
-[BoundSymbolManager]: https://cs.opensource.google/verible/verible/+/master:common/analysis/matcher/bound_symbol_manager.h?q=class:BoundSymbolManager&ss=verible%2Fverible
+[LineLintRule]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/line-lint-rule.h
+[TokenStreamLintRule]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/token-stream-lint-rule.h
+[SyntaxTreeLintRule]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/syntax-tree-lint-rule.h
+[TextStructureLintRule]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/text-structure-lint-rule.h
+[TextStructureView]: https://cs.opensource.google/verible/verible/+/master:verible/common/text/text-structure.h
+[TreeContextVisitor]: https://cs.opensource.google/verible/verible/+/master:verible/common/text/tree-context-visitor.h
+[LintViolation]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/lint-rule-status.h?q=class:%5CbLintViolation%5Cb&ss=verible%2Fverible
+[LintRuleStatus]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/lint-rule-status.h?q=class:%5CbLintRuleStatus%5Cb&ss=verible%2Fverible
+[LintTestCase]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/linter-test-utils.h?q=class:%5CbLintTestCase%5Cb&ss=verible%2Fverible
+[core_matchers.h]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/matcher/core-matchers.h
+[verilog_matchers.h]: https://cs.opensource.google/verible/verible/+/master:verible/verilog/CST/verilog-matchers.h
+[TagMatchBuilder]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/matcher/matcher-builders.h?q=class:%5CbTagMatchBuilder%5Cb%20&ss=verible%2Fverible
+[BindableMatcher]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/matcher/matcher.h?q=class:%5CbBindableMatcher%5Cb%20&ss=verible%2Fverible
+[BoundSymbolManager]: https://cs.opensource.google/verible/verible/+/master:verible/common/analysis/matcher/bound-symbol-manager.h?q=class:BoundSymbolManager&ss=verible%2Fverible
