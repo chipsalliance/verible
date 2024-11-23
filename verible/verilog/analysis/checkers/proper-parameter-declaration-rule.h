@@ -37,6 +37,8 @@ class ProperParameterDeclarationRule : public verible::SyntaxTreeLintRule {
 
   static const LintRuleDescriptor &GetDescriptor();
 
+  ProperParameterDeclarationRule();
+
   void AddParameterViolation(const verible::Symbol &symbol,
                              const verible::SyntaxTreeContext &context);
 
@@ -51,10 +53,15 @@ class ProperParameterDeclarationRule : public verible::SyntaxTreeLintRule {
   absl::Status Configure(absl::string_view configuration) final;
 
  private:
+  void ChooseMessagesForConfiguration();
+
   std::set<verible::LintViolation> violations_;
 
   bool package_allow_parameter_ = false;
   bool package_allow_localparam_ = true;
+
+  absl::string_view parameter_message_;
+  absl::string_view local_parameter_message_;
 };
 
 }  // namespace analysis

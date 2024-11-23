@@ -47,16 +47,16 @@ static constexpr absl::string_view kUVMLowerCaseMessage =
 static constexpr absl::string_view kUVMUpperCaseMessage =
     "'UVM_*' named macros must follow 'UPPER_SNAKE_CASE' format.";
 
-static absl::string_view lower_snake_case_regex = "[a-z_0-9]+";
-static absl::string_view upper_snake_case_regex = "[A-Z_0-9]+";
+static constexpr absl::string_view kLowerSnakeCaseRegex = "[a-z_0-9]+";
+static constexpr absl::string_view kUpperSnakeCaseRegex = "[A-Z_0-9]+";
 
 MacroNameStyleRule::MacroNameStyleRule()
     : style_regex_(
-          std::make_unique<re2::RE2>(upper_snake_case_regex, re2::RE2::Quiet)),
+          std::make_unique<re2::RE2>(kUpperSnakeCaseRegex, re2::RE2::Quiet)),
       style_lower_snake_case_regex_(
-          std::make_unique<re2::RE2>(lower_snake_case_regex, re2::RE2::Quiet)),
-      style_upper_snake_case_regex_(std::make_unique<re2::RE2>(
-          upper_snake_case_regex, re2::RE2::Quiet)) {}
+          std::make_unique<re2::RE2>(kLowerSnakeCaseRegex, re2::RE2::Quiet)),
+      style_upper_snake_case_regex_(
+          std::make_unique<re2::RE2>(kUpperSnakeCaseRegex, re2::RE2::Quiet)) {}
 
 const LintRuleDescriptor &MacroNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -70,7 +70,7 @@ const LintRuleDescriptor &MacroNameStyleRule::GetDescriptor() {
           "and \"UPPER_SNAKE_CASE\" naming conventions respectively. Refer to "
           "https://github.com/chipsalliance/verible/tree/master/verilog/tools/"
           "lint#readme for more detail on verible regex patterns.",
-      .param = {{"style_regex", std::string(upper_snake_case_regex),
+      .param = {{"style_regex", std::string(kUpperSnakeCaseRegex),
                  "A regex used to check macro names style."}},
   };
   return d;
