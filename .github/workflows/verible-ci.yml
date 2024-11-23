@@ -550,7 +550,7 @@ jobs:
       env:
         VSC_MARKETPLACE_TOKEN: ${{ secrets.VSC_MARKETPLACE_TOKEN }}
       run: |
-        cd verilog/tools/ls/vscode
+        cd verible/verilog/tools/ls/vscode
         npm install
         # install vsce globally
         npm install -g @vscode/vsce
