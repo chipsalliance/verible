@@ -28,8 +28,8 @@ To learn more about how to use Kythe to
 Each directory in the source tree contains a short README.md describing the
 contents.
 
-*   [common/](../common) contains all language-agnostic libraries and tools
-*   [verilog/](../verilog) contains Verilog-specific libraries and tools
+*   [common/](../verible/common) contains all language-agnostic libraries and tools
+*   [verilog/](../verible/verilog) contains Verilog-specific libraries and tools
 *   [external_libs/](../external_libs) contains some library dependencies
 
 ## Verilog Front-End
