@@ -51,20 +51,20 @@ details below in the [Developers](#developers-welcome) section.
 
 ### Parser
 
-[Learn more about the parser implementation here](./verilog/parser).
+[Learn more about the parser implementation here](./verible/verilog/parser).
 
-We provide a standalone [`verible-verilog-syntax`](./verilog/tools/syntax) tool
+We provide a standalone [`verible-verilog-syntax`](./verible/verilog/tools/syntax) tool
 to help with visualizing the syntax structure as understood by the lexer and
 parser. This is very useful for troubleshooting and understand the internal
 representations seen by the other tools.
 
 The tool has an ability of exporting a concrete syntax tree in JSON format,
 making use of it in external tools easy. There is also a
-[Python wrapper module and a few example scripts](./verilog/tools/syntax/export_json_examples).
+[Python wrapper module and a few example scripts](./verible/verilog/tools/syntax/export_json_examples).
 
 ### Style Linter
 
-[`verible-verilog-lint`](./verilog/tools/lint) identifies constructs or patterns
+[`verible-verilog-lint`](./verible/verilog/tools/lint) identifies constructs or patterns
 in code that are deemed undesirable according to a style guide. The main goal is
 to relieve humans the burden of reviewing code for style compliance. Many
 [lint rules][lint-rule-list] use syntax tree pattern matching to find style
@@ -81,12 +81,12 @@ Features:
 
 Documentation:
 
-*   [Style linter user documentation](./verilog/tools/lint)
+*   [Style linter user documentation](./verible/verilog/tools/lint)
 *   [Generated lint rule documentation][lint-rule-list]
 
 ### Formatter
 
-The [`verible-verilog-format`](./verilog/tools/formatter) formatter manages
+The [`verible-verilog-format`](./verible/verilog/tools/formatter) formatter manages
 whitespace in accordance with a particular style. The main goal is to relieve
 humans of having to manually manage whitespace, wrapping, and indentation, and
 to provide a tool that can be integrated into any editor to enable
@@ -109,7 +109,7 @@ See https://github.com/chipsalliance/verible/issues/528
 
 ### Language Server
 
-The [`verible-verilog-ls`](./verilog/tools/ls) is a language server that
+The [`verible-verilog-ls`](./verible/verilog/tools/ls) is a language server that
 provides the functionalities that come with the Verible command line tools
 also directly in your editor.
 
@@ -123,19 +123,19 @@ provides quick-fixes
 
 ### Lexical Diff
 
-[`verible-verilog-diff`](./verilog/tools/diff) compares two input files for
+[`verible-verilog-diff`](./verible/verilog/tools/diff) compares two input files for
 equivalence.
 
 ### Verible project tool
 
-[`verible-verilog-project`](./verilog/tools/project) is a multi-tool that
+[`verible-verilog-project`](./verible/verilog/tools/project) is a multi-tool that
 operates on whole Verilog projects, consisting of a file list and related
 configurations. This serves as a diagnostic tool for analyzing (and potentially
 transforming) project-level sources.
 
 ### Code Obfuscator
 
-[`verible-verilog-obfuscate`](./verilog/tools/obfuscator) transforms Verilog
+[`verible-verilog-obfuscate`](./verible/verilog/tools/obfuscator) transforms Verilog
 code by replacing identifiers with obfuscated names of equal length, and
 preserving all other text, including spaces. Output is written to stdout. The
 resulting file size is the same as the original. This is useful for preparing
@@ -148,13 +148,13 @@ See https://github.com/chipsalliance/verible/issues/528
 
 ### Preprocessor
 
-[`verible-verilog-preprocessor`](./verilog/tools/preprocessor) is a collection
+[`verible-verilog-preprocessor`](./verible/verilog/tools/preprocessor) is a collection
 of preprocessor-like tools, (but does not include a fully-featured Verilog
 preprocessor yet.)
 
 ### Source Code Indexer
 
-[`verible-verilog-kythe-extractor`](./verilog/tools/kythe) extracts indexing
+[`verible-verilog-kythe-extractor`](./verible/verilog/tools/kythe) extracts indexing
 facts from SV source code using the [Kythe](http://kythe.io) schema, which can
 then enhance IDEs with linked cross-references for ease of source code
 navigation.
@@ -192,8 +192,8 @@ bazel build -c opt //...
 
 You can access the generated artifacts under `bazel-bin/`. For instance the
 syntax checker will be at
-`bazel-bin/verilog/tools/syntax/verible-verilog-syntax` (corresponding to the
-target name `//verilog/tools/syntax:verible-verilog-syntax`).
+`bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax` (corresponding to the
+target name `//verible/verilog/tools/syntax:verible-verilog-syntax`).
 
 Moreover, if you need statically linked executables that don't depend on your
 shared libraries, you can use custom config

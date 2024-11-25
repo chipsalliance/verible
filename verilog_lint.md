@@ -22,7 +22,7 @@ verible-verilog-lint: usage: /tmp/verible-bin/verible-verilog-lint [options] <fi
       name); default: ;
 
 
-  Flags from verilog/analysis/verilog_linter.cc:
+  Flags from verible/verilog/analysis/verilog-linter.cc:
     --rules (Comma-separated of lint rules to enable. No prefix or a '+' prefix
       enables it, '-' disable it. Configuration values for each rules placed
       after '=' character.); default: ;
@@ -37,11 +37,11 @@ verible-verilog-lint: usage: /tmp/verible-bin/verible-verilog-lint [options] <fi
       to the README file for information about its format.); default: "";
 
 
-  Flags from verilog/parser/verilog_parser.cc:
+  Flags from verible/verilog/parser/verilog-parser.cc:
     --verilog_trace_parser (Trace verilog parser); default: false;
 
 
-  Flags from verilog/tools/lint/verilog_lint.cc:
+  Flags from verible/verilog/tools/lint/verilog-lint.cc:
     --autofix (autofix mode; one of
       [no|patch-interactive|patch|inplace-interactive|inplace|generate-waiver]);
       default: no;
@@ -450,4 +450,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-11-21 16:48:16 -0800 from [106f651](https://github.com/google/verible/commit/106f651e3f692704bdda1338935132c34f2bca90)
+Generated on 2024-11-23 14:58:37 -0800 from [660d166](https://github.com/google/verible/commit/660d1664dfb52f2e029108b3964117099b176d0e)

@@ -11,7 +11,18 @@ suite.
 verible-verilog-format: usage: /tmp/verible-bin/verible-verilog-format [options] <file> [<file...>]
 To pipe from stdin, use '-' as <file>.
 
-  Flags from common/formatting/basic_format_style_init.cc:
+  Flags from external/com_google_absl/absl/flags/parse.cc:
+    --flagfile (comma-separated list of files to load flags from); default: ;
+    --fromenv (comma-separated list of flags to set from the environment [use
+      'export FLAGS_flag1=value']); default: ;
+    --tryfromenv (comma-separated list of flags to try to set from the
+      environment if present); default: ;
+    --undefok (comma-separated list of flag names that it is okay to specify on
+      the command line even if the program does not define a flag with that
+      name); default: ;
+
+
+  Flags from verible/common/formatting/basic-format-style-init.cc:
     --column_limit (Target line length limit to stay under when formatting.);
       default: 100;
     --indentation_spaces (Each indentation level adds this many spaces.);
@@ -27,18 +38,7 @@ To pipe from stdin, use '-' as <file>.
       operator.); default: 4;
 
 
-  Flags from external/com_google_absl/absl/flags/parse.cc:
-    --flagfile (comma-separated list of files to load flags from); default: ;
-    --fromenv (comma-separated list of flags to set from the environment [use
-      'export FLAGS_flag1=value']); default: ;
-    --tryfromenv (comma-separated list of flags to try to set from the
-      environment if present); default: ;
-    --undefok (comma-separated list of flag names that it is okay to specify on
-      the command line even if the program does not define a flag with that
-      name); default: ;
-
-
-  Flags from verilog/formatting/format_style_init.cc:
+  Flags from verible/verilog/formatting/format-style-init.cc:
     --assignment_statement_alignment (Format various assignments:
       {align,flush-left,preserve,infer}); default: infer;
     --case_items_alignment (Format case items:
@@ -85,11 +85,11 @@ To pipe from stdin, use '-' as <file>.
       default: false;
 
 
-  Flags from verilog/parser/verilog_parser.cc:
+  Flags from verible/verilog/parser/verilog-parser.cc:
     --verilog_trace_parser (Trace verilog parser); default: false;
 
 
-  Flags from verilog/tools/formatter/verilog_format.cc:
+  Flags from verible/verilog/tools/formatter/verilog-format.cc:
     --failsafe_success (If true, always exit with 0 status, even if there were
       input errors or internal errors. In all error conditions, the original
       text is always preserved. This is useful in deploying services where
@@ -129,4 +129,4 @@ path.
 
 ## Version
 
-Generated on 2024-11-21 16:48:16 -0800 from [106f651](https://github.com/google/verible/commit/106f651e3f692704bdda1338935132c34f2bca90)
+Generated on 2024-11-23 14:58:37 -0800 from [660d166](https://github.com/google/verible/commit/660d1664dfb52f2e029108b3964117099b176d0e)

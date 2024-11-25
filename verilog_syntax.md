@@ -21,11 +21,11 @@ verible-verilog-syntax: usage: /tmp/verible-bin/verible-verilog-syntax [options]
       name); default: ;
 
 
-  Flags from verilog/parser/verilog_parser.cc:
+  Flags from verible/verilog/parser/verilog-parser.cc:
     --verilog_trace_parser (Trace verilog parser); default: false;
 
 
-  Flags from verilog/tools/syntax/verilog_syntax.cc:
+  Flags from verible/verilog/tools/syntax/verilog-syntax.cc:
     --error_limit (Limit the number of syntax errors reported. (0: unlimited));
       default: 0;
     --export_json (Uses JSON for output. Intended to be used as an input for
@@ -51,4 +51,4 @@ path.
 
 ## Version
 
-Generated on 2024-11-21 16:48:16 -0800 from [106f651](https://github.com/google/verible/commit/106f651e3f692704bdda1338935132c34f2bca90)
+Generated on 2024-11-23 14:58:37 -0800 from [660d166](https://github.com/google/verible/commit/660d1664dfb52f2e029108b3964117099b176d0e)
