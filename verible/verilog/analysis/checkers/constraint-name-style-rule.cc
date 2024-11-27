@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
 #include "verible/verilog/analysis/checkers/constraint-name-style-rule.h"
 
 #include <set>
+#include <string>
 
-#include "absl/strings/match.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
-#include "verible/common/strings/naming-utils.h"
+#include "verible/common/text/config-utils.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/token-info.h"
@@ -41,18 +44,22 @@ using verible::matcher::Matcher;
 // Register ConstraintNameStyleRule.
 VERILOG_REGISTER_LINT_RULE(ConstraintNameStyleRule);
 
-static constexpr absl::string_view kMessage =
-    "Constraint names must by styled with lower_snake_case and end with _c.";
-
 const LintRuleDescriptor &ConstraintNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "constraint-name-style",
       .topic = "constraints",
       .desc =
-          "Check that constraint names follow the lower_snake_case "
-          "convention and end with _c.",
+          "Check that constraint names follow the required name style "
+          "specified by a regular expression.",
+      .param = {{"pattern", kSuffix.data()}},
   };
   return d;
+}
+
+absl::Status ConstraintNameStyleRule::Configure(
+    absl::string_view configuration) {
+  return verible::ParseNameValues(
+      configuration, {{"pattern", verible::config::SetRegex(&regex)}});
 }
 
 static const Matcher &ConstraintMatcher() {
@@ -78,11 +85,16 @@ void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
 
     const absl::string_view constraint_name = identifier_token->text();
 
-    if (!verible::IsLowerSnakeCaseWithDigits(constraint_name) ||
-        !absl::EndsWith(constraint_name, "_c")) {
-      violations_.insert(LintViolation(*identifier_token, kMessage, context));
+    if (!RE2::FullMatch(constraint_name, *regex)) {
+      violations_.insert(
+          LintViolation(*identifier_token, FormatReason(), context));
     }
   }
+}
+
+std::string ConstraintNameStyleRule::FormatReason() const {
+  return absl::StrCat("Constraint names must obey the following regex: ",
+                      regex->pattern());
 }
 
 LintRuleStatus ConstraintNameStyleRule::Report() const {
