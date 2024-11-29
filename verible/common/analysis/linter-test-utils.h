@@ -18,6 +18,7 @@
 #include <functional>
 #include <initializer_list>
 #include <iosfwd>
+#include <iterator>
 #include <memory>
 #include <set>
 #include <sstream>
@@ -114,9 +115,12 @@ void RunLintTestCases(std::initializer_list<LintTestCase> tests,
 }
 
 struct AutoFixInOut {
+  static constexpr int NO_FIX_AVAILABLE = -1;
+
   absl::string_view code;
   absl::string_view expected_output;
   int fix_alternative = 0;  // Some rules provide alternative fixes
+  int violation_number = 0;
 };
 
 // Tests that LintTestCase test has expected violations under make_rule
@@ -134,10 +138,17 @@ void RunLintAutoFixCase(const AutoFixInOut &test,
   const LintRuleStatus rule_status = lint_runner.Run(analyzer.Data(), filename);
   const auto &violations(rule_status.violations);
 
-  CHECK_EQ(violations.size(), 1) << "TODO: apply multi-violation fixes";
-  CHECK_GT(violations.begin()->autofixes.size(), test.fix_alternative);
-  const verible::AutoFix &fix =
-      rule_status.violations.begin()->autofixes[test.fix_alternative];
+  CHECK_GT(violations.size(), test.violation_number);
+  const LintViolation &violation =
+      *std::next(violations.begin(), test.violation_number);
+
+  if (test.fix_alternative == AutoFixInOut::NO_FIX_AVAILABLE) {
+    CHECK_EQ(violation.autofixes.size(), 0);
+    return;
+  }
+
+  CHECK_GT(violation.autofixes.size(), test.fix_alternative);
+  const verible::AutoFix &fix = violation.autofixes[test.fix_alternative];
   std::string fix_out = fix.Apply(analyzer.Data().Contents());
 
   EXPECT_EQ(test.expected_output, fix_out) << "For input " << test.code;
