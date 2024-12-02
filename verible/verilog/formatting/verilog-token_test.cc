@@ -25,6 +25,8 @@ namespace {
 
 using FTT = FormatTokenType;
 
+// UBSAN check will notice, that 9999 is out of range; skip test in that case
+#ifndef UNDEFINED_BEHAVIOR_SANITIZER
 // Test that GetFormatTokenType() correctly converts a TokenInfo enum to FTT
 TEST(VerilogTokenTest, GetFormatTokenTypeTestUnknown) {
   const int FAKE_TOKEN = 9999;
@@ -32,6 +34,7 @@ TEST(VerilogTokenTest, GetFormatTokenTypeTestUnknown) {
   verible::PreFormatToken format_token(&token_info);
   EXPECT_EQ(FTT::unknown, GetFormatTokenType(verilog_tokentype(FAKE_TOKEN)));
 }
+#endif
 
 struct GetFormatTokenTypeTestCase {
   verilog_tokentype token_info_type;
