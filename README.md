@@ -238,12 +238,13 @@ For simple installation, we provide regular [binary releases].
 If you prefer to build and install the binaries locally yourself:
 
 ```bash
-# In your home directory
-bazel run -c opt :install -- ~/bin
+bazel build -c opt :install-binaries
 
-# For a system directory that requires root-access, call with -s option.
-# (Do _not_ run bazel with sudo.)
-bazel run -c opt :install -- -s /usr/local/bin
+# install In your home directory
+.github/bin/simple-install.sh ~/bin
+
+# For a system directory that requires root-access, call scfript with sudo.
+sudo .github/bin/simple-install.sh /usr/local/bin
 ```
 
 (this requies a compliant `install` utility, otherwise simply copy

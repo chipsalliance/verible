@@ -41,15 +41,9 @@ filegroup(
     name = "install-scripts",
     srcs = [
         "//verible/common/tools:verible-transform-interactive",
-        "//verible/verilog/tools/formatter:git-verilog-format",
+        "//verible/verilog/tools/formatter:git-verible-verilog-format",
         "//verible/verilog/tools/formatter:verible-verilog-format-changed-lines-interactive",
     ],
-)
-
-# Installing; see README.md
-alias(
-    name = "install",
-    actual = "//bazel:install",
 )
 
 genrule(
