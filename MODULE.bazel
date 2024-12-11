@@ -25,7 +25,7 @@ use_repo(m4, "m4")
 register_toolchains("@m4//:toolchain")
 
 # Register bison rules and toolchain.
-bazel_dep(name = "rules_bison", version = "0.2.2")
+bazel_dep(name = "rules_bison", version = "0.3")
 
 bison = use_extension(
     "@rules_bison//bison/extensions:bison_repository_ext.bzl",

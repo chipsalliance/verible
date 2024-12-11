@@ -37,7 +37,7 @@ cc_binary(
 #   //verible/verilog/tools/formatter:verible-verilog-format
 #   //verible/common/tools:verible-patch-tool
 filegroup(
-    name = "git-verilog-format",
+    name = "git-verible-verilog-format",
     srcs = ["git-verible-verilog-format.sh"],
     visibility = ["//:__pkg__"],  # for release
 )
