@@ -260,7 +260,10 @@ jobs:
 
     - name: Gather and pack binaries
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
-      run: bazel run :install -c fastbuild -- $VERIBLE_BINDIR && tar cfv verible-bin.tar -C $VERIBLE_BINDIR .
+      run: |
+        bazel build -c fastbuild :install-binaries
+        .github/bin/simple-install.sh $VERIBLE_BINDIR
+        tar cfv verible-bin.tar -C $VERIBLE_BINDIR .
 
     - name: Upload bazel-bin
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
@@ -385,9 +388,7 @@ jobs:
         .github/bin/run-clang-tidy-cached.cc --checks="-*"
 
   MacOsBuild:
-    # New MacOS has a broken patch utility:
-    # //verible/verilog/tools/lint:lint-tool_test trips over a no-newline-at-end-of-file
-    runs-on: macos-12
+    runs-on: macos-latest
     steps:
 
     - name: Install Dependencies
@@ -414,7 +415,9 @@ jobs:
         restore-keys: bazelcache_macos_
 
     - name: Tests
-      run: bazel test -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
+      # MacOS has a broken patch utility:
+      # //verible/verilog/tools/lint:lint-tool_test trips over a no-newline-at-end-of-file
+      run: bazel test -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis -- //... -//verible/verilog/tools/lint:lint-tool_test
 
     - name: Build
       run: bazel build -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis :install-binaries
@@ -486,7 +489,7 @@ jobs:
     - name: Prepare release
       run: |
         $VERSION = git describe --match=v*
-        C:/ProgramData/chocolatey/lib/bazel/bazel.exe run -c opt :install -- "c:/verible-${VERSION}-win64"
+        bash .github/bin/simple-install.sh "c:/verible-${VERSION}-win64"
         7z a "verible-${VERSION}-win64.zip" "c:/verible-${VERSION}-win64"
 
     - name: 📤 Upload artifact

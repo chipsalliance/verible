@@ -73,27 +73,6 @@ http_archive(
 # External tools needed
 #
 
-# 'make install' equivalent rule 2023-02-21
-http_archive(
-    name = "com_github_google_rules_install",
-    # The installer uses an option -T that is not available on MacOS, but
-    # it is benign to leave out.
-    # Upstream bug https://github.com/google/bazel_rules_install/issues/31
-    patch_args = ["-p1"],
-    patches = ["//bazel:installer.patch"],
-    sha256 = "aba3c1ae179beb92c1fc4502d66d7d7c648f90eb51897aa4b0ae4a76ce225eec",
-    strip_prefix = "bazel_rules_install-6001facc1a96bafed0e414a529b11c1819f0cdbe",
-    urls = ["https://github.com/google/bazel_rules_install/archive/6001facc1a96bafed0e414a529b11c1819f0cdbe.zip"],
-)
-
-load("@com_github_google_rules_install//:deps.bzl", "install_rules_dependencies")
-
-install_rules_dependencies()
-
-load("@com_github_google_rules_install//:setup.bzl", "install_rules_setup")
-
-install_rules_setup()
-
 http_archive(
     name = "rules_m4",
     sha256 = "10ce41f150ccfbfddc9d2394ee680eb984dc8a3dfea613afd013cfb22ea7445c",
