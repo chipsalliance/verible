@@ -85,9 +85,9 @@ m4_register_toolchains(version = "1.4.18")
 
 http_archive(
     name = "rules_flex",
-    sha256 = "8929fedc40909d19a4b42548d0785f796c7677dcef8b5d1600b415e5a4a7749f",
+    sha256 = "99393873d4a1bce44853f1cf0c48a34640583cee3d06f2d3d439e12fb1529036",
     # flex 2.6.4
-    urls = ["https://github.com/jmillikin/rules_flex/releases/download/v0.2.1/rules_flex-v0.2.1.tar.xz"],
+    urls = ["https://github.com/jmillikin/rules_flex/releases/download/v0.3/rules_flex-v0.3.tar.xz"],
 )
 
 load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
@@ -102,7 +102,7 @@ http_archive(
 
 load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 
-bison_register_toolchains()
+bison_register_toolchains(version = "3.3.2")
 
 # We, but also protobuf needs zlib. Make sure we define it first.
 http_archive(
