@@ -16,13 +16,21 @@
 set -u
 set -e
 
-readonly OUTPUT_BASE="$(bazel info output_base)"
+BANT=${BANT:-bant}
 
-readonly COMPDB_SCRIPT="${OUTPUT_BASE}/external/rules_compdb/generate.py"
-[ -r "${COMPDB_SCRIPT}" ] || bazel fetch ...
+if [ ! -e bazel-bin ]; then
+  echo "Before creating compilation DB, need to run bazel build first"
+  exit 1
+fi
 
-python3 "${COMPDB_SCRIPT}"
+if command -v ${BANT} >/dev/null; then
+  ${BANT} compile-flags > compile_flags.txt
 
-# Remove a flags observed in the wild that clang-tidy doesn't understand.
-sed -i -e 's/-fno-canonical-system-headers//g; s/DEBUG_PREFIX_MAP_PWD=.//g' \
-       compile_commands.json
+  # Bant does not see yet the flex dependency inside the toolchain
+  for d in bazel-out/../../../external/*flex*/src/FlexLexer.h ; do
+    echo "-I$(dirname $d)" >> compile_flags.txt
+  done
+else
+  echo "To create compilation DB, need to have http://bant.build/ installed or provided in BANT environment variable."
+  exit 1
+fi
