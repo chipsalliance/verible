@@ -103,8 +103,8 @@ jobs:
         path: |
           /root/.cache/clang-tidy
           /root/.cache/bazel
-        key: clang-tidy1-${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: clang-tidy1-
+        key: clang-tidy2-${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: clang-tidy2-
 
     - name: Build Project genrules
       run: |
@@ -115,7 +115,8 @@ jobs:
             //verible/verilog/parser:verilog-lex \
             //verible/verilog/parser:verilog-y \
             //verible/verilog/parser:verilog-y-final \
-            //verible/common/analysis:command-file-lexer_test
+            //verible/common/analysis:command-file-lexer_test \
+            //verible/common/lsp:lsp-text-buffer
         bazel build $(bin/bant -q genrule-outputs | awk '{print $2}') \
            $(bin/bant list-targets | grep cc_proto_library | awk '{print $3}')
 
@@ -437,14 +438,14 @@ jobs:
       uses: actions/cache@v3
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
-        key: bazelcache_windows1_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_windows1_
+        key: bazelcache_windows3_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_windows3_
 
     - name: Install dependencies
       run: |
         choco install bazel --force --version=6.5.0
         choco install winflexbison3
-        choco install llvm --allow-downgrade --version=16.0.6
+        choco install llvm --allow-downgrade --version=17.0.6
 
     - name: Debug bazel directory settings
       # We need to explicitly call the bazel binary from choco, otherwise

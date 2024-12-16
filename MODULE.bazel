@@ -2,13 +2,14 @@ module(
     name = "verible",
 )
 
-bazel_dep(name = "platforms", version = "0.0.8")
-bazel_dep(name = "bazel_skylib", version = "1.5.0")
-bazel_dep(name = "rules_license", version = "0.0.8")
-bazel_dep(name = "rules_proto", version = "6.0.0-rc2")
-bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "rules_license", version = "1.0.0")
+bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1", repo_name = "jsonhpp")
+bazel_dep(name = "re2", version = "2024-07-02.bcr.1", repo_name = "com_googlesource_code_re2")
+bazel_dep(name = "zlib", version = "1.3.1.bcr.3")
 
-# Register m4 rules and toolchain.
+# Register m4/flex/bison rules and toolchains
 bazel_dep(name = "rules_m4", version = "0.2.3")
 
 m4 = use_extension(
@@ -24,23 +25,6 @@ use_repo(m4, "m4")
 
 register_toolchains("@m4//:toolchain")
 
-# Register bison rules and toolchain.
-bazel_dep(name = "rules_bison", version = "0.3")
-
-bison = use_extension(
-    "@rules_bison//bison/extensions:bison_repository_ext.bzl",
-    "bison_repository_ext",
-)
-bison.repository(
-    name = "bison",
-    extra_copts = ["-O3"],
-    version = "3.3.2",
-)
-use_repo(bison, "bison")
-
-register_toolchains("@bison//:toolchain")
-
-# Register flex rules and toolchain.
 bazel_dep(name = "rules_flex", version = "0.3")
 
 flex = use_extension(
@@ -56,9 +40,25 @@ use_repo(flex, "flex")
 
 register_toolchains("@flex//:toolchain")
 
+bazel_dep(name = "rules_bison", version = "0.3")
+
+bison = use_extension(
+    "@rules_bison//bison/extensions:bison_repository_ext.bzl",
+    "bison_repository_ext",
+)
+bison.repository(
+    name = "bison",
+    extra_copts = ["-O3"],
+    version = "3.3.2",
+)
+use_repo(bison, "bison")
+
+register_toolchains("@bison//:toolchain")
+
 # abseil-cpp and googletest can not be updated beyond the following currently,
 # as newer googletest is not compatible with bazel 6 anymore, and abseil-cpp
-# depends on it :( -- to support all active bazel's, we're stuck till Dec 2025.
+# depends on it :( -- to support all active bazel's, we're stuck till EOL bazel6
+bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name = "com_google_googletest")
 bazel_dep(name = "abseil-cpp", version = "20240116.2", repo_name = "com_google_absl")
 single_version_override(
     module_name = "abseil-cpp",
@@ -67,8 +67,10 @@ single_version_override(
     version = "20240116.2",
 )
 
-bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name = "com_google_googletest")
-bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1", repo_name = "jsonhpp")
-bazel_dep(name = "protobuf", version = "26.0", repo_name = "com_google_protobuf")
-bazel_dep(name = "re2", version = "2023-09-01", repo_name = "com_googlesource_code_re2")
-bazel_dep(name = "zlib", version = "1.3.1")
+# Last protobuf version working with windows without strange linking errors.
+# This also means that we unfortunately can't use the @protobuf//bazel rules
+# but have to use rules_cc and rules_proto.
+# TODO: figure out how we can make proto compile beyond 24.4 on Windows.
+bazel_dep(name = "protobuf", version = "24.4", repo_name = "com_google_protobuf")
+bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "rules_proto", version = "6.0.0-rc2")

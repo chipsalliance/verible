@@ -183,7 +183,7 @@ the nix package manager simply run `nix-shell` to get a build environment.
 
 ```bash
 # Build all tools and libraries
-# bazel 5/6/7
+# bazel 6/7/8
 bazel build -c opt //...
 ```
 

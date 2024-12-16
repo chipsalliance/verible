@@ -29,6 +29,12 @@ common:macos --features=-supports_dynamic_linker --linkopt=-framework --linkopt=
 # Since we use designated initializers (C99 ... but >= c++20), compiler really wants the c++20 mode
 common:windows --compiler=clang-cl --cxxopt=/std:c++20 --host_cxxopt=/std:c++20 --client_env=BAZEL_CXXOPTS=/std:c++20
 
+build --cxxopt="-Wno-unknown-warning-option" --host_cxxopt="-Wno-unknown-warning-option"
+# TODO: this looks like benign where it happens but to be explored further
+build --cxxopt="-Wno-dangling-reference" --host_cxxopt="-Wno-dangling-reference"
+# Newer bisons create an unused label.
+build --cxxopt="-Wno-unused-label" --host_cxxopt="-Wno-unused-label"
+
 # For 3rd party code: Disable warnings entirely.
 # They are not actionable and just create noise.
 build --per_file_copt=external/.*@-w
