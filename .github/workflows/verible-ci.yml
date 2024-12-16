@@ -103,14 +103,13 @@ jobs:
         path: |
           /root/.cache/clang-tidy
           /root/.cache/bazel
-        key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: clang-tidy-
+        key: clang-tidy1-${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: clang-tidy1-
 
     - name: Build Project genrules
       run: |
         # Fetch all dependencies and run genrules for bant to see every file
-        # that makes it into the compile to build comile DB.f
-        bazel fetch ...
+        # that makes it into the compile to build comile DB.
         bazel build \
             //verible/common/analysis:command-file-lexer \
             //verible/verilog/parser:verilog-lex \
@@ -164,7 +163,6 @@ jobs:
         run: |
           # Fetch all dependencies and run genrules for bant to see every file
           # that makes it into the compile. Use bant itself to find genrules.
-          bazel fetch ...
           bazel build $(bin/bant -q genrule-outputs | awk '{print $2}') \
               //verible/common/analysis:command-file-lexer \
               //verible/verilog/parser:verilog-lex \
@@ -195,7 +193,6 @@ jobs:
         - compile-clang
         - compile-static
         - compile-static-clang
-        - coverage
         - clean
         arch:
         - x86_64
@@ -210,8 +207,6 @@ jobs:
           - mode: asan
             arch: arm64
           - mode: asan-clang
-            arch: arm64
-          - mode: coverage
             arch: arm64
     env:
       MODE: ${{ matrix.mode }}
@@ -238,8 +233,8 @@ jobs:
       if: matrix.mode != 'clean' && matrix.mode != 'coverage'
       with:
         path: "/root/.cache/bazel"
-        key: bazelcache3_${{ matrix.arch }}_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache3_${{ matrix.arch }}_${{ matrix.mode }}_
+        key: bazelcache_${{ matrix.arch }}_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_${{ matrix.arch }}_${{ matrix.mode }}_
 
     - name: Install Dependencies
       run: |
@@ -273,15 +268,6 @@ jobs:
 
     - name: ${{ matrix.mode }} Verible
       run: ./.github/bin/build-and-test.sh
-
-    - name: Upload coverage
-      # will show up under https://app.codecov.io/gh/chipsalliance/verible
-      if: matrix.mode == 'coverage'
-      uses: codecov/codecov-action@v2
-      with:
-        files: bazel-out/_coverage/_coverage_report.dat
-        verbose: true
-      continue-on-error: true
 
     - name: Gather and pack binaries
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
@@ -397,8 +383,8 @@ jobs:
       with:
         path: |
           /private/var/tmp/_bazel_runner
-        key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_macos_
+        key: bazelcache_macos1_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_macos1_
 
     - name: Tests
       # MacOS has a broken patch utility:
@@ -451,12 +437,12 @@ jobs:
       uses: actions/cache@v3
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
-        key: bazelcache_windows_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_windows_
+        key: bazelcache_windows1_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_windows1_
 
     - name: Install dependencies
       run: |
-        choco install bazel --force --version=6.4.0
+        choco install bazel --force --version=6.5.0
         choco install winflexbison3
         choco install llvm --allow-downgrade --version=16.0.6
 
