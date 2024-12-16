@@ -80,6 +80,17 @@ jobs:
         source ./.github/settings.sh
         ./.github/bin/install-bazel.sh
 
+    - name: Get Bant
+      run: |
+        # TODO: provide this as action where we simply say with version=...
+        VERSION="v0.1.9"
+        STATIC_VERSION="bant-${VERSION}-linux-static-x86_64"
+        wget "https://github.com/hzeller/bant/releases/download/${VERSION}/${STATIC_VERSION}.tar.gz"
+        tar xvzf "${STATIC_VERSION}.tar.gz"
+        mkdir -p bin
+        ln -sf ../"${STATIC_VERSION}/bin/bant" bin/
+        bin/bant -V
+
     - name: Create Cache Timestamp
       id: cache_timestamp
       uses: nanzm/get-time-action@v2.0
@@ -95,11 +106,25 @@ jobs:
         key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
         restore-keys: clang-tidy-
 
+    - name: Build Project genrules
+      run: |
+        # Fetch all dependencies and run genrules for bant to see every file
+        # that makes it into the compile to build comile DB.f
+        bazel fetch ...
+        bazel build \
+            //verible/common/analysis:command-file-lexer \
+            //verible/verilog/parser:verilog-lex \
+            //verible/verilog/parser:verilog-y \
+            //verible/verilog/parser:verilog-y-final \
+            //verible/common/analysis:command-file-lexer_test
+        bazel build $(bin/bant -q genrule-outputs | awk '{print $2}') \
+           $(bin/bant list-targets | grep cc_proto_library | awk '{print $3}')
+
     - name: Run clang tidy
       run: |
         echo "::group::Make Compilation DB"
-        .github/bin/make-compilation-db.sh
-        wc -l compile_commands.json
+        BANT=bin/bant .github/bin/make-compilation-db.sh
+        cat compile_flags.txt
         echo "::endgroup::"
         # For runtime references, use clang-tidy 11 that still has it, everything else: latest.
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references" \
@@ -127,7 +152,7 @@ jobs:
       - name: Get Bant
         run: |
           # TODO: provide this as action where we simply say with version=...
-          VERSION="v0.1.7"
+          VERSION="v0.1.9"
           STATIC_VERSION="bant-${VERSION}-linux-static-x86_64"
           wget "https://github.com/hzeller/bant/releases/download/${VERSION}/${STATIC_VERSION}.tar.gz"
           tar xvzf "${STATIC_VERSION}.tar.gz"
@@ -347,45 +372,6 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         path: kythe_output/*.kzip
-
-  MacOsBuildDevTools:
-    runs-on: macos-latest
-    steps:
-
-    - name: Install Dependencies
-      run: |
-        brew install llvm
-        echo "CLANG_TIDY=$(brew --prefix llvm)/bin/clang-tidy" >> $GITHUB_ENV
-        echo "USE_BAZEL_VERSION=6.5.0" >> $GITHUB_ENV
-
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-
-    - name: Create Cache Timestamp
-      id: cache_timestamp
-      uses: nanzm/get-time-action@v2.0
-      with:
-        format: 'YYYY-MM-DD-HH-mm-ss'
-
-    - name: Mount bazel cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          /private/var/tmp/_bazel_runner
-          /Users/runner/.cache/clang-tidy
-        key: clangtidy_macos_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: clangtidy_macos_
-
-    - name: Test Developer tooling scripts
-      run: |
-        # Just a smoke test to make sure developer scripts run on Mac
-        echo "::group::Make Compilation DB"
-        .github/bin/make-compilation-db.sh
-        echo "::endgroup::"
-        # Quick with no checks to be fast (full tidy run in ClangTidy action)
-        .github/bin/run-clang-tidy-cached.cc --checks="-*"
 
   MacOsBuild:
     runs-on: macos-latest

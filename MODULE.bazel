@@ -41,7 +41,7 @@ use_repo(bison, "bison")
 register_toolchains("@bison//:toolchain")
 
 # Register flex rules and toolchain.
-bazel_dep(name = "rules_flex", version = "0.2.1")
+bazel_dep(name = "rules_flex", version = "0.3")
 
 flex = use_extension(
     "@rules_flex//flex/extensions:flex_repository_ext.bzl",
