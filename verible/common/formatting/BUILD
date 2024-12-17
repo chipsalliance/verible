@@ -33,8 +33,8 @@ cc_library(
         "//verible/common/util:tree-operations",
         "//verible/common/util:vector-tree",
         "//verible/common/util:vector-tree-iterators",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -59,10 +59,10 @@ cc_test(
         "//verible/common/util:range",
         "//verible/common/util:spacer",
         "//verible/common/util:value-saver",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -72,7 +72,7 @@ cc_library(
     hdrs = ["basic-format-style.h"],
     deps = [
         "//verible/common/util:enum-flags",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -82,7 +82,7 @@ cc_library(
     hdrs = ["basic-format-style-init.h"],
     deps = [
         ":basic-format-style",
-        "@com_google_absl//absl/flags:flag",
+        "@abseil-cpp//absl/flags:flag",
     ],
 )
 
@@ -91,8 +91,8 @@ cc_test(
     srcs = ["basic-format-style_test.cc"],
     deps = [
         ":basic-format-style",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -112,9 +112,9 @@ cc_library(
         "//verible/common/util:logging",
         "//verible/common/util:range",
         "//verible/common/util:spacer",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/base:core_headers",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -127,9 +127,9 @@ cc_test(
         "//verible/common/strings:position",
         "//verible/common/text:token-info",
         "//verible/common/util:range",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -151,10 +151,10 @@ cc_library(
         "//verible/common/util:tree-operations",
         "//verible/common/util:value-saver",
         "//verible/common/util:vector-tree",
-        "@com_google_absl//absl/container:fixed_array",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/container:fixed_array",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -179,11 +179,11 @@ cc_test(
         "//verible/common/util:spacer",
         "//verible/common/util:tree-operations",
         "//verible/common/util:vector-tree",
-        "@com_google_absl//absl/container:fixed_array",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/container:fixed_array",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -210,7 +210,7 @@ cc_library(
         "//verible/common/util:top-n",
         "//verible/common/util:tree-operations",
         "//verible/common/util:vector-tree",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -225,8 +225,8 @@ cc_library(
         ":unwrapped-line",
         "//verible/common/util:logging",
         "//verible/common/util:tree-operations",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -246,10 +246,10 @@ cc_test(
         "//verible/common/util:logging",
         "//verible/common/util:tree-operations",
         "//verible/common/util:vector-tree",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -269,7 +269,7 @@ cc_library(
         "//verible/common/util:iterator-range",
         "//verible/common/util:logging",
         "//verible/common/util:spacer",
-        "@com_google_absl//absl/strings",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -283,7 +283,7 @@ cc_library(
         ":unwrapped-line",
         "//verible/common/text:constants",
         "//verible/common/text:token-info",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -298,9 +298,9 @@ cc_test(
         "//verible/common/text:token-info",
         "//verible/common/text:tree-builder-test-util",
         "//verible/common/util:container-iterator-range",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -332,9 +332,9 @@ cc_test(
         "//verible/common/text:tree-builder-test-util",
         "//verible/common/util:iterator-range",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -359,7 +359,7 @@ cc_library(
         "//verible/common/util:tree-operations",
         "//verible/common/util:value-saver",
         "//verible/common/util:vector-tree",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -378,10 +378,10 @@ cc_test(
         "//verible/common/text:token-stream-view",
         "//verible/common/util:container-iterator-range",
         "//verible/common/util:range",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -401,7 +401,7 @@ cc_library(
         "//verible/common/util:iterator-adaptors",
         "//verible/common/util:iterator-range",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -431,9 +431,9 @@ cc_test(
         ":unwrapped-line-test-utils",
         "//verible/common/text:token-info",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -447,9 +447,9 @@ cc_test(
         ":unwrapped-line",
         ":unwrapped-line-test-utils",
         "//verible/common/text:token-info",
-        "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -460,9 +460,9 @@ cc_library(
     deps = [
         "//verible/common/strings:diff",
         "//verible/common/strings:position",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -472,9 +472,9 @@ cc_test(
     deps = [
         ":verification",
         "//verible/common/strings:position",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )

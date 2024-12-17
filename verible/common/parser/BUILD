@@ -20,8 +20,8 @@ cc_library(
         "//verible/common/text:concrete-syntax-tree",
         "//verible/common/text:token-info",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -44,7 +44,7 @@ cc_library(
     deps = [
         "//verible/common/text:concrete-syntax-tree",
         "//verible/common/text:token-info",
-        "@com_google_absl//absl/status",
+        "@abseil-cpp//absl/status",
     ],
     alwayslink = 1,
 )
@@ -60,7 +60,7 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/util:casts",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -74,9 +74,9 @@ cc_library(
         "//verible/common/text:symbol",
         "//verible/common/text:token-info-test-util",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",  # for library testonly
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",  # for library testonly
     ],
 )
 
@@ -93,8 +93,8 @@ cc_test(
         "//verible/common/text:symbol",
         "//verible/common/text:token-info",
         "//verible/common/util:casts",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )

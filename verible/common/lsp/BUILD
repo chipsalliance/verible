@@ -26,9 +26,9 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//verible/common/util:status-macros",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -37,11 +37,11 @@ cc_test(
     srcs = ["message-stream-splitter_test.cc"],
     deps = [
         ":message-stream-splitter",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -57,8 +57,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp//:singleheader-json",
+        "@abseil-cpp//absl/strings:string_view",
+        "@nlohmann_json//:singleheader-json",
     ],
 )
 
@@ -72,10 +72,10 @@ cc_test(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         ":json-rpc-dispatcher",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
-        "@jsonhpp//:singleheader-json",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@nlohmann_json//:singleheader-json",
     ],
 )
 
@@ -91,7 +91,7 @@ cc_library(
     name = "lsp-protocol",
     hdrs = ["lsp-protocol.h"],
     visibility = ["//visibility:public"],
-    deps = ["@jsonhpp//:singleheader-json"],
+    deps = ["@nlohmann_json//:singleheader-json"],
 )
 
 cc_library(
@@ -113,8 +113,8 @@ cc_test(
     deps = [
         ":lsp-protocol",
         ":lsp-protocol-operators",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -127,9 +127,9 @@ cc_library(
         ":json-rpc-dispatcher",
         ":lsp-protocol",
         "//verible/common/strings:utf8",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -140,10 +140,10 @@ cc_test(
         ":json-rpc-dispatcher",
         ":lsp-protocol",
         ":lsp-text-buffer",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -153,8 +153,8 @@ cc_library(
     hdrs = ["lsp-file-utils.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -163,9 +163,9 @@ cc_test(
     srcs = ["lsp-file-utils_test.cc"],
     deps = [
         ":lsp-file-utils",
-        "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -174,10 +174,10 @@ cc_binary(
     srcs = ["json-rpc-expect.cc"],
     deps = [
         ":message-stream-splitter",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp//:singleheader-json",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@nlohmann_json//:singleheader-json",
     ],
 )
 
@@ -189,9 +189,9 @@ cc_binary(
         ":lsp-protocol",
         ":lsp-text-buffer",
         ":message-stream-splitter",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp//:singleheader-json",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings:string_view",
+        "@nlohmann_json//:singleheader-json",
     ],
 )
 
@@ -216,10 +216,10 @@ cc_binary(
     visibility = ["//visibility:private"],
     deps = [
         "//verible/common/util:init-command-line",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
-        "@com_googlesource_code_re2//:re2",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/strings",
+        "@re2",
     ],
 )
 
@@ -234,7 +234,7 @@ genrule(
 cc_library(
     name = "jcxxgen-testfile",
     hdrs = ["jcxxgen-testfile.h"],
-    deps = ["@jsonhpp//:singleheader-json"],
+    deps = ["@nlohmann_json//:singleheader-json"],
 )
 
 cc_test(
@@ -247,9 +247,9 @@ cc_test(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         ":jcxxgen-testfile",
-        "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
-        "@jsonhpp//:singleheader-json",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@nlohmann_json//:singleheader-json",
     ],
 )

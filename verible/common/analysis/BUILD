@@ -20,8 +20,8 @@ cc_library(
     srcs = ["citation.cc"],
     hdrs = ["citation.h"],
     deps = [
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -39,8 +39,8 @@ cc_library(
         "//verible/common/text:tree-utils",
         "//verible/common/util:logging",
         "//verible/common/util:spacer",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -49,8 +49,8 @@ cc_library(
     hdrs = ["lint-rule.h"],
     deps = [
         ":lint-rule-status",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -81,7 +81,7 @@ cc_library(
         "//verible/common/text:token-stream-view",
         "//verible/common/util:iterator-range",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -95,9 +95,9 @@ cc_library(
         "//verible/common/util:file-util",
         "//verible/common/util:logging",
         "//verible/common/util:user-interaction",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -111,9 +111,9 @@ cc_test(
         "//verible/common/text:constants",
         "//verible/common/text:token-info",
         "//verible/common/text:token-info-test-util",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -134,12 +134,12 @@ cc_library(
         "//verible/common/util:file-util",
         "//verible/common/util:iterator-range",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_googlesource_code_re2//:re2",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@re2",
     ],
 )
 
@@ -159,8 +159,8 @@ cc_library(
         "//verible/common/text:token-stream-view",
         "//verible/common/util:logging",
         "//verible/common/util:spacer",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -175,10 +175,10 @@ cc_library(
         "//verible/common/text:token-info-test-util",
         "//verible/common/util:algorithm",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",  # for library testonly
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",  # for library testonly
     ],
 )
 
@@ -195,7 +195,7 @@ cc_library(
         "//verible/common/text:tree-utils",
         "//verible/common/util:algorithm",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -207,7 +207,7 @@ cc_library(
         ":line-lint-rule",
         ":lint-rule-status",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -222,7 +222,7 @@ cc_library(
         ":linter-test-utils",
         "//verible/common/text:text-structure",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -231,7 +231,7 @@ cc_library(
     hdrs = ["line-lint-rule.h"],
     deps = [
         ":lint-rule",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -261,7 +261,7 @@ cc_library(
         ":syntax-tree-linter",
         "//verible/common/text:text-structure",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -301,7 +301,7 @@ cc_library(
         ":text-structure-lint-rule",
         "//verible/common/text:text-structure",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -316,7 +316,7 @@ cc_library(
         ":text-structure-linter",
         "//verible/common/text:text-structure",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -326,7 +326,7 @@ cc_library(
     deps = [
         ":lint-rule",
         "//verible/common/text:text-structure",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -353,7 +353,7 @@ cc_library(
         ":token-stream-linter",
         "//verible/common/text:text-structure",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -374,10 +374,10 @@ cc_test(
         "//verible/common/text:concrete-syntax-tree",
         "//verible/common/text:token-info",
         "//verible/common/text:tree-builder-test-util",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -391,9 +391,9 @@ cc_test(
         "//verible/common/text:token-info",
         "//verible/common/text:token-stream-view",
         "//verible/common/util:iterator-range",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -405,11 +405,11 @@ cc_test(
         "//verible/common/strings:line-column-map",
         "//verible/common/text:text-structure",
         "//verible/common/text:token-info",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -420,10 +420,10 @@ cc_test(
         ":lint-rule-status",
         ":linter-test-utils",
         "//verible/common/util:range",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -435,9 +435,9 @@ cc_test(
         ":line-linter",
         ":lint-rule-status",
         "//verible/common/text:token-info",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -455,9 +455,9 @@ cc_test(
         "//verible/common/text:token-info",
         "//verible/common/text:tree-builder-test-util",
         "//verible/common/util:casts",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -471,8 +471,8 @@ cc_test(
         "//verible/common/text:syntax-tree-context",
         "//verible/common/text:tree-builder-test-util",
         "//verible/common/text:tree-utils",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -484,10 +484,10 @@ cc_test(
         ":syntax-tree-search-test-utils",
         "//verible/common/text:tree-builder-test-util",
         "//verible/common/util:range",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -500,10 +500,10 @@ cc_test(
         ":text-structure-linter",
         "//verible/common/text:text-structure",
         "//verible/common/text:token-info",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -516,8 +516,8 @@ cc_test(
         ":token-stream-linter",
         "//verible/common/text:token-info",
         "//verible/common/text:token-stream-view",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
