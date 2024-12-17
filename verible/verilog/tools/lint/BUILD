@@ -37,10 +37,10 @@ cc_binary(
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-linter",
         "//verible/verilog/analysis:verilog-linter-configuration",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 

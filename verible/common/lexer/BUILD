@@ -28,8 +28,8 @@ cc_library(
         ":token-generator",
         "//verible/common/text:token-info",
         "//verible/common/text:token-stream-view",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -40,8 +40,8 @@ cc_library(
         ":lexer",
         "//verible/common/text:token-info",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -50,7 +50,7 @@ cc_library(
     hdrs = ["lexer.h"],
     deps = [
         "//verible/common/text:token-info",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -64,8 +64,8 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/text:token-info-test-util",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",  # for library testonly
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",  # for library testonly
     ],
 )
 
@@ -76,10 +76,10 @@ cc_test(
         ":lexer-test-util",
         "//verible/common/text:constants",
         "//verible/common/text:token-info",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -93,9 +93,9 @@ cc_test(
         "//verible/common/text:constants",
         "//verible/common/text:token-info",
         "//verible/common/text:token-stream-view",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )

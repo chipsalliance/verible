@@ -30,7 +30,7 @@ cc_library(
     deps = [
         ":bound-symbol-manager",
         "//verible/common/text:symbol",
-        "@com_google_absl//absl/types:optional",
+        "@abseil-cpp//absl/types:optional",
     ],
 )
 
@@ -47,8 +47,8 @@ cc_test(
         "//verible/common/text:symbol",
         "//verible/common/text:tree-builder-test-util",
         "//verible/common/util:casts",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -73,8 +73,8 @@ cc_test(
         ":matcher-test-utils",
         "//verible/common/text:symbol",
         "//verible/common/text:tree-builder-test-util",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -114,8 +114,8 @@ cc_test(
         "//verible/common/text:symbol",
         "//verible/common/text:tree-builder-test-util",
         "//verible/common/util:casts",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -141,8 +141,8 @@ cc_test(
         "//verible/common/text:token-info",
         "//verible/common/text:tree-builder-test-util",
         "//verible/common/util:casts",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -159,8 +159,8 @@ cc_library(
         "//verible/common/text:symbol",
         "//verible/common/text:tree-utils",
         "//verible/common/text:visitors",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",  # for library testonly
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",  # for library testonly
     ],
 )

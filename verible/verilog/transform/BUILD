@@ -24,9 +24,9 @@ cc_library(
         "//verible/verilog/analysis:verilog-equivalence",
         "//verible/verilog/parser:verilog-lexer",
         "//verible/verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -36,10 +36,10 @@ cc_test(
     deps = [
         ":obfuscate",
         "//verible/common/strings:obfuscator",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -57,8 +57,8 @@ cc_library(
         "//verible/verilog/parser:verilog-lexer",
         "//verible/verilog/parser:verilog-parser",
         "//verible/verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -67,8 +67,8 @@ cc_test(
     srcs = ["strip-comments_test.cc"],
     deps = [
         ":strip-comments",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )

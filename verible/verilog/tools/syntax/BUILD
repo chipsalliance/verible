@@ -35,11 +35,11 @@ cc_binary(
         "//verible/verilog/parser:verilog-token",
         "//verible/verilog/parser:verilog-token-classifications",
         "//verible/verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp//:singleheader-json",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@nlohmann_json//:singleheader-json",
     ],
 )
 

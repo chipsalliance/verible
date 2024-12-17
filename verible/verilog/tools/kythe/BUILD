@@ -29,10 +29,10 @@ cc_library(
     hdrs = ["kythe-facts.h"],
     deps = [
         "//verible/common/util:spacer",
-        "@com_google_absl//absl/hash",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/hash",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -41,8 +41,8 @@ cc_test(
     srcs = ["kythe-facts_test.cc"],
     deps = [
         ":kythe-facts",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -53,11 +53,11 @@ cc_library(
     deps = [
         ":kythe-facts",
         "//verible/common/util:logging",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/container:flat_hash_set",
-        "@com_google_absl//absl/container:node_hash_map",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/container:node_hash_map",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -67,9 +67,9 @@ cc_test(
     deps = [
         ":kythe-facts",
         ":scope-resolver",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -86,7 +86,7 @@ cc_library(
 cc_library(
     name = "kythe-schema-constants",
     hdrs = ["kythe-schema-constants.h"],
-    deps = ["@com_google_absl//absl/strings:string_view"],
+    deps = ["@abseil-cpp//absl/strings:string_view"],
 )
 
 cc_library(
@@ -103,12 +103,12 @@ cc_library(
         "//verible/common/util:logging",
         "//verible/common/util:tree-operations",
         "//verible/verilog/analysis:verilog-project",
-        "@com_google_absl//absl/container:flat_hash_set",
-        "@com_google_absl//absl/container:node_hash_set",
-        "@com_google_absl//absl/hash",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_absl//absl/time",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/container:node_hash_set",
+        "@abseil-cpp//absl/hash",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@abseil-cpp//absl/time",
     ],
 )
 
@@ -123,7 +123,7 @@ cc_library(
         "verilog_extractor_indexing_fact_type_foreach.inc",
     ],
     deps = [
-        "@com_google_absl//absl/strings",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -136,8 +136,8 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/util:tree-operations",
         "//verible/common/util:vector-tree",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -148,9 +148,9 @@ cc_test(
         ":indexing-facts-tree",
         ":verilog-extractor-indexing-fact-type",
         "//verible/common/util:range",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -186,9 +186,9 @@ cc_library(
         "//verible/verilog/CST:verilog-nonterminals",
         "//verible/verilog/analysis:verilog-project",
         "//verible/verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -204,11 +204,11 @@ cc_test(
         "//verible/common/util:logging",
         "//verible/common/util:tree-operations",
         "//verible/verilog/analysis:verilog-project",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",
-        "@com_google_googletest//:gtest_main",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -220,7 +220,7 @@ cc_library(
         ":kythe-facts",
         ":kythe-facts-extractor",
         "//third_party/proto/kythe:storage_cc_proto",
-        "@com_google_protobuf//src/google/protobuf/io",
+        "@protobuf//src/google/protobuf/io",
     ],
 )
 
@@ -244,10 +244,10 @@ cc_binary(
         "//verible/verilog/analysis:verilog-filelist",
         "//verible/verilog/analysis:verilog-project",
         "//verible/verilog/analysis/checkers:verilog-lint-rules",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -283,8 +283,8 @@ cc_library(
         "//verible/common/util:file-util",
         "//verible/common/util:sha256",
         "//verible/common/util:simple-zip",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -302,9 +302,9 @@ cc_binary(
         "//verible/common/util:init-command-line",
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-filelist",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
