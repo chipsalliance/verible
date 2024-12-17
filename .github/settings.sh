@@ -32,7 +32,7 @@ export BAZEL_CXXOPTS="-std=c++17"
 export BAZEL_OPTS="-c opt --noshow_progress"
 
 # Used to fetch the BAZEL version where needed.
-export BAZEL_VERSION=5.4.1
+export BAZEL_VERSION=6.5.0
 
 # Kythe version for extracting xRefs
 export KYTHE_VERSION=v0.0.52
