@@ -78,12 +78,19 @@ if [ $? -eq 0 ]; then
   EXIT_CODE=1
 fi
 
+find verible -name "*-test.cc" -o -name "*-test.sh" | grep test
+if [ $? -eq 0 ]; then
+  echo "::error:: File naming-convention for tests is to end with _test; e.g. foo-bar.cc has test foo-bar_test.cc; similar with shell-script tests"
+  echo
+  EXIT_CODE=1
+fi
+
 # bazelbuild/rules_python is broken as it downloads a dynamically
 # linked pre-built binary - This makes it _very_ platform specific.
 # This should either compile Python from scratch or use the local system Python.
 # So before rules_python() is added here, this needs to be fixed first upstream.
 # https://github.com/bazelbuild/rules_python/issues/1211
-grep rules_python WORKSPACE* MODULE.bazel
+grep rules_python MODULE.bazel
 if [ $? -eq 0 ]; then
   echo "::error:: rules_python() breaks platform independence with shared libs."
   echo
