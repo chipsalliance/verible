@@ -54,7 +54,7 @@ filegroup(
 sh_test_with_runfiles_lib(
     name = "verible-transform-interactive_test",
     size = "small",
-    srcs = ["verible-transform-interactive-test.sh"],
+    srcs = ["verible-transform-interactive_test.sh"],
     args = [
         "$(location :verible-transform-interactive)",
         "$(location :verible-patch-tool)",

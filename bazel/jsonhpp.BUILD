@@ -1,4 +1,10 @@
 # JSON for Modern C++ https://github.com/nlohmann/json
+#
+# This file is not directly needed anymore, but left
+# here for now for projects still using a WORKSPACE
+# reference.
+#
+# Should probably be removed around mid 2025.
 
 licenses(["unencumbered"])  # Public Domain or MIT
 

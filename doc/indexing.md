@@ -10,6 +10,9 @@ indexing Bazel-based projects.
 More information about indexing Bazel-based projects using Kythe
 [here](https://github.com/kythe/kythe/tree/master/kythe/cxx/extractor#bazel-c-extractor).
 
+Note, if you just want to locally edit the code, no need to index, just use
+the compilation DB by calling `.github/bin/make-compilation-db.sh`
+
 ### Initializing Kythe
 
 Download the latest Kythe release from https://github.com/kythe/kythe/releases
