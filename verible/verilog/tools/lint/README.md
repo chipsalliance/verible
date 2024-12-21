@@ -164,8 +164,8 @@ Some lint rules allow users to use a regular expression to configure the rule. V
 verible-verilog-lint --rules="enum-name-style=style_regex:[a-z_0-9]+(_t|_e)" ...
 ```
 
-For naming style rules, the regex can be kept simple and not have to worry about 
-the beginning starting with a digit as this is already taken care of by the 
+For naming style rules, the regex can be kept simple and not have to worry about
+the beginning starting with a digit as this is already taken care of by the
 lexer/parser. Below are some common naming style regex patterns that can be used.
 
 | Naming Style           | Regex Expression                           |
