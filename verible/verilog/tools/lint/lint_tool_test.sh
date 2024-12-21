@@ -16,6 +16,15 @@
 MY_OUTPUT_FILE="${TEST_TMPDIR}/myoutput.txt"
 readonly MY_OUTPUT_FILE
 
+PATCH_SET=${PATCH:-no}
+if [ "${PATCH_SET}" == "no" ]; then
+  PATCH=patch
+else
+  # allow to set patch from environent variable
+  PATCH="$(readlink -f $PATCH)"
+fi
+readonly PATCH
+
 # Process script flags and arguments.
 [[ "$#" == 1 ]] || {
   echo "Expecting 1 positional argument, verible-verilog-lint path."
@@ -554,7 +563,7 @@ check_diff "${ORIGINAL_TEST_FILE}" "${TEST_FILE}" "${DIFF_FILE}" \
 
 # Patch source file with generated patch file
 
-patch_out="$(patch "${TEST_FILE}" "${PATCH_FILE}" 2>&1)"
+patch_out="$("${PATCH}" "${TEST_FILE}" "${PATCH_FILE}" 2>&1)"
 status="$?"
 (( $status )) && {
   echo "Expected exit code 0 from 'patch' tool, but got $status"
@@ -616,7 +625,7 @@ check_diff "${ORIGINAL_TEST_FILE_3}" "${TEST_FILE_3}" "${DIFF_FILE_3}" \
 
 # Patch sources with generated patch file
 
-patch_out="$(cd $TEST_TMPDIR; patch -p1 < "${PATCH_FILE}" 2>&1)"
+patch_out="$(cd $TEST_TMPDIR; "${PATCH}" -p1 < "${PATCH_FILE}" 2>&1)"
 status="$?"
 (( $status )) && {
   echo "Expected exit code 0 from 'patch' tool, but got $status"
@@ -718,7 +727,7 @@ interactive_autofix_test() {
     "${NO_CHANGES_ERR_MESSAGE}"
   (( failure|="$?" ))
 
-  patch_out="$(cd $TEST_TMPDIR; patch -p1 < "${PATCH_FILE}" 2>&1)"
+  patch_out="$(cd $TEST_TMPDIR; "${PATCH}" -p1 < "${PATCH_FILE}" 2>&1)"
   status="$?"
   (( $status )) && {
     echo "Expected exit code 0 from 'patch' tool, but got $status"
