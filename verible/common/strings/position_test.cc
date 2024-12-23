@@ -21,7 +21,7 @@ namespace verible {
 namespace {
 
 TEST(AdvancingTextNewColumnPositionTest, EmptyString) {
-  const absl::string_view text("");
+  const absl::string_view text;
   EXPECT_EQ(AdvancingTextNewColumnPosition(0, text), 0);
   EXPECT_EQ(AdvancingTextNewColumnPosition(1, text), 1);
   EXPECT_EQ(AdvancingTextNewColumnPosition(8, text), 8);

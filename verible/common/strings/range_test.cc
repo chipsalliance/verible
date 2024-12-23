@@ -25,7 +25,7 @@ namespace verible {
 namespace {
 
 TEST(MakeStringViewRangeTest, Empty) {
-  absl::string_view text("");
+  absl::string_view text;
   auto copy_view = make_string_view_range(text.begin(), text.end());
   EXPECT_TRUE(BoundsEqual(copy_view, text));
 }
@@ -44,7 +44,13 @@ TEST(MakeStringViewRangeTest, BadRange) {
 using IntPair = std::pair<int, int>;
 
 TEST(ByteOffsetRangeTest, EmptyInEmpty) {
-  const absl::string_view superstring("");
+  const absl::string_view superstring("");  // NOLINT
+  const auto substring = superstring;
+  EXPECT_EQ(SubstringOffsets(substring, superstring), IntPair(0, 0));
+}
+
+TEST(ByteOffsetRangeTest, EmptyInNullptrEmpty) {
+  const absl::string_view superstring;  // default constructor init with nullptr
   const auto substring = superstring;
   EXPECT_EQ(SubstringOffsets(substring, superstring), IntPair(0, 0));
 }

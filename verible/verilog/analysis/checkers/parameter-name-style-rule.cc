@@ -53,8 +53,8 @@ static constexpr absl::string_view kUpperCamelCaseRegex =
 // ALL_CAPS
 static constexpr absl::string_view kAllCapsRegex = "[A-Z_0-9]+";
 
-static constexpr absl::string_view kLocalparamDefaultRegex = "";
-static constexpr absl::string_view kParameterDefaultRegex = "";
+static constexpr absl::string_view kLocalparamDefaultRegex;
+static constexpr absl::string_view kParameterDefaultRegex;
 
 ParameterNameStyleRule::ParameterNameStyleRule()
     : localparam_style_regex_(std::make_unique<re2::RE2>(

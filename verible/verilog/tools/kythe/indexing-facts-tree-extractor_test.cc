@@ -251,7 +251,7 @@ TEST(FactsTreeExtractor, EqualOperatorTest) {
 }
 
 TEST(FactsTreeExtractor, EmptyCSTTest) {
-  constexpr absl::string_view code_text = "";
+  constexpr absl::string_view code_text;
 
   SimpleTestProject project(code_text);
 

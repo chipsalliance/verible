@@ -367,7 +367,7 @@ TEST(VerilogProjectTest, UpdateFileContentsEmptyFile) {
   EXPECT_EQ(project.LookupFileOrigin(search_substring), from_file);
 
   // Prepare an empty file
-  constexpr absl::string_view empty_file_content("");
+  constexpr absl::string_view empty_file_content;
   const ScopedTestFile empty_file(project_root_dir, empty_file_content);
   const absl::string_view empty_file_reference =
       Basename(empty_file.filename());

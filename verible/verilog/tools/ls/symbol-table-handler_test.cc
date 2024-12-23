@@ -484,7 +484,7 @@ TEST(SymbolTableHandlerTest, UpdateWithUnparseableEditorContentRegression) {
       verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
-  absl::string_view filelist_content = "";
+  absl::string_view filelist_content;
   const verible::file::testing::ScopedTestFile filelist(
       sources_dir, filelist_content, "verible.filelist");
   const std::string uri = verible::lsp::PathToLSPUri(sources_dir + "/a.sv");

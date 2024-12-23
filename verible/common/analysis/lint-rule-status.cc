@@ -106,7 +106,7 @@ std::string LintStatusFormatter::FormatWithRelatedTokens(
     return std::string(message);
   }
   size_t beg_pos = 0;
-  size_t end_pos = message.find("@", beg_pos);
+  size_t end_pos = message.find('@', beg_pos);
   std::ostringstream s;
   for (const auto &token : tokens) {
     if (end_pos == absl::string_view::npos) {
@@ -122,7 +122,7 @@ std::string LintStatusFormatter::FormatWithRelatedTokens(
     }
 
     beg_pos = end_pos + 1;
-    end_pos = message.find("@", beg_pos);
+    end_pos = message.find('@', beg_pos);
   }
 
   return absl::StrReplaceAll(s.str(), {{"\\@", "@"}});

@@ -143,7 +143,7 @@ void FileAnalyzer::ExtractLinterTokenErrorDetail(
     const RejectedToken &error_token,
     const ReportLinterErrorFunction &error_report) const {
   const LineColumnRange range = Data().GetRangeForToken(error_token.token_info);
-  absl::string_view context_line = "";
+  absl::string_view context_line;
   const auto &lines = Data().Lines();
   if (range.start.line < static_cast<int>(lines.size())) {
     context_line = lines[range.start.line];

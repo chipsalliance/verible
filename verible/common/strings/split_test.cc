@@ -42,7 +42,7 @@ TEST(StringSpliteratorTest, CompileTimeAsFunction) {
 }
 
 TEST(StringSpliteratorTest, EmptyOriginal) {
-  constexpr absl::string_view empty("");
+  constexpr absl::string_view empty;
   StringSpliterator splitter(empty);
   EXPECT_TRUE(splitter);
   EXPECT_TRUE(BoundsEqual(splitter.Remainder(), empty));
@@ -137,7 +137,7 @@ static std::vector<IntPair> SplitLinesToOffsets(absl::string_view text) {
 }
 
 TEST(SplitLinesTest, Empty) {
-  constexpr absl::string_view text("");
+  constexpr absl::string_view text;
   const auto lines = SplitLines(text);
   EXPECT_TRUE(lines.empty());
 }
@@ -185,7 +185,7 @@ static std::vector<IntPair> SplitLinesKeepLineTerminatorToOffsets(
 }
 
 TEST(SplitLinesKeepLineTerminatorTest, Empty) {
-  constexpr absl::string_view text("");
+  constexpr absl::string_view text;
   const auto lines = SplitLinesKeepLineTerminator(text);
   EXPECT_TRUE(lines.empty());
 }

@@ -213,7 +213,7 @@ std::string VerilogProject::GetRelativePathToSource(
 
 void VerilogProject::UpdateFileContents(
     absl::string_view path, const verilog::VerilogAnalyzer *parsed) {
-  constexpr absl::string_view kCorpus = "";
+  constexpr absl::string_view kCorpus;
   const std::string projectpath = GetRelativePathToSource(path);
 
   // If we get a non-null parsed file, use that, otherwise fall back to

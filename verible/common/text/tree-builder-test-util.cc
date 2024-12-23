@@ -24,7 +24,7 @@
 
 namespace verible {
 
-constexpr absl::string_view kDontCareText("");
+constexpr absl::string_view kDontCareText;
 
 SymbolPtr XLeaf(int token_enum) { return Leaf(token_enum, kDontCareText); }
 

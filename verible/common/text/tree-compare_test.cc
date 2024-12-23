@@ -136,7 +136,7 @@ TEST(TreeEqualityTest, NonEmptyNodesEqualByEnumString) {
 }
 
 TEST(TreeEqualityTest, NonEmptyNodesNotEqualByEnum) {
-  constexpr absl::string_view foo("");
+  constexpr absl::string_view foo;
   SymbolPtr tree1 = Node(Leaf(1, foo), Leaf(2, foo));
   SymbolPtr tree2 = Node(Leaf(1, foo), Leaf(2, foo), Leaf(3, foo));
   SymbolPtr tree3 = Node(Leaf(3, foo), Leaf(1, foo), Leaf(2, foo));

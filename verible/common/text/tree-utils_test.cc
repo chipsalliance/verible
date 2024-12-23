@@ -225,7 +225,7 @@ TEST(StringSpanOfSymbolTest, DeepEmptyTree) {
 }
 
 TEST(StringSpanOfSymbolTest, LeafOnlyEmptyText) {
-  constexpr absl::string_view text("");
+  constexpr absl::string_view text;
   SymbolPtr symbol = Leaf(1, text);
   const auto range = StringSpanOfSymbol(*symbol);
   EXPECT_TRUE(range.empty());
@@ -240,7 +240,7 @@ TEST(StringSpanOfSymbolTest, LeafOnlyNonemptyText) {
 }
 
 TEST(StringSpanOfSymbolTest, DeepLeafOnlyEmptyText) {
-  constexpr absl::string_view text("");
+  constexpr absl::string_view text;
   SymbolPtr symbol = Node(Node(Leaf(1, text)));
   const auto range = StringSpanOfSymbol(*symbol);
   EXPECT_TRUE(BoundsEqual(range, text));
@@ -1007,7 +1007,7 @@ TEST(MutateLeavesTest, NodeAndLeaves) {
 
 // Test that a leafless root node is not pruned.
 TEST(PruneSyntaxTreeAfterOffsetTest, LeaflessRootNode) {
-  constexpr absl::string_view text("");
+  constexpr absl::string_view text;
   SymbolPtr tree = Node();
   SymbolPtr expect = Node();  // distinct copy
   PruneSyntaxTreeAfterOffset(&tree, text.begin());
@@ -1168,7 +1168,7 @@ TEST(PruneSyntaxTreeAfterOffsetTest, DeleteAll) {
 
 // Test that root node without leaves is cleared because no locations match.
 TEST(TrimSyntaxTreeTest, RootNodeOnly) {
-  constexpr absl::string_view range("");
+  constexpr absl::string_view range;
   SymbolPtr tree = Node();
   TrimSyntaxTree(&tree, range);
   EXPECT_EQ(tree, nullptr);
@@ -1176,7 +1176,7 @@ TEST(TrimSyntaxTreeTest, RootNodeOnly) {
 
 // Test that tree without leaves is cleared because no locations match.
 TEST(TrimSyntaxTreeTest, TreeNoLeaves) {
-  constexpr absl::string_view range("");
+  constexpr absl::string_view range;
   SymbolPtr tree = Node(TNode(4), TNode(3, TNode(1), TNode(2)), TNode(0));
   TrimSyntaxTree(&tree, range);
   EXPECT_EQ(tree, nullptr);
