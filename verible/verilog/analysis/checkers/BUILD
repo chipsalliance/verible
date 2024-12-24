@@ -775,7 +775,6 @@ cc_library(
         "//verible/verilog/CST:verilog-matchers",
         "//verible/verilog/analysis:descriptions",
         "//verible/verilog/analysis:lint-rule-registry",
-        "@abseil-cpp//absl/strings:string_view",
     ],
     alwayslink = 1,
 )

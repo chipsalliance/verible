@@ -162,7 +162,7 @@ class FakeTextStructureView : public TextStructureView {
 static const verible::LineColumnMap dummy_map("");
 
 // Don't care about file name for these tests.
-static constexpr absl::string_view filename = "";
+static constexpr absl::string_view filename;
 
 TEST(ProjectPolicyTest, MatchesAnyPath) {
   struct TestCase {
@@ -645,7 +645,7 @@ TEST(RuleBundleTest, UnparseRuleBundleEmpty) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleEmpty) {
-  constexpr absl::string_view text = "";
+  constexpr absl::string_view text;
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);

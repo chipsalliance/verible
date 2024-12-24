@@ -241,7 +241,7 @@ struct DeclarationTypeInfo {
   const verible::Symbol *syntax_origin = nullptr;
 
   // holds optional string_view describing direction of the port
-  absl::string_view direction = "";
+  absl::string_view direction;
 
   // holds additional type specifications, used mostly in multiline definitions
   // of ports

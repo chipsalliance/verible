@@ -28,7 +28,7 @@ namespace {
 
 // Test that IsSubRange matches same empty string.
 TEST(IsSubRangeTest, SameEmptyString) {
-  const absl::string_view substring = "";
+  const absl::string_view substring;
   EXPECT_TRUE(IsSubRange(substring, substring));
 }
 
@@ -112,7 +112,7 @@ TEST(IsSubRangeTest, DerivedSubStringView) {
 
 // Test that BoundsEqual matches same empty string.
 TEST(BoundsEqualTest, SameEmptyString) {
-  const absl::string_view substring = "";
+  const absl::string_view substring;
   EXPECT_TRUE(BoundsEqual(substring, substring));
 }
 

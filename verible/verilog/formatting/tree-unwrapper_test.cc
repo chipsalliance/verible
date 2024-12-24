@@ -274,7 +274,7 @@ class TreeUnwrapperTest : public ::testing::Test {
 // Test that TreeUnwrapper produces the correct UnwrappedLines from an empty
 // file
 TEST_F(TreeUnwrapperTest, UnwrapEmptyFile) {
-  const absl::string_view source_code = "";
+  const absl::string_view source_code;
 
   auto tree_unwrapper = CreateTreeUnwrapper(source_code);
   tree_unwrapper->Unwrap();

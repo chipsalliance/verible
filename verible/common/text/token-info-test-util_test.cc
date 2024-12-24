@@ -175,7 +175,7 @@ TEST(TokenInfoTestDataTest, FindImportantTokensTest) {
 TEST(TokenInfoTestDataTest, RebaseToCodeCopyEmpty) {
   std::vector<TokenInfo> tokens;
   const TokenInfoTestData test_data{};
-  constexpr absl::string_view other_text("");
+  constexpr absl::string_view other_text;
   EXPECT_EQ(test_data.code, other_text);
   test_data.RebaseToCodeCopy(&tokens, other_text);
   EXPECT_TRUE(tokens.empty());
