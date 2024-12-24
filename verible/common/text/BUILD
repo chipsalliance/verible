@@ -177,7 +177,6 @@ cc_library(
     deps = [
         ":symbol",
         ":token-info",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
