@@ -14,7 +14,6 @@
 
 #include "verible/common/text/tree-compare.h"
 
-#include "absl/strings/string_view.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/token-info.h"
 
