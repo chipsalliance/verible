@@ -1035,3 +1035,29 @@ TEST(VerilogPreprocessTest,
 
 }  // namespace
 }  // namespace verilog
+
+TEST(PreprocessorAnnotationTest, AnnotatesConditionals) {
+    const std::string input = R"(
+        `ifdef FOO
+        `ifdef BAR
+        code
+        `endif
+        `else
+        other_code
+        `endif
+    )";
+
+    const std::string expected_output = R"(
+        `ifdef FOO  // FOO
+        `ifdef BAR  // FOO && BAR
+        code
+        `endif  // FOO && BAR
+        `else  // !FOO
+        other_code
+        `endif  // FOO
+    )";
+
+    VerilogPreprocess preprocess(/*config=*/{});
+    auto output = preprocess.AnnotatePreprocessorDirectives(input);
+    EXPECT_EQ(output, expected_output);
+}

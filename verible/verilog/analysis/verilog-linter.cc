@@ -360,7 +360,8 @@ absl::Status PrintRuleInfo(std::ostream *os,
 }
 
 void GetLintRuleDescriptionsHelpFlag(std::ostream *os,
-                                     absl::string_view flag_value) {
+                                     absl::string_view flag_value,
+                                     bool verbose) {
   // Set up the map.
   auto rule_map = analysis::GetAllRuleDescriptions();
   for (const auto &rule_id : analysis::kDefaultRuleSet) {
@@ -380,8 +381,14 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream *os,
       *os << status.message();
       return;
     }
+
+    // If verbose flag is set, print example for the rule
+    if (verbose) {
+      *os << "\nExample: " << rule.second.GetExample() << "\n"; // Assuming rule.second has GetExample()
+    }
   }
 }
+
 
 void GetLintRuleFile(std::ostream *os, const LinterConfiguration &config) {
   // This rule bundle contains only a list of enabled rules. There
