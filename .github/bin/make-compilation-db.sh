@@ -19,18 +19,16 @@ set -e
 BANT=${BANT:-bant}
 
 if [ ! -e bazel-bin ]; then
-  echo "Before creating compilation DB, need to run bazel build first"
+  echo "Before creating compilation DB, run bazel build first to fetch deps."
   exit 1
 fi
 
-if command -v ${BANT} >/dev/null; then
-  ${BANT} compile-flags > compile_flags.txt
+bazel run --cxxopt=-std=c++20 @bant//bant:bant -- \
+      -C $(pwd) compile-flags 2>/dev/null > compile_flags.txt
 
-  # Bant does not see yet the flex dependency inside the toolchain
-  for d in bazel-out/../../../external/*flex*/src/FlexLexer.h ; do
-    echo "-I$(dirname $d)" >> compile_flags.txt
-  done
-else
-  echo "To create compilation DB, need to have http://bant.build/ installed or provided in BANT environment variable."
-  exit 1
-fi
+# Bant does not see yet the flex dependency inside the toolchain
+for d in bazel-out/../../../external/*flex*/src/FlexLexer.h ; do
+  echo "-I$(dirname $d)" >> compile_flags.txt
+done
+
+echo "Now, re-run original build to make all artifacts visible to clang-tidy"

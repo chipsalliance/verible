@@ -80,17 +80,6 @@ jobs:
         source ./.github/settings.sh
         ./.github/bin/install-bazel.sh
 
-    - name: Get Bant
-      run: |
-        # TODO: provide this as action where we simply say with version=...
-        VERSION="v0.1.9"
-        STATIC_VERSION="bant-${VERSION}-linux-static-x86_64"
-        wget "https://github.com/hzeller/bant/releases/download/${VERSION}/${STATIC_VERSION}.tar.gz"
-        tar xvzf "${STATIC_VERSION}.tar.gz"
-        mkdir -p bin
-        ln -sf ../"${STATIC_VERSION}/bin/bant" bin/
-        bin/bant -V
-
     - name: Create Cache Timestamp
       id: cache_timestamp
       uses: nanzm/get-time-action@v2.0
@@ -106,26 +95,21 @@ jobs:
         key: clang-tidy2-${{ steps.cache_timestamp.outputs.time }}
         restore-keys: clang-tidy2-
 
-    - name: Build Project genrules
-      run: |
-        # Fetch all dependencies and run genrules for bant to see every file
-        # that makes it into the compile to build comile DB.
-        bazel build \
-            //verible/common/analysis:command-file-lexer \
-            //verible/verilog/parser:verilog-lex \
-            //verible/verilog/parser:verilog-y \
-            //verible/verilog/parser:verilog-y-final \
-            //verible/common/analysis:command-file-lexer_test \
-            //verible/common/lsp:lsp-text-buffer
-        bazel build $(bin/bant -q genrule-outputs | awk '{print $2}') \
-           $(bin/bant list-targets | grep cc_proto_library | awk '{print $3}')
-
     - name: Run clang tidy
       run: |
+        echo "::group::Trigger fetch and preparation"
+        bazel build -c opt :install-binaries
+        echo "::endgroup::"
+
         echo "::group::Make Compilation DB"
-        BANT=bin/bant .github/bin/make-compilation-db.sh
+        .github/bin/make-compilation-db.sh
         cat compile_flags.txt
         echo "::endgroup::"
+
+        echo "::group::Re-etablish links"
+        bazel build -c opt :install-binaries
+        echo "::endgroup::"
+
         # For runtime references, use clang-tidy 11 that still has it, everything else: latest.
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references" \
            || ( cat verible_clang-tidy.out ; exit 1)
