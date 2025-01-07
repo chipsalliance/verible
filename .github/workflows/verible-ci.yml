@@ -72,11 +72,11 @@ jobs:
         apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
         wget https://apt.llvm.org/llvm.sh
         chmod +x ./llvm.sh
-        ./llvm.sh 17
+        ./llvm.sh 18
 
     - name: Install other Dependencies
       run: |
-        apt -qq -y install clang-tidy-11 clang-tidy-17 build-essential git wget
+        apt -qq -y install clang-tidy-11 clang-tidy-18 build-essential git wget
         source ./.github/settings.sh
         ./.github/bin/install-bazel.sh
 
@@ -97,24 +97,17 @@ jobs:
 
     - name: Run clang tidy
       run: |
-        echo "::group::Trigger fetch and preparation"
-        bazel build -c opt :install-binaries
-        echo "::endgroup::"
-
         echo "::group::Make Compilation DB"
         .github/bin/make-compilation-db.sh
         cat compile_flags.txt
         echo "::endgroup::"
 
-        echo "::group::Re-etablish links"
-        bazel build -c opt :install-binaries
-        echo "::endgroup::"
-
-        # For runtime references, use clang-tidy 11 that still has it, everything else: latest.
+        # For runtime references, use clang-tidy 11 that still has it,
+        # everything else: latest.
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references" \
            || ( cat verible_clang-tidy.out ; exit 1)
 
-        CLANG_TIDY=clang-tidy-17 ./.github/bin/run-clang-tidy-cached.cc \
+        CLANG_TIDY=clang-tidy-18 ./.github/bin/run-clang-tidy-cached.cc \
             || ( cat verible_clang-tidy.out ; exit 1)
 
     - name: 📤 Upload performance graphs
