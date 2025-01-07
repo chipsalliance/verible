@@ -35,14 +35,16 @@ struct LintConfigParameterDescriptor {
   std::string description;
 };
 
-struct LintRuleDescriptor {
-  LintRuleId name;          // ID/name of the rule.
-  absl::string_view topic;  // section in style-guide
-  std::string desc;         // Detailed description.
-  std::vector<LintConfigParameterDescriptor> param;
-};
+std::string format_long_description(const std::string& description) {
+    const size_t max_length = 80;
+    std::string formatted_desc;
+    size_t start = 0;
 
-}  // namespace analysis
-}  // namespace verilog
+    while (start < description.size()) {
+        size_t end = std::min(start + max_length, description.size());
+        formatted_desc += description.substr(start, end - start) + "\n    ";
+        start = end;
+    }
 
-#endif  // VERIBLE_VERILOG_ANALYSIS_DESCRIPTIONS_H_
+    return formatted_desc;
+}
