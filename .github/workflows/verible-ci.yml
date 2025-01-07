@@ -25,7 +25,7 @@ env:
 jobs:
 
 
-  VerifyFormatting:
+  CheckFormatAndBuildClean:
     runs-on: ubuntu-24.04
     steps:
 
@@ -41,7 +41,11 @@ jobs:
 
     - name: Run formatting style check
       run: |
-        CLANG_FORMAT=clang-format-17 ./.github/bin/run-clang-format.sh
+        echo "--- check formatting ---"
+        CLANG_FORMAT=clang-format-17 ./.github/bin/run-format.sh
+        echo "--- check build dependencies ---"
+        ./.github/bin/run-build-cleaner.sh
+        echo "--- check potential problems ---"
         ./.github/bin/check-potential-problems.sh
 
     - name: 📤 Upload performance graphs
@@ -72,11 +76,11 @@ jobs:
         apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
         wget https://apt.llvm.org/llvm.sh
         chmod +x ./llvm.sh
-        ./llvm.sh 17
+        ./llvm.sh 18
 
     - name: Install other Dependencies
       run: |
-        apt -qq -y install clang-tidy-11 clang-tidy-17 build-essential git wget
+        apt -qq -y install clang-tidy-11 clang-tidy-18 build-essential git wget
         source ./.github/settings.sh
         ./.github/bin/install-bazel.sh
 
@@ -97,24 +101,17 @@ jobs:
 
     - name: Run clang tidy
       run: |
-        echo "::group::Trigger fetch and preparation"
-        bazel build -c opt :install-binaries
-        echo "::endgroup::"
-
         echo "::group::Make Compilation DB"
         .github/bin/make-compilation-db.sh
         cat compile_flags.txt
         echo "::endgroup::"
 
-        echo "::group::Re-etablish links"
-        bazel build -c opt :install-binaries
-        echo "::endgroup::"
-
-        # For runtime references, use clang-tidy 11 that still has it, everything else: latest.
+        # For runtime references, use clang-tidy 11 that still has it,
+        # everything else: latest.
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references" \
            || ( cat verible_clang-tidy.out ; exit 1)
 
-        CLANG_TIDY=clang-tidy-17 ./.github/bin/run-clang-tidy-cached.cc \
+        CLANG_TIDY=clang-tidy-18 ./.github/bin/run-clang-tidy-cached.cc \
             || ( cat verible_clang-tidy.out ; exit 1)
 
     - name: 📤 Upload performance graphs
@@ -123,40 +120,6 @@ jobs:
       with:
         name: "diag"
         path: "**/plot_*.svg"
-
-  RunBantBuildCleaner:
-    # Running http://bant.build/ to check all dependencies in BUILD files.
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get Bant
-        run: |
-          # TODO: provide this as action where we simply say with version=...
-          VERSION="v0.1.9"
-          STATIC_VERSION="bant-${VERSION}-linux-static-x86_64"
-          wget "https://github.com/hzeller/bant/releases/download/${VERSION}/${STATIC_VERSION}.tar.gz"
-          tar xvzf "${STATIC_VERSION}.tar.gz"
-          mkdir -p bin
-          ln -sf ../"${STATIC_VERSION}/bin/bant" bin/
-          bin/bant -V
-
-      - name: Build Project genrules
-        run: |
-          # Fetch all dependencies and run genrules for bant to see every file
-          # that makes it into the compile. Use bant itself to find genrules.
-          bazel build $(bin/bant -q genrule-outputs | awk '{print $2}') \
-              //verible/common/analysis:command-file-lexer \
-              //verible/verilog/parser:verilog-lex \
-              //verible/verilog/parser:verilog-y \
-              //verible/verilog/parser:verilog-y-final
-
-      - name: Run bant build-cleaner
-        run: |
-          bin/bant dwyu ...
 
   Check:
     container: ubuntu:jammy

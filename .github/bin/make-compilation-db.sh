@@ -16,19 +16,38 @@
 set -u
 set -e
 
-BANT=${BANT:-bant}
+# Which bazel and bant to use can be chosen by environment variables
+BAZEL=${BAZEL:-bazel}
+BANT=${BANT:-needs-to-be-compiled-locally}
 
-if [ ! -e bazel-bin ]; then
-  echo "Before creating compilation DB, run bazel build first to fetch deps."
-  exit 1
+if [ "${BANT}" = "needs-to-be-compiled-locally" ]; then
+  # Bant not given, compile from bzlmod dep. We need to do that before
+  # we run other bazel rules below as we change the cxxopt flags. Remember
+  # the full realpath of the resulting binary to be immune to symbolic-link
+  # switcharoo by bazel.
+  ${BAZEL} build -c opt --cxxopt=-std=c++20 @bant//bant:bant >/dev/null 2>&1
+  BANT=$(realpath bazel-bin/external/bant*/bant/bant)
 fi
 
-bazel run --cxxopt=-std=c++20 @bant//bant:bant -- \
-      -C $(pwd) compile-flags 2>/dev/null > compile_flags.txt
+BAZEL_OPTS="-c opt --noshow_progress"
+# Bazel-build all targets that generate files, so that they can be
+# seen in dependency analysis.
+${BAZEL} build ${BAZEL_OPTS} $(${BANT} list-targets | \
+  egrep "genrule|cc_proto_library|genlex|genyacc" | awk '{print $3}')
 
-# Bant does not see yet the flex dependency inside the toolchain
+# Some selected targets to trigger all dependency fetches from MODULE.bazel
+# verilog-y-final to create a header, kzip creator to trigger build of any.pb.h
+# and some test that triggers fetching nlohmann_json and gtest
+${BAZEL} build ${BAZEL_OPTS} //verible/verilog/parser:verilog-y-final \
+  //verible/verilog/tools/kythe:verible-verilog-kythe-kzip-writer \
+  //verible/common/lsp:json-rpc-dispatcher_test
+
+# bant does not distinguish the includes per file yet, so instead of
+# a compile_commands.json, we can just as well create a simpler
+# compile_flags.txt which is easier to digest for all kinds of tools anyway.
+${BANT} compile-flags 2>/dev/null > compile_flags.txt
+
+# Bant does not see the flex dependency inside the toolchain yet.
 for d in bazel-out/../../../external/*flex*/src/FlexLexer.h ; do
   echo "-I$(dirname $d)" >> compile_flags.txt
 done
-
-echo "Now, re-run original build to make all artifacts visible to clang-tidy"

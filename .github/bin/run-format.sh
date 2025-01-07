@@ -29,7 +29,7 @@ find . -name "*.h" -o -name "*.cc" \
   | egrep -v 'third_party/|external_libs/|.github/' \
   | xargs -P2 ${CLANG_FORMAT} -i
 
-# If we have buildifier installed, use that on BUILD files
+# If we have buildifier installed, use that to format BUILD files
 if command -v ${BUILDIFIER} >/dev/null; then
   echo "Run $(buildifier --version)"
   ${BUILDIFIER} -lint=fix MODULE.bazel $(find . -name BUILD -o -name "*.bzl")
