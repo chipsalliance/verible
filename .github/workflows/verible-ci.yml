@@ -25,7 +25,7 @@ env:
 jobs:
 
 
-  VerifyFormatting:
+  CheckFormatAndBuildClean:
     runs-on: ubuntu-24.04
     steps:
 
@@ -41,7 +41,11 @@ jobs:
 
     - name: Run formatting style check
       run: |
+        echo "--- check formatting ---"
         CLANG_FORMAT=clang-format-17 ./.github/bin/run-format.sh
+        echo "--- check build dependencies ---"
+        ./.github/bin/run-build-cleaner.sh
+        echo "--- check potential problems ---"
         ./.github/bin/check-potential-problems.sh
 
     - name: 📤 Upload performance graphs
@@ -116,40 +120,6 @@ jobs:
       with:
         name: "diag"
         path: "**/plot_*.svg"
-
-  RunBantBuildCleaner:
-    # Running http://bant.build/ to check all dependencies in BUILD files.
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get Bant
-        run: |
-          # TODO: provide this as action where we simply say with version=...
-          VERSION="v0.1.9"
-          STATIC_VERSION="bant-${VERSION}-linux-static-x86_64"
-          wget "https://github.com/hzeller/bant/releases/download/${VERSION}/${STATIC_VERSION}.tar.gz"
-          tar xvzf "${STATIC_VERSION}.tar.gz"
-          mkdir -p bin
-          ln -sf ../"${STATIC_VERSION}/bin/bant" bin/
-          bin/bant -V
-
-      - name: Build Project genrules
-        run: |
-          # Fetch all dependencies and run genrules for bant to see every file
-          # that makes it into the compile. Use bant itself to find genrules.
-          bazel build $(bin/bant -q genrule-outputs | awk '{print $2}') \
-              //verible/common/analysis:command-file-lexer \
-              //verible/verilog/parser:verilog-lex \
-              //verible/verilog/parser:verilog-y \
-              //verible/verilog/parser:verilog-y-final
-
-      - name: Run bant build-cleaner
-        run: |
-          bin/bant dwyu ...
 
   Check:
     container: ubuntu:jammy
