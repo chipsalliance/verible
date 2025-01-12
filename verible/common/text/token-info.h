@@ -95,7 +95,7 @@ class TokenInfo {
   // a series of abutting substring ranges.  Useful for lexer operation.
   void AdvanceText(int token_length) {
     // The end of the previous token is the beginning of the next.
-    text_ = absl::string_view(text_.end(), token_length);
+    text_ = absl::string_view(text_.data() + text_.length(), token_length);
   }
 
   // Writes a human-readable string representation of the token.
@@ -123,8 +123,8 @@ class TokenInfo {
   // same length as the current string_view.
   // string_view::iterator happens to be const char*, but don't rely on that
   // fact as it can be implementation-dependent.
-  void RebaseStringView(const char *new_text) {
-    RebaseStringView(absl::string_view(new_text, text_.length()));
+  void RebaseStringView(absl::string_view::const_iterator new_text) {
+    RebaseStringView(absl::string_view(&*new_text, text_.length()));
   }
 
   // Joins the text from a sequence of (text-disjoint) tokens, and also

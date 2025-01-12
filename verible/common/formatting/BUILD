@@ -4,6 +4,7 @@ package(
     default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//verible/verilog/formatting:__subpackages__",
+        "//verible/verilog/tools/ls:__pkg__",  # for string_null_it
     ],
     features = ["layering_check"],
 )

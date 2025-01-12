@@ -71,7 +71,8 @@ void TextStructureView::Clear() {
   contents_ = contents_.substr(0, 0);  // clear
 }
 
-static bool TokenLocationLess(const TokenInfo &token, const char *offset) {
+static bool TokenLocationLess(const TokenInfo &token,
+                              const absl::string_view::const_iterator offset) {
   return token.text().begin() < offset;
 }
 
@@ -408,8 +409,9 @@ absl::Status TextStructureView::SyntaxTreeConsistencyCheck() const {
   VLOG(2) << __FUNCTION__;
   // Check that first and last token in syntax_tree_ point to text
   // inside contents_.
-  const char *const lower_bound = contents_.data();
-  const char *const upper_bound = lower_bound + contents_.length();
+  const absl::string_view::const_iterator lower_bound = contents_.begin();
+  const absl::string_view::const_iterator upper_bound =
+      lower_bound + contents_.length();
   if (syntax_tree_ != nullptr) {
     const SyntaxTreeLeaf *left = GetLeftmostLeaf(*syntax_tree_);
     if (!left) return absl::OkStatus();
@@ -470,19 +472,21 @@ void TextStructureView::ConsumeDeferredExpansion(
     TokenSequence::const_iterator *next_token_iter,
     TokenStreamView::const_iterator *next_token_view_iter,
     DeferredExpansion *expansion, TokenSequence *combined_tokens,
-    std::vector<int> *token_view_indices, const char *offset) {
+    std::vector<int> *token_view_indices,
+    absl::string_view::const_iterator offset) {
   auto token_iter = *next_token_iter;
   auto token_view_iter = *next_token_view_iter;
   // Find the position up to each expansion point.
-  *next_token_iter =
-      std::lower_bound(token_iter, tokens_.cend(), offset,
-                       [](const TokenInfo &token, const char *target) {
-                         return std::distance(target, token.text().begin()) < 0;
-                       });
+  *next_token_iter = std::lower_bound(
+      token_iter, tokens_.cend(), offset,
+      [](const TokenInfo &token, absl::string_view::const_iterator target) {
+        return std::distance(target, token.text().begin()) < 0;
+      });
   CHECK(*next_token_iter != tokens_.cend());
   *next_token_view_iter = std::lower_bound(
       token_view_iter, tokens_view_.cend(), offset,
-      [](TokenStreamView::const_reference token_ref, const char *target) {
+      [](TokenStreamView::const_reference token_ref,
+         absl::string_view::const_iterator target) {
         return std::distance(target, token_ref->text().begin()) < 0;
       });
   CHECK(*next_token_view_iter != tokens_view_.cend());
@@ -498,8 +502,8 @@ void TextStructureView::ConsumeDeferredExpansion(
   TextStructureView &sub_data = ABSL_DIE_IF_NULL(subanalysis)->MutableData();
   const absl::string_view sub_data_text(sub_data.Contents());
   CHECK(!IsSubRange(sub_data_text, contents_));
-  CHECK_EQ(sub_data_text, absl::string_view(offset, sub_data_text.length()));
-  CHECK_GE(offset, contents_.begin());
+  CHECK_EQ(sub_data_text, absl::string_view(&*offset, sub_data_text.length()));
+  CHECK(offset >= contents_.begin());
   sub_data.RebaseTokensToSuperstring(contents_, sub_data_text,
                                      std::distance(contents_.begin(), offset));
 

@@ -192,7 +192,7 @@ LayoutFunction::const_iterator LayoutFunction::AtOrToTheLeftOf(
       begin(), end(), column, [](const LayoutFunctionSegment &s, int column) {
         return s.column <= column;
       });
-  CHECK_NE(it, begin());
+  CHECK(it != begin());
   return it - 1;
 }
 

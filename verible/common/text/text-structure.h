@@ -222,7 +222,8 @@ class TextStructureView {
       TokenSequence::const_iterator *next_token_iter,
       TokenStreamView::const_iterator *next_token_view_iter,
       DeferredExpansion *expansion, TokenSequence *combined_tokens,
-      std::vector<int> *token_view_indices, const char *offset);
+      std::vector<int> *token_view_indices,
+      absl::string_view::const_iterator offset);
 
   // Resets all fields. Only needed in tests.
   void Clear();

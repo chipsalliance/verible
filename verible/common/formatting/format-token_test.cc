@@ -218,9 +218,9 @@ class ConnectPreFormatTokensPreservedSpaceStartsTest
       public UnwrappedLineMemoryHandler {};
 
 TEST_F(ConnectPreFormatTokensPreservedSpaceStartsTest, Empty) {
-  const char *text = "";
+  constexpr absl::string_view text;
   CreateTokenInfosExternalStringBuffer({});
-  ConnectPreFormatTokensPreservedSpaceStarts(text, &pre_format_tokens_);
+  ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
   EXPECT_TRUE(pre_format_tokens_.empty());
 }
 

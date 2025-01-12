@@ -35,7 +35,7 @@ TokenInfo TokenInfo::EOFToken() {
 }
 
 TokenInfo TokenInfo::EOFToken(absl::string_view buffer) {
-  return {TK_EOF, absl::string_view(buffer.end(), 0)};
+  return {TK_EOF, absl::string_view(buffer.data() + buffer.length(), 0)};
 }
 
 bool TokenInfo::operator==(const TokenInfo &token) const {

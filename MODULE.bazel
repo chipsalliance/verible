@@ -20,12 +20,6 @@ bazel_dep(name = "rules_bison", version = "0.3")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1", dev_dependency = True)
 
 bazel_dep(name = "abseil-cpp", version = "20240116.2")
-single_version_override(
-    module_name = "abseil-cpp",
-    patch_strip = 1,
-    patches = ["//bazel:absl.patch"],
-    version = "20240116.2",
-)
 
 # Last protobuf version working with windows without strange linking errors.
 # This also means that we unfortunately can't use the @protobuf//bazel rules
