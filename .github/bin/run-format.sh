@@ -32,7 +32,8 @@ find . -name "*.h" -o -name "*.cc" \
 # If we have buildifier installed, use that to format BUILD files
 if command -v ${BUILDIFIER} >/dev/null; then
   echo "Run $(buildifier --version)"
-  ${BUILDIFIER} -lint=fix MODULE.bazel $(find . -name BUILD -o -name "*.bzl")
+  # TODO(hzeller): re-enable -lint=fix once compatible bazel version range again
+  ${BUILDIFIER} MODULE.bazel $(find . -name BUILD -o -name "*.bzl")
 fi
 
 # Check if we got any diff

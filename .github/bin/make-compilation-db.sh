@@ -26,7 +26,7 @@ if [ "${BANT}" = "needs-to-be-compiled-locally" ]; then
   # the full realpath of the resulting binary to be immune to symbolic-link
   # switcharoo by bazel.
   ${BAZEL} build -c opt --cxxopt=-std=c++20 @bant//bant:bant >/dev/null 2>&1
-  BANT=$(realpath bazel-bin/external/bant*/bant/bant)
+  BANT=$(realpath bazel-bin/external/bant*/bant/bant | head -1)
 fi
 
 BAZEL_OPTS="-c opt --noshow_progress"
