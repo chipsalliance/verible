@@ -83,11 +83,12 @@ TEST(RebaseStringViewTest, NewSubstringNotAtFront) {
 // Test that substring in the middle of old string is rebased correctly.
 TEST(RebaseStringViewTest, UsingCharPointer) {
   const absl::string_view text = "hello";
-  const absl::string_view new_base = "xxxhelloyyy";
-  const char *new_view = new_base.begin() + 3;
+  const char *new_base = "xxxhelloyyy";
+  const char *new_view_offset = new_base + 3;
   absl::string_view text_view(text);
-  RebaseStringView(&text_view, new_view);  // assume original length
-  EXPECT_TRUE(BoundsEqual(text_view, new_base.substr(3, 5)));
+  RebaseStringView(&text_view, new_view_offset);  // assume original length
+  const absl::string_view new_base_view(new_base);
+  EXPECT_TRUE(BoundsEqual(text_view, new_base_view.substr(3, 5)));
 }
 
 // Test integration with substr() function rebases correctly.

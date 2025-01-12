@@ -52,7 +52,7 @@ void FilterTokenStreamViewInPlace(const TokenFilterPredicate &keep,
 }
 
 static bool TokenLocationLess(const TokenSequence::const_iterator &token_iter,
-                              const char *offset) {
+                              absl::string_view::const_iterator offset) {
   return token_iter->text().begin() < offset;
 }
 

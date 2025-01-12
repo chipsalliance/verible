@@ -957,7 +957,7 @@ void AnnotateFormattingInformation(
 }
 
 void AnnotateFormattingInformation(
-    const FormatStyle &style, const char *buffer_start,
+    const FormatStyle &style, absl::string_view::const_iterator buffer_start,
     const verible::Symbol *syntax_tree_root,
     const verible::TokenInfo &eof_token,
     std::vector<verible::PreFormatToken> *format_tokens) {
@@ -965,7 +965,7 @@ void AnnotateFormattingInformation(
     return;
   }
 
-  if (buffer_start != nullptr) {
+  if (buffer_start != verible::string_view_null_iterator()) {
     // For unit testing, tokens' text snippets don't necessarily originate
     // from the same contiguous string buffer, so skip this step.
     ConnectPreFormatTokensPreservedSpaceStarts(buffer_start, format_tokens);

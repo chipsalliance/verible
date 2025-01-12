@@ -218,9 +218,12 @@ class ConnectPreFormatTokensPreservedSpaceStartsTest
       public UnwrappedLineMemoryHandler {};
 
 TEST_F(ConnectPreFormatTokensPreservedSpaceStartsTest, Empty) {
-  const char *text = "";
+  // We do want to initialize the text, otherwise string_view wraps a nulllptr
+  // that is checked against downstream.
+  // NOLINTNEXTLINE(readability-redundant-string-init)
+  constexpr absl::string_view text("");
   CreateTokenInfosExternalStringBuffer({});
-  ConnectPreFormatTokensPreservedSpaceStarts(text, &pre_format_tokens_);
+  ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
   EXPECT_TRUE(pre_format_tokens_.empty());
 }
 

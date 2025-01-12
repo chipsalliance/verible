@@ -296,7 +296,7 @@ absl::string_view DffNameStyleRule::CheckSuffix(
                                  [&](const std::string &suffix) -> bool {
                                    if (absl::EndsWith(id, suffix)) {
                                      base = absl::string_view(
-                                         id.begin(), id.size() - suffix.size());
+                                         id.data(), id.size() - suffix.size());
                                      suffix_match = suffix;
                                      return true;
                                    }

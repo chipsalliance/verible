@@ -266,8 +266,9 @@ const Symbol *FindLastSubtree(const Symbol *, const TreePredicate &);
 // subtree that starts with the next whole token.
 // Nodes without leaves will never be considered because they have no location.
 // Both the tree and the returned tree are intended to be mutable.
-ConcreteSyntaxTree *FindSubtreeStartingAtOffset(ConcreteSyntaxTree *tree,
-                                                const char *first_token_offset);
+ConcreteSyntaxTree *FindSubtreeStartingAtOffset(
+    ConcreteSyntaxTree *tree,
+    absl::string_view::const_iterator first_token_offset);
 
 // Cuts out all nodes and leaves that start at or past the given offset.
 // This only looks at leaves' location offsets, and not actual text.
@@ -275,7 +276,8 @@ ConcreteSyntaxTree *FindSubtreeStartingAtOffset(ConcreteSyntaxTree *tree,
 // of recursive pruning will also be pruned.
 // tree must not be null.
 // This will never prune away the root node.
-void PruneSyntaxTreeAfterOffset(ConcreteSyntaxTree *tree, const char *offset);
+void PruneSyntaxTreeAfterOffset(ConcreteSyntaxTree *tree,
+                                absl::string_view::const_iterator offset);
 
 // Returns the pointer to the largest subtree wholly contained
 // inside the text range spanned by trim_range.

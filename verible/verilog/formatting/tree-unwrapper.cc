@@ -3191,7 +3191,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf &leaf) {
   UpdateInterLeafScanner(tag);
 
   // Sanity check that NextUnfilteredToken() is aligned to the current leaf.
-  CHECK_EQ(NextUnfilteredToken()->text().begin(), leaf.get().text().begin());
+  CHECK(NextUnfilteredToken()->text().begin() == leaf.get().text().begin());
 
   // Start a new partition in the following cases.
   // In most other cases, do nothing.

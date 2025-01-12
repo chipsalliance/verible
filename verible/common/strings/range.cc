@@ -23,10 +23,12 @@
 
 namespace verible {
 
-absl::string_view make_string_view_range(const char *begin, const char *end) {
+absl::string_view make_string_view_range(
+    absl::string_view::const_iterator begin,
+    absl::string_view::const_iterator end) {
   const int length = std::distance(begin, end);
   CHECK_GE(length, 0) << "Malformed string bounds.";
-  return absl::string_view(begin, length);
+  return absl::string_view(&*begin, length);
 }
 
 std::pair<int, int> SubstringOffsets(absl::string_view substring,

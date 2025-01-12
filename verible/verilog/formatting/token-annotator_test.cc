@@ -1828,7 +1828,8 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
     // context-insensitive annotation rules.
     // Since we're using the joined string buffer inside handler,
     // we need to pass an EOF token that points to the end of that buffer.
-    AnnotateFormattingInformation(test_case.style, nullptr, nullptr,
+    AnnotateFormattingInformation(test_case.style,
+                                  verible::string_view_null_iterator(), nullptr,
                                   handler.EOFToken(), &ftokens_range);
     EXPECT_TRUE(CorrectExpectedFormatTokens(test_case.expected_calculations,
                                             ftokens_range))

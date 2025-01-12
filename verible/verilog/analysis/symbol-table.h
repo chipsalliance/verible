@@ -394,7 +394,8 @@ struct SymbolInfo {
 
     template <typename L, typename R>
     bool operator()(L l, R r) const {
-      static constexpr std::less<const void *> compare_address;
+      static constexpr std::less<absl::string_view::const_iterator>
+          compare_address;
       return compare_address(ToString(l).begin(), ToString(r).begin());
     }
   };
