@@ -19,6 +19,7 @@ cc_library(
         ":lsp-parse-buffer",
         ":symbol-table-handler",
         "//verible/common/analysis:syntax-tree-search",
+        "//verible/common/formatting:format-token",
         "//verible/common/lsp:lsp-protocol",
         "//verible/common/strings:line-column-map",
         "//verible/common/strings:position",

@@ -69,7 +69,8 @@ class AlignmentTestFixture : public ::testing::Test,
                              public UnwrappedLineMemoryHandler {
  public:
   explicit AlignmentTestFixture(absl::string_view text)
-      : sample_(text),
+      : sample_backing_(text),
+        sample_(sample_backing_),
         tokens_(absl::StrSplit(sample_, absl::ByAnyChar(" \n"),
                                absl::SkipEmpty())) {
     for (const auto token : tokens_) {
@@ -80,7 +81,8 @@ class AlignmentTestFixture : public ::testing::Test,
   }
 
  protected:
-  const std::string sample_;
+  const std::string sample_backing_;
+  const absl::string_view sample_;
   const std::vector<absl::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 };
@@ -271,7 +273,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, AlignmentPolicyFlushLeft) {
 
 TEST_F(Sparse3x3MatrixAlignmentTest, AlignmentPolicyPreserve) {
   // Set previous-token string pointers to preserve spaces.
-  ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+  ConnectPreFormatTokensPreservedSpaceStarts(sample_.begin(),
                                              &pre_format_tokens_);
 
   TabularAlignTokens(40, sample_, ByteOffsetSet(), kPreserveAlignmentHandler,
@@ -391,7 +393,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
 
 TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignment) {
   // Disabled ranges use original spacing
-  ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+  ConnectPreFormatTokensPreservedSpaceStarts(sample_.begin(),
                                              &pre_format_tokens_);
 
   // Require 1 space between tokens.
@@ -413,7 +415,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignment) {
 
 TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignmentWithIndent) {
   // Disabled ranges use original spacing
-  ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+  ConnectPreFormatTokensPreservedSpaceStarts(sample_.begin(),
                                              &pre_format_tokens_);
 
   // Require 1 space between tokens.
@@ -445,7 +447,7 @@ class Sparse3x3MatrixAlignmentMoreSpacesTest
   Sparse3x3MatrixAlignmentMoreSpacesTest()
       : Sparse3x3MatrixAlignmentTest("one   two\nthree   four\nfive   six") {
     // This is needed for preservation of original spacing.
-    ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+    ConnectPreFormatTokensPreservedSpaceStarts(sample_.begin(),
                                                &pre_format_tokens_);
   }
 };
@@ -480,7 +482,7 @@ TEST_F(Sparse3x3MatrixAlignmentMoreSpacesTest,
 
 TEST_F(Sparse3x3MatrixAlignmentTest, PartiallyDisabledNoAlignment) {
   // Disabled ranges use original spacing
-  ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+  ConnectPreFormatTokensPreservedSpaceStarts(sample_.begin(),
                                              &pre_format_tokens_);
 
   // Require 1 space between tokens.
@@ -865,7 +867,7 @@ class Dense2x2MatrixAlignmentTest : public MatrixTreeAlignmentTestFixture {
     CHECK_EQ(tokens_.size(), 4);
 
     // Need to know original spacing to be able to infer user-intent.
-    ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+    ConnectPreFormatTokensPreservedSpaceStarts(sample_.begin(),
                                                &pre_format_tokens_);
 
     // Require 1 space between tokens.
@@ -1170,7 +1172,7 @@ TEST_F(SubcolumnsTreeAlignmentTest, AlignmentPolicyFlushLeft) {
 }
 
 TEST_F(SubcolumnsTreeAlignmentTest, AlignmentPolicyPreserve) {
-  ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+  ConnectPreFormatTokensPreservedSpaceStarts(sample_.begin(),
                                              &pre_format_tokens_);
 
   TabularAlignTokens(40, sample_, ByteOffsetSet(),
@@ -1332,7 +1334,7 @@ class InferSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
           "( eleven  nineteen-ninety-nine  2k    )\n")
       : SubcolumnsTreeAlignmentTest(text) {
     // Need to know original spacing to be able to infer user-intent.
-    ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+    ConnectPreFormatTokensPreservedSpaceStarts(sample_.begin(),
                                                &pre_format_tokens_);
 
     // Require 1 space between tokens.
@@ -1497,7 +1499,8 @@ class FormatUsingOriginalSpacingTest : public ::testing::Test,
           "\n       <1NL+7Spaces>\n       <1nl+7spaces>"
           "\n\n  <2NL+2Spaces>\n\n  <2nl+2spaces>"
           "\n \n\n  <1NL+1Space+2NL+2Spaces>\n \n\n  <1nl+1space+2nl+2spaces>")
-      : sample_(text),
+      : sample_backing_(text),
+        sample_(sample_backing_),
         tokens_(absl::StrSplit(sample_, OutsideCharPairs('<', '>'),
                                absl::SkipEmpty())) {
     for (const auto token : tokens_) {
@@ -1505,7 +1508,7 @@ class FormatUsingOriginalSpacingTest : public ::testing::Test,
     }
     // sample_ is the memory-owning string buffer
     CreateTokenInfosExternalStringBuffer(ftokens_);
-    ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+    ConnectPreFormatTokensPreservedSpaceStarts(sample_.begin(),
                                                &pre_format_tokens_);
   }
 
@@ -1518,7 +1521,8 @@ class FormatUsingOriginalSpacingTest : public ::testing::Test,
     EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, nodes[0], expected);
   }
 
-  const std::string sample_;
+  const std::string sample_backing_;
+  const absl::string_view sample_;
   const std::vector<absl::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 };

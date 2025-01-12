@@ -701,7 +701,8 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
     // Setup pointers for OriginalLeadingSpaces()
     auto must_wrap_token = must_wrap_pre_format_tokens.begin();
     auto joinable_token = joinable_pre_format_tokens.begin();
-    const char *buffer_start = sample_.data();
+    absl::string_view sample_view(sample_);
+    absl::string_view::const_iterator buffer_start = sample_view.begin();
     for (size_t i = 0; i < number_of_tokens_in_set; ++i) {
       must_wrap_token->before.preserved_space_start = buffer_start;
       joinable_token->before.preserved_space_start = buffer_start;
@@ -2387,10 +2388,11 @@ class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
                                            public UnwrappedLineMemoryHandler {
  public:
   TokenPartitionsLayoutOptimizerTest()
-      : sample_(
+      : sample_backing_(
             //   :    |10  :    |20  :    |30  :    |40
             "one two three four\n"
             "eleven twelve thirteen fourteen\n"),
+        sample_(sample_backing_),
         tokens_(
             absl::StrSplit(sample_, absl::ByAnyChar(" \n"), absl::SkipEmpty())),
         style_(CreateStyle()),
@@ -2399,7 +2401,7 @@ class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
       ftokens_.emplace_back(1, token);
     }
     CreateTokenInfosExternalStringBuffer(ftokens_);
-    ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+    ConnectPreFormatTokensPreservedSpaceStarts(sample_.begin(),
                                                &pre_format_tokens_);
 
     // Set token properties
@@ -2423,7 +2425,8 @@ class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
   }
 
  protected:
-  const std::string sample_;
+  const std::string sample_backing_;
+  const absl::string_view sample_;
   const std::vector<absl::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
   const BasicFormatStyle style_;

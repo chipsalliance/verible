@@ -43,16 +43,16 @@ std::string AutoFix::Apply(absl::string_view base) const {
   std::string result;
   auto prev_start = base.cbegin();
   for (const auto &edit : edits_) {
-    CHECK_LE(base.cbegin(), edit.fragment.cbegin());
-    CHECK_GE(base.cend(), edit.fragment.cend());
+    CHECK(base.cbegin() <= edit.fragment.cbegin());
+    CHECK(base.cend() >= edit.fragment.cend());
 
     const absl::string_view text_before(
-        prev_start, std::distance(prev_start, edit.fragment.cbegin()));
+        &*prev_start, std::distance(prev_start, edit.fragment.cbegin()));
     absl::StrAppend(&result, text_before, edit.replacement);
 
     prev_start = edit.fragment.cend();
   }
-  const absl::string_view text_after(prev_start,
+  const absl::string_view text_after(&*prev_start,
                                      std::distance(prev_start, base.cend()));
   return absl::StrCat(result, text_after);
 }

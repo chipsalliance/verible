@@ -28,6 +28,10 @@
 
 namespace verible {
 
+// TODO: find something platform independent that is less ugly.
+inline absl::string_view::iterator string_view_null_iterator() {
+  return absl::string_view().begin();
+}
 // Enumeration for options for formatting spaces between tokens.
 // This controls what to explore (if not pre-determined).
 // Related enum: SpacingDecision
@@ -76,7 +80,8 @@ struct InterTokenInfo {
   // tokens, for the sake of preserving space.
   // Together with the current token, they can form a string_view representing
   // pre-existing space from the original buffer.
-  const char *preserved_space_start = nullptr;
+  absl::string_view::iterator preserved_space_start =
+      string_view_null_iterator();
 
   InterTokenInfo() = default;
   InterTokenInfo(const InterTokenInfo &) = default;
@@ -158,7 +163,7 @@ std::ostream &operator<<(std::ostream &stream, const PreFormatToken &token);
 // inter-token (space) text.
 // Note that this does not cover the space between the last token and EOF.
 void ConnectPreFormatTokensPreservedSpaceStarts(
-    const char *buffer_start,
+    absl::string_view::const_iterator buffer_start,
     std::vector<verible::PreFormatToken> *format_tokens);
 
 // Marks formatting-disabled ranges of tokens so that their original spacing is
@@ -199,7 +204,8 @@ struct InterTokenDecision {
   SpacingDecision action = SpacingDecision::kPreserve;
 
   // When preserving spaces before this token, start from this offset.
-  const char *preserved_space_start = nullptr;
+  absl::string_view::iterator preserved_space_start =
+      string_view_null_iterator();
 
   InterTokenDecision() = default;
 

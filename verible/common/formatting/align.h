@@ -396,8 +396,8 @@ ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
 
     // Collect tokens excluded from SyntaxTree (delimiters and comments)
     CHECK(!ftokens.empty());
-    CHECK_LE(ftokens.front().Text().begin(), first_tree_token.text().begin());
-    CHECK_GE(ftokens.back().Text().end(), last_tree_token.text().end());
+    CHECK(ftokens.front().Text().begin() <= first_tree_token.text().begin());
+    CHECK(ftokens.back().Text().end() >= last_tree_token.text().end());
 
     FormatTokenRange::const_iterator ftoken_it = ftokens.begin();
     // Find leading non-tree tokens range end

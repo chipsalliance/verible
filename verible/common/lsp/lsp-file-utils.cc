@@ -25,6 +25,9 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
+// This changes with later absl versions.
+#define USE_ABSL_NEW_HEX 0
+
 namespace verible::lsp {
 
 static constexpr absl::string_view kFileSchemePrefix = "file://";
@@ -56,7 +59,12 @@ std::string DecodeURI(absl::string_view uri) {
       pos++;
       if (pos + 2 <= uri.size() && std::isxdigit(uri[pos]) &&
           std::isxdigit(uri[pos + 1])) {
-        std::string hex = absl::HexStringToBytes(uri.substr(pos, 2));
+        std::string hex;
+#if USE_ABSL_NEW_HEX
+        if (!absl::HexStringToBytes(uri.substr(pos, 2), &hex)) break;
+#else
+        hex = absl::HexStringToBytes(uri.substr(pos, 2));
+#endif
         absl::StrAppend(&result, hex.length() == 1 ? hex : uri.substr(pos, 2));
         pos += 2;
       } else {
