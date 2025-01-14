@@ -18623,7 +18623,7 @@ TEST(FormatterEndToEndTest, FunctionCallsWithComments) {
 std::string NLCountAndfirstWord(absl::string_view str) {
   std::string result;
   int newline_count = 0;
-  const char *begin = str.begin();
+  absl::string_view::const_iterator begin = str.begin();
   for (/**/; begin < str.end(); ++begin) {
     if (!isspace(*begin)) break;
     newline_count += (*begin == '\n');
@@ -18631,7 +18631,7 @@ std::string NLCountAndfirstWord(absl::string_view str) {
   // Emit number of newlines seen up to first token.
   result.append(1,
                 static_cast<char>(newline_count + '0'));  // single digit itoa
-  const char *end_str = begin;
+  absl::string_view::const_iterator end_str = begin;
   for (/**/; end_str < str.end() && !isspace(*end_str); ++end_str) {
   }
   result.append(begin, end_str);
@@ -18643,16 +18643,16 @@ std::string NLCountAndfirstWord(absl::string_view str) {
 std::string lastWordAndNLCount(absl::string_view str) {
   std::string result;
   int newline_count = 0;
-  const char *back = str.end() - 1;
+  absl::string_view::const_iterator back = str.end() - 1;
   for (/**/; back >= str.begin(); --back) {
     if (!isspace(*back)) break;
     newline_count += (*back == '\n');
   }
 
-  const char *start_str = back;
+  absl::string_view::const_iterator start_str = back;
   for (/**/; start_str >= str.begin() && !isspace(*start_str); --start_str) {
   }
-  result.append(start_str + 1, back - start_str);
+  result.append(&*(start_str + 1), back - start_str);
   // Emit number of newlines seen following last token.
   result.append(1,
                 static_cast<char>(newline_count + '0'));  // single digit itoa
@@ -18722,7 +18722,7 @@ foobar, input    bit [4] foobaz,
       // Area we cover in the input (include the final newline);
       const auto source_begin = lines[start_line].begin();
       const auto source_end = lines[end_line - 1].end() + 1;  // include \n
-      const absl::string_view range_unformatted(source_begin,
+      const absl::string_view range_unformatted(&*source_begin,
                                                 source_end - source_begin);
 
       // To compare that we indeed formatted the requested reqgion, we make

@@ -99,7 +99,7 @@ absl::string_view StringSpanOfSymbol(const Symbol &lsym, const Symbol &rsym) {
   if (left != nullptr && right != nullptr) {
     const auto range_begin = left->get().text().begin();
     const auto range_end = right->get().text().end();
-    return absl::string_view(range_begin,
+    return absl::string_view(&*range_begin,
                              std::distance(range_begin, range_end));
   }
   return "";
@@ -270,7 +270,8 @@ const Symbol *FindLastSubtree(const Symbol *tree, const TreePredicate &pred) {
 }
 
 ConcreteSyntaxTree *FindSubtreeStartingAtOffset(
-    ConcreteSyntaxTree *tree, const char *first_token_offset) {
+    ConcreteSyntaxTree *tree,
+    absl::string_view::const_iterator first_token_offset) {
   auto predicate = [=](const Symbol &s) {
     const SyntaxTreeLeaf *leftmost = GetLeftmostLeaf(s);
     if (leftmost != nullptr) {
@@ -292,7 +293,8 @@ ConcreteSyntaxTree *FindSubtreeStartingAtOffset(
 // Helper function for PruneSyntaxTreeAfterOffset
 namespace {
 // Returns true if this node should be deleted by parent (pop_back).
-bool PruneTreeFromRight(ConcreteSyntaxTree *tree, const char *offset) {
+bool PruneTreeFromRight(ConcreteSyntaxTree *tree,
+                        absl::string_view::const_iterator offset) {
   const auto kind = (*ABSL_DIE_IF_NULL(tree))->Kind();
   switch (kind) {
     case SymbolKind::kLeaf: {
@@ -329,14 +331,15 @@ bool PruneTreeFromRight(ConcreteSyntaxTree *tree, const char *offset) {
 }
 }  // namespace
 
-void PruneSyntaxTreeAfterOffset(ConcreteSyntaxTree *tree, const char *offset) {
+void PruneSyntaxTreeAfterOffset(ConcreteSyntaxTree *tree,
+                                absl::string_view::const_iterator offset) {
   PruneTreeFromRight(tree, offset);
 }
 
 // Helper functions for ZoomSyntaxTree
 namespace {
 // Return the upper bound offset of the rightmost token in the tree.
-const char *RightmostOffset(const Symbol &symbol) {
+absl::string_view::const_iterator RightmostOffset(const Symbol &symbol) {
   const SyntaxTreeLeaf *leaf_ptr = verible::GetRightmostLeaf(symbol);
   return ABSL_DIE_IF_NULL(leaf_ptr)->get().text().end();
 }

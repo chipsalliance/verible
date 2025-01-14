@@ -369,7 +369,7 @@ class AutoExpander {
     const auto begin = text_structure.Lines()[min].begin();
     const auto end = text_structure.Lines()[max].end();
     const size_t length = static_cast<size_t>(std::distance(begin, end));
-    expand_span_ = absl::string_view(begin, length);
+    expand_span_ = absl::string_view(&*begin, length);
   }
 
   AutoExpander(const TextStructureView &text_structure,
@@ -797,7 +797,7 @@ void AutoExpander::Module::GenerateConnections(
     }
     size_t pos = connected.port_name.find('@');
     while (pos != std::string::npos) {
-      connected.port_name.replace(pos, 1, instance_name.begin(),
+      connected.port_name.replace(pos, 1, &*instance_name.begin(),
                                   instance_name.length());
       pos = connected.port_name.find('@', pos);
     }
@@ -846,7 +846,7 @@ void AutoExpander::Module::AddGeneratedConnection(
       {port_name, {connected}, packed_dimensions, unpacked_dimensions},
       direction,
       Port::Declaration::kUndeclared,
-      nullptr,
+      {},
   });
 }
 
@@ -1000,8 +1000,8 @@ std::vector<AutoExpander::Dimension> GetDimensionsFromNodes(
         const absl::string_view left_span = StringSpanOfSymbol(*left);
         const absl::string_view right_span = StringSpanOfSymbol(*right);
         dimensions.push_back(absl::string_view{
-            left_span.begin(), static_cast<size_t>(std::distance(
-                                   left_span.begin(), right_span.end()))});
+            &*left_span.begin(), static_cast<size_t>(std::distance(
+                                     left_span.begin(), right_span.end()))});
       }
     }
   }
@@ -1121,9 +1121,7 @@ std::optional<AutoExpander::Match> FindMatchInSymbol(const Symbol &symbol,
   absl::string_view match;
   absl::string_view comment;
   if (RE2::PartialMatch(symbol_span, re, &match, &comment)) {
-    return AutoExpander::Match{
-        .auto_span = {match.begin(), match.length()},
-        .comment_span = {comment.begin(), comment.length()}};
+    return AutoExpander::Match{.auto_span = match, .comment_span = comment};
   }
   return std::nullopt;
 }
@@ -1133,9 +1131,8 @@ std::optional<absl::string_view> FindSpanInSymbol(const Symbol &symbol,
                                                   const RE2 &re) {
   const absl::string_view symbol_span = StringSpanOfSymbol(symbol);
   absl::string_view match;
-  if (RE2::PartialMatch({symbol_span.data(), symbol_span.length()}, re,
-                        &match)) {
-    return absl::string_view{match.begin(), match.length()};
+  if (RE2::PartialMatch(symbol_span, re, &match)) {
+    return match;
   }
   return std::nullopt;
 }
@@ -1574,7 +1571,7 @@ std::optional<absl::string_view> AutoExpander::FindSpanToReplace(
   const absl::string_view symbol_span = StringSpanOfSymbol(symbol);
   const size_t replaced_length = static_cast<size_t>(
       std::distance(auto_span.begin(), symbol_span.end() - 1));
-  const absl::string_view replaced_span{auto_span.begin(), replaced_length};
+  const absl::string_view replaced_span{&*auto_span.begin(), replaced_length};
   if (!SpansOverlapping(replaced_span, expand_span_)) {
     return std::nullopt;
   }
