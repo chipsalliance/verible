@@ -15,8 +15,8 @@
 #include "verible/verilog/analysis/checkers/no-tabs-rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/text/token-info.h"
 #include "verible/verilog/analysis/descriptions.h"
@@ -33,7 +33,7 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(NoTabsRule);
 
-static constexpr absl::string_view kMessage = "Use spaces, not tabs.";
+static constexpr std::string_view kMessage = "Use spaces, not tabs.";
 
 const LintRuleDescriptor &NoTabsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -46,11 +46,11 @@ const LintRuleDescriptor &NoTabsRule::GetDescriptor() {
   return d;
 }
 
-void NoTabsRule::HandleLine(absl::string_view line) {
+void NoTabsRule::HandleLine(std::string_view line) {
   // Finds first tab in each line, if there is one.
   // This reports only the first violation on each line.
   const auto tab_pos = line.find('\t');
-  if (tab_pos != absl::string_view::npos) {
+  if (tab_pos != std::string_view::npos) {
     TokenInfo token(TK_SPACE, line.substr(tab_pos, 1));
     violations_.insert(LintViolation(token, kMessage));
   }

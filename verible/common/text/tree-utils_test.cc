@@ -18,8 +18,8 @@
 #include <memory>
 #include <ostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/concrete-syntax-tree.h"
@@ -119,7 +119,7 @@ TEST(DescendThroughSingletonsTest, NodeFirstChildNodeSecondChildNull) {
   EXPECT_EQ(node.get(), DescendThroughSingletons(*node));
 }
 
-static constexpr absl::string_view kTestToken[] = {
+static constexpr std::string_view kTestToken[] = {
     "test_token1",
     "test_token2",
     "test_token3",
@@ -225,7 +225,7 @@ TEST(StringSpanOfSymbolTest, DeepEmptyTree) {
 }
 
 TEST(StringSpanOfSymbolTest, LeafOnlyEmptyText) {
-  constexpr absl::string_view text;
+  constexpr std::string_view text;
   SymbolPtr symbol = Leaf(1, text);
   const auto range = StringSpanOfSymbol(*symbol);
   EXPECT_TRUE(range.empty());
@@ -233,21 +233,21 @@ TEST(StringSpanOfSymbolTest, LeafOnlyEmptyText) {
 }
 
 TEST(StringSpanOfSymbolTest, LeafOnlyNonemptyText) {
-  constexpr absl::string_view text("asdfg");
+  constexpr std::string_view text("asdfg");
   SymbolPtr symbol = Leaf(1, text);
   const auto range = StringSpanOfSymbol(*symbol);
   EXPECT_TRUE(BoundsEqual(range, text));
 }
 
 TEST(StringSpanOfSymbolTest, DeepLeafOnlyEmptyText) {
-  constexpr absl::string_view text;
+  constexpr std::string_view text;
   SymbolPtr symbol = Node(Node(Leaf(1, text)));
   const auto range = StringSpanOfSymbol(*symbol);
   EXPECT_TRUE(BoundsEqual(range, text));
 }
 
 TEST(StringSpanOfSymbolTest, TwoLeavesOneTree) {
-  constexpr absl::string_view text("aaabbb");
+  constexpr std::string_view text("aaabbb");
   SymbolPtr symbol =
       Node(Node(Leaf(1, text.substr(0, 3))), Node(Leaf(2, text.substr(3, 3))));
   const auto range = StringSpanOfSymbol(*symbol);
@@ -255,7 +255,7 @@ TEST(StringSpanOfSymbolTest, TwoLeavesOneTree) {
 }
 
 TEST(StringSpanOfSymbolTest, TwoAbuttingLeavesTwoTrees) {
-  constexpr absl::string_view text("aaabbb");
+  constexpr std::string_view text("aaabbb");
   SymbolPtr lsymbol = Node(Node(Leaf(1, text.substr(0, 3))));
   SymbolPtr rsymbol = Node(Node(Leaf(1, text.substr(3, 3))));
   const auto range = StringSpanOfSymbol(*lsymbol, *rsymbol);
@@ -263,7 +263,7 @@ TEST(StringSpanOfSymbolTest, TwoAbuttingLeavesTwoTrees) {
 }
 
 TEST(StringSpanOfSymbolTest, TwoDisjointLeavesTwoTrees) {
-  constexpr absl::string_view text("aaabbb");
+  constexpr std::string_view text("aaabbb");
   SymbolPtr lsymbol = Node(Node(Leaf(1, text.substr(0, 2))));
   SymbolPtr rsymbol = Node(Node(Leaf(1, text.substr(4, 2))));
   const auto range = StringSpanOfSymbol(*lsymbol, *rsymbol);
@@ -271,14 +271,14 @@ TEST(StringSpanOfSymbolTest, TwoDisjointLeavesTwoTrees) {
 }
 
 TEST(TreePrintTest, RawPrint) {
-  constexpr absl::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
+  constexpr std::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
   SymbolPtr tree = Node(Leaf(0, text.substr(0, 6)),        //
                         Node(                              //
                             Leaf(1, text.substr(7, 6)),    //
                             Leaf(2, text.substr(14, 6))),  //
                         Leaf(3, text.substr(21, 6)));
   // Output excludes byte offsets.
-  constexpr absl::string_view expected =
+  constexpr std::string_view expected =
       "Node @0 {\n"
       "  Leaf @0 (#0: \"leaf 1\")\n"
       "  Node @1 {\n"
@@ -293,7 +293,7 @@ TEST(TreePrintTest, RawPrint) {
 }
 
 TEST(TreePrintTest, RawPrintNullptrPrinting) {
-  constexpr absl::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
+  constexpr std::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
   SymbolPtr tree = Node(nullptr,                           //
                         Leaf(0, text.substr(0, 6)),        //
                         nullptr,                           //
@@ -306,7 +306,7 @@ TEST(TreePrintTest, RawPrintNullptrPrinting) {
                         nullptr);
   {
     // Output excludes byte offsets.
-    constexpr absl::string_view expected =
+    constexpr std::string_view expected =
         "Node @0 {\n"
         "  Leaf @1 (#0: \"leaf 1\")\n"
         "  Node @3 {\n"
@@ -321,7 +321,7 @@ TEST(TreePrintTest, RawPrintNullptrPrinting) {
   }
   {
     // Now the same, but with nullptr printing enabled.
-    constexpr absl::string_view expected =
+    constexpr std::string_view expected =
         "Node @0 {\n"
         "  NULL @0\n"
         "  Leaf @1 (#0: \"leaf 1\")\n"
@@ -342,7 +342,7 @@ TEST(TreePrintTest, RawPrintNullptrPrinting) {
 }
 
 TEST(TreePrintTest, PrettyPrint) {
-  constexpr absl::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
+  constexpr std::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
   SymbolPtr tree = Node(                 //
       Leaf(0, text.substr(0, 6)),        //
       Node(                              //
@@ -350,7 +350,7 @@ TEST(TreePrintTest, PrettyPrint) {
           Leaf(2, text.substr(14, 6))),  //
       Leaf(3, text.substr(21, 6)));
   // Output includes byte offsets.
-  constexpr absl::string_view expected =
+  constexpr std::string_view expected =
       "Node @0 {\n"
       "  Leaf @0 (#0 @0-6: \"leaf 1\")\n"
       "  Node @1 {\n"
@@ -374,7 +374,7 @@ TEST(TreePrintTest, PrettyPrint) {
 }
 
 TEST(TreePrintTest, PrettyPrintSkipNullptrs) {
-  constexpr absl::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
+  constexpr std::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
   SymbolPtr tree = Node(                 //
       Leaf(0, text.substr(0, 6)),        //
       nullptr,                           //
@@ -388,7 +388,7 @@ TEST(TreePrintTest, PrettyPrintSkipNullptrs) {
       nullptr,                           //
       Leaf(3, text.substr(21, 6)));
   // Output includes byte offsets.
-  constexpr absl::string_view expected =
+  constexpr std::string_view expected =
       "Node @0 {\n"
       "  Leaf @0 (#0 @0-6: \"leaf 1\")\n"
       "  Node @3 {\n"
@@ -809,8 +809,8 @@ TEST(FindLastSubtreeTest, MatchLeaf) {
 
 // FindSubtreeStartingAtOffset tests
 
-constexpr absl::string_view kFindSubtreeTestText("abcdef");
-const absl::string_view kFindSubtreeTestSubstring(
+constexpr std::string_view kFindSubtreeTestText("abcdef");
+const std::string_view kFindSubtreeTestSubstring(
     kFindSubtreeTestText.substr(1, 3));
 
 struct FindSubtreeStartingAtOffsetTest : public testing::Test {
@@ -841,9 +841,9 @@ TEST_F(FindSubtreeStartingAtOffsetTest, LeafOnlyOffsetGreaterThan) {
 }
 
 // Allow to look beyond kBaseText by cutting it out of a larger string.
-constexpr absl::string_view kBaseTextPadded("_abcdefghijklmnopqrst_");
-constexpr absl::string_view kBaseText = {kBaseTextPadded.data() + 1,
-                                         kBaseTextPadded.length() - 2};
+constexpr std::string_view kBaseTextPadded("_abcdefghijklmnopqrst_");
+constexpr std::string_view kBaseText = {kBaseTextPadded.data() + 1,
+                                        kBaseTextPadded.length() - 2};
 
 // Return a tree with monotonically increasing token locations.
 // This is suitable for tests that require only location offsets,
@@ -1007,7 +1007,7 @@ TEST(MutateLeavesTest, NodeAndLeaves) {
 
 // Test that a leafless root node is not pruned.
 TEST(PruneSyntaxTreeAfterOffsetTest, LeaflessRootNode) {
-  constexpr absl::string_view text;
+  constexpr std::string_view text;
   SymbolPtr tree = Node();
   SymbolPtr expect = Node();  // distinct copy
   PruneSyntaxTreeAfterOffset(&tree, text.begin());
@@ -1016,7 +1016,7 @@ TEST(PruneSyntaxTreeAfterOffsetTest, LeaflessRootNode) {
 
 // Test that a root leaf is never pruned.
 TEST(PruneSyntaxTreeAfterOffsetTest, RootLeafNeverRemoved) {
-  constexpr absl::string_view text("baz");
+  constexpr std::string_view text("baz");
   SymbolPtr tree = Leaf(1, text);
   SymbolPtr expect = Leaf(1, text);  // distinct copy
   PruneSyntaxTreeAfterOffset(&tree, text.begin());
@@ -1025,7 +1025,7 @@ TEST(PruneSyntaxTreeAfterOffsetTest, RootLeafNeverRemoved) {
 
 // Test that a leafless tree is pruned down to the root.
 TEST(PruneSyntaxTreeAfterOffsetTest, EmptyNodes) {
-  constexpr absl::string_view text("baz");
+  constexpr std::string_view text("baz");
   SymbolPtr tree = Node(TNode(1), TNode(1, TNode(0), TNode(3)), TNode(2));
   SymbolPtr expect = Node();
   PruneSyntaxTreeAfterOffset(&tree, text.begin());
@@ -1042,8 +1042,8 @@ TEST(PruneSyntaxTreeAfterOffsetTest, AtEndPrunesNothing) {
 
 // Test that trailing nullptr nodes are pruned.
 TEST(PruneSyntaxTreeAfterOffsetTest, PruneTrailingNullNodes) {
-  constexpr absl::string_view text("foo bar");
-  const absl::string_view foo(text.substr(0, 3)), bar(text.substr(4, 3));
+  constexpr std::string_view text("foo bar");
+  const std::string_view foo(text.substr(0, 3)), bar(text.substr(4, 3));
   SymbolPtr tree = TNode(0,             // noformat
                          nullptr,       // noformat
                          Leaf(1, foo),  // noformat
@@ -1061,8 +1061,8 @@ TEST(PruneSyntaxTreeAfterOffsetTest, PruneTrailingNullNodes) {
 
 // Test that trailing nullptr nodes are pruned recursively.
 TEST(PruneSyntaxTreeAfterOffsetTest, PruneTrailingNullNodesRecursive) {
-  constexpr absl::string_view text("foo bar BQ");
-  const absl::string_view foo(text.substr(0, 3)), bar(text.substr(4, 3)),
+  constexpr std::string_view text("foo bar BQ");
+  const std::string_view foo(text.substr(0, 3)), bar(text.substr(4, 3)),
       bq(text.substr(8, 2));
   SymbolPtr tree = TNode(0,                   // noformat
                          nullptr,             // noformat
@@ -1168,7 +1168,7 @@ TEST(PruneSyntaxTreeAfterOffsetTest, DeleteAll) {
 
 // Test that root node without leaves is cleared because no locations match.
 TEST(TrimSyntaxTreeTest, RootNodeOnly) {
-  constexpr absl::string_view range;
+  constexpr std::string_view range;
   SymbolPtr tree = Node();
   TrimSyntaxTree(&tree, range);
   EXPECT_EQ(tree, nullptr);
@@ -1176,7 +1176,7 @@ TEST(TrimSyntaxTreeTest, RootNodeOnly) {
 
 // Test that tree without leaves is cleared because no locations match.
 TEST(TrimSyntaxTreeTest, TreeNoLeaves) {
-  constexpr absl::string_view range;
+  constexpr std::string_view range;
   SymbolPtr tree = Node(TNode(4), TNode(3, TNode(1), TNode(2)), TNode(0));
   TrimSyntaxTree(&tree, range);
   EXPECT_EQ(tree, nullptr);
@@ -1184,8 +1184,8 @@ TEST(TrimSyntaxTreeTest, TreeNoLeaves) {
 
 // Test that tree with one leaf is preserved in the enclosing range.
 TEST(TrimSyntaxTreeTest, OneLeafNotTrimmed) {
-  constexpr absl::string_view text("ddddddddddddddd");
-  const absl::string_view token(text.substr(5, 5));
+  constexpr std::string_view text("ddddddddddddddd");
+  const std::string_view token(text.substr(5, 5));
   const SymbolPtr expect = Node(TNode(3, Leaf(1, token)));
   for (int left = 4; left <= 5; ++left) {
     for (int right = 10; right <= 11; ++right) {
@@ -1198,8 +1198,8 @@ TEST(TrimSyntaxTreeTest, OneLeafNotTrimmed) {
 
 // Test that tree with one leaf is trimmed correctly (right bound).
 TEST(TrimSyntaxTreeTest, OneLeafTrimmedFromRight) {
-  constexpr absl::string_view text("ddddddddddddddd");
-  const absl::string_view token(text.substr(5, 5));
+  constexpr std::string_view text("ddddddddddddddd");
+  const std::string_view token(text.substr(5, 5));
   for (int left = 4; left <= 5; ++left) {
     SymbolPtr tree = Node(TNode(3, Leaf(1, token)));
     TrimSyntaxTree(&tree, text.substr(left, 9 - left));
@@ -1209,8 +1209,8 @@ TEST(TrimSyntaxTreeTest, OneLeafTrimmedFromRight) {
 
 // Test that tree with one leaf is trimmed correctly (left bound).
 TEST(TrimSyntaxTreeTest, OneLeafTrimmedFromLeft) {
-  constexpr absl::string_view text("ddddddddddddddd");
-  const absl::string_view token(text.substr(5, 5));
+  constexpr std::string_view text("ddddddddddddddd");
+  const std::string_view token(text.substr(5, 5));
   for (int right = 10; right <= 11; ++right) {
     SymbolPtr tree = Node(TNode(3, Leaf(1, token)));
     TrimSyntaxTree(&tree, text.substr(6, right - 6));
@@ -1229,7 +1229,7 @@ TEST(TrimSyntaxTreeTest, OutOfRangeLeft) {
 
 // Test that out-of-range (on right) yields a null tree.
 TEST(TrimSyntaxTreeTest, OutOfRangeRight) {
-  constexpr absl::string_view text("dddddddddddddddddddddddddd");
+  constexpr std::string_view text("dddddddddddddddddddddddddd");
   SymbolPtr tree = FakeSyntaxTree();
   // Can't test right beyond 17, because string_view raises a bounds
   // check error.

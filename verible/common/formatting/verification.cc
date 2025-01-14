@@ -15,19 +15,19 @@
 #include "verible/common/formatting/verification.h"
 
 #include <sstream>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/diff.h"
 #include "verible/common/strings/position.h"
 
 namespace verible {
 
-absl::Status ReformatMustMatch(absl::string_view original_text,
+absl::Status ReformatMustMatch(std::string_view original_text,
                                const LineNumberSet &lines,
-                               absl::string_view formatted_text,
-                               absl::string_view reformatted_text) {
+                               std::string_view formatted_text,
+                               std::string_view reformatted_text) {
   if (reformatted_text != formatted_text) {
     const verible::LineDiffs formatting_diffs(formatted_text, reformatted_text);
     std::ostringstream diff_stream;

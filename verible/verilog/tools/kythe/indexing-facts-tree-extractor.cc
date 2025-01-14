@@ -17,12 +17,12 @@
 #include <iterator>
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "verible/common/analysis/syntax-tree-search.h"
 #include "verible/common/text/concrete-syntax-tree.h"
@@ -84,7 +84,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
         source_file_(source_file),
         extraction_state_(extraction_state),
         errors_(errors) {
-    const absl::string_view base = source_file_.GetTextStructure()->Contents();
+    const std::string_view base = source_file_.GetTextStructure()->Contents();
     root_.Value().AppendAnchor(
         // Create the Anchor for file path node.
         Anchor(source_file_.ResolvedPath()),
@@ -286,7 +286,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // extracted node.
   void MoveAndDeleteLastExtractedNode(IndexingFactNode *new_node);
 
-  absl::string_view FileContent() {
+  std::string_view FileContent() {
     return source_file_.GetTextStructure()->Contents();
   }
 
@@ -342,13 +342,13 @@ IndexingFactNode BuildIndexingFactsTree(
 
 }  // namespace
 
-IndexingFactNode ExtractFiles(absl::string_view file_list_path,
+IndexingFactNode ExtractFiles(std::string_view file_list_path,
                               VerilogProject *project,
                               const std::vector<std::string> &file_names,
                               std::vector<absl::Status> *errors) {
   VLOG(1) << __FUNCTION__;
   // Open all of the translation units.
-  for (absl::string_view file_name : file_names) {
+  for (std::string_view file_name : file_names) {
     const auto status_or_file = project->OpenTranslationUnit(file_name);
     if (!status_or_file.ok()) {
       if (errors != nullptr) {
@@ -373,7 +373,7 @@ IndexingFactNode ExtractFiles(absl::string_view file_list_path,
 
   // pre-allocate file nodes with the number of translation units
   file_list_facts_tree.Children().reserve(file_names.size());
-  for (absl::string_view file_name : file_names) {
+  for (std::string_view file_name : file_names) {
     auto *translation_unit = project->LookupRegisteredFile(file_name);
     if (translation_unit == nullptr) continue;
     const auto parse_status = translation_unit->Parse();
@@ -1040,12 +1040,12 @@ void IndexingFactsTreeExtractor::ExtractMacroDefinition(
 }
 
 Anchor GetMacroAnchorFromTokenInfo(const TokenInfo &macro_token_info,
-                                   absl::string_view file_content) {
+                                   std::string_view file_content) {
   // Strip the prefix "`".
   // e.g.
   // `define TEN 0
   // `TEN --> removes the `
-  const absl::string_view macro_name =
+  const std::string_view macro_name =
       absl::StripPrefix(macro_token_info.text(), "`");
   int begin = std::distance(file_content.begin(), macro_name.begin());
   return Anchor(macro_name, begin, macro_name.size());
@@ -1788,7 +1788,7 @@ void IndexingFactsTreeExtractor::ExtractForInitialization(
 
 // Returns string_view of `text` with outermost double-quotes removed.
 // If `text` is not wrapped in quotes, return it as-is.
-absl::string_view StripOuterQuotes(absl::string_view text) {
+std::string_view StripOuterQuotes(std::string_view text) {
   return absl::StripSuffix(absl::StripPrefix(text, "\""), "\"");
 }
 
@@ -1801,10 +1801,10 @@ void IndexingFactsTreeExtractor::ExtractInclude(
     return;
   }
 
-  const absl::string_view filename_text = included_filename->get().text();
+  const std::string_view filename_text = included_filename->get().text();
 
   // Remove the double quotes from the filesname.
-  const absl::string_view filename_unquoted = StripOuterQuotes(filename_text);
+  const std::string_view filename_unquoted = StripOuterQuotes(filename_text);
   VLOG(1) << "got: `include \"" << filename_unquoted << "\"";
 
   VerilogProject *const project = extraction_state_->project;

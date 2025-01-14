@@ -25,10 +25,10 @@
 #define VERIBLE_COMMON_PARSER_BISON_PARSER_ADAPTER_H_
 
 #include <cstddef>  // for size_t
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/lexer/token-generator.h"
 #include "verible/common/parser/parse.h"
 #include "verible/common/parser/parser-param.h"
@@ -43,8 +43,7 @@ template <int (*ParseFunc)(ParserParam *)>
 class BisonParserAdapter : public Parser {
  public:
   // Filename purely FYI.
-  BisonParserAdapter(TokenGenerator *token_generator,
-                     absl::string_view filename)
+  BisonParserAdapter(TokenGenerator *token_generator, std::string_view filename)
       : Parser(), param_(token_generator, filename) {}
 
   absl::Status Parse() final {

@@ -15,12 +15,12 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/enum-flags.h"
 #include "verible/common/util/init-command-line.h"
 #include "verible/common/util/logging.h"
@@ -62,7 +62,7 @@ static std::ostream &operator<<(std::ostream &stream, PrintMode mode) {
   return PrintModeStringMap().Unparse(mode, stream);
 }
 
-static bool AbslParseFlag(absl::string_view text, PrintMode *mode,
+static bool AbslParseFlag(std::string_view text, PrintMode *mode,
                           std::string *error) {
   return PrintModeStringMap().Parse(text, mode, error,
                                     "--print_kythe_facts value");
@@ -133,7 +133,7 @@ static void KytheFactsNullPrinter(const IndexingFactNode &file_list_facts_tree,
 }
 
 static std::vector<absl::Status> ExtractTranslationUnits(
-    absl::string_view file_list_path, VerilogProject *project,
+    std::string_view file_list_path, VerilogProject *project,
     const std::vector<std::string> &file_names) {
   std::vector<absl::Status> errors;
   const verilog::kythe::IndexingFactNode file_list_facts_tree(

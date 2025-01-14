@@ -21,12 +21,12 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/formatting/format-token.h"
@@ -52,7 +52,7 @@ std::string ToString(const T &value) {
   return s.str();
 }
 
-std::ostream &PrintIndented(std::ostream &stream, absl::string_view str,
+std::ostream &PrintIndented(std::ostream &stream, std::string_view str,
                             int indentation) {
   for (const auto &line : verible::SplitLinesKeepLineTerminator(str)) {
     stream << verible::Spacer(indentation) << line;
@@ -61,10 +61,9 @@ std::ostream &PrintIndented(std::ostream &stream, absl::string_view str,
 }
 
 template <typename Value>
-void PrintInvalidValueMessage(std::ostream &stream,
-                              absl::string_view value_name, const Value &actual,
-                              const Value &expected, int indentation = 0,
-                              bool multiline = false) {
+void PrintInvalidValueMessage(std::ostream &stream, std::string_view value_name,
+                              const Value &actual, const Value &expected,
+                              int indentation = 0, bool multiline = false) {
   using ::testing::PrintToString;
   using verible::Spacer;
 
@@ -165,7 +164,7 @@ class LayoutTest : public ::testing::Test, public UnwrappedLineMemoryHandler {
 
  protected:
   const std::string sample_;
-  const std::vector<absl::string_view> tokens_;
+  const std::vector<std::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 };
 
@@ -701,8 +700,8 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
     // Setup pointers for OriginalLeadingSpaces()
     auto must_wrap_token = must_wrap_pre_format_tokens.begin();
     auto joinable_token = joinable_pre_format_tokens.begin();
-    absl::string_view sample_view(sample_);
-    absl::string_view::const_iterator buffer_start = sample_view.begin();
+    std::string_view sample_view(sample_);
+    std::string_view::const_iterator buffer_start = sample_view.begin();
     for (size_t i = 0; i < number_of_tokens_in_set; ++i) {
       must_wrap_token->before.preserved_space_start = buffer_start;
       joinable_token->before.preserved_space_start = buffer_start;
@@ -739,7 +738,7 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
 
       // Count spaces preceding the token and set spaces_required accordingly
       auto last_non_space_offset = leading_spaces.find_last_not_of(' ');
-      if (last_non_space_offset != absl::string_view::npos) {
+      if (last_non_space_offset != std::string_view::npos) {
         token->before.spaces_required =
             leading_spaces.size() - 1 - last_non_space_offset;
       } else {
@@ -769,7 +768,7 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
   };
 
   const std::string sample_;
-  const std::vector<absl::string_view> tokens_;
+  const std::vector<std::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 
   NamedUnwrappedLines lines_;
@@ -1982,7 +1981,7 @@ class TreeReconstructorTest : public ::testing::Test,
 
  protected:
   const std::string sample_;
-  const std::vector<absl::string_view> tokens_;
+  const std::vector<std::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 };
 
@@ -2340,7 +2339,7 @@ class OptimizeTokenPartitionTreeTest : public ::testing::Test,
 
  protected:
   const std::string sample_;
-  const std::vector<absl::string_view> tokens_;
+  const std::vector<std::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 };
 
@@ -2412,7 +2411,7 @@ class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
       if (absl::StrContains(leading_spaces, '\n')) {
         token.before.break_decision = SpacingOptions::kMustWrap;
         auto last_non_space_offset = leading_spaces.find_last_not_of(' ');
-        if (last_non_space_offset != absl::string_view::npos) {
+        if (last_non_space_offset != std::string_view::npos) {
           token.before.spaces_required =
               leading_spaces.size() - 1 - last_non_space_offset;
         }
@@ -2426,8 +2425,8 @@ class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
 
  protected:
   const std::string sample_backing_;
-  const absl::string_view sample_;
-  const std::vector<absl::string_view> tokens_;
+  const std::string_view sample_;
+  const std::vector<std::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
   const BasicFormatStyle style_;
   const LayoutFunctionFactory factory_;

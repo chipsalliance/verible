@@ -16,10 +16,10 @@
 #define VERIBLE_COMMON_UTIL_INTERVAL_H_
 
 #include <iostream>
+#include <string_view>
 #include <utility>
 
 #include "absl/strings/numbers.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/forward.h"
 
 namespace verible {
@@ -114,8 +114,8 @@ std::ostream &operator<<(std::ostream &stream, const Interval<T> &interval) {
 // Returns true on success, false on parse error.
 // This is the reverse of Interval::FormatInclusive().
 template <typename T>
-bool ParseInclusiveRange(Interval<T> *interval, absl::string_view first_str,
-                         absl::string_view last_str, std::ostream *errstream) {
+bool ParseInclusiveRange(Interval<T> *interval, std::string_view first_str,
+                         std::string_view last_str, std::ostream *errstream) {
   T first, last;
   if (!absl::SimpleAtoi(first_str, &first)) {
     *errstream << "Expected number, but got: \"" << first_str << "\"."

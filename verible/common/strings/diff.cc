@@ -16,9 +16,9 @@
 
 #include <cstddef>
 #include <iostream>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "external_libs/editscript.h"
 #include "verible/common/strings/position.h"
 #include "verible/common/strings/split.h"
@@ -43,7 +43,7 @@ static char EditOperationToLineMarker(Operation op) {
   }
 }
 
-LineDiffs::LineDiffs(absl::string_view before, absl::string_view after)
+LineDiffs::LineDiffs(std::string_view before, std::string_view after)
     : before_text(before),
       after_text(after),
       before_lines(SplitLinesKeepLineTerminator(before_text)),
@@ -158,8 +158,8 @@ std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits &edits,
 }
 
 void LineDiffsToUnifiedDiff(std::ostream &stream, const LineDiffs &linediffs,
-                            unsigned common_context, absl::string_view file_a,
-                            absl::string_view file_b) {
+                            unsigned common_context, std::string_view file_a,
+                            std::string_view file_b) {
   const std::vector<diff::Edits> chunks =
       DiffEditsToPatchHunks(linediffs.edits, common_context);
 

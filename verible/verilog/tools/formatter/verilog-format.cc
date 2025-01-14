@@ -25,6 +25,7 @@
 #include <iostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
+#include <string_view>
 #include <vector>
 
 #include "absl/flags/flag.h"
@@ -34,7 +35,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/position.h"
 #include "verible/common/util/file-util.h"
 #include "verible/common/util/init-command-line.h"
@@ -60,14 +60,14 @@ struct LineRanges {
 
 LineRanges::storage_type LineRanges::values;  // global initializer
 
-bool AbslParseFlag(absl::string_view flag_arg, LineRanges * /* unused */,
+bool AbslParseFlag(std::string_view flag_arg, LineRanges * /* unused */,
                    std::string *error) {
   auto &values = LineRanges::values;
   // Pre-split strings, so that "--flag v1,v2" and "--flag v1 --flag v2" are
   // equivalent.
-  const std::vector<absl::string_view> tokens = absl::StrSplit(flag_arg, ',');
+  const std::vector<std::string_view> tokens = absl::StrSplit(flag_arg, ',');
   values.reserve(values.size() + tokens.size());
-  for (const absl::string_view &token : tokens) {
+  for (const std::string_view &token : tokens) {
     // need to copy string, cannot just use string_view
     values.emplace_back(token.begin(), token.end());
   }
@@ -124,13 +124,13 @@ ABSL_FLAG(int, max_search_states, 100000,
           "Limits the number of search states explored during "
           "line wrap optimization.");
 
-static std::ostream &FileMsg(absl::string_view filename) {
+static std::ostream &FileMsg(std::string_view filename) {
   std::cerr << filename << ": ";
   return std::cerr;
 }
 
 // TODO: Refactor and simplify
-static bool formatOneFile(absl::string_view filename,
+static bool formatOneFile(std::string_view filename,
                           const LineNumberSet &lines_to_format,
                           bool *any_changes) {
   const bool inplace = absl::GetFlag(FLAGS_inplace);
@@ -283,7 +283,7 @@ int main(int argc, char **argv) {
   bool all_success = true;
   bool any_changes = false;
   // All positional arguments are file names.  Exclude program name.
-  for (const absl::string_view filename :
+  for (const std::string_view filename :
        verible::make_range(file_args.begin() + 1, file_args.end())) {
     all_success &= formatOneFile(filename, lines_to_format, &any_changes);
   }

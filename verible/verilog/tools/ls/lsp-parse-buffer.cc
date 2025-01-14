@@ -19,12 +19,12 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/lsp/lsp-file-utils.h"
 #include "verible/common/lsp/lsp-text-buffer.h"
@@ -35,7 +35,7 @@
 
 namespace verilog {
 static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
-    absl::string_view filename, const verilog::VerilogAnalyzer &parser) {
+    std::string_view filename, const verilog::VerilogAnalyzer &parser) {
   const auto &text_structure = parser.Data();
 
   verilog::LinterConfiguration config;
@@ -50,8 +50,8 @@ static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
   return VerilogLintTextStructure(filename, config, text_structure);
 }
 
-ParsedBuffer::ParsedBuffer(int64_t version, absl::string_view uri,
-                           absl::string_view content)
+ParsedBuffer::ParsedBuffer(int64_t version, std::string_view uri,
+                           std::string_view content)
     : version_(version),
       uri_(uri),
       parser_(verilog::VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(
@@ -70,7 +70,7 @@ void BufferTracker::Update(const std::string &uri,
     LOG(DFATAL) << "Testing: Forgot to update version number ?";
     return;  // Nothing to do (we don't really expect this to happen)
   }
-  txt.RequestContent([&txt, &uri, this](absl::string_view content) {
+  txt.RequestContent([&txt, &uri, this](std::string_view content) {
     current_.reset(new ParsedBuffer(txt.last_global_version(), uri, content));
   });
   if (current_->parsed_successfully()) {

@@ -16,9 +16,9 @@
 #define VERIBLE_VERILOG_CST_MATCH_TEST_UTILS_H_
 
 #include <functional>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/syntax-tree-search-test-utils.h"
 #include "verible/common/analysis/syntax-tree-search.h"
 #include "verible/common/text/text-structure.h"
@@ -30,7 +30,7 @@ namespace verilog {
 // 'test_case'.
 // Test will terminate early if there are lexical or syntax errors.
 void TestVerilogSyntaxRangeMatches(
-    absl::string_view test_name,
+    std::string_view test_name,
     const verible::SyntaxTreeSearchTestCase &test_case,
     const std::function<std::vector<verible::TreeSearchMatch>(
         const verible::TextStructureView &)> &match_collector);

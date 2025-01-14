@@ -18,10 +18,10 @@
 #include <cstddef>
 #include <iostream>
 #include <iterator>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "verible/common/strings/comment-utils.h"
 #include "verible/common/strings/display-utils.h"
@@ -42,9 +42,9 @@ namespace formatter {
 using verible::ByteOffsetSet;
 using verible::EscapeString;
 
-ByteOffsetSet DisableFormattingRanges(absl::string_view text,
+ByteOffsetSet DisableFormattingRanges(std::string_view text,
                                       const verible::TokenSequence &tokens) {
-  static constexpr absl::string_view kTrigger = "verilog_format:";
+  static constexpr std::string_view kTrigger = "verilog_format:";
   static const auto kDelimiters = absl::ByAnyChar(" \t");
   static constexpr int kNullOffset = -1;
   const verible::TokenInfo::Context context(
@@ -61,7 +61,7 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
       // Focus on the space-delimited tokens in the comment text.
       auto commands = verible::StripCommentAndSpacePadding(token.text());
       if (absl::ConsumePrefix(&commands, kTrigger)) {
-        const std::vector<absl::string_view> comment_tokens(
+        const std::vector<std::string_view> comment_tokens(
             absl::StrSplit(commands, kDelimiters, absl::SkipEmpty()));
         if (!comment_tokens.empty()) {
           // "off" marks the start of a disabling range, at end of comment.
@@ -114,12 +114,12 @@ ByteOffsetSet EnabledLinesToDisabledByteRanges(
   return byte_offsets;
 }
 
-static size_t NewlineCount(absl::string_view s) {
+static size_t NewlineCount(std::string_view s) {
   return std::count(s.begin(), s.end(), '\n');
 }
 
 void FormatWhitespaceWithDisabledByteRanges(
-    absl::string_view text_base, absl::string_view space_text,
+    std::string_view text_base, std::string_view space_text,
     const ByteOffsetSet &disabled_ranges, bool include_disabled_ranges,
     std::ostream &stream) {
   VLOG(3) << __FUNCTION__;
@@ -148,14 +148,14 @@ void FormatWhitespaceWithDisabledByteRanges(
   for (const auto &range : enabled_ranges) {
     if (include_disabled_ranges) {  // for disabled intervals, print the
                                     // original spacing
-      const absl::string_view disabled(
+      const std::string_view disabled(
           text_base.substr(next_start, range.first - next_start));
       VLOG(3) << "output: \"" << EscapeString{disabled} << "\" (preserved)";
       stream << disabled;
       total_enabled_newlines += NewlineCount(disabled);
     }
     {  // for enabled intervals, preserve only newlines
-      const absl::string_view enabled(
+      const std::string_view enabled(
           text_base.substr(range.first, range.second - range.first));
       const size_t newline_count = NewlineCount(enabled);
       VLOG(3) << "output: " << newline_count << "*\"\\n\" (formatted)";
@@ -167,7 +167,7 @@ void FormatWhitespaceWithDisabledByteRanges(
   }
   if (include_disabled_ranges) {
     // If there is a disabled interval left over, print that.
-    const absl::string_view final_disabled(
+    const std::string_view final_disabled(
         text_base.substr(next_start, end - next_start));
     VLOG(3) << "output: \"" << EscapeString(final_disabled)
             << "\" (remaining disabled)";

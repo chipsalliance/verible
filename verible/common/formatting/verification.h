@@ -15,8 +15,9 @@
 #ifndef VERIBLE_COMMON_FORMATTING_VERIFICATION_H_
 #define VERIBLE_COMMON_FORMATTING_VERIFICATION_H_
 
+#include <string_view>
+
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/position.h"
 
 namespace verible {
@@ -26,10 +27,10 @@ namespace verible {
 // The following parameters are only used for diagnostics:
 // 'original_text' is the text before any formatting was done.
 // 'lines' is the set of lines requested if incrementally formatting.
-absl::Status ReformatMustMatch(absl::string_view original_text,
+absl::Status ReformatMustMatch(std::string_view original_text,
                                const LineNumberSet &lines,
-                               absl::string_view formatted_text,
-                               absl::string_view reformatted_text);
+                               std::string_view formatted_text,
+                               std::string_view reformatted_text);
 
 }  // namespace verible
 

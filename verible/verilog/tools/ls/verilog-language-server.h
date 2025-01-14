@@ -16,9 +16,9 @@
 #define VERILOG_TOOLS_LS_LS_WRAPPER_H
 
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/lsp/json-rpc-dispatcher.h"
 #include "verible/common/lsp/lsp-protocol.h"
 #include "verible/common/lsp/lsp-text-buffer.h"
@@ -68,7 +68,7 @@ class VerilogLanguageServer {
   // updating VerilogProject views for edited files
   // if "project_root" is an empty string, set to either current directory
   // or directory containing verible.filelist
-  void ConfigureProject(absl::string_view project_root);
+  void ConfigureProject(std::string_view project_root);
 
   // Publish a diagnostic sent to the server.
   void SendDiagnostics(const std::string &uri,

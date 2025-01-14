@@ -17,8 +17,8 @@
 #include "verible/common/parser/bison-parser-common.h"
 
 #include <memory>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/lexer/lexer.h"
 #include "verible/common/lexer/token-stream-adapter.h"
@@ -41,7 +41,7 @@ class MockLexer : public Lexer {
 
   const TokenInfo &DoNextToken() final { return token_; }
 
-  void Restart(absl::string_view) final {}
+  void Restart(std::string_view) final {}
 
   bool TokenIsError(const TokenInfo &) const final { return false; }
 

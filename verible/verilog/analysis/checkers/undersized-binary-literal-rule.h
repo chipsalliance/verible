@@ -17,9 +17,9 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
 #include "verible/common/text/symbol.h"
@@ -44,13 +44,13 @@ class UndersizedBinaryLiteralRule : public verible::SyntaxTreeLintRule {
 
   verible::LintRuleStatus Report() const final;
 
-  absl::Status Configure(absl::string_view configuration) final;
+  absl::Status Configure(std::string_view configuration) final;
 
  private:
   // Generate string representation of why lint error occurred at leaf
-  static std::string FormatReason(absl::string_view width,
-                                  absl::string_view base_text, char base,
-                                  absl::string_view literal);
+  static std::string FormatReason(std::string_view width,
+                                  std::string_view base_text, char base,
+                                  std::string_view literal);
 
   bool check_bin_numbers_ = true;
   bool check_hex_numbers_ = false;

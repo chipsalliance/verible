@@ -17,10 +17,10 @@
 
 #include <cstddef>
 #include <memory>
+#include <string_view>
 #include <utility>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/file-analyzer.h"
 #include "verible/common/strings/mem-block.h"
 #include "verible/common/text/token-stream-view.h"
@@ -32,20 +32,20 @@ namespace verilog {
 class VerilogAnalyzer : public verible::FileAnalyzer {
  public:
   VerilogAnalyzer(std::shared_ptr<verible::MemBlock> text,
-                  absl::string_view name,
+                  std::string_view name,
                   const VerilogPreprocess::Config &preprocess_config)
       : verible::FileAnalyzer(std::move(text), name),
         preprocess_config_(preprocess_config) {}
 
   // Legacy constructor.
-  VerilogAnalyzer(absl::string_view text, absl::string_view name,
+  VerilogAnalyzer(std::string_view text, std::string_view name,
                   const VerilogPreprocess::Config &preprocess_config)
       : verible::FileAnalyzer(text, name),
         preprocess_config_(preprocess_config) {}
 
   // Legacy constructor.
   // TODO(hzeller): Remove once every instantiation sets preprocessor config.
-  VerilogAnalyzer(absl::string_view text, absl::string_view name)
+  VerilogAnalyzer(std::string_view text, std::string_view name)
       : VerilogAnalyzer(text, name, VerilogPreprocess::Config()) {}
 
   VerilogAnalyzer(const VerilogAnalyzer &) = delete;
@@ -72,11 +72,11 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
   // Automatically analyze with the correct parsing mode, as detected
   // by parser directive comments.
   static std::unique_ptr<VerilogAnalyzer> AnalyzeAutomaticMode(
-      const std::shared_ptr<verible::MemBlock> &text, absl::string_view name,
+      const std::shared_ptr<verible::MemBlock> &text, std::string_view name,
       const VerilogPreprocess::Config &preprocess_config);
 
   static std::unique_ptr<VerilogAnalyzer> AnalyzeAutomaticMode(
-      absl::string_view text, absl::string_view name,
+      std::string_view text, std::string_view name,
       const VerilogPreprocess::Config &preprocess_config);
 
   // Automatically analyze with correct parsing mode like AnalyzeAutomaticMode()
@@ -84,7 +84,7 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
   // possible parse tree; if this yields to syntax errors, fall back to
   // enabling preprocess branches.
   static std::unique_ptr<VerilogAnalyzer> AnalyzeAutomaticPreprocessFallback(
-      absl::string_view text, absl::string_view name);
+      std::string_view text, std::string_view name);
 
   const VerilogPreprocessData &PreprocessorData() const {
     return preprocessor_data_;
@@ -102,11 +102,11 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
   // Returns a string that is first argument of the directive, e.g.:
   //     // verilog_syntax: mode-x
   // results in "mode-x".
-  static absl::string_view ScanParsingModeDirective(
+  static std::string_view ScanParsingModeDirective(
       const verible::TokenSequence &raw_tokens);
 
   // Special string inside a comment that triggers setting parsing mode.
-  static constexpr absl::string_view kParseDirectiveName = "verilog_syntax:";
+  static constexpr std::string_view kParseDirectiveName = "verilog_syntax:";
 
  private:
   // Attempt to parse all macro arguments as expressions.  Where parsing as an

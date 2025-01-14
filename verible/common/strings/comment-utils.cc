@@ -17,23 +17,23 @@
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
+#include <string_view>
 
 #include "absl/strings/ascii.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/logging.h"
 #include "verible/common/util/range.h"
 
 namespace verible {
 
 // Returns the number of occurences of a character c in the text's prefix.
-static size_t CountLeadingChars(absl::string_view text, char c) {
+static size_t CountLeadingChars(std::string_view text, char c) {
   const auto rpos = text.find_first_not_of(c);
-  if (rpos == absl::string_view::npos) return text.length();
+  if (rpos == std::string_view::npos) return text.length();
   return rpos;
 }
 
 // Returns the number of occurences of a character c in the text's suffix.
-static size_t CountTrailingChars(absl::string_view text, char c) {
+static size_t CountTrailingChars(std::string_view text, char c) {
   const auto rpos = std::find_if(text.rbegin(), text.rend(),
                                  [=](const char ch) { return ch != c; });
   // if rpos == text.rend(), then return == text.length().
@@ -49,7 +49,7 @@ static size_t CountTrailingChars(absl::string_view text, char c) {
 //    * and this
 //    **/
 // Returns a substring within text, even if it is equivalent to empty.
-static absl::string_view StripBlockComment(absl::string_view text) {
+static std::string_view StripBlockComment(std::string_view text) {
   // Adjust for multiple *'s like /**** and ****/ .
   // Strip off /* and */ first and then remove leading/trailing *'s.
   const size_t lpos = CountLeadingChars(text.substr(2), '*') + 2;
@@ -69,10 +69,10 @@ static absl::string_view StripBlockComment(absl::string_view text) {
   return text.substr(lpos, rpos - lpos);
 }
 
-absl::string_view StripComment(absl::string_view text) {
+std::string_view StripComment(std::string_view text) {
   if (text.length() < 2) return text;  // cannot be an endline comment
-  const absl::string_view start = text.substr(0, 2);
-  const absl::string_view end = text.substr(text.length() - 2);
+  const std::string_view start = text.substr(0, 2);
+  const std::string_view end = text.substr(text.length() - 2);
   if (start == "//") {
     const auto ltrim = CountLeadingChars(text.substr(2), '/') + 2;
     return text.substr(ltrim);
@@ -84,7 +84,7 @@ absl::string_view StripComment(absl::string_view text) {
   return text;
 }
 
-absl::string_view StripCommentAndSpacePadding(absl::string_view text) {
+std::string_view StripCommentAndSpacePadding(std::string_view text) {
   const auto stripped_text = StripComment(text);
   CHECK(verible::IsSubRange(stripped_text, text));
   const auto return_text = absl::StripAsciiWhitespace(stripped_text);

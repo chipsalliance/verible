@@ -17,12 +17,12 @@
 #include <cstddef>
 #include <ostream>
 #include <sstream>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/logging.h"
@@ -38,7 +38,7 @@ using verible::testing::NamedInterval;
 using verible::testing::VectorTreeTestType;
 
 template <class Tree>
-void ExpectPath(const Tree &tree, absl::string_view expect) {
+void ExpectPath(const Tree &tree, std::string_view expect) {
   std::ostringstream stream;
   stream << NodePath(tree);
   EXPECT_EQ(stream.str(), expect);
@@ -343,7 +343,7 @@ TEST(VectorTreeTest, DeepEqualRootToRootValueDifferent) {
 }
 
 struct NameOnly {
-  absl::string_view name;
+  std::string_view name;
 
   explicit NameOnly(const NamedInterval &v) : name(v.name) {}
 };
@@ -1154,7 +1154,7 @@ TEST(VectorTreeTest, ApplyPreOrderTransformValue) {
   auto tree = verible::testing::MakeExampleFamilyTree();
 
   // Transform intervals.
-  std::vector<absl::string_view> visit_order;
+  std::vector<std::string_view> visit_order;
   const int shift = 2;
   ApplyPreOrder(tree, [=, &visit_order](NamedInterval &interval) {
     visit_order.push_back(interval.name);
@@ -1188,7 +1188,7 @@ TEST(VectorTreeTest, ApplyPreOrderTransformNode) {
   auto tree = verible::testing::MakeExampleFamilyTree();
 
   // Transform intervals.
-  std::vector<absl::string_view> visit_order;
+  std::vector<std::string_view> visit_order;
   const int shift = 2;
   ApplyPreOrder(tree, [=, &visit_order](VectorTreeTestType &node) {
     auto &interval = node.Value();
@@ -1223,7 +1223,7 @@ TEST(VectorTreeTest, ApplyPostOrderTransformValue) {
   auto tree = verible::testing::MakeExampleFamilyTree();
 
   // Transform intervals.
-  std::vector<absl::string_view> visit_order;
+  std::vector<std::string_view> visit_order;
   const int shift = 1;
   ApplyPostOrder(tree, [=, &visit_order](NamedInterval &interval) {
     visit_order.push_back(interval.name);
@@ -1256,7 +1256,7 @@ TEST(VectorTreeTest, ApplyPostOrderTransformNode) {
   auto tree = verible::testing::MakeExampleFamilyTree();
 
   // Transform intervals.
-  std::vector<absl::string_view> visit_order;
+  std::vector<std::string_view> visit_order;
   const int shift = 1;
   ApplyPostOrder(tree, [=, &visit_order](VectorTreeTestType &node) {
     auto &interval = node.Value();

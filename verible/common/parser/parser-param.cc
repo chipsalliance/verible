@@ -18,10 +18,10 @@
 
 #include <cstdint>
 #include <functional>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/lexer/token-generator.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/concrete-syntax-tree.h"
@@ -32,7 +32,7 @@
 namespace verible {
 
 ParserParam::ParserParam(TokenGenerator *token_stream,
-                         absl::string_view filename)
+                         std::string_view filename)
     : token_stream_(token_stream),
       filename_(filename),
       last_token_(TokenInfo::EOFToken()),

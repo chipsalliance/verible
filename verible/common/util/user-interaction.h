@@ -16,15 +16,14 @@
 #define VERIBLE_COMMON_UTIL_USER_INTERACTION_H_
 
 #include <iostream>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 namespace term {
 // Convenience functions: Print bold or inverse if and only if this
 // is an interactive session connected to a terminal. Otherwise just plain.
-std::ostream &bold(std::ostream &out, absl::string_view s);
-std::ostream &inverse(std::ostream &out, absl::string_view s);
+std::ostream &bold(std::ostream &out, std::string_view s);
+std::ostream &inverse(std::ostream &out, std::string_view s);
 
 enum class Color {
   kGreen = 0,
@@ -36,7 +35,7 @@ enum class Color {
 
 // Print the `s` string to `out` ostream colored with color `c`.
 // This will only apply if we're in an interactive terminal session
-std::ostream &Colored(std::ostream &out, absl::string_view s, Color c);
+std::ostream &Colored(std::ostream &out, std::string_view s, Color c);
 
 }  // namespace term
 
@@ -62,7 +61,7 @@ bool IsInteractiveTerminalSession(const std::ostream &s);
 //                                    IsInteractiveTerminalSession(std::cout),
 //                                    "Type a letter and confirm with ENTER: ");
 char ReadCharFromUser(std::istream &input, std::ostream &output,
-                      bool input_is_terminal, absl::string_view prompt);
+                      bool input_is_terminal, std::string_view prompt);
 
 }  // namespace verible
 

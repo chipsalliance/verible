@@ -17,10 +17,10 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
@@ -45,9 +45,9 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static constexpr absl::string_view kLowerSnakeCaseWithSuffixRegex =
+static constexpr std::string_view kLowerSnakeCaseWithSuffixRegex =
     "[a-z_0-9]+(_if)";
-static constexpr absl::string_view kDefaultStyleRegex =
+static constexpr std::string_view kDefaultStyleRegex =
     kLowerSnakeCaseWithSuffixRegex;
 
 InterfaceNameStyleRule::InterfaceNameStyleRule()
@@ -82,7 +82,7 @@ std::string InterfaceNameStyleRule::CreateViolationMessage() {
 void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
                                           const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
-  absl::string_view name;
+  std::string_view name;
   const verible::TokenInfo *identifier_token;
   if (InterfaceMatcher().Matches(symbol, &manager)) {
     identifier_token = GetInterfaceNameToken(symbol);
@@ -95,8 +95,7 @@ void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
   }
 }
 
-absl::Status InterfaceNameStyleRule::Configure(
-    absl::string_view configuration) {
+absl::Status InterfaceNameStyleRule::Configure(std::string_view configuration) {
   using verible::config::SetRegex;
   absl::Status s = verible::ParseNameValues(
       configuration, {{"style_regex", SetRegex(&style_regex_)}});

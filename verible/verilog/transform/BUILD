@@ -26,7 +26,6 @@ cc_library(
         "//verible/verilog/parser:verilog-token-enum",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -37,7 +36,6 @@ cc_test(
         ":obfuscate",
         "//verible/common/strings:obfuscator",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -58,7 +56,6 @@ cc_library(
         "//verible/verilog/parser:verilog-parser",
         "//verible/verilog/parser:verilog-token-enum",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -67,7 +64,6 @@ cc_test(
     srcs = ["strip-comments_test.cc"],
     deps = [
         ":strip-comments",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

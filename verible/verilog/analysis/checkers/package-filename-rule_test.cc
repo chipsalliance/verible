@@ -16,8 +16,8 @@
 
 #include <initializer_list>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/linter-test-utils.h"
 #include "verible/common/analysis/text-structure-linter-test-utils.h"
@@ -205,7 +205,7 @@ TEST(PackageFilenameRuleTest, DashAllowedWhenConfigured) {
 
   {
     // With dashes not allowed, we only accept the underscore name
-    constexpr absl::string_view config = "allow-dash-for-underscore:off";
+    constexpr std::string_view config = "allow-dash-for-underscore:off";
     RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
         kOkCases, config, f_with_underscore);
     RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
@@ -216,7 +216,7 @@ TEST(PackageFilenameRuleTest, DashAllowedWhenConfigured) {
 
   {
     // ... But with dashes allowed, dashes are also an ok case.
-    constexpr absl::string_view config = "allow-dash-for-underscore:on";
+    constexpr std::string_view config = "allow-dash-for-underscore:on";
     // With dashes not allowed, we only accept the underscore name
     RunConfiguredLintTestCases<VerilogAnalyzer, PackageFilenameRule>(
         kOkCases, config, f_with_underscore);

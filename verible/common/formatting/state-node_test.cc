@@ -19,9 +19,9 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/formatting/format-token.h"
@@ -183,7 +183,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {
 
 // Tests that preserving spaces results in correct column position.
 TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNoGap) {
-  const absl::string_view text("aaabbb");  // no gap between "aaa" and "bbb"
+  const std::string_view text("aaabbb");  // no gap between "aaa" and "bbb"
   const int kInitialIndent = 1;
   const std::vector<TokenInfo> tokens = {{0, text.substr(0, 3)},
                                          {1, text.substr(3, 3)}};
@@ -215,7 +215,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNoGap) {
 
 // Tests that preserving spaces results in correct column position.
 TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateSpaces) {
-  const absl::string_view text(
+  const std::string_view text(
       "aaa    bbb");  // 4 spaces between "aaa" and "bbb"
   const int kInitialIndent = 1;
   const std::vector<TokenInfo> tokens = {{1, text.substr(0, 3)},
@@ -250,7 +250,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateSpaces) {
 
 // Tests that preserving spaces results in correct column position.
 TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNewline) {
-  const absl::string_view text("aaa  \n bbb");  // newline in between
+  const std::string_view text("aaa  \n bbb");  // newline in between
   const int kInitialIndent = 1;
   const std::vector<TokenInfo> tokens = {{1, text.substr(0, 3)},
                                          {2, text.substr(7, 3)}};

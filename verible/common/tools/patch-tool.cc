@@ -15,13 +15,13 @@
 #include <cstddef>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "absl/flags/usage.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/patch.h"
 #include "verible/common/util/file-util.h"
 #include "verible/common/util/init-command-line.h"
@@ -39,7 +39,7 @@ static absl::Status ChangedLines(const SubcommandArgsRange &args,
     return absl::InvalidArgumentError(
         "Missing patchfile argument.  Use '-' for stdin.");
   }
-  const absl::string_view patchfile = args[0];
+  const std::string_view patchfile = args[0];
   auto patch_content_or = verible::file::GetContentAsString(patchfile);
   if (!patch_content_or.ok()) return patch_content_or.status();
 
@@ -64,7 +64,7 @@ static absl::Status ApplyPick(const SubcommandArgsRange &args,
   if (args.empty()) {
     return absl::InvalidArgumentError("Missing patchfile argument.");
   }
-  const absl::string_view patchfile = args[0];
+  const std::string_view patchfile = args[0];
   absl::StatusOr<std::string> patch_contents_or;
   patch_contents_or = verible::file::GetContentAsString(patchfile);
   if (!patch_contents_or.ok()) return patch_contents_or.status();
@@ -120,7 +120,7 @@ static absl::Status CatTest(const SubcommandArgsRange &args, std::istream &ins,
   return absl::OkStatus();
 }
 
-static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
+static const std::pair<std::string_view, SubcommandEntry> kCommands[] = {
     {"changed-lines",  //
      {&ChangedLines,   //
       R"(changed-lines patchfile

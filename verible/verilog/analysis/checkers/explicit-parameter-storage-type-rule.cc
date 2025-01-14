@@ -16,11 +16,11 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -47,7 +47,7 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitParameterStorageTypeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitParameterStorageTypeRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Explicitly define a storage type for every parameter and localparam, ";
 
 const LintRuleDescriptor &ExplicitParameterStorageTypeRule::GetDescriptor() {
@@ -99,8 +99,8 @@ void ExplicitParameterStorageTypeRule::HandleSymbol(
 // The only allowed exemption right now is 'string', as this is
 // a common type that can't be handled well in some old tools.
 absl::Status ExplicitParameterStorageTypeRule::Configure(
-    absl::string_view configuration) {
-  static const std::vector<absl::string_view> allowed = {"", "string"};
+    std::string_view configuration) {
+  static const std::vector<std::string_view> allowed = {"", "string"};
   using verible::config::SetStringOneOf;
   std::string value;
   auto s = verible::ParseNameValues(

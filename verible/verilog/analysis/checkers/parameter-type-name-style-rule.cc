@@ -15,9 +15,9 @@
 #include "verible/verilog/analysis/checkers/parameter-type-name-style-rule.h"
 
 #include <set>
+#include <string_view>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -41,7 +41,7 @@ using verible::matcher::Matcher;
 // Register ParameterTypeNameStyleRule.
 VERILOG_REGISTER_LINT_RULE(ParameterTypeNameStyleRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Parameter type names must use the lower_snake_case naming convention"
     " and end with _t.";
 

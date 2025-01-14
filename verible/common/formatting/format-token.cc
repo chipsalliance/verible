@@ -19,12 +19,12 @@
 #include <iostream>
 #include <sstream>  // pragma IWYU: keep  // for ostringstream
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/base/attributes.h"
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/display-utils.h"
 #include "verible/common/strings/position.h"
 #include "verible/common/strings/range.h"
@@ -143,9 +143,9 @@ InterTokenDecision::InterTokenDecision(const InterTokenInfo &info)
       action(ConvertSpacing(info.break_decision)),
       preserved_space_start(info.preserved_space_start) {}
 
-static absl::string_view OriginalLeadingSpacesRange(
-    absl::string_view::const_iterator begin,
-    absl::string_view::const_iterator end) {
+static std::string_view OriginalLeadingSpacesRange(
+    std::string_view::const_iterator begin,
+    std::string_view::const_iterator end) {
   if (begin == string_view_null_iterator()) {
     VLOG(4) << "no original space range";
     return make_string_view_range(end, end);  // empty range
@@ -156,7 +156,7 @@ static absl::string_view OriginalLeadingSpacesRange(
   return make_string_view_range(begin, end);
 }
 
-absl::string_view FormattedToken::OriginalLeadingSpaces() const {
+std::string_view FormattedToken::OriginalLeadingSpaces() const {
   return OriginalLeadingSpacesRange(before.preserved_space_start,
                                     token->text().begin());
 }
@@ -190,7 +190,7 @@ std::ostream &operator<<(std::ostream &stream, const FormattedToken &token) {
   return token.FormattedText(stream);
 }
 
-absl::string_view PreFormatToken::OriginalLeadingSpaces() const {
+std::string_view PreFormatToken::OriginalLeadingSpaces() const {
   return OriginalLeadingSpacesRange(before.preserved_space_start,
                                     token->text().begin());
 }
@@ -206,7 +206,7 @@ size_t PreFormatToken::LeadingSpacesLength() const {
 
 int PreFormatToken::ExcessSpaces() const {
   if (before.preserved_space_start == string_view_null_iterator()) return 0;
-  const absl::string_view leading_spaces = OriginalLeadingSpaces();
+  const std::string_view leading_spaces = OriginalLeadingSpaces();
   int delta = 0;
   if (!absl::StrContains(leading_spaces, "\n")) {
     delta = static_cast<int>(leading_spaces.length()) - before.spaces_required;
@@ -229,7 +229,7 @@ std::ostream &operator<<(std::ostream &stream, const PreFormatToken &t) {
 }
 
 void ConnectPreFormatTokensPreservedSpaceStarts(
-    absl::string_view::const_iterator buffer_start,
+    std::string_view::const_iterator buffer_start,
     std::vector<PreFormatToken> *format_tokens) {
   VLOG(4) << __FUNCTION__;
   CHECK(buffer_start != string_view_null_iterator());
@@ -246,7 +246,7 @@ void ConnectPreFormatTokensPreservedSpaceStarts(
 static MutableFormatTokenRange FindFormatTokensInByteOffsetRange(
     std::vector<PreFormatToken>::iterator begin,
     std::vector<PreFormatToken>::iterator end,
-    const std::pair<int, int> &byte_offset_range, absl::string_view base_text) {
+    const std::pair<int, int> &byte_offset_range, std::string_view base_text) {
   const auto tokens_begin =
       std::lower_bound(begin, end, byte_offset_range.first,
                        [=](const PreFormatToken &t, int position) {
@@ -262,7 +262,7 @@ static MutableFormatTokenRange FindFormatTokensInByteOffsetRange(
 
 void PreserveSpacesOnDisabledTokenRanges(
     std::vector<PreFormatToken> *ftokens,
-    const ByteOffsetSet &disabled_byte_ranges, absl::string_view base_text) {
+    const ByteOffsetSet &disabled_byte_ranges, std::string_view base_text) {
   VLOG(2) << __FUNCTION__;
   // saved_iter: shrink bounds of binary search with every iteration,
   // due to monotonic, non-overlapping intervals.
@@ -288,7 +288,7 @@ void PreserveSpacesOnDisabledTokenRanges(
       VLOG(3) << "checking whether first ftoken in range is a must-wrap.";
       if (first.before.break_decision == SpacingOptions::kMustWrap) {
         VLOG(3) << "checking if spaces before first ftoken starts with \\n.";
-        const absl::string_view leading_space = first.OriginalLeadingSpaces();
+        const std::string_view leading_space = first.OriginalLeadingSpaces();
         // consume the first '\n' from the preceding inter-token spaces
         if (absl::StartsWith(leading_space, "\n")) {
           VLOG(3) << "consuming leading \\n.";

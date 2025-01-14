@@ -19,9 +19,9 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/symbol.h"
@@ -34,7 +34,7 @@
 namespace verilog {
 
 VerilogPrettyPrinter::VerilogPrettyPrinter(std::ostream *output_stream,
-                                           absl::string_view base)
+                                           std::string_view base)
     : verible::PrettyPrinter(
           output_stream,
           verible::TokenInfo::Context(base, [](std::ostream &stream, int e) {
@@ -65,7 +65,7 @@ void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeNode &node) {
   auto_indent() << "}" << std::endl;
 }
 
-void PrettyPrintVerilogTree(const verible::Symbol &root, absl::string_view base,
+void PrettyPrintVerilogTree(const verible::Symbol &root, std::string_view base,
                             std::ostream *stream) {
   VerilogPrettyPrinter printer(stream, base);
   root.Accept(&printer);

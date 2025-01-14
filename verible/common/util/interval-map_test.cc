@@ -17,11 +17,11 @@
 #include <iterator>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/range.h"
 
@@ -54,12 +54,12 @@ TEST(DisjointIntervalMapTest, EmplaceOne) {
 TEST(DisjointIntervalMapTest, EmplaceOneEnsureMove) {
   StringIntervalMap imap;
   auto s = std::make_unique<std::string>("Gruetzi!");
-  const absl::string_view sv(*s);
+  const std::string_view sv(*s);
   const auto p = imap.emplace({3, 7}, std::move(s));
   EXPECT_TRUE(p.second);
   EXPECT_EQ(p.first->first, std::make_pair(3, 7));
   // ownership transferred, string_view range is still valid
-  const absl::string_view new_sv(*p.first->second);
+  const std::string_view new_sv(*p.first->second);
   EXPECT_TRUE(BoundsEqual(new_sv, sv)) << "got: " << new_sv << " vs. " << sv;
 }
 

@@ -14,9 +14,9 @@
 
 #include "verible/common/text/token-info-test-util.h"
 
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/text/token-info.h"
 
@@ -175,7 +175,7 @@ TEST(TokenInfoTestDataTest, FindImportantTokensTest) {
 TEST(TokenInfoTestDataTest, RebaseToCodeCopyEmpty) {
   std::vector<TokenInfo> tokens;
   const TokenInfoTestData test_data{};
-  constexpr absl::string_view other_text;
+  constexpr std::string_view other_text;
   EXPECT_EQ(test_data.code, other_text);
   test_data.RebaseToCodeCopy(&tokens, other_text);
   EXPECT_TRUE(tokens.empty());
@@ -186,7 +186,7 @@ TEST(TokenInfoTestDataTest, RebaseToCodeCopyMoved) {
       {3, "text"},
       {4, "book"},
   };
-  constexpr absl::string_view other_text("textbook");         // separate copy
+  constexpr std::string_view other_text("textbook");          // separate copy
   std::vector<TokenInfo> tokens = test_data.expected_tokens;  // copy
   EXPECT_EQ(test_data.code, other_text);
   EXPECT_EQ(tokens.size(), 2);
@@ -215,7 +215,7 @@ TEST(TokenInfoTestDataTest, FindImportantTokensRebased) {
       {3, "text"},
       {4, "book"},
   };
-  constexpr absl::string_view other_text("textbook");  // separate copy
+  constexpr std::string_view other_text("textbook");  // separate copy
   std::vector<TokenInfo> tokens = test_data.FindImportantTokens(other_text);
   EXPECT_EQ(test_data.code, other_text);
   EXPECT_EQ(tokens.size(), 2);

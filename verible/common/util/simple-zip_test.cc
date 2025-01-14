@@ -15,8 +15,8 @@
 #include "verible/common/util/simple-zip.h"
 
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/file-util.h"
 
@@ -24,10 +24,10 @@
 // is actually unzippable (we don't have the reverse functionality), so we
 // just probe that the generated file looks right.
 
-static int CountSubstr(absl::string_view needle, absl::string_view haystack) {
+static int CountSubstr(std::string_view needle, std::string_view haystack) {
   int count = 0;
-  absl::string_view::size_type pos = 0;
-  while ((pos = haystack.find(needle, pos)) != absl::string_view::npos) {
+  std::string_view::size_type pos = 0;
+  while ((pos = haystack.find(needle, pos)) != std::string_view::npos) {
     count++;
     pos += needle.length();
   }
@@ -36,7 +36,7 @@ static int CountSubstr(absl::string_view needle, absl::string_view haystack) {
 
 TEST(SimpleZip, NoCompress) {
   std::string result;
-  verible::zip::Encoder zipper(0, [&result](absl::string_view out) {
+  verible::zip::Encoder zipper(0, [&result](std::string_view out) {
     result.append(out.begin(), out.end());
     return true;
   });
@@ -57,7 +57,7 @@ TEST(SimpleZip, NoCompress) {
 
 TEST(SimpleZip, WithCompression) {
   std::string result;
-  verible::zip::Encoder zipper(9, [&result](absl::string_view out) {
+  verible::zip::Encoder zipper(9, [&result](std::string_view out) {
     result.append(out.begin(), out.end());
     return true;
   });
@@ -77,7 +77,7 @@ TEST(SimpleZip, WithCompression) {
 
 TEST(SimpleZip, ReadFromFileByteSource) {
   std::string result;
-  verible::zip::Encoder zipper(0, [&result](absl::string_view out) {
+  verible::zip::Encoder zipper(0, [&result](std::string_view out) {
     result.append(out.begin(), out.end());
     return true;
   });
@@ -102,7 +102,7 @@ TEST(SimpleZip, ImplicitFinishOnDestruction) {
   std::string result;
 
   {
-    verible::zip::Encoder zipper(0, [&result](absl::string_view out) {
+    verible::zip::Encoder zipper(0, [&result](std::string_view out) {
       result.append(out.begin(), out.end());
       return true;
     });

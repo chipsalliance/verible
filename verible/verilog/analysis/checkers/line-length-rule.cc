@@ -17,11 +17,11 @@
 #include <cstddef>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/strings/comment-utils.h"
 #include "verible/common/strings/utf8.h"
@@ -49,10 +49,10 @@ using verible::TokenSequence;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(LineLengthRule);
 
-static constexpr absl::string_view kMessage = "Line length exceeds max: ";
+static constexpr std::string_view kMessage = "Line length exceeds max: ";
 
 #if 0  // See comment below about comment-reflowing being implemented
-static bool ContainsAnyWhitespace(absl::string_view s) {
+static bool ContainsAnyWhitespace(std::string_view s) {
   for (char c : s) {
     if (absl::ascii_isspace(c)) return true;
   }
@@ -112,7 +112,7 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
 
         // Once comment-reflowing is implemented, re-enable the following:
         // If comment consist of more than one token, it should be split.
-        // const absl::string_view comment_contents =
+        // const std::string_view comment_contents =
         //     verible::StripCommentAndSpacePadding(token_begin->text);
         // return !ContainsAnyWhitespace(comment_contents);
       }
@@ -145,7 +145,7 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
 
   if (IsComment(verilog_tokentype(last_token->token_enum()))) {
     // Check for end-of-line comment that contain lint waivers.
-    const absl::string_view text =
+    const std::string_view text =
         verible::StripCommentAndSpacePadding(last_token->text());
     if (absl::StartsWith(text, "ri lint_check_waive")) {
       // TODO(fangism): Could make this pattern more space-insensitive
@@ -163,7 +163,7 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
 }
 
 void LineLengthRule::Lint(const TextStructureView &text_structure,
-                          absl::string_view) {
+                          std::string_view) {
   size_t lineno = 0;
   for (const auto &line : text_structure.Lines()) {
     const int observed_line_length = verible::utf8_len(line);
@@ -183,7 +183,7 @@ void LineLengthRule::Lint(const TextStructureView &text_structure,
   }
 }
 
-absl::Status LineLengthRule::Configure(absl::string_view configuration) {
+absl::Status LineLengthRule::Configure(std::string_view configuration) {
   using verible::config::SetInt;
   return verible::ParseNameValues(
       configuration, {{"length", SetInt(&line_length_limit_, kMinimumLineLength,

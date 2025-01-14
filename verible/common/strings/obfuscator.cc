@@ -16,22 +16,22 @@
 
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/logging.h"
 
 namespace verible {
 
-bool Obfuscator::encode(absl::string_view key, absl::string_view value) {
+bool Obfuscator::encode(std::string_view key, std::string_view value) {
   return translator_.insert(std::string(key), std::string(value));
 }
 
-absl::string_view Obfuscator::operator()(absl::string_view input) {
+std::string_view Obfuscator::operator()(std::string_view input) {
   if (decode_mode_) {
     const auto *p = translator_.find_reverse(input);
     return (p != nullptr) ? *p : input;
@@ -51,11 +51,11 @@ std::string Obfuscator::save() const {
   return stream.str();
 }
 
-absl::Status Obfuscator::load(absl::string_view mapping) {
-  const std::vector<absl::string_view> lines =
+absl::Status Obfuscator::load(std::string_view mapping) {
+  const std::vector<std::string_view> lines =
       absl::StrSplit(mapping, '\n', absl::SkipEmpty());
   for (const auto &line : lines) {
-    const std::vector<absl::string_view> elements =
+    const std::vector<std::string_view> elements =
         absl::StrSplit(absl::StripAsciiWhitespace(line), kPairSeparator);
     if (elements.size() < 2) {
       return absl::InvalidArgumentError(
@@ -67,8 +67,8 @@ absl::Status Obfuscator::load(absl::string_view mapping) {
   return absl::OkStatus();
 }
 
-bool IdentifierObfuscator::encode(absl::string_view key,
-                                  absl::string_view value) {
+bool IdentifierObfuscator::encode(std::string_view key,
+                                  std::string_view value) {
   CHECK_EQ(key.length(), value.length());
   return parent_type::encode(key, value);
 }

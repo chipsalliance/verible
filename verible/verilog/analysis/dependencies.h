@@ -19,8 +19,8 @@
 #include <iosfwd>
 #include <map>
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/compare.h"
 #include "verible/verilog/analysis/symbol-table.h"
 #include "verible/verilog/analysis/verilog-project.h"
@@ -41,7 +41,7 @@ struct FileDependencies {
   using node_type = const VerilogSourceFile *;
 
   // A set of strings, whose memory is owned outside of this data structure.
-  using SymbolNameSet = std::set<absl::string_view, verible::StringViewCompare>;
+  using SymbolNameSet = std::set<std::string_view, verible::StringViewCompare>;
 
   // Sort by referenced file name.
   using FileCompare = VerilogSourceFile::Less;
@@ -70,7 +70,7 @@ struct FileDependencies {
   // objects.  Typically, this is owned by VerilogSourceFile inside
   // VerilogProject.
   using symbol_index_type =
-      std::map<absl::string_view, SymbolData, verible::StringViewCompare>;
+      std::map<std::string_view, SymbolData, verible::StringViewCompare>;
 
   // === Fields (in order of initialization and computation)
   // All fields are const-initialized and public.

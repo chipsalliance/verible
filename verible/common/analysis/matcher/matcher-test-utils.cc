@@ -15,9 +15,9 @@
 #include "verible/common/analysis/matcher/matcher-test-utils.h"
 
 #include <map>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -83,7 +83,7 @@ class MatchCounter : public TreeVisitorRecursive {
 };
 
 void ExpectMatchesInAST(const Symbol &tree, const Matcher &matcher,
-                        int num_matches, absl::string_view code) {
+                        int num_matches, std::string_view code) {
   MatchCounter counter(matcher);
   EXPECT_EQ(num_matches, counter.Count(tree)) << "code:\n"
                                               << code << "\ntree:\n"

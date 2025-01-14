@@ -14,9 +14,9 @@
 
 #include "verible/common/formatting/tree-annotator.h"
 
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/format-token.h"
@@ -67,7 +67,7 @@ iterator_range<typename T::const_iterator> ExcludeFirst(const T &t) {
 }
 
 TEST(AnnotateFormatTokensUsingSyntaxContextTest, UnusedContext) {
-  const absl::string_view text("abc");
+  const std::string_view text("abc");
   const TokenInfo tokens[] = {
       {4, text.substr(0, 1)},
       {5, text.substr(1, 1)},
@@ -96,7 +96,7 @@ void LeftIsB(const PreFormatToken &left, PreFormatToken *right,
 }
 
 TEST(AnnotateFormatTokensUsingSyntaxContextTest, UnusedContextBasedOnLeft) {
-  const absl::string_view text("abc");
+  const std::string_view text("abc");
   const TokenInfo tokens[] = {
       {4, text.substr(0, 1)},
       {5, text.substr(1, 1)},
@@ -125,7 +125,7 @@ void RightContextDirectParentIsNine(const PreFormatToken &,
 }
 
 TEST(AnnotateFormatTokensUsingSyntaxContextTest, UsingRightContext) {
-  const absl::string_view text("abc");
+  const std::string_view text("abc");
   const TokenInfo tokens[] = {
       {4, text.substr(0, 1)},
       {5, text.substr(1, 1)},
@@ -160,7 +160,7 @@ void LeftContextDirectParentIsSeven(const PreFormatToken &,
 }
 
 TEST(AnnotateFormatTokensUsingSyntaxContextTest, UsingLeftContext) {
-  const absl::string_view text("abc");
+  const std::string_view text("abc");
   const TokenInfo tokens[] = {
       {4, text.substr(0, 1)},
       {5, text.substr(1, 1)},
@@ -184,7 +184,7 @@ TEST(AnnotateFormatTokensUsingSyntaxContextTest, UsingLeftContext) {
 }
 
 TEST(AnnotateFormatTokensUsingSyntaxContextTest, VerifySlidingContexts) {
-  const absl::string_view text("abcdefgh");
+  const std::string_view text("abcdefgh");
   const TokenInfo tokens[] = {
       {4, text.substr(0, 1)}, {5, text.substr(1, 1)},
       {6, text.substr(2, 1)}, {4, text.substr(3, 1)},

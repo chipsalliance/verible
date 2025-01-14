@@ -17,11 +17,11 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/text/config-utils.h"
@@ -41,14 +41,14 @@ using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::TokenInfo;
 
-static constexpr absl::string_view kUVMLowerCaseMessage =
+static constexpr std::string_view kUVMLowerCaseMessage =
     "'uvm_*' named macros must follow 'lower_snake_case' format.";
 
-static constexpr absl::string_view kUVMUpperCaseMessage =
+static constexpr std::string_view kUVMUpperCaseMessage =
     "'UVM_*' named macros must follow 'UPPER_SNAKE_CASE' format.";
 
-static constexpr absl::string_view kLowerSnakeCaseRegex = "[a-z_0-9]+";
-static constexpr absl::string_view kUpperSnakeCaseRegex = "[A-Z_0-9]+";
+static constexpr std::string_view kLowerSnakeCaseRegex = "[a-z_0-9]+";
+static constexpr std::string_view kUpperSnakeCaseRegex = "[A-Z_0-9]+";
 
 MacroNameStyleRule::MacroNameStyleRule()
     : style_regex_(
@@ -83,7 +83,7 @@ std::string MacroNameStyleRule::CreateViolationMessage() {
 
 void MacroNameStyleRule::HandleToken(const TokenInfo &token) {
   const auto token_enum = static_cast<verilog_tokentype>(token.token_enum());
-  const absl::string_view text(token.text());
+  const std::string_view text(token.text());
   if (IsUnlexed(verilog_tokentype(token.token_enum()))) {
     // recursively lex to examine inside macro definition bodies, etc.
     RecursiveLexText(
@@ -136,7 +136,7 @@ void MacroNameStyleRule::HandleToken(const TokenInfo &token) {
   }  // switch (state_)
 }
 
-absl::Status MacroNameStyleRule::Configure(absl::string_view configuration) {
+absl::Status MacroNameStyleRule::Configure(std::string_view configuration) {
   using verible::config::SetRegex;
   absl::Status s = verible::ParseNameValues(
       configuration, {{"style_regex", SetRegex(&style_regex_)}});

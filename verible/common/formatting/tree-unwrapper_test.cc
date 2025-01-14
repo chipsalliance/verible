@@ -18,10 +18,10 @@
 #include <iterator>
 #include <memory>
 #include <sstream>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/ascii.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/unwrapped-line.h"
@@ -37,7 +37,7 @@
 namespace verible {
 
 static bool KeepNonWhitespace(const TokenInfo &token) {
-  const absl::string_view text(absl::StripAsciiWhitespace(token.text()));
+  const std::string_view text(absl::StripAsciiWhitespace(token.text()));
   return !text.empty();
 }
 

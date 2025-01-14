@@ -22,6 +22,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -30,7 +31,6 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "verible/common/analysis/command-file-lexer.h"
 #include "verible/common/strings/comment-utils.h"
@@ -47,17 +47,17 @@
 
 namespace verible {
 
-void LintWaiver::WaiveOneLine(absl::string_view rule_name, int line_number) {
+void LintWaiver::WaiveOneLine(std::string_view rule_name, int line_number) {
   WaiveLineRange(rule_name, line_number, line_number + 1);
 }
 
-void LintWaiver::WaiveLineRange(absl::string_view rule_name, int line_begin,
+void LintWaiver::WaiveLineRange(std::string_view rule_name, int line_begin,
                                 int line_end) {
   LineNumberSet &line_set = waiver_map_[rule_name];
   line_set.Add({line_begin, line_end});
 }
 
-const RE2 *LintWaiver::GetOrCreateCachedRegex(absl::string_view regex_str) {
+const RE2 *LintWaiver::GetOrCreateCachedRegex(std::string_view regex_str) {
   auto found = regex_cache_.find(regex_str);
   if (found != regex_cache_.end()) {
     return found->second.get();
@@ -68,8 +68,8 @@ const RE2 *LintWaiver::GetOrCreateCachedRegex(absl::string_view regex_str) {
   return inserted.first->second.get();
 }
 
-absl::Status LintWaiver::WaiveWithRegex(absl::string_view rule_name,
-                                        absl::string_view regex_str) {
+absl::Status LintWaiver::WaiveWithRegex(std::string_view rule_name,
+                                        std::string_view regex_str) {
   const std::string regex_as_group = absl::StrCat("(", regex_str, ")");
   const RE2 *regex = GetOrCreateCachedRegex(regex_as_group);
   if (!regex->ok()) {
@@ -81,12 +81,12 @@ absl::Status LintWaiver::WaiveWithRegex(absl::string_view rule_name,
   return absl::OkStatus();
 }
 
-void LintWaiver::RegexToLines(absl::string_view contents,
+void LintWaiver::RegexToLines(std::string_view contents,
                               const LineColumnMap &line_map) {
   for (const auto &rule : waiver_re_map_) {
     for (const RE2 *re : rule.second) {
-      absl::string_view walk = contents;
-      absl::string_view match;
+      std::string_view walk = contents;
+      std::string_view match;
       while (RE2::FindAndConsume(&walk, *re, &match)) {
         const size_t pos = match.begin() - contents.begin();
         WaiveOneLine(rule.first, line_map.LineAtOffset(pos));
@@ -99,7 +99,7 @@ void LintWaiver::RegexToLines(absl::string_view contents,
   }
 }
 
-bool LintWaiver::RuleIsWaivedOnLine(absl::string_view rule_name,
+bool LintWaiver::RuleIsWaivedOnLine(std::string_view rule_name,
                                     int line_number) const {
   const auto *line_set = verible::container::FindOrNull(waiver_map_, rule_name);
   return line_set != nullptr && LineNumberSetContains(*line_set, line_number);
@@ -114,9 +114,9 @@ bool LintWaiver::Empty() const {
   return true;
 }
 
-absl::string_view LintWaiverBuilder::ExtractWaivedRuleFromComment(
-    absl::string_view comment_text,
-    std::vector<absl::string_view> *comment_tokens) const {
+std::string_view LintWaiverBuilder::ExtractWaivedRuleFromComment(
+    std::string_view comment_text,
+    std::vector<std::string_view> *comment_tokens) const {
   // Look for directives of the form: <tool_name> <directive> <rule_name>
   // Addition text beyond the last argument is ignored, so it could
   // contain more comment text.
@@ -141,7 +141,7 @@ void LintWaiverBuilder::ProcessLine(const TokenRange &tokens, int line_number) {
   // TODO(fangism): [optimization] Use a SmallVector, or function-local
   // static to avoid re-allocation in every call.  This method does not
   // need to be re-entrant.
-  std::vector<absl::string_view> lint_directives;
+  std::vector<std::string_view> lint_directives;
 
   // Determine whether line is blank, where whitespace still counts as blank.
   const bool line_is_blank =
@@ -166,15 +166,15 @@ void LintWaiverBuilder::ProcessLine(const TokenRange &tokens, int line_number) {
   }
 
   // Find all directives on this line.
-  std::vector<absl::string_view> comment_tokens;  // Re-use in loop.
+  std::vector<std::string_view> comment_tokens;  // Re-use in loop.
   for (const auto &token : tokens) {
     if (is_token_comment_(token)) {
       // Lex the comment text.
-      const absl::string_view comment_text =
+      const std::string_view comment_text =
           StripCommentAndSpacePadding(token.text());
       comment_tokens = absl::StrSplit(comment_text, ' ', absl::SkipEmpty());
       // TODO(fangism): Support different waiver lexers.
-      const absl::string_view waived_rule =
+      const std::string_view waived_rule =
           ExtractWaivedRuleFromComment(comment_text, &comment_tokens);
       if (!waived_rule.empty()) {
         // If there are any significant tokens on this line, apply to this
@@ -238,30 +238,29 @@ void LintWaiverBuilder::ProcessTokenRangesByLine(
 
 template <typename... T>
 static std::string WaiveCommandErrorFmt(LineColumn pos,
-                                        absl::string_view filename,
-                                        absl::string_view msg,
+                                        std::string_view filename,
+                                        std::string_view msg,
                                         const T &...args) {
   return absl::StrCat(filename, ":", pos.line + 1, ":", pos.column + 1,
                       ": command error: ", msg, args...);
 }
 
 template <typename... T>
-static absl::Status WaiveCommandError(LineColumn pos,
-                                      absl::string_view filename,
-                                      absl::string_view msg, const T &...args) {
+static absl::Status WaiveCommandError(LineColumn pos, std::string_view filename,
+                                      std::string_view msg, const T &...args) {
   return absl::InvalidArgumentError(
       WaiveCommandErrorFmt(pos, filename, msg, args...));
 }
 
 static absl::Status WaiveCommandHandler(
-    const TokenRange &tokens, absl::string_view waive_file,
-    absl::string_view waive_content, absl::string_view lintee_filename,
+    const TokenRange &tokens, std::string_view waive_file,
+    std::string_view waive_content, std::string_view lintee_filename,
     const LineColumnMap &line_map, LintWaiver *waiver,
-    const std::set<absl::string_view> &active_rules) {
-  absl::string_view rule;
+    const std::set<std::string_view> &active_rules) {
+  std::string_view rule;
 
-  absl::string_view option;
-  absl::string_view val;
+  std::string_view option;
+  std::string_view val;
 
   int line_start = -1;
   int line_end = -1;
@@ -316,7 +315,7 @@ static absl::Status WaiveCommandHandler(
 
         if (option == "line") {
           size_t range = val.find(':');
-          if (range != absl::string_view::npos) {
+          if (range != std::string_view::npos) {
             // line range
             if (!absl::SimpleAtoi(val.substr(0, range), &line_start) ||
                 !absl::SimpleAtoi(val.substr(range + 1, val.length() - range),
@@ -420,12 +419,12 @@ static absl::Status WaiveCommandHandler(
 }
 
 using HandlerFun = std::function<absl::Status(
-    const TokenRange &, absl::string_view waive_file,
-    absl::string_view waive_content, absl::string_view lintee_filename,
-    const LineColumnMap &, LintWaiver *, const std::set<absl::string_view> &)>;
-static const std::map<absl::string_view, HandlerFun> &GetCommandHandlers() {
+    const TokenRange &, std::string_view waive_file,
+    std::string_view waive_content, std::string_view lintee_filename,
+    const LineColumnMap &, LintWaiver *, const std::set<std::string_view> &)>;
+static const std::map<std::string_view, HandlerFun> &GetCommandHandlers() {
   // allocated once, never freed
-  static const auto *handlers = new std::map<absl::string_view, HandlerFun>{
+  static const auto *handlers = new std::map<std::string_view, HandlerFun>{
       // Right now, we only have one handler
       {"waive", WaiveCommandHandler},
   };
@@ -433,9 +432,9 @@ static const std::map<absl::string_view, HandlerFun> &GetCommandHandlers() {
 }
 
 absl::Status LintWaiverBuilder::ApplyExternalWaivers(
-    const std::set<absl::string_view> &active_rules,
-    absl::string_view lintee_filename, absl::string_view waiver_filename,
-    absl::string_view waivers_config_content) {
+    const std::set<std::string_view> &active_rules,
+    std::string_view lintee_filename, std::string_view waiver_filename,
+    std::string_view waivers_config_content) {
   if (waivers_config_content.empty()) {
     return {absl::StatusCode::kInternal, "Broken waiver config handle"};
   }

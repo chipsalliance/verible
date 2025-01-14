@@ -20,10 +20,10 @@
 #include <iostream>
 #include <iterator>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/lsp/message-stream-splitter.h"
 
@@ -147,8 +147,8 @@ int main(int argc, char *argv[]) {
   int first_error = -1;
   size_t expect_pos = 0;
   stream_splitter.SetMessageProcessor(
-      [&expect_data, &expect_pos, &first_error](absl::string_view,
-                                                absl::string_view body) {
+      [&expect_data, &expect_pos, &first_error](std::string_view,
+                                                std::string_view body) {
         std::cerr << "Got: " << body << std::endl;
         const json received = json::parse(body);
         const json &expected = expect_data[expect_pos];

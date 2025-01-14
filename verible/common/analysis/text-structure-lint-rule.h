@@ -30,7 +30,8 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_TEXT_STRUCTURE_LINT_RULE_H_
 #define VERIBLE_COMMON_ANALYSIS_TEXT_STRUCTURE_LINT_RULE_H_
 
-#include "absl/strings/string_view.h"
+#include <string_view>
+
 #include "verible/common/analysis/lint-rule.h"
 #include "verible/common/text/text-structure.h"
 
@@ -42,7 +43,7 @@ class TextStructureLintRule : public LintRule {
 
   // Analyze text structure for violations.
   virtual void Lint(const TextStructureView &text_structure,
-                    absl::string_view filename) = 0;
+                    std::string_view filename) = 0;
 };
 
 }  // namespace verible

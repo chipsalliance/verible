@@ -18,11 +18,11 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
@@ -48,13 +48,13 @@ using verible::SyntaxTreeContext;
 using Matcher = verible::matcher::Matcher;
 
 // Upper Camel Case (may end in _[0-9]+)
-static constexpr absl::string_view kUpperCamelCaseRegex =
+static constexpr std::string_view kUpperCamelCaseRegex =
     "([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?";
 // ALL_CAPS
-static constexpr absl::string_view kAllCapsRegex = "[A-Z_0-9]+";
+static constexpr std::string_view kAllCapsRegex = "[A-Z_0-9]+";
 
-static constexpr absl::string_view kLocalparamDefaultRegex;
-static constexpr absl::string_view kParameterDefaultRegex;
+static constexpr std::string_view kLocalparamDefaultRegex;
+static constexpr std::string_view kParameterDefaultRegex;
 
 ParameterNameStyleRule::ParameterNameStyleRule()
     : localparam_style_regex_(std::make_unique<re2::RE2>(
@@ -137,7 +137,7 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
 }
 
 absl::Status ParameterNameStyleRule::AppendRegex(
-    std::unique_ptr<re2::RE2> *rule_regex, absl::string_view regex_str) {
+    std::unique_ptr<re2::RE2> *rule_regex, std::string_view regex_str) {
   if (*rule_regex == nullptr) {
     *rule_regex = std::make_unique<re2::RE2>(absl::StrCat("(", regex_str, ")"),
                                              re2::RE2::Quiet);
@@ -197,11 +197,10 @@ absl::Status ParameterNameStyleRule::ConfigureRegex(
   return s;
 }
 
-absl::Status ParameterNameStyleRule::Configure(
-    absl::string_view configuration) {
+absl::Status ParameterNameStyleRule::Configure(std::string_view configuration) {
   // same sequence as enum StyleChoicesBits
-  static const std::vector<absl::string_view> choices = {"CamelCase",
-                                                         "ALL_CAPS"};
+  static const std::vector<std::string_view> choices = {"CamelCase",
+                                                        "ALL_CAPS"};
 
   uint32_t localparam_style = kUpperCamelCase;
   uint32_t parameter_style = kUpperCamelCase | kAllCaps;

@@ -16,12 +16,12 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/file-analyzer.h"
@@ -70,7 +70,7 @@ bool TreeContainsToken(const ConcreteSyntaxTree &tree, const TokenInfo &token) {
 }
 
 void DiagnosticMessagesContainFilename(const VerilogAnalyzer &analyzer,
-                                       absl::string_view filename,
+                                       std::string_view filename,
                                        bool with_diagnostic_context) {
   const std::vector<std::string> syntax_error_messages(
       analyzer.LinterTokenErrorMessages(with_diagnostic_context));
@@ -446,7 +446,7 @@ TEST(AnalyzeVerilogAutomaticMode, ModuleBodyMode) {
 }
 
 TEST(AnalyzeVerilogAutomaticMode, ModuleBodyModeSyntaxError) {
-  const absl::string_view filename = "wirefile.sv";
+  const std::string_view filename = "wirefile.sv";
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
       VerilogAnalyzer::AnalyzeAutomaticMode(
           "// verilog_syntax: parse-as-module-body\n"
@@ -512,7 +512,7 @@ TEST(AnalyzeVerilogAutomaticMode, AutomaticWithFallback) {
   };
 
   // Test cases that are known to syntax error without branch filter enabled.
-  constexpr absl::string_view test_cases[] = {
+  constexpr std::string_view test_cases[] = {
       R"(
 module foo();
   always @(*) begin
@@ -524,7 +524,7 @@ module foo();
   end
 endmodule
 )"};
-  for (const absl::string_view code : test_cases) {
+  for (const std::string_view code : test_cases) {
     const auto should_fail =
         VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kNoBranchFilter);
     const auto should_succeed = VerilogAnalyzer::AnalyzeAutomaticMode(
@@ -857,7 +857,7 @@ class VerilogAnalyzerInternalsTest : public testing::Test,
 
 // Tests that parser-selection directive is properly detected.
 TEST_F(VerilogAnalyzerInternalsTest, ScanParsingModeDirective) {
-  const std::pair<std::string, absl::string_view> test_cases[] = {
+  const std::pair<std::string, std::string_view> test_cases[] = {
       // code, expected parsing mode
       {"", ""},
       {"\n", ""},
@@ -908,7 +908,7 @@ TEST_F(VerilogAnalyzerInternalsTest, ScanParsingModeDirective) {
     VerilogAnalyzer analyzer(test.first, "<file>", kDefaultPreprocess);
     const auto lexer_status = analyzer.Tokenize();
     EXPECT_OK(lexer_status);
-    absl::string_view mode =
+    std::string_view mode =
         ScanParsingModeDirective(analyzer.Data().TokenStream());
     EXPECT_EQ(mode, test.second) << " mismatched mode with input:\n"
                                  << test.first;

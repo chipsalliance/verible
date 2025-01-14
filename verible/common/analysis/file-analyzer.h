@@ -43,11 +43,11 @@
 #include <iosfwd>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/lexer/lexer.h"
 #include "verible/common/parser/parse.h"
 #include "verible/common/strings/line-column-map.h"
@@ -93,12 +93,12 @@ std::ostream &operator<<(std::ostream &, const RejectedToken &);
 // FileAnalyzer holds the results of lexing and parsing.
 class FileAnalyzer {
  public:
-  FileAnalyzer(std::shared_ptr<MemBlock> contents, absl::string_view filename)
+  FileAnalyzer(std::shared_ptr<MemBlock> contents, std::string_view filename)
       : text_structure_(new TextStructure(std::move(contents))),
         filename_(filename) {}
 
   // Legacy constructor.
-  FileAnalyzer(absl::string_view contents, absl::string_view filename)
+  FileAnalyzer(std::string_view contents, std::string_view filename)
       : text_structure_(new TextStructure(contents)), filename_(filename) {}
 
   virtual ~FileAnalyzer() = default;
@@ -131,8 +131,8 @@ class FileAnalyzer {
   // TODO(hzeller): these are a lot of parameters, maybe a struct would be good.
   using ReportLinterErrorFunction = std::function<void(
       const std::string &filename, LineColumnRange range,
-      ErrorSeverity severity, AnalysisPhase phase, absl::string_view token_text,
-      absl::string_view context_line, const std::string &message)>;
+      ErrorSeverity severity, AnalysisPhase phase, std::string_view token_text,
+      std::string_view context_line, const std::string &message)>;
 
   // Extract detailed diagnostic information for rejected token.
   void ExtractLinterTokenErrorDetail(

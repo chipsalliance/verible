@@ -15,10 +15,10 @@
 #include "verible/verilog/analysis/checkers/struct-union-name-style-rule.h"
 
 #include <initializer_list>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/linter-test-utils.h"
 #include "verible/common/analysis/syntax-tree-linter-test-utils.h"
@@ -89,7 +89,7 @@ TEST(StructUnionNameStyleRuleTest, ValidStructNames) {
 }
 
 TEST(StructUnionNameStyleRuleTestConfigured, ValidStructNames) {
-  const absl::string_view exceptions = "exceptions:12B,11GiB,KJ,Kg";
+  const std::string_view exceptions = "exceptions:12B,11GiB,KJ,Kg";
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
       {"typedef struct {logic foo; logic bar;} b_a_z_t;"},
@@ -105,7 +105,7 @@ TEST(StructUnionNameStyleRuleTestConfigured, ValidStructNames) {
 }
 
 TEST(StructUnionNameStyleRuleTestConfigured, InvalidStructNames) {
-  const absl::string_view exceptions = "exceptions:12B,KJ,Kg,t";
+  const std::string_view exceptions = "exceptions:12B,KJ,Kg,t";
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
@@ -169,7 +169,7 @@ TEST(StructUnionNameStyleRuleTest, ValidUnionNames) {
 }
 
 TEST(StructUnionNameStyleRuleTestConfigured, ValidUnionNames) {
-  const absl::string_view exceptions = "exceptions:12B,11GiB,KJ,Kg";
+  const std::string_view exceptions = "exceptions:12B,11GiB,KJ,Kg";
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
       {"typedef union {logic foo; logic bar;} b_a_z_t;"},
@@ -220,7 +220,7 @@ TEST(StructUnionNameStyleRuleTest, InvalidUnionNames) {
 }
 
 TEST(StructUnionNameStyleRuleTestConfigured, InvalidUnionNames) {
-  const absl::string_view exceptions = "exceptions:12B,KJ,Kg,t";
+  const std::string_view exceptions = "exceptions:12B,KJ,Kg,t";
   constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},

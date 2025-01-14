@@ -22,10 +22,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/lexer/token-generator.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/token-info.h"
@@ -46,7 +46,7 @@ class ParserParam {
  public:
   // The "filename" is merely to have better error messages, it is purely
   // FYI, does not change processing.
-  ParserParam(TokenGenerator *token_stream, absl::string_view filename);
+  ParserParam(TokenGenerator *token_stream, std::string_view filename);
 
   ~ParserParam();
 
@@ -59,7 +59,7 @@ class ParserParam {
   void RecordSyntaxError(const SymbolPtr &symbol_ptr);
 
   // Filename being processed, if known.
-  absl::string_view filename() const { return filename_; }
+  std::string_view filename() const { return filename_; }
 
   const std::vector<TokenInfo> &RecoveredSyntaxErrors() const {
     return recovered_syntax_errors_;

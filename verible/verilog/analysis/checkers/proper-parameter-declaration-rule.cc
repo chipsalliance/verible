@@ -15,9 +15,9 @@
 #include "verible/verilog/analysis/checkers/proper-parameter-declaration-rule.h"
 
 #include <set>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -43,22 +43,22 @@ using verible::matcher::Matcher;
 // Register ProperParameterDeclarationRule
 VERILOG_REGISTER_LINT_RULE(ProperParameterDeclarationRule);
 
-static constexpr absl::string_view kParameterNotInPackageMessage =
+static constexpr std::string_view kParameterNotInPackageMessage =
     "\'parameter\' declarations should only be in the formal parameter list of "
     "modules/classes.";
-static constexpr absl::string_view kParameterAllowPackageMessage =
+static constexpr std::string_view kParameterAllowPackageMessage =
     "\'parameter\' declarations should only be in the formal parameter list of "
     "modules and classes or in package definition bodies.";
-static constexpr absl::string_view kLocalParamNotInPackageMessage =
+static constexpr std::string_view kLocalParamNotInPackageMessage =
     "\'localparam\' declarations should only be within modules or class "
     "definition bodies.";
-static constexpr absl::string_view kLocalParamAllowPackageMessage =
+static constexpr std::string_view kLocalParamAllowPackageMessage =
     "\'localparam\' declarations should only be within modules, packages or "
     "class definition bodies.";
 
-static constexpr absl::string_view kAutoFixReplaceParameterWithLocalparam =
+static constexpr std::string_view kAutoFixReplaceParameterWithLocalparam =
     "Replace 'parameter' with 'localparam'";
-static constexpr absl::string_view kAutoFixReplaceLocalparamWithParameter =
+static constexpr std::string_view kAutoFixReplaceLocalparamWithParameter =
     "Replace 'localparam' with 'parameter'";
 
 const LintRuleDescriptor &ProperParameterDeclarationRule::GetDescriptor() {
@@ -100,7 +100,7 @@ void ProperParameterDeclarationRule::ChooseMessagesForConfiguration() {
 }
 
 absl::Status ProperParameterDeclarationRule::Configure(
-    absl::string_view configuration) {
+    std::string_view configuration) {
   using verible::config::SetBool;
   auto status = verible::ParseNameValues(
       configuration,

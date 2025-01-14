@@ -15,9 +15,9 @@
 #include "verible/common/text/token-stream-view.h"
 
 #include <algorithm>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/util/iterator-range.h"
 
@@ -52,12 +52,12 @@ void FilterTokenStreamViewInPlace(const TokenFilterPredicate &keep,
 }
 
 static bool TokenLocationLess(const TokenSequence::const_iterator &token_iter,
-                              absl::string_view::const_iterator offset) {
+                              std::string_view::const_iterator offset) {
   return token_iter->text().begin() < offset;
 }
 
 TokenViewRange TokenViewRangeSpanningOffsets(const TokenStreamView &view,
-                                             absl::string_view range) {
+                                             std::string_view range) {
   const auto lower = range.begin();
   const auto upper = range.end();
   const auto left =

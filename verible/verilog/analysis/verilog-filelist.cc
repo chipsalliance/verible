@@ -17,6 +17,7 @@
 #include <iosfwd>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -25,17 +26,16 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "verible/common/util/file-util.h"
 #include "verible/common/util/iterator-range.h"
 
 namespace verilog {
-absl::Status AppendFileListFromContent(absl::string_view file_list_path,
+absl::Status AppendFileListFromContent(std::string_view file_list_path,
                                        const std::string &file_list_content,
                                        FileList *append_to) {
-  constexpr absl::string_view kIncludeDirPrefix = "+incdir+";
-  constexpr absl::string_view kDefineMacroPrefix = "+define+";
+  constexpr std::string_view kIncludeDirPrefix = "+incdir+";
+  constexpr std::string_view kDefineMacroPrefix = "+define+";
   append_to->preprocessing.include_dirs.emplace_back(
       ".");  // Should we do that?
   std::string file_path;
@@ -59,7 +59,7 @@ absl::Status AppendFileListFromContent(absl::string_view file_list_path,
 
     if (absl::StartsWith(file_path, kDefineMacroPrefix)) {
       // Handle defines
-      absl::string_view definition =
+      std::string_view definition =
           absl::StripPrefix(file_path, kDefineMacroPrefix);
       std::pair<std::string, std::string> define_value = absl::StrSplit(
           definition, absl::MaxSplits('=', 1), absl::SkipEmpty());
@@ -81,7 +81,7 @@ absl::Status AppendFileListFromContent(absl::string_view file_list_path,
   return absl::OkStatus();
 }
 
-absl::Status AppendFileListFromFile(absl::string_view file_list_file,
+absl::Status AppendFileListFromFile(std::string_view file_list_file,
                                     FileList *append_to) {
   auto content_or = verible::file::GetContentAsString(file_list_file);
   if (!content_or.ok()) return content_or.status();
@@ -89,8 +89,8 @@ absl::Status AppendFileListFromFile(absl::string_view file_list_file,
 }
 
 absl::Status AppendFileListFromCommandline(
-    const std::vector<absl::string_view> &cmdline, FileList *append_to) {
-  for (absl::string_view argument : cmdline) {
+    const std::vector<std::string_view> &cmdline, FileList *append_to) {
+  for (std::string_view argument : cmdline) {
     if (argument.empty()) continue;
     if (argument[0] != '+') {
       // Then "argument" is a SV file name.
@@ -98,7 +98,7 @@ absl::Status AppendFileListFromCommandline(
       continue;
     }
     // It should be either a define or incdir.
-    std::vector<absl::string_view> argument_plus_splitted =
+    std::vector<std::string_view> argument_plus_splitted =
         absl::StrSplit(argument, absl::ByChar('+'), absl::SkipEmpty());
     if (argument_plus_splitted.size() < 2) {
       return absl::InvalidArgumentError(
@@ -106,9 +106,9 @@ absl::Status AppendFileListFromCommandline(
                        "followed by the parameter but got '",
                        argument, "'"));
     }
-    absl::string_view plus_argument_type = argument_plus_splitted[0];
+    std::string_view plus_argument_type = argument_plus_splitted[0];
     if (plus_argument_type == "define") {
-      for (const absl::string_view define_argument :
+      for (const std::string_view define_argument :
            verible::make_range(argument_plus_splitted.begin() + 1,
                                argument_plus_splitted.end())) {
         // argument_plus_splitted[0] is 'define' so it is safe to skip it.
@@ -126,7 +126,7 @@ absl::Status AppendFileListFromCommandline(
                                                       macro_pair.second);
       }
     } else if (plus_argument_type == "incdir") {
-      for (const absl::string_view incdir_argument :
+      for (const std::string_view incdir_argument :
            verible::make_range(argument_plus_splitted.begin() + 1,
                                argument_plus_splitted.end())) {
         // argument_plus_splitted[0] is 'incdir' so it is safe to skip it.
@@ -147,10 +147,10 @@ std::string FileList::ToString() const {
   for (const auto &definition : preprocessing.defines) {
     buffer << "+define+" << definition.name << "=" << definition.value << '\n';
   }
-  for (absl::string_view include : preprocessing.include_dirs) {
+  for (std::string_view include : preprocessing.include_dirs) {
     buffer << "+incdir+" << include << '\n';
   }
-  for (absl::string_view path : file_paths) {
+  for (std::string_view path : file_paths) {
     buffer << path << '\n';
   }
   return buffer.str();

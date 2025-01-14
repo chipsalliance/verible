@@ -16,10 +16,10 @@
 
 #include <memory>
 #include <set>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/lint-rule-status.h"
@@ -39,9 +39,9 @@ class RequireHelloRule : public TextStructureLintRule {
   RequireHelloRule() = default;
 
   void Lint(const TextStructureView &text_structure,
-            absl::string_view filename) final {
+            std::string_view filename) final {
     const auto &lines = text_structure.Lines();
-    const absl::string_view contents = text_structure.Contents();
+    const std::string_view contents = text_structure.Contents();
     if (!lines.empty() && !absl::StartsWith(contents, "Hello")) {
       const TokenInfo token(1, lines[0]);
       violations_.emplace(token, "Text must begin with Hello");

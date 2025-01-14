@@ -16,8 +16,7 @@
 #define COMMON_STRINGS_MEM_BLOCK_H
 
 #include <string>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 // A representation of a block of (readonly) memory that is owned by MemBlock.
@@ -27,7 +26,7 @@ namespace verible {
 class MemBlock {
  public:
   virtual ~MemBlock() = default;
-  virtual absl::string_view AsStringView() const = 0;
+  virtual std::string_view AsStringView() const = 0;
 
  protected:
   MemBlock() = default;
@@ -44,14 +43,14 @@ class StringMemBlock final : public MemBlock {
  public:
   StringMemBlock() = default;
   explicit StringMemBlock(std::string &&move_from) : content_(move_from) {}
-  explicit StringMemBlock(absl::string_view copy_from)
+  explicit StringMemBlock(std::string_view copy_from)
       : content_(copy_from.begin(), copy_from.end()) {}
 
   // Assign/modify content. Use sparingly, ideally only in initialization
   // as the expectation of the MemBlock is that it won't change later.
   std::string *mutable_content() { return &content_; }
 
-  absl::string_view AsStringView() const final { return content_; }
+  std::string_view AsStringView() const final { return content_; }
 
  private:
   std::string content_;

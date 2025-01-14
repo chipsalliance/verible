@@ -15,17 +15,16 @@
 #include "verible/common/strings/split.h"
 
 #include <cstddef>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 
 namespace verible {
 
-std::vector<absl::string_view> SplitLines(absl::string_view text) {
+std::vector<std::string_view> SplitLines(std::string_view text) {
   if (text.empty()) return {};
-  std::vector<absl::string_view> lines(
-      absl::StrSplit(text, absl::ByChar('\n')));
+  std::vector<std::string_view> lines(absl::StrSplit(text, absl::ByChar('\n')));
   // If text ends cleanly with a \n, omit the last blank split,
   // otherwise treat it as if the trailing text ends with a \n.
   if (text.back() == '\n') {
@@ -40,9 +39,9 @@ class AfterCharDelimiter {
  public:
   explicit AfterCharDelimiter(char delimiter) : delimiter_(delimiter) {}
 
-  absl::string_view Find(absl::string_view text, size_t pos) const {
+  std::string_view Find(std::string_view text, size_t pos) const {
     const size_t found_pos = text.find(delimiter_, pos);
-    if (found_pos == absl::string_view::npos) {
+    if (found_pos == std::string_view::npos) {
       return {text.data() + text.size(), 0};
     }
     return text.substr(found_pos + 1, 0);
@@ -52,8 +51,8 @@ class AfterCharDelimiter {
   const char delimiter_;
 };
 
-std::vector<absl::string_view> SplitLinesKeepLineTerminator(
-    absl::string_view text) {
+std::vector<std::string_view> SplitLinesKeepLineTerminator(
+    std::string_view text) {
   if (text.empty()) return {};
   return absl::StrSplit(text, AfterCharDelimiter('\n'));
 }

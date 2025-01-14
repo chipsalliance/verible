@@ -16,11 +16,11 @@
 
 #include <iostream>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 
 namespace verible {
 
@@ -50,7 +50,7 @@ SubcommandRegistry::SubcommandRegistry()
 }
 
 const SubcommandEntry &SubcommandRegistry::GetSubcommandEntry(
-    absl::string_view command) const {
+    std::string_view command) const {
   const SubcommandMap &commands(subcommand_map_);
   const auto iter = commands.find(command);
   if (iter == commands.end()) {
@@ -61,7 +61,7 @@ const SubcommandEntry &SubcommandRegistry::GetSubcommandEntry(
 }
 
 absl::Status SubcommandRegistry::RegisterCommand(
-    absl::string_view name, const SubcommandEntry &command) {
+    std::string_view name, const SubcommandEntry &command) {
   const auto p = subcommand_map_.emplace(name, command);
   if (!p.second) {
     return absl::InvalidArgumentError(absl::StrCat(

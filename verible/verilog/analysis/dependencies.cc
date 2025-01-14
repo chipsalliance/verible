@@ -16,8 +16,8 @@
 
 #include <functional>
 #include <iostream>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/display-utils.h"
 #include "verible/common/util/logging.h"
 #include "verible/verilog/analysis/symbol-table.h"
@@ -36,7 +36,7 @@ static FileDependencies::symbol_index_type CreateSymbolMapFromSymbolTable(
 
   // Collect definers of root-level symbols.
   for (const SymbolTableNode::key_value_type &child : root) {
-    const absl::string_view symbol_name(child.first);
+    const std::string_view symbol_name(child.first);
     const VerilogSourceFile *file_origin = child.second.Value().file_origin;
     if (file_origin == nullptr) continue;
 
@@ -55,7 +55,7 @@ static FileDependencies::symbol_index_type CreateSymbolMapFromSymbolTable(
          symbol_info.local_references_to_bind) {
       // Only look at the root reference node, which is unqualified.
       const ReferenceComponent &ref_comp(ref.components->Value());
-      const absl::string_view ref_id(ref_comp.identifier);
+      const std::string_view ref_id(ref_comp.identifier);
       VLOG(2) << "  referenced id: " << ref_id;
 
       const VerilogSourceFile *ref_file_origin =
@@ -98,7 +98,7 @@ CreateFileDependenciesFromSymbolMap(
   VLOG(1) << __FUNCTION__;
   FileDependencies::file_deps_graph_type file_deps;
   for (const auto &symbol_entry : symbol_map) {
-    const absl::string_view symbol_name(symbol_entry.first);
+    const std::string_view symbol_name(symbol_entry.first);
     const FileDependencies::SymbolData &symbol_info(symbol_entry.second);
     const VerilogSourceFile *def = symbol_info.definer;
     // If no definition is found, then do not create any edges for it.

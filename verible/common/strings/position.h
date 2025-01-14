@@ -16,8 +16,8 @@
 #define VERIBLE_COMMON_STRINGS_POSITION_H_
 
 #include <initializer_list>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/util/interval-set.h"
 #include "verible/common/util/interval.h"
 
@@ -28,7 +28,7 @@ namespace verible {
 // resets the column position back to zero.  All non-newline characters count as
 // one space.
 int AdvancingTextNewColumnPosition(int old_column_position,
-                                   absl::string_view advancing_text);
+                                   std::string_view advancing_text);
 
 // Collection of ranges of byte offsets.
 // Intentionally defining a class instead of merely typedef-ing to

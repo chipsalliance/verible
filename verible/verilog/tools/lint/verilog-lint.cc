@@ -24,12 +24,12 @@
 #include <memory>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
+#include <string_view>
 #include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/violation-handler.h"
 #include "verible/common/util/enum-flags.h"
@@ -71,7 +71,7 @@ std::string AbslUnparseFlag(const AutofixMode &mode) {
   return stream.str();
 }
 
-bool AbslParseFlag(absl::string_view text, AutofixMode *mode,
+bool AbslParseFlag(std::string_view text, AutofixMode *mode,
                    std::string *error) {
   return AutofixModeEnumStringMap().Parse(text, mode, error, "--autofix value");
 }
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
 
   const verible::ViolationFixer::AnswerChooser applyAllFixes =
       [](const verible::LintViolation &,
-         absl::string_view) -> verible::ViolationFixer::Answer {
+         std::string_view) -> verible::ViolationFixer::Answer {
     return {verible::ViolationFixer::AnswerChoice::kApplyAll, 0};
   };
 
@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
   }
 
   // All positional arguments are file names.  Exclude program name.
-  for (const absl::string_view filename :
+  for (const std::string_view filename :
        verible::make_range(args.begin() + 1, args.end())) {
     // Copy configuration, so that it can be locally modified per file.
     auto config_status = verilog::LinterConfigurationFromFlags(filename);

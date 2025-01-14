@@ -21,9 +21,9 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/verilog/preprocessor/verilog-preprocess.h"
 
 namespace verilog {
@@ -33,7 +33,7 @@ namespace analysis {
 // This could be useful when interface names are required to be
 // preserved.
 absl::Status CollectInterfaceNames(
-    absl::string_view content, std::set<std::string> *if_names,
+    std::string_view content, std::set<std::string> *if_names,
     const verilog::VerilogPreprocess::Config &preprocess_config);
 
 }  // namespace analysis

@@ -16,8 +16,8 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/symbol.h"
@@ -37,7 +37,7 @@ using verible::SyntaxTreeContext;
 // Register ForbidConsecutiveNullStatementsRule
 VERILOG_REGISTER_LINT_RULE(ForbidConsecutiveNullStatementsRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Do not use consecutive null statements like \';;\'.";
 
 const LintRuleDescriptor &ForbidConsecutiveNullStatementsRule::GetDescriptor() {

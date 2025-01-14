@@ -11,7 +11,6 @@ package(
 cc_library(
     name = "compare",
     hdrs = ["compare.h"],
-    deps = ["@abseil-cpp//absl/strings:string_view"],
 )
 
 cc_test(
@@ -19,7 +18,6 @@ cc_test(
     srcs = ["compare_test.cc"],
     deps = [
         ":compare",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -33,7 +31,6 @@ cc_library(
         "//verible/common/util:logging",
         "//verible/common/util:range",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -43,7 +40,6 @@ cc_test(
     deps = [
         ":comment-utils",
         "//verible/common/util:range",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -58,7 +54,6 @@ cc_library(
         ":split",
         "//external_libs:editscript",
         "//verible/common/util:iterator-range",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -69,7 +64,6 @@ cc_test(
         ":diff",
         ":position",
         "//external_libs:editscript",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -79,10 +73,7 @@ cc_library(
     name = "display-utils",
     srcs = ["display-utils.cc"],
     hdrs = ["display-utils.h"],
-    deps = [
-        "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
-    ],
+    deps = ["@abseil-cpp//absl/strings"],
 )
 
 cc_test(
@@ -90,7 +81,6 @@ cc_test(
     srcs = ["display-utils_test.cc"],
     deps = [
         ":display-utils",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -106,7 +96,6 @@ cc_library(
         "//verible/common/util:logging",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -119,7 +108,6 @@ cc_test(
         "//verible/common/util:bijective-map",
         "//verible/common/util:logging",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -128,17 +116,13 @@ cc_test(
 cc_library(
     name = "mem-block",
     hdrs = ["mem-block.h"],
-    deps = ["@abseil-cpp//absl/strings:string_view"],
 )
 
 cc_library(
     name = "naming-utils",
     srcs = ["naming-utils.cc"],
     hdrs = ["naming-utils.h"],
-    deps = [
-        "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
-    ],
+    deps = ["@abseil-cpp//absl/strings"],
 )
 
 cc_test(
@@ -171,7 +155,6 @@ cc_library(
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -184,7 +167,6 @@ cc_test(
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -197,7 +179,6 @@ cc_library(
     deps = [
         "//verible/common/util:interval",
         "//verible/common/util:interval-set",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -206,7 +187,6 @@ cc_test(
     srcs = ["position_test.cc"],
     deps = [
         ":position",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -220,7 +200,6 @@ cc_library(
         "//verible/common/util:interval-set",
         "//verible/common/util:iterator-range",
         "//verible/common/util:logging",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -241,7 +220,6 @@ cc_library(
     deps = [
         "//verible/common/util:logging",
         "//verible/common/util:range",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -251,7 +229,6 @@ cc_test(
     deps = [
         ":range",
         "//verible/common/util:range",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -261,10 +238,7 @@ cc_library(
     name = "split",
     srcs = ["split.cc"],
     hdrs = ["split.h"],
-    deps = [
-        "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
-    ],
+    deps = ["@abseil-cpp//absl/strings"],
 )
 
 cc_test(
@@ -274,7 +248,6 @@ cc_test(
         ":range",
         ":split",
         "//verible/common/util:range",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -284,10 +257,7 @@ cc_library(
     name = "rebase",
     srcs = ["rebase.cc"],
     hdrs = ["rebase.h"],
-    deps = [
-        "//verible/common/util:logging",
-        "@abseil-cpp//absl/strings:string_view",
-    ],
+    deps = ["//verible/common/util:logging"],
 )
 
 cc_test(
@@ -296,7 +266,6 @@ cc_test(
     deps = [
         ":rebase",
         "//verible/common/util:range",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -305,7 +274,6 @@ cc_test(
 cc_library(
     name = "utf8",
     hdrs = ["utf8.h"],
-    deps = ["@abseil-cpp//absl/strings:string_view"],
 )
 
 cc_library(
@@ -319,10 +287,7 @@ cc_library(
         "//verible/verilog/formatting:__pkg__",
         "//verible/verilog/tools/ls:__pkg__",
     ],
-    deps = [
-        ":utf8",
-        "@abseil-cpp//absl/strings:string_view",
-    ],
+    deps = [":utf8"],
 )
 
 cc_test(
@@ -341,7 +306,6 @@ cc_test(
     deps = [
         ":line-column-map",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -355,7 +319,6 @@ cc_library(
         "//verible/common/util:interval-map",
         "//verible/common/util:interval-set",
         "//verible/common/util:logging",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -367,7 +330,6 @@ cc_test(
         ":string-memory-map",
         "//verible/common/util:logging",
         "//verible/common/util:range",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

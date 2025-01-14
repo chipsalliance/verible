@@ -18,9 +18,9 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "third_party/proto/kythe/analysis.pb.h"
 #include "verible/common/util/simple-zip.h"
 
@@ -32,10 +32,10 @@ namespace kythe {
 class KzipCreator final {
  public:
   // Initializes the archive. Crashes if initialization fails.
-  explicit KzipCreator(absl::string_view output_path);
+  explicit KzipCreator(std::string_view output_path);
 
   // Adds source code file to the Kzip. Returns its digest.
-  std::string AddSourceFile(absl::string_view path, absl::string_view content);
+  std::string AddSourceFile(std::string_view path, std::string_view content);
 
   // Adds compilation unit to the Kzip.
   absl::Status AddCompilationUnit(

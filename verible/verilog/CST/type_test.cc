@@ -15,10 +15,10 @@
 #include "verible/verilog/CST/type.h"
 
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/syntax-tree-search-test-utils.h"
 #include "verible/common/analysis/syntax-tree-search.h"
@@ -45,7 +45,7 @@ using verible::TreeSearchMatch;
 
 // Tests that the correct amount of node kDataType declarations are found.
 TEST(FindAllDataTypeDeclarationsTest, BasicTests) {
-  constexpr std::pair<absl::string_view, int> kTestCases[] = {
+  constexpr std::pair<std::string_view, int> kTestCases[] = {
       {"", 0},
       {"class foo; endclass", 0},
       {"function foo; endfunction", 1},
@@ -205,7 +205,7 @@ TEST(FindAllUnionTypesTest, BasicTests) {
 // Tests that IsStorageTypeOfDataTypeSpecified correctly returns true if the
 // node kDataType has declared a storage type.
 TEST(IsStorageTypeOfDataTypeSpecifiedTest, AcceptTests) {
-  constexpr std::pair<absl::string_view, int> kTestCases[] = {
+  constexpr std::pair<std::string_view, int> kTestCases[] = {
       {"function foo(int bar); endfunction", 2},
       {"function foo(int foo, bit bar); endfunction", 3},
       {"function foo (bit [10:0] bar); endfunction", 2},
@@ -231,7 +231,7 @@ TEST(IsStorageTypeOfDataTypeSpecifiedTest, AcceptTests) {
 // Tests that IsStorageTypeOfDataTypeSpecified correctly returns false if the
 // node kDataType has not declared a storage type.
 TEST(IsStorageTypeOfDataTypeSpecifiedTest, RejectTests) {
-  constexpr absl::string_view kTestCases[] = {
+  constexpr std::string_view kTestCases[] = {
       {"function foo (bar); endfunction"},
       {"function foo(foo, ref bar); endfunction"},
       {"function foo(input foo, inout bar); endfunction"},

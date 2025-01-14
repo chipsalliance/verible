@@ -15,8 +15,8 @@
 #include "verible/verilog/analysis/checkers/unpacked-dimensions-rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -43,13 +43,13 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(UnpackedDimensionsRule);
 
-static constexpr absl::string_view kMessageScalarInOrder =
+static constexpr std::string_view kMessageScalarInOrder =
     "When an unpacked dimension range is zero-based ([0:N-1]), "
     "declare size as [N] instead.";
-static constexpr absl::string_view kMessageScalarReversed =
+static constexpr std::string_view kMessageScalarReversed =
     "Unpacked dimension range must be declared in big-endian ([0:N-1]) order.  "
     "Declare zero-based big-endian unpacked dimensions sized as [N].";
-static constexpr absl::string_view kMessageReorder =
+static constexpr std::string_view kMessageReorder =
     "Declare unpacked dimension range in big-endian (increasing) order, "
     "e.g. [N:N+M].";
 

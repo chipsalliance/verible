@@ -20,10 +20,10 @@
 #define VERIBLE_COMMON_ANALYSIS_TEXT_STRUCTURE_LINTER_H_
 
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/text-structure-lint-rule.h"
 #include "verible/common/text/text-structure.h"
@@ -33,7 +33,7 @@ namespace verible {
 class TextStructureLinter {
  public:
   // Analyzes a sequence of tokens.
-  void Lint(const TextStructureView &, absl::string_view);
+  void Lint(const TextStructureView &, std::string_view);
 
   // Transfers ownership of rule into this Linter
   void AddRule(std::unique_ptr<TextStructureLintRule> rule) {

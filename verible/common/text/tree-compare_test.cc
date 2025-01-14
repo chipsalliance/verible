@@ -14,7 +14,8 @@
 
 #include "verible/common/text/tree-compare.h"
 
-#include "absl/strings/string_view.h"
+#include <string_view>
+
 #include "gtest/gtest.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/tree-builder-test-util.h"
@@ -136,7 +137,7 @@ TEST(TreeEqualityTest, NonEmptyNodesEqualByEnumString) {
 }
 
 TEST(TreeEqualityTest, NonEmptyNodesNotEqualByEnum) {
-  constexpr absl::string_view foo;
+  constexpr std::string_view foo;
   SymbolPtr tree1 = Node(Leaf(1, foo), Leaf(2, foo));
   SymbolPtr tree2 = Node(Leaf(1, foo), Leaf(2, foo), Leaf(3, foo));
   SymbolPtr tree3 = Node(Leaf(3, foo), Leaf(1, foo), Leaf(2, foo));
@@ -150,7 +151,7 @@ TEST(TreeEqualityTest, NonEmptyNodesNotEqualByEnum) {
 }
 
 TEST(TreeEqualityTest, NonEmptyNodesNotEqualByEnumString) {
-  constexpr absl::string_view foo("Foo"), bar("Bar");
+  constexpr std::string_view foo("Foo"), bar("Bar");
   SymbolPtr tree1 = Node(Leaf(1, bar), Leaf(2, foo));
   SymbolPtr tree2 = Node(Leaf(1, foo), Leaf(2, bar));
   SymbolPtr tree3 = Node(Leaf(3, foo), Leaf(1, foo), Leaf(2, bar));
@@ -203,7 +204,7 @@ TEST(TreeEqualityTest, SubTreeNotEqual) {
 
 // Test exact token-by-token equality.
 TEST(TreeEqualityTest, ExactEqualPerfectMatch) {
-  constexpr absl::string_view foo("foo"), bar("bar");
+  constexpr std::string_view foo("foo"), bar("bar");
   SymbolPtr tree1 = Node(Leaf(1, bar), Leaf(2, foo));
   SymbolPtr tree2 = Node(Leaf(1, bar), Leaf(2, foo));
   EXPECT_TRUE(EqualTrees(tree1.get(), tree2.get()));
@@ -212,7 +213,7 @@ TEST(TreeEqualityTest, ExactEqualPerfectMatch) {
 
 // Test for mismatch on different leaf tag.
 TEST(TreeEqualityTest, ExactEqualMismatchLeafTag) {
-  constexpr absl::string_view foo("foo"), bar("bar");
+  constexpr std::string_view foo("foo"), bar("bar");
   SymbolPtr tree1 = Node(Leaf(1, bar), Leaf(2, foo));
   SymbolPtr tree2 = Node(Leaf(1, bar), Leaf(3, foo));
   EXPECT_FALSE(EqualTrees(tree1.get(), tree2.get()));
@@ -221,9 +222,9 @@ TEST(TreeEqualityTest, ExactEqualMismatchLeafTag) {
 
 // Test for mismatch on different token location.
 TEST(TreeEqualityTest, ExactEqualMismatchTokenLocation) {
-  constexpr absl::string_view bar("barbar"), foo("foo");
+  constexpr std::string_view bar("barbar"), foo("foo");
   // guarantee different ranges
-  const absl::string_view bar1(bar.substr(0, 3)), bar2(bar.substr(3, 3));
+  const std::string_view bar1(bar.substr(0, 3)), bar2(bar.substr(3, 3));
   SymbolPtr tree1 = Node(Leaf(1, bar1), Leaf(2, foo));
   SymbolPtr tree2 = Node(Leaf(1, bar2), Leaf(2, foo));
   EXPECT_FALSE(EqualTrees(tree1.get(), tree2.get()));
@@ -232,7 +233,7 @@ TEST(TreeEqualityTest, ExactEqualMismatchTokenLocation) {
 
 // Test for mismatch on different token text.
 TEST(TreeEqualityTest, ExactEqualMismatchTokenText) {
-  constexpr absl::string_view bar("bar"), foo1("foo"), foo2("f00");
+  constexpr std::string_view bar("bar"), foo1("foo"), foo2("f00");
   SymbolPtr tree1 = Node(Leaf(1, bar), Leaf(2, foo1));
   SymbolPtr tree2 = Node(Leaf(1, bar), Leaf(2, foo2));
   EXPECT_FALSE(EqualTrees(tree1.get(), tree2.get()));

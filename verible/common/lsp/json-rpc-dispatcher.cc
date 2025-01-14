@@ -17,14 +17,14 @@
 #include <exception>
 #include <sstream>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/util/logging.h"
 
 namespace verible {
 namespace lsp {
-void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
+void JsonRpcDispatcher::DispatchMessage(std::string_view data) {
   nlohmann::json request;
   try {
     request = nlohmann::json::parse(data);
@@ -115,7 +115,7 @@ void JsonRpcDispatcher::SendNotification(const std::string &method,
 }
 
 /*static*/ nlohmann::json JsonRpcDispatcher::CreateError(
-    const nlohmann::json &request, int code, absl::string_view message) {
+    const nlohmann::json &request, int code, std::string_view message) {
   nlohmann::json result = {
       {"jsonrpc", "2.0"},
   };

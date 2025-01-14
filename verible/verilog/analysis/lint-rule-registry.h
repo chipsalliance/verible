@@ -77,7 +77,7 @@ using LintRuleDescriptionsMap =
 //  class MyLintRule : LintRuleType {
 //   public:
 //    using rule_type = LintRuleType;
-//    static absl::string_view Name();
+//    static std::string_view Name();
 //    static std::string GetDescription(DescriptionType);
 //    ... implement internals ...
 //  }
@@ -90,7 +90,7 @@ using LintRuleDescriptionsMap =
 // initialization, when registration happens), and must be backed by string
 // memory with guaranteed lifetime.  e.g.
 //
-// absl::string_view MyLintRule::Name() {
+// std::string_view MyLintRule::Name() {
 //   return "my-lint-rule";  // safely initialized function-local string literal
 // }
 //

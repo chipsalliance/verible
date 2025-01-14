@@ -35,23 +35,23 @@
 #define VERIBLE_VERILOG_CST_VERILOG_TREEBUILDER_UTILS_H_
 
 #include <string>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/verilog/CST/verilog-nonterminals.h"
 
 namespace verilog {
 
 // Set of utility functions for embedding a statement into a certain context.
-std::string EmbedInModule(absl::string_view text);
-std::string EmbedInClass(absl::string_view text);
-std::string EmbedInFunction(absl::string_view text);
-std::string EmbedInClassMethod(absl::string_view text);
+std::string EmbedInModule(std::string_view text);
+std::string EmbedInClass(std::string_view text);
+std::string EmbedInFunction(std::string_view text);
+std::string EmbedInClassMethod(std::string_view text);
 
 // Checks that symbol is symbol is a leaf and its text matches expected
 // Uses gunit's CHECK to raise error
-void ExpectString(const verible::SymbolPtr &symbol, absl::string_view expected);
+void ExpectString(const verible::SymbolPtr &symbol, std::string_view expected);
 
 template <typename T1, typename T2, typename T3>
 verible::SymbolPtr MakeParenGroup(T1 &&left_paren, T2 &&contents,

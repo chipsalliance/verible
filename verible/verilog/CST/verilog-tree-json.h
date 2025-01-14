@@ -15,7 +15,8 @@
 #ifndef VERIBLE_VERILOG_CST_VERILOG_TREE_JSON_H_
 #define VERIBLE_VERILOG_CST_VERILOG_TREE_JSON_H_
 
-#include "absl/strings/string_view.h"
+#include <string_view>
+
 #include "nlohmann/json.hpp"
 #include "verible/common/text/symbol.h"
 
@@ -23,7 +24,7 @@ namespace verilog {
 
 // Returns a JSON representation of tree contained at root.
 nlohmann::json ConvertVerilogTreeToJson(const verible::Symbol &root,
-                                        absl::string_view base);
+                                        std::string_view base);
 
 }  // namespace verilog
 

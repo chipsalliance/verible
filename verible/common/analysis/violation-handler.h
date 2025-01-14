@@ -20,8 +20,8 @@
 #include <map>
 #include <ostream>
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 
 namespace verible {
@@ -40,7 +40,7 @@ class ViolationHandler {
   // from different files. `base` contains source code from the file.
   virtual void HandleViolations(
       const std::set<verible::LintViolationWithStatus> &violations,
-      absl::string_view base, absl::string_view path) = 0;
+      std::string_view base, std::string_view path) = 0;
 };
 
 // ViolationHandler that prints all violations in a form of user-friendly
@@ -51,7 +51,7 @@ class ViolationPrinter : public ViolationHandler {
 
   void HandleViolations(
       const std::set<verible::LintViolationWithStatus> &violations,
-      absl::string_view base, absl::string_view path) final;
+      std::string_view base, std::string_view path) final;
 
  protected:
   std::ostream *const stream_;
@@ -68,7 +68,7 @@ class ViolationWaiverPrinter : public ViolationHandler {
 
   void HandleViolations(
       const std::set<verible::LintViolationWithStatus> &violations,
-      absl::string_view base, absl::string_view path) final;
+      std::string_view base, std::string_view path) final;
 
  protected:
   std::ostream *const message_stream_;
@@ -117,7 +117,7 @@ class ViolationFixer : public verible::ViolationHandler {
   };
 
   using AnswerChooser =
-      std::function<Answer(const verible::LintViolation &, absl::string_view)>;
+      std::function<Answer(const verible::LintViolation &, std::string_view)>;
 
   // Violation fixer with user-chosen answer chooser.
   ViolationFixer(std::ostream *message_stream, std::ostream *patch_stream,
@@ -131,7 +131,7 @@ class ViolationFixer : public verible::ViolationHandler {
 
   void HandleViolations(
       const std::set<verible::LintViolationWithStatus> &violations,
-      absl::string_view base, absl::string_view path) final;
+      std::string_view base, std::string_view path) final;
 
  private:
   ViolationFixer(std::ostream *message_stream, std::ostream *patch_stream,
@@ -143,16 +143,16 @@ class ViolationFixer : public verible::ViolationHandler {
         ultimate_answer_({AnswerChoice::kUnknown, 0}) {}
 
   void HandleViolation(const verible::LintViolation &violation,
-                       absl::string_view base, absl::string_view path,
-                       absl::string_view url, absl::string_view rule_name,
+                       std::string_view base, std::string_view path,
+                       std::string_view url, std::string_view rule_name,
                        const verible::LintStatusFormatter &formatter,
                        verible::AutoFix *fix);
 
   static Answer InteractiveAnswerChooser(
-      const verible::LintViolation &violation, absl::string_view rule_name);
+      const verible::LintViolation &violation, std::string_view rule_name);
 
-  void CommitFixes(absl::string_view source_content,
-                   absl::string_view source_path,
+  void CommitFixes(std::string_view source_content,
+                   std::string_view source_path,
                    const verible::AutoFix &fix) const;
 
   std::ostream *const message_stream_;
@@ -161,7 +161,7 @@ class ViolationFixer : public verible::ViolationHandler {
   const bool is_interactive_;
 
   Answer ultimate_answer_;
-  std::map<absl::string_view, Answer> rule_answers_;
+  std::map<std::string_view, Answer> rule_answers_;
 };
 
 }  // namespace verible

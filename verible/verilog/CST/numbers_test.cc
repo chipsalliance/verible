@@ -15,9 +15,9 @@
 #include "verible/verilog/CST/numbers.h"
 
 #include <sstream>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace verilog {
@@ -25,8 +25,8 @@ namespace analysis {
 namespace {
 
 struct BasedNumberTestCase {
-  absl::string_view base;
-  absl::string_view digits;
+  std::string_view base;
+  std::string_view digits;
   BasedNumber expected;
 };
 
@@ -60,7 +60,7 @@ TEST(BasedNumberTest, ParseLiteral) {
 
 // Tests that invalid inputs are marked as not OK.
 TEST(BasedNumberTest, ParseInvalidLiterals) {
-  const std::pair<absl::string_view, absl::string_view> test_cases[] = {
+  const std::pair<std::string_view, std::string_view> test_cases[] = {
       {"", ""},
       {"xx", ""},
       {"", "96"},

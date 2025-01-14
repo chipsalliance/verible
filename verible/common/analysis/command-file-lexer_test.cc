@@ -15,9 +15,9 @@
 #include "verible/common/analysis/command-file-lexer.h"
 
 #include <initializer_list>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/lexer/lexer-test-util.h"
 #include "verible/common/text/constants.h"
@@ -30,7 +30,7 @@ namespace {
 // Removes non-essential tokens from token output stream, such as spaces.
 class FilteredCommandFileLexer : public CommandFileLexer {
  public:
-  explicit FilteredCommandFileLexer(absl::string_view code)
+  explicit FilteredCommandFileLexer(std::string_view code)
       : CommandFileLexer(code) {}
 
   bool KeepSyntaxTreeTokens(const verible::TokenInfo &t) {

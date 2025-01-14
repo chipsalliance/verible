@@ -15,9 +15,9 @@
 #include "verible/verilog/CST/verilog-treebuilder-utils.h"
 
 #include <string>
+#include <string_view>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/symbol.h"
@@ -29,25 +29,24 @@ namespace verilog {
 using verible::down_cast;
 
 // Set of utility functions for embedded a statement into a certain context.
-std::string EmbedInClass(absl::string_view text) {
+std::string EmbedInClass(std::string_view text) {
   return absl::StrCat("class test_class;\n", text, "\nendclass\n");
 }
 
-std::string EmbedInModule(absl::string_view text) {
+std::string EmbedInModule(std::string_view text) {
   return absl::StrCat("module test_module;\n", text, "\nendmodule\n");
 }
 
-std::string EmbedInFunction(absl::string_view text) {
+std::string EmbedInFunction(std::string_view text) {
   return absl::StrCat("function integer test_function;\n", text,
                       "\nendfunction\n");
 }
 
-std::string EmbedInClassMethod(absl::string_view text) {
+std::string EmbedInClassMethod(std::string_view text) {
   return EmbedInClass(EmbedInFunction(text));
 }
 
-void ExpectString(const verible::SymbolPtr &symbol,
-                  absl::string_view expected) {
+void ExpectString(const verible::SymbolPtr &symbol, std::string_view expected) {
   const auto *leaf = down_cast<const verible::SyntaxTreeLeaf *>(symbol.get());
   CHECK(leaf != nullptr) << "expected: " << expected;
   CHECK_EQ(leaf->get().text(), expected);

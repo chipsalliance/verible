@@ -17,10 +17,10 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/lsp/lsp-file-utils.h"
 #include "verible/common/lsp/lsp-protocol.h"
@@ -32,7 +32,7 @@
 namespace verilog {
 namespace {
 
-static constexpr absl::string_view  //
+static constexpr std::string_view  //
     kSampleModuleA(
         R"(module a;
   assign var1 = 1'b0;
@@ -40,7 +40,7 @@ static constexpr absl::string_view  //
 endmodule
 )");
 
-static constexpr absl::string_view  //
+static constexpr std::string_view  //
     kSampleModuleB(
         R"(module b;
   assign var1 = 1'b0;
@@ -106,7 +106,7 @@ TEST(SymbolTableHandlerTest, LoadFileList) {
       verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
-  absl::string_view filelist_content =
+  std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
 
@@ -134,7 +134,7 @@ TEST(SymbolTableHandlerTest, FileListWithNonExistingFile) {
       verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
-  absl::string_view filelist_content =
+  std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
 
@@ -182,7 +182,7 @@ TEST(SymbolTableHandlerTest, DefinitionNotTrackedFile) {
       verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
-  absl::string_view filelist_content =
+  std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
 
@@ -225,7 +225,7 @@ TEST(SymbolTableHandlerTest,
       verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
-  absl::string_view filelist_content = "b.sv\n";
+  std::string_view filelist_content = "b.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       sources_dir, filelist_content, "verible.filelist");
@@ -274,7 +274,7 @@ TEST(SymbolTableHandlerTest,
       verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
-  absl::string_view filelist_content = "b.sv\n";
+  std::string_view filelist_content = "b.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       sources_dir, filelist_content, "verible.filelist");
@@ -321,7 +321,7 @@ TEST(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
       verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
-  absl::string_view filelist_content =
+  std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
 
@@ -371,7 +371,7 @@ TEST(SymbolTableHandlerTest,
       verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
-  absl::string_view filelist_content =
+  std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
 
@@ -423,7 +423,7 @@ TEST(SymbolTableHandlerTest,
       verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
-  absl::string_view filelist_content =
+  std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
 
@@ -484,7 +484,7 @@ TEST(SymbolTableHandlerTest, UpdateWithUnparseableEditorContentRegression) {
       verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
-  absl::string_view filelist_content;
+  std::string_view filelist_content;
   const verible::file::testing::ScopedTestFile filelist(
       sources_dir, filelist_content, "verible.filelist");
   const std::string uri = verible::lsp::PathToLSPUri(sources_dir + "/a.sv");

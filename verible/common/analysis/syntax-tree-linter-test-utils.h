@@ -16,10 +16,10 @@
 #define VERIBLE_COMMON_ANALYSIS_SYNTAX_TREE_LINTER_TEST_UTILS_H_
 
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/linter-test-utils.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"  // IWYU pragma: export
@@ -37,7 +37,7 @@ class LintRunner<SyntaxTreeLintRule> {
   }
 
   LintRuleStatus Run(const TextStructureView &text_structure,
-                     absl::string_view) {
+                     std::string_view) {
     linter_.Lint(*ABSL_DIE_IF_NULL(text_structure.SyntaxTree()));
     // Looking for one type of rule violation at a time.
     CHECK_EQ(linter_.ReportStatus().size(), 1);

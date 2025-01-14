@@ -19,10 +19,10 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/util/vector-tree.h"
 #include "verible/verilog/tools/kythe/verilog-extractor-indexing-fact-type.h"
@@ -43,9 +43,9 @@ struct AnchorRange {
 // Anchor class represents the location and value of some token.
 class Anchor {
  public:
-  explicit Anchor(absl::string_view value) : content_(value) {}
+  explicit Anchor(std::string_view value) : content_(value) {}
 
-  explicit Anchor(absl::string_view value, size_t begin, size_t length)
+  explicit Anchor(std::string_view value, size_t begin, size_t length)
       : content_(value) {
     source_text_range_.emplace(begin, length);
   }
@@ -54,7 +54,7 @@ class Anchor {
   // Recall the TokenInfo's string point to substrings of memory owned
   // elsewhere.
   explicit Anchor(const verible::TokenInfo &token,
-                  absl::string_view source_content)
+                  std::string_view source_content)
       : content_(token.text()) {
     const int token_left = token.left(source_content);
     const int token_right = token.right(source_content);
@@ -69,7 +69,7 @@ class Anchor {
   // Returns human readable view of this Anchor.
   std::string DebugString() const;
 
-  absl::string_view Text() const { return content_; }
+  std::string_view Text() const { return content_; }
 
   // Returns the location of the Anchor's content in the original string.
   const std::optional<AnchorRange> &SourceTextRange() const {
@@ -156,10 +156,9 @@ std::ostream &operator<<(std::ostream &, const IndexingNodeData &);
 struct PrintableIndexingNodeData {
   const IndexingNodeData &data;
   // The superstring of which all string_views in this subtree is a substring.
-  const absl::string_view base;
+  const std::string_view base;
 
-  PrintableIndexingNodeData(const IndexingNodeData &data,
-                            absl::string_view base)
+  PrintableIndexingNodeData(const IndexingNodeData &data, std::string_view base)
       : data(data), base(base) {}
 };
 
@@ -174,10 +173,9 @@ using IndexingFactNode = verible::VectorTree<IndexingNodeData>;
 struct PrintableIndexingFactNode {
   const IndexingFactNode &data;
   // The superstring of which all string_views in this subtree is a substring.
-  const absl::string_view base;
+  const std::string_view base;
 
-  PrintableIndexingFactNode(const IndexingFactNode &data,
-                            absl::string_view base)
+  PrintableIndexingFactNode(const IndexingFactNode &data, std::string_view base)
       : data(data), base(base) {}
 };
 

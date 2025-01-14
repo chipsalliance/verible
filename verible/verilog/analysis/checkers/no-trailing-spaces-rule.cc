@@ -19,8 +19,8 @@
 #include <iterator>
 #include <set>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/text/token-info.h"
@@ -39,7 +39,7 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(NoTrailingSpacesRule);
 
-static constexpr absl::string_view kMessage = "Remove trailing spaces.";
+static constexpr std::string_view kMessage = "Remove trailing spaces.";
 
 const LintRuleDescriptor &NoTrailingSpacesRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -50,7 +50,7 @@ const LintRuleDescriptor &NoTrailingSpacesRule::GetDescriptor() {
   return d;
 }
 
-void NoTrailingSpacesRule::HandleLine(absl::string_view line) {
+void NoTrailingSpacesRule::HandleLine(std::string_view line) {
   // Lines may end with \n or \r\n. '\n' is already excluded.
   // Exclude '\r'
   absl::ConsumeSuffix(&line, "\r");

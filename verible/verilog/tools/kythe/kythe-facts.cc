@@ -17,13 +17,13 @@
 #include <cstddef>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/spacer.h"
 
 namespace verilog {
@@ -47,7 +47,7 @@ size_t CombineHash(size_t existing, size_t addition) {
 // res[2] = hash(0, name[0], name[1])
 // ...
 // res[N] = hash(0, name[0], name[1], ..., name[N])
-std::vector<size_t> RollingHash(const std::vector<absl::string_view> &names) {
+std::vector<size_t> RollingHash(const std::vector<std::string_view> &names) {
   if (names.size() <= 1) {
     return {0};  // Global scope
   }
@@ -68,7 +68,7 @@ std::vector<size_t> RollingHash(const std::vector<absl::string_view> &names) {
 
 std::string Signature::ToString() const {
   std::string signature;
-  for (absl::string_view name : names_) {
+  for (std::string_view name : names_) {
     if (name.empty()) continue;
     absl::StrAppend(&signature, name, "#");
   }

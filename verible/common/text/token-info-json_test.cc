@@ -15,8 +15,8 @@
 #include "verible/common/text/token-info-json.h"
 
 #include <ostream>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/text/constants.h"
@@ -26,7 +26,7 @@ namespace verible {
 namespace {
 
 TEST(TokenInfoToJsonTest, ToJsonEOF) {
-  constexpr absl::string_view base;  // empty
+  constexpr std::string_view base;  // empty
   const TokenInfo::Context context(base);
   const TokenInfo token_info(TK_EOF, base);
 
@@ -45,7 +45,7 @@ TEST(TokenInfoToJsonTest, ToJsonEOF) {
 }
 
 TEST(TokenInfoToJsonTest, ToJsonWithBase) {
-  constexpr absl::string_view base("basement cat");
+  constexpr std::string_view base("basement cat");
   const TokenInfo::Context context(base);
   const TokenInfo token_info(7, base.substr(9, 3));
 
@@ -64,7 +64,7 @@ TEST(TokenInfoToJsonTest, ToJsonWithBase) {
 }
 
 TEST(TokenInfoToJsonTest, ToJsonWithTokenEnumTranslator) {
-  constexpr absl::string_view text("string of length 19");
+  constexpr std::string_view text("string of length 19");
   const TokenInfo token_info(143, text);
 
   const verible::TokenInfo::Context context(

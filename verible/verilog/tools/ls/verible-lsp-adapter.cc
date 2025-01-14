@@ -17,10 +17,10 @@
 
 #include <iterator>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/analysis/file-analyzer.h"
 #include "verible/common/analysis/lint-rule-status.h"
@@ -99,7 +99,7 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
         [&result, &rejected_token](
             const std::string &filename, verible::LineColumnRange range,
             verible::ErrorSeverity severity, verible::AnalysisPhase phase,
-            absl::string_view token_text, absl::string_view context_line,
+            std::string_view token_text, std::string_view context_line,
             const std::string &msg) {
           std::string message(AnalysisPhaseName(phase));
           absl::StrAppend(&message, " ", ErrorSeverityDescription(severity));
@@ -146,7 +146,7 @@ static std::vector<verible::lsp::TextEdit> AutofixToTextEdits(
   std::vector<verible::lsp::TextEdit> result;
   // TODO(hzeller): figure out if edits are stacking or are all based
   // on the same start status.
-  const absl::string_view base = text.Contents();
+  const std::string_view base = text.Contents();
   for (const verible::ReplacementEdit &edit : fix.Edits()) {
     verible::LineColumn start =
         text.GetLineColAtOffset(edit.fragment.begin() - base.begin());

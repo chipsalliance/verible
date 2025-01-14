@@ -20,11 +20,11 @@
 #include <cstddef>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/numeric/int128.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -82,8 +82,8 @@ static int digitBits(char digit, bool *is_lower_bound) {
   return 1;
 }
 
-static absl::string_view StripLeadingZeroes(absl::string_view str) {
-  const absl::string_view::const_iterator it =
+static std::string_view StripLeadingZeroes(std::string_view str) {
+  const std::string_view::const_iterator it =
       std::find_if_not(str.begin(), str.end(), [](char c) { return c == '0'; });
   return str.substr(it - str.begin());
 }
@@ -91,7 +91,7 @@ static absl::string_view StripLeadingZeroes(absl::string_view str) {
 // Return count of bits the given number occupies. Sometims we can only make
 // a lower bound estimate, return that in "is_lower_bound".
 static size_t GetBitWidthOfNumber(const BasedNumber &n, bool *is_lower_bound) {
-  const absl::string_view literal = StripLeadingZeroes(n.literal);
+  const std::string_view literal = StripLeadingZeroes(n.literal);
 
   *is_lower_bound = true;           // Can only estimate for the following two
   if (literal.empty()) return 1;    // all zeroes

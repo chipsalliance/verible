@@ -16,9 +16,9 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_LINE_LENGTH_RULE_H_
 
 #include <set>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/text-structure-lint-rule.h"
 #include "verible/common/text/text-structure.h"
@@ -46,9 +46,9 @@ class LineLengthRule : public verible::TextStructureLintRule {
 
   LineLengthRule() = default;
 
-  absl::Status Configure(absl::string_view configuration) final;
+  absl::Status Configure(std::string_view configuration) final;
 
-  void Lint(const verible::TextStructureView &, absl::string_view) final;
+  void Lint(const verible::TextStructureView &, std::string_view) final;
 
   verible::LintRuleStatus Report() const final;
 

@@ -28,7 +28,6 @@ cc_binary(
         "@abseil-cpp//absl/flags:usage",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 

@@ -16,9 +16,9 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -37,8 +37,8 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(PlusargAssignmentRule);
 
-static constexpr absl::string_view kForbiddenFunctionName = "$test$plusargs";
-static constexpr absl::string_view kCorrectFunctionName = "$value$plusargs";
+static constexpr std::string_view kForbiddenFunctionName = "$test$plusargs";
+static constexpr std::string_view kCorrectFunctionName = "$value$plusargs";
 
 const LintRuleDescriptor &PlusargAssignmentRule::GetDescriptor() {
   static const LintRuleDescriptor d{

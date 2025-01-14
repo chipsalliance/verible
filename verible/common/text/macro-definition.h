@@ -21,10 +21,10 @@
 #include <cstddef>
 #include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/text/token-info.h"
 
 namespace verible {
@@ -78,7 +78,7 @@ class MacroDefinition {
   MacroDefinition(const TokenInfo &header, const TokenInfo &name)
       : header_(header), name_(name) {}
 
-  absl::string_view Name() const { return name_.text(); }
+  std::string_view Name() const { return name_.text(); }
   const TokenInfo &NameToken() const { return name_; }
 
   const TokenInfo &DefinitionText() const { return definition_text_; }
@@ -100,7 +100,7 @@ class MacroDefinition {
     return parameter_info_array_;
   }
 
-  using substitution_map_type = std::map<absl::string_view, DefaultTokenInfo>;
+  using substitution_map_type = std::map<std::string_view, DefaultTokenInfo>;
 
   // Create a text substitution map to be used for macro expansion.
   absl::Status PopulateSubstitutionMap(const std::vector<TokenInfo> &,

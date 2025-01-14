@@ -16,8 +16,8 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -39,7 +39,7 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(V2001GenerateBeginRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Do not begin a generate block inside a generate region.";
 
 const LintRuleDescriptor &V2001GenerateBeginRule::GetDescriptor() {

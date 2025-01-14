@@ -160,7 +160,6 @@ cc_library(
         "//verible/common/text:tree-utils",
         "//verible/common/text:visitors",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",  # for library testonly
     ],
 )

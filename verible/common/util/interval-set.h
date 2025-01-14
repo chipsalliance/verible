@@ -23,6 +23,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -30,7 +31,6 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/auto-iterator.h"
 #include "verible/common/util/interval.h"
 #include "verible/common/util/iterator-range.h"
@@ -542,7 +542,7 @@ std::ostream &operator<<(std::ostream &stream, const IntervalSet<T> &iset) {
 template <typename T, typename Iter>
 bool ParseInclusiveRanges(IntervalSet<T> *iset, Iter begin, Iter end,
                           std::ostream *errstream, const char sep = '-') {
-  std::vector<absl::string_view> bounds;  // re-use allocated memory
+  std::vector<std::string_view> bounds;  // re-use allocated memory
   for (const auto &range : verible::make_range(begin, end)) {
     bounds = absl::StrSplit(range, sep);
     if (bounds.size() == 1) {

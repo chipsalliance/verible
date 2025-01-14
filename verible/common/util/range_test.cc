@@ -16,10 +16,10 @@
 
 #include <cstddef>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/iterator-range.h"
 
@@ -28,24 +28,23 @@ namespace {
 
 // Test that IsSubRange matches same empty string.
 TEST(IsSubRangeTest, SameEmptyString) {
-  const absl::string_view substring;
+  const std::string_view substring;
   EXPECT_TRUE(IsSubRange(substring, substring));
 }
 
 // Test that IsSubRange matches same nonempty string.
 TEST(IsSubRangeTest, SameNonEmptyString) {
-  const absl::string_view substring = "nonempty";
+  const std::string_view substring = "nonempty";
   EXPECT_TRUE(IsSubRange(substring, substring));
 }
 
 // Test that IsSubRange works on string and string_view.
 TEST(IsSubRangeTest, MixedStringViewStdString) {
   const std::string superstring("nonempty");
-  const absl::string_view substring =
-      absl::string_view(superstring).substr(1, 3);
-  // Note: std::string and absl::string_view iterators are not directly
+  const std::string_view substring = std::string_view(superstring).substr(1, 3);
+  // Note: std::string and std::string_view iterators are not directly
   // comparable to each other.
-  EXPECT_TRUE(IsSubRange(substring, absl::string_view(superstring)));
+  EXPECT_TRUE(IsSubRange(substring, std::string_view(superstring)));
 }
 
 // Test that IsSubRange works on string iterators.
@@ -58,8 +57,8 @@ TEST(IsSubRangeTest, StringAndIterator) {
 
 // Test that IsSubRange is false on completely different string_views.
 TEST(IsSubRangeTest, DifferentStringViews) {
-  const absl::string_view a = "twiddle-dee";
-  const absl::string_view b = "twiddle-dum";
+  const std::string_view a = "twiddle-dee";
+  const std::string_view b = "twiddle-dum";
   EXPECT_FALSE(IsSubRange(a, b));
   EXPECT_FALSE(IsSubRange(b, a));
 }
@@ -78,7 +77,7 @@ TEST(IsSubRangeTest, IdenticalSeparateStrings) {
 
 // Test that IsSubRange matches sub-string_view.
 TEST(IsSubRangeTest, SubStringView) {
-  const absl::string_view superstring = "not-empty";
+  const std::string_view superstring = "not-empty";
   EXPECT_TRUE(IsSubRange(superstring.substr(0, 0), superstring));  // empty
   EXPECT_TRUE(IsSubRange(superstring.substr(3, 0), superstring));  // empty
   EXPECT_TRUE(IsSubRange(superstring.substr(0), superstring));
@@ -89,14 +88,14 @@ TEST(IsSubRangeTest, SubStringView) {
 
 // Test that IsSubRange is false on superstring views (converse).
 TEST(IsSubRangeTest, SuperStringView) {
-  const absl::string_view superstring = "also-nonempty";
+  const std::string_view superstring = "also-nonempty";
   EXPECT_FALSE(IsSubRange(superstring, superstring.substr(1)));
   EXPECT_FALSE(IsSubRange(superstring, superstring.substr(1, 3)));
 }
 
 // Test that IsSubRange works on substring ranges.
 TEST(IsSubRangeTest, DerivedSubStringView) {
-  const absl::string_view str = "qwertyuiop";
+  const std::string_view str = "qwertyuiop";
   EXPECT_FALSE(IsSubRange(str.substr(0, 0), str.substr(1, 0)));  // empty
   EXPECT_FALSE(IsSubRange(str.substr(1, 0), str.substr(0, 0)));  // empty
   EXPECT_TRUE(IsSubRange(str.substr(1, 0), str.substr(0, 1)));
@@ -112,20 +111,20 @@ TEST(IsSubRangeTest, DerivedSubStringView) {
 
 // Test that BoundsEqual matches same empty string.
 TEST(BoundsEqualTest, SameEmptyString) {
-  const absl::string_view substring;
+  const std::string_view substring;
   EXPECT_TRUE(BoundsEqual(substring, substring));
 }
 
 // Test that BoundsEqual matches same nonempty string.
 TEST(BoundsEqualTest, SameNonEmptyString) {
-  const absl::string_view substring = "nonempty";
+  const std::string_view substring = "nonempty";
   EXPECT_TRUE(BoundsEqual(substring, substring));
 }
 
 // Test that BoundsEqual is false on completely different string_views.
 TEST(BoundsEqualTest, DifferentStringViews) {
-  const absl::string_view a = "twiddle-dee";
-  const absl::string_view b = "twiddle-dum";
+  const std::string_view a = "twiddle-dee";
+  const std::string_view b = "twiddle-dum";
   EXPECT_FALSE(BoundsEqual(a, b));
   EXPECT_FALSE(BoundsEqual(b, a));
 }
@@ -140,7 +139,7 @@ TEST(BoundsEqualTest, IdenticalSeparateStrings) {
 
 // Test that BoundsEqual matches sub-string_view.
 TEST(BoundsEqualTest, SubStringView) {
-  const absl::string_view superstring = "not-empty";
+  const std::string_view superstring = "not-empty";
   EXPECT_FALSE(BoundsEqual(superstring.substr(0, 0), superstring));  // empty
   EXPECT_FALSE(BoundsEqual(superstring.substr(3, 0), superstring));  // empty
   EXPECT_TRUE(BoundsEqual(superstring.substr(0), superstring));
@@ -151,14 +150,14 @@ TEST(BoundsEqualTest, SubStringView) {
 
 // Test that BoundsEqual is false on superstring views (converse).
 TEST(BoundsEqualTest, SuperStringView) {
-  const absl::string_view superstring = "also-nonempty";
+  const std::string_view superstring = "also-nonempty";
   EXPECT_FALSE(BoundsEqual(superstring, superstring.substr(1)));
   EXPECT_FALSE(BoundsEqual(superstring, superstring.substr(1, 3)));
 }
 
 // Test that BoundsEqual works on substring ranges.
 TEST(BoundsEqualTest, DerivedSubStringView) {
-  const absl::string_view str = "qwertyuiop";
+  const std::string_view str = "qwertyuiop";
   EXPECT_FALSE(BoundsEqual(str.substr(0, 0), str.substr(1, 0)));  // empty
   EXPECT_FALSE(BoundsEqual(str.substr(1, 0), str.substr(0, 0)));  // empty
   EXPECT_FALSE(BoundsEqual(str.substr(1, 0), str.substr(0, 1)));

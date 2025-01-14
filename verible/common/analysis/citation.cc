@@ -15,12 +15,12 @@
 #include "verible/common/analysis/citation.h"
 
 #include <string>
+#include <string_view>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 
 namespace verible {
-std::string GetStyleGuideCitation(absl::string_view topic) {
+std::string GetStyleGuideCitation(std::string_view topic) {
   return absl::StrCat("[Style: ", topic, "]");
 }
 }  // namespace verible

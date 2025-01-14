@@ -15,8 +15,8 @@
 #include "verible/verilog/analysis/checkers/macro-string-concatenation-rule.h"
 
 #include <cstddef>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/util/value-saver.h"
@@ -36,7 +36,7 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(MacroStringConcatenationRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Token concatenation (``) used inside plain string literal.";
 
 const LintRuleDescriptor &MacroStringConcatenationRule::GetDescriptor() {
@@ -51,7 +51,7 @@ const LintRuleDescriptor &MacroStringConcatenationRule::GetDescriptor() {
 
 void MacroStringConcatenationRule::HandleToken(const TokenInfo &token) {
   const auto token_enum = static_cast<verilog_tokentype>(token.token_enum());
-  const absl::string_view text(token.text());
+  const std::string_view text(token.text());
 
   // Search only in `define tokens. Ignore state as `defines can be nested.
   if (token_enum == PP_define_body) {
@@ -63,7 +63,7 @@ void MacroStringConcatenationRule::HandleToken(const TokenInfo &token) {
   } else if (state_ == State::kInsideDefineBody &&
              token_enum == TK_StringLiteral) {
     size_t pos = 0;
-    while ((pos = text.find("``", pos)) != absl::string_view::npos) {
+    while ((pos = text.find("``", pos)) != std::string_view::npos) {
       violations_.insert(
           LintViolation(TokenInfo(token_enum, text.substr(pos, 2)), kMessage));
       pos += 2;

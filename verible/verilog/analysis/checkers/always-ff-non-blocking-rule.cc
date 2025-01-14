@@ -17,9 +17,9 @@
 #include <algorithm>
 #include <ostream>
 #include <set>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -49,7 +49,7 @@ using verible::matcher::Matcher;
 // Register AlwaysFFNonBlockingRule
 VERILOG_REGISTER_LINT_RULE(AlwaysFFNonBlockingRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Use blocking assignments, at most, for locals inside "
     "'always_ff' sequential blocks.";
 
@@ -72,7 +72,7 @@ LintRuleStatus AlwaysFFNonBlockingRule::Report() const {
 
 //- Configuration -----------------------------------------------------------
 absl::Status AlwaysFFNonBlockingRule::Configure(
-    const absl::string_view configuration) {
+    const std::string_view configuration) {
   using verible::config::SetBool;
   return verible::ParseNameValues(
       configuration, {
@@ -215,7 +215,7 @@ bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
         if (const auto *const ident =
                 verible::down_cast<const verible::SyntaxTreeLeaf *>(
                     node->front().get())) {
-          const absl::string_view name = ident->get().text();
+          const std::string_view name = ident->get().text();
           VLOG(4) << "Registering '" << name << '\'' << std::endl;
           locals_.emplace_back(name);
           count++;

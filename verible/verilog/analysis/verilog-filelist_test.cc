@@ -15,9 +15,9 @@
 #include "verible/verilog/analysis/verilog-filelist.h"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/file-util.h"
@@ -57,7 +57,7 @@ TEST(FileListTest, AppendFileListFromFile) {
 }
 
 TEST(FileListTest, AppendFileListFromInvalidCommandline) {
-  std::vector<std::vector<absl::string_view>> test_cases = {
+  std::vector<std::vector<std::string_view>> test_cases = {
       {"+define+macro1="},
       {"+define+"},
       {"+not_valid_define+"},
@@ -70,7 +70,7 @@ TEST(FileListTest, AppendFileListFromInvalidCommandline) {
 }
 
 TEST(FileListTest, AppendFileListFromCommandline) {
-  std::vector<absl::string_view> cmdline = {
+  std::vector<std::string_view> cmdline = {
       "+define+macro1=text1+macro2+macro3=text3",
       "file1",
       "+define+macro4",

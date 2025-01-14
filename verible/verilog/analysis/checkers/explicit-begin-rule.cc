@@ -15,11 +15,11 @@
 #include "verible/verilog/analysis/checkers/explicit-begin-rule.h"
 
 #include <set>
+#include <string_view>
 
 #include "absl/base/attributes.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/token-stream-lint-rule.h"
 #include "verible/common/text/config-utils.h"
@@ -81,7 +81,7 @@ const LintRuleDescriptor &ExplicitBeginRule::GetDescriptor() {
   return d;
 }
 
-absl::Status ExplicitBeginRule::Configure(absl::string_view configuration) {
+absl::Status ExplicitBeginRule::Configure(std::string_view configuration) {
   using verible::config::SetBool;
   return verible::ParseNameValues(
       configuration,

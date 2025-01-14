@@ -18,11 +18,11 @@
 #include <bitset>
 #include <functional>
 #include <map>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/text/token-stream-view.h"
 
 namespace verilog {
@@ -147,7 +147,7 @@ class FlowTree {
 
   // Mapping each conditional macro to an integer ID,
   // to use it later as a bit offset.
-  std::map<absl::string_view, int> conditional_macro_id_;
+  std::map<std::string_view, int> conditional_macro_id_;
 
   // A vector containing all the macros used placed by their given ID.
   std::vector<TokenSequenceConstIterator> conditional_macros_;

@@ -17,9 +17,9 @@
 #include <algorithm>
 #include <initializer_list>
 #include <iterator>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/util/logging.h"
 
@@ -35,12 +35,12 @@ ExpectedTokenInfo::ExpectedTokenInfo(char token_enum_and_text)
                 // address) at offset 0 or sizeof(int) -1.
                 // Note: This constructor using a self-pointer makes this struct
                 // non-default-copy/move/assign-able.
-                absl::string_view(reinterpret_cast<const char *>(&token_enum_)
+                std::string_view(reinterpret_cast<const char *>(&token_enum_)
 #ifdef IS_BIG_ENDIAN
-                                      + (sizeof(typeid(token_enum_)) - 1)
+                                     + (sizeof(typeid(token_enum_)) - 1)
 #endif
-                                      ,
-                                  1)) {
+                                     ,
+                                 1)) {
 }
 
 static std::vector<TokenInfo> ComposeExpectedTokensFromFragments(
@@ -78,21 +78,21 @@ std::vector<TokenInfo> TokenInfoTestData::FindImportantTokens() const {
 }
 
 std::vector<TokenInfo> TokenInfoTestData::FindImportantTokens(
-    absl::string_view base) const {
+    std::string_view base) const {
   std::vector<TokenInfo> return_tokens = FindImportantTokens();
   RebaseToCodeCopy(&return_tokens, base);
   return return_tokens;
 }
 
 void TokenInfoTestData::RebaseToCodeCopy(std::vector<TokenInfo> *tokens,
-                                         absl::string_view base) const {
+                                         std::string_view base) const {
   CHECK_EQ(code, base);  // verify content match
   // Another analyzer object may have made its own copy of 'code', so
   // we need to translate the expected error token into a rebased version
   // before directly comparing against the rejected tokens.
   for (TokenInfo &token : *tokens) {
     const auto offset =
-        std::distance(absl::string_view(code).begin(), token.text().begin());
+        std::distance(std::string_view(code).begin(), token.text().begin());
     token.RebaseStringView(base.begin() + offset);
   }
 }

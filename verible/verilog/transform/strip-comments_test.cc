@@ -15,18 +15,18 @@
 #include "verible/verilog/transform/strip-comments.h"
 
 #include <sstream>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace verilog {
 namespace {
 
 struct StripCommentsTestCase {
-  absl::string_view input;
-  absl::string_view expect_deleted;
-  absl::string_view expect_spaced;
-  absl::string_view expect_otherchar;
+  std::string_view input;
+  std::string_view expect_deleted;
+  std::string_view expect_spaced;
+  std::string_view expect_otherchar;
 };
 
 TEST(StripVerilogCommentsTest, Various) {

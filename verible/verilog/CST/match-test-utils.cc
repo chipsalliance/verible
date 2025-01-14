@@ -16,9 +16,9 @@
 
 #include <functional>
 #include <sstream>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/syntax-tree-search-test-utils.h"
 #include "verible/common/analysis/syntax-tree-search.h"
@@ -35,14 +35,14 @@ using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 void TestVerilogSyntaxRangeMatches(
-    absl::string_view test_name, const SyntaxTreeSearchTestCase &test_case,
+    std::string_view test_name, const SyntaxTreeSearchTestCase &test_case,
     const std::function<std::vector<TreeSearchMatch>(const TextStructureView &)>
         &match_collector) {
-  const absl::string_view code(test_case.code);
+  const std::string_view code(test_case.code);
   // Parse Verilog source code into syntax tree.
   VerilogAnalyzer analyzer(code, "test-file");
   const TextStructureView &text_structure(analyzer.Data());
-  const absl::string_view code_copy = text_structure.Contents();
+  const std::string_view code_copy = text_structure.Contents();
   ASSERT_OK(analyzer.Analyze()) << test_name << " failed on:\n" << code;
 
   // Run the match collector to gather results.

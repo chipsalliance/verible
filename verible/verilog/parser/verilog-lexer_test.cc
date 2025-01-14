@@ -16,10 +16,10 @@
 #include "verible/verilog/parser/verilog-lexer.h"
 
 #include <initializer_list>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/lexer/lexer-test-util.h"
@@ -35,7 +35,7 @@ using verible::TokenInfo;
 // Removes non-essential tokens from token output stream, such as spaces.
 class FilteredVerilogLexer : public VerilogLexer {
  public:
-  explicit FilteredVerilogLexer(absl::string_view code) : VerilogLexer(code) {}
+  explicit FilteredVerilogLexer(std::string_view code) : VerilogLexer(code) {}
 
   const TokenInfo &DoNextToken() final {
     do {
@@ -2355,7 +2355,7 @@ TEST(VerilogLexerTest, DirectivesUnfiltered) {
 TEST(VerilogLexerTest, Library) { TestLexer(kLibraryTests); }
 
 TEST(RecursiveLexTextTest, Basic) {
-  constexpr absl::string_view text("hello;");
+  constexpr std::string_view text("hello;");
   std::vector<TokenInfo> tokens;
   RecursiveLexText(text,
                    [&tokens](const TokenInfo &t) { tokens.push_back(t); });
@@ -2366,8 +2366,8 @@ TEST(RecursiveLexTextTest, Basic) {
 
 TEST(VerilogLexerTest, StrayNulCharacterHandledCorrectly) {
   {  // baseline
-    FilteredVerilogLexer lexer(absl::string_view("foo bar baz", 11));
-    for (absl::string_view expected : {"foo", "bar", "baz"}) {
+    FilteredVerilogLexer lexer(std::string_view("foo bar baz", 11));
+    for (std::string_view expected : {"foo", "bar", "baz"}) {
       auto token = lexer.DoNextToken();
       EXPECT_EQ(token.text(), expected);
       EXPECT_EQ(token.token_enum(), SymbolIdentifier);
@@ -2375,8 +2375,8 @@ TEST(VerilogLexerTest, StrayNulCharacterHandledCorrectly) {
     EXPECT_TRUE(lexer.DoNextToken().isEOF());
   }
   {  // Stray nul character in text should just be skipped as space
-    FilteredVerilogLexer lexer(absl::string_view("foo bar\0baz", 11));
-    for (absl::string_view expected : {"foo", "bar", "baz"}) {
+    FilteredVerilogLexer lexer(std::string_view("foo bar\0baz", 11));
+    for (std::string_view expected : {"foo", "bar", "baz"}) {
       auto token = lexer.DoNextToken();
       EXPECT_EQ(token.text(), expected);
       EXPECT_EQ(token.token_enum(), SymbolIdentifier);

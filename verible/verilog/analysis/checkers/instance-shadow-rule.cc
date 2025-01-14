@@ -17,8 +17,8 @@
 #include <iterator>
 #include <set>
 #include <sstream>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/citation.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
@@ -46,7 +46,7 @@ using verible::matcher::Matcher;
 // Register InstanceShadowRule
 VERILOG_REGISTER_LINT_RULE(InstanceShadowRule);
 
-absl::string_view InstanceShadowRule::Name() { return "instance-shadowing"; }
+std::string_view InstanceShadowRule::Name() { return "instance-shadowing"; }
 const char InstanceShadowRule::kTopic[] = "mark-shadowed-instances";
 const char InstanceShadowRule::kMessage[] =
     "Instance shadows the already declared variable";

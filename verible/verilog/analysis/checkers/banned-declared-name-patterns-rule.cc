@@ -15,9 +15,9 @@
 #include "verible/verilog/analysis/checkers/banned-declared-name-patterns-rule.h"
 
 #include <set>
+#include <string_view>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
@@ -36,7 +36,7 @@ VERILOG_REGISTER_LINT_RULE(BannedDeclaredNamePatternsRule);
 using verible::LintRuleStatus;
 using verible::LintViolation;
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Check banned declared name patterns";
 
 const LintRuleDescriptor &BannedDeclaredNamePatternsRule::GetDescriptor() {
@@ -58,7 +58,7 @@ void BannedDeclaredNamePatternsRule::HandleNode(
     case NodeEnum::kModuleDeclaration: {
       const auto *module_match = GetModuleName(node);
       if (module_match) {
-        const absl::string_view module_id = module_match->get().text();
+        const std::string_view module_id = module_match->get().text();
 
         if (absl::EqualsIgnoreCase(module_id, "ILLEGALNAME")) {
           violations_.insert(LintViolation(module_match->get(), kMessage));
@@ -69,7 +69,7 @@ void BannedDeclaredNamePatternsRule::HandleNode(
     case NodeEnum::kPackageDeclaration: {
       const verible::TokenInfo *pack_match = GetPackageNameToken(node);
       if (pack_match) {
-        absl::string_view pack_id = pack_match->text();
+        std::string_view pack_id = pack_match->text();
         if (absl::EqualsIgnoreCase(pack_id, "ILLEGALNAME")) {
           violations_.insert(LintViolation(*pack_match, kMessage));
         }

@@ -16,10 +16,10 @@
 
 #include <initializer_list>
 #include <sstream>
+#include <string_view>
 #include <utility>
 
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/strings/line-column-map.h"
@@ -67,7 +67,7 @@ struct DisableRangeTestData : public TokenInfoTestData {
       : TokenInfoTestData{fragments} {
     // convert expected_tokens into expected ranges
     const auto tokens = FindImportantTokens();
-    const absl::string_view base(code);
+    const std::string_view base(code);
     for (const auto &t : tokens) {
       expected.Add({t.left(base), t.right(base)});
     }
@@ -215,7 +215,7 @@ TEST(DisableFormattingRangesTest, FormatOffVarious) {
 }
 
 struct DisabledBytesTestCase {
-  absl::string_view text;
+  std::string_view text;
   LineNumberSet enabled_lines;
   ByteOffsetSet expected_bytes;
 };
@@ -318,14 +318,14 @@ TEST(EnabledLinesToDisabledByteRangesTest, AllCases) {
 }
 
 struct FormatWhitespaceTestCase {
-  absl::string_view full_text;
+  std::string_view full_text;
   std::pair<int, int> substring_range;
   ByteOffsetSet disabled_ranges;
-  absl::string_view expected;
+  std::string_view expected;
 };
 
 TEST(FormatWhitespaceWithDisabledByteRangesTest, InvalidSubstring) {
-  const absl::string_view foo("foo"), bar("bar");
+  const std::string_view foo("foo"), bar("bar");
   std::ostringstream stream;
   EXPECT_DEATH(
       FormatWhitespaceWithDisabledByteRanges(foo, bar, {}, true, stream),

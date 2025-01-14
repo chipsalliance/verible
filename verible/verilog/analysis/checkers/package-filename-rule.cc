@@ -18,12 +18,12 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-search.h"
 #include "verible/common/text/config-utils.h"
@@ -43,9 +43,9 @@ using verible::TextStructureView;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(PackageFilenameRule);
 
-static constexpr absl::string_view kOptionalSuffix = "_pkg";
+static constexpr std::string_view kOptionalSuffix = "_pkg";
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Package declaration name must match the file name "
     "(ignoring optional \"_pkg\" file name suffix).  ";
 
@@ -65,7 +65,7 @@ const LintRuleDescriptor &PackageFilenameRule::GetDescriptor() {
 }
 
 void PackageFilenameRule::Lint(const TextStructureView &text_structure,
-                               absl::string_view filename) {
+                               std::string_view filename) {
   if (verible::file::IsStdin(filename)) {
     return;
   }
@@ -87,9 +87,9 @@ void PackageFilenameRule::Lint(const TextStructureView &text_structure,
   //        foo          | foo-pkg.sv | yes, iff allow-dash-for-underscore
   //        foo_pkg      | foo_pkg.sv | yes
   //        foo_pkg      | foo.sv     | NO.
-  const absl::string_view basename =
+  const std::string_view basename =
       verible::file::Basename(verible::file::Stem(filename));
-  std::vector<absl::string_view> basename_components =
+  std::vector<std::string_view> basename_components =
       absl::StrSplit(basename, '.');
   if (basename_components.empty() || basename_components[0].empty()) return;
   std::string unitname(basename_components[0].begin(),
@@ -105,7 +105,7 @@ void PackageFilenameRule::Lint(const TextStructureView &text_structure,
     const verible::TokenInfo *package_name_token =
         GetPackageNameToken(*package_match.match);
     if (!package_name_token) continue;
-    absl::string_view package_id = package_name_token->text();
+    std::string_view package_id = package_name_token->text();
     auto package_id_plus_suffix = absl::StrCat(package_id, kOptionalSuffix);
     if ((package_id != unitname) && (package_id_plus_suffix != unitname)) {
       violations_.insert(verible::LintViolation(
@@ -120,7 +120,7 @@ LintRuleStatus PackageFilenameRule::Report() const {
   return LintRuleStatus(violations_, GetDescriptor());
 }
 
-absl::Status PackageFilenameRule::Configure(absl::string_view configuration) {
+absl::Status PackageFilenameRule::Configure(std::string_view configuration) {
   using verible::config::SetBool;
   return verible::ParseNameValues(
       configuration,

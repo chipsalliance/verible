@@ -16,10 +16,10 @@
 
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/syntax-tree-search.h"
 #include "verible/common/text/tree-builder-test-util.h"
@@ -31,7 +31,7 @@ namespace {
 TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, AllEmpty) {
   const SyntaxTreeSearchTestCase test{};
   const std::vector<TreeSearchMatch> actual_findings;
-  const absl::string_view text;
+  const std::string_view text;
   std::ostringstream diffstream;
   EXPECT_TRUE(test.ExactMatchFindings(actual_findings, text, &diffstream));
 }
@@ -44,12 +44,12 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, OneMatchingViolation) {
       "ghi",
   };
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text = text_view.substr(3, 3);
+  const std::string_view bad_text = text_view.substr(3, 3);
   constexpr int kTag = -1;
   auto leaf = Leaf(kTag, bad_text);
   const std::vector<TreeSearchMatch> actual_findings{
@@ -68,12 +68,12 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, IgnoreEmptyStringSpan) {
       "ghi",
   };
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text = text_view.substr(3, 3);
+  const std::string_view bad_text = text_view.substr(3, 3);
   constexpr int kTag = -1;
   auto leaf = Leaf(kTag, bad_text);
   auto ignored_leaf = Leaf(kTag, bad_text.substr(0, 0));
@@ -94,12 +94,12 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, IgnoreNullptrSymbol) {
       "ghi",
   };
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text = text_view.substr(3, 3);
+  const std::string_view bad_text = text_view.substr(3, 3);
   constexpr int kTag = -1;
   auto leaf = Leaf(kTag, bad_text);
   const std::vector<TreeSearchMatch> actual_findings{
@@ -121,10 +121,10 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest,
       {kToken, "jkl"},
   };
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
   const auto bad_text1 = Leaf(kToken, text_view.substr(3, 3));
   const auto bad_text2 = Leaf(kToken, text_view.substr(9, 3));
@@ -138,21 +138,21 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest,
   EXPECT_TRUE(diffstream.str().empty());
 }
 
-constexpr absl::string_view kFoundNotExpectedMessage(
+constexpr std::string_view kFoundNotExpectedMessage(
     "actual findings did not match the expected");
-constexpr absl::string_view kExpectedNotFoundMessage(
+constexpr std::string_view kExpectedNotFoundMessage(
     "expected findings did not match the ones found");
 
 TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, OneFoundNotExpected) {
   constexpr int kToken = 42;
   const SyntaxTreeSearchTestCase test{"abcdefghi"};  // no expected violations
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text = text_view.substr(3, 3);
+  const std::string_view bad_text = text_view.substr(3, 3);
   const auto leaf = Leaf(kToken, bad_text);
   const std::vector<TreeSearchMatch> actual_findings{
       {leaf.get(), {/* context ignored */}},
@@ -169,12 +169,12 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, OneExpectedNotFound) {
   constexpr int kToken = 42;
   const SyntaxTreeSearchTestCase test{"abc", {kToken, "def"}, "ghi"};
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text = text_view.substr(3, 3);
+  const std::string_view bad_text = text_view.substr(3, 3);
   const std::vector<TreeSearchMatch> actual_findings;  // none expected
   std::ostringstream diffstream;
   EXPECT_FALSE(
@@ -188,12 +188,12 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, OneMismatchEach) {
   constexpr int kToken = 42;
   const SyntaxTreeSearchTestCase test{"abc", {kToken, "def"}, "ghi"};
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text = text_view.substr(4, 3);  // "efg"
+  const std::string_view bad_text = text_view.substr(4, 3);  // "efg"
   const auto leaf = Leaf(kToken, bad_text);
   const std::vector<TreeSearchMatch> actual_findings{
       {leaf.get(), {/* context ignored */}},

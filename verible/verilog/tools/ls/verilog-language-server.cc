@@ -20,11 +20,11 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/lsp/lsp-file-utils.h"
 #include "verible/common/lsp/lsp-protocol.h"
@@ -46,7 +46,7 @@ VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
     : dispatcher_(write_fun), text_buffers_(&dispatcher_) {
   // All bodies the stream splitter extracts are pushed to the json dispatcher
   stream_splitter_.SetMessageProcessor(
-      [this](absl::string_view header, absl::string_view body) {
+      [this](std::string_view header, std::string_view body) {
         dispatcher_.DispatchMessage(body);
       });
 
@@ -236,7 +236,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
   return GetCapabilities();
 }
 
-void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
+void VerilogLanguageServer::ConfigureProject(std::string_view project_root) {
   LOG(INFO) << "Initializing with project-root '" << project_root << "'";
   std::string proj_root = {project_root.begin(), project_root.end()};
   if (proj_root.empty()) {

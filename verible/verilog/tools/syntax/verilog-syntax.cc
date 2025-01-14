@@ -25,13 +25,13 @@
 #include <memory>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/strings/mem-block.h"
 #include "verible/common/text/concrete-syntax-tree.h"
@@ -77,7 +77,7 @@ static std::ostream &operator<<(std::ostream &stream, LanguageMode mode) {
   return LanguageModeStringMap().Unparse(mode, stream);
 }
 
-static bool AbslParseFlag(absl::string_view text, LanguageMode *mode,
+static bool AbslParseFlag(std::string_view text, LanguageMode *mode,
                           std::string *error) {
   return LanguageModeStringMap().Parse(text, mode, error, "--flag value");
 }
@@ -122,7 +122,7 @@ using verilog::VerilogAnalyzer;
 
 static std::unique_ptr<VerilogAnalyzer> ParseWithLanguageMode(
     const std::shared_ptr<verible::MemBlock> &content,
-    absl::string_view filename,
+    std::string_view filename,
     const verilog::VerilogPreprocess::Config &preprocess_config) {
   switch (absl::GetFlag(FLAGS_lang)) {
     case LanguageMode::kAutoDetect:
@@ -163,7 +163,7 @@ static void VerifyParseTree(const TextStructureView &text_structure) {
 static bool ShouldIncludeTokenText(const verible::TokenInfo &token) {
   const verilog_tokentype tokentype =
       static_cast<verilog_tokentype>(token.token_enum());
-  absl::string_view type_str = verilog::TokenTypeToString(tokentype);
+  std::string_view type_str = verilog::TokenTypeToString(tokentype);
   // Don't include token's text for operators, keywords, or anything that is a
   // part of Verilog syntax. For such types, TokenTypeToString() is equal to
   // token's text. Exception has to be made for identifiers, because things like
@@ -174,7 +174,7 @@ static bool ShouldIncludeTokenText(const verible::TokenInfo &token) {
 
 static int AnalyzeOneFile(
     const std::shared_ptr<verible::MemBlock> &content,
-    absl::string_view filename,
+    std::string_view filename,
     const verilog::VerilogPreprocess::Config &preprocess_config,
     json *json_out) {
   int exit_status = 0;
@@ -293,7 +293,7 @@ int main(int argc, char **argv) {
 
   int exit_status = 0;
   // All positional arguments are file names.  Exclude program name.
-  for (absl::string_view filename :
+  for (std::string_view filename :
        verible::make_range(args.begin() + 1, args.end())) {
     auto content_status = verible::file::GetContentAsMemBlock(filename);
     if (!content_status.status().ok()) {

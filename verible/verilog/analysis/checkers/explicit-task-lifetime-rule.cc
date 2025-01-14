@@ -15,8 +15,8 @@
 #include "verible/verilog/analysis/checkers/explicit-task-lifetime-rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -43,7 +43,7 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitTaskLifetimeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitTaskLifetimeRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Explicitly define static or automatic lifetime for non-class tasks";
 
 const LintRuleDescriptor &ExplicitTaskLifetimeRule::GetDescriptor() {

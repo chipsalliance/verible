@@ -18,11 +18,11 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/text/text-structure.h"
 #include "verible/common/util/container-util.h"
 #include "verible/common/util/logging.h"
@@ -48,8 +48,8 @@ using verible::container::FindOrNull;
 // The returned analyzer's text structure will discard parsed information
 // about the prolog and epilog, leaving only the substructure of interest.
 static std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogConstruct(
-    absl::string_view prolog, absl::string_view text, absl::string_view epilog,
-    absl::string_view filename,
+    std::string_view prolog, std::string_view text, std::string_view epilog,
+    std::string_view filename,
     const VerilogPreprocess::Config &preprocess_config) {
   VLOG(2) << __FUNCTION__;
   CHECK(epilog.empty() || absl::ascii_isspace(epilog[0]))
@@ -79,7 +79,7 @@ static std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogConstruct(
 }
 
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogPropertySpec(
-    absl::string_view text, absl::string_view filename,
+    std::string_view text, std::string_view filename,
     const VerilogPreprocess::Config &preprocess_config) {
   return AnalyzeVerilogConstruct("module foo;\nproperty p;\n", text,
                                  "\nendproperty;\nendmodule;\n", filename,
@@ -87,14 +87,14 @@ std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogPropertySpec(
 }
 
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogStatements(
-    absl::string_view text, absl::string_view filename,
+    std::string_view text, std::string_view filename,
     const VerilogPreprocess::Config &preprocess_config) {
   return AnalyzeVerilogConstruct("function foo();\n", text, "\nendfunction\n",
                                  filename, preprocess_config);
 }
 
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogExpression(
-    absl::string_view text, absl::string_view filename,
+    std::string_view text, std::string_view filename,
     const VerilogPreprocess::Config &preprocess_config) {
   return AnalyzeVerilogConstruct("module foo;\nif (", text,
                                  " ) $error;\nendmodule\n", filename,
@@ -106,28 +106,28 @@ std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogExpression(
 }
 
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogModuleBody(
-    absl::string_view text, absl::string_view filename,
+    std::string_view text, std::string_view filename,
     const VerilogPreprocess::Config &preprocess_config) {
   return AnalyzeVerilogConstruct("module foo;\n", text, "\nendmodule\n",
                                  filename, preprocess_config);
 }
 
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogClassBody(
-    absl::string_view text, absl::string_view filename,
+    std::string_view text, std::string_view filename,
     const VerilogPreprocess::Config &preprocess_config) {
   return AnalyzeVerilogConstruct("class foo;\n", text, "\nendclass\n", filename,
                                  preprocess_config);
 }
 
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogPackageBody(
-    absl::string_view text, absl::string_view filename,
+    std::string_view text, std::string_view filename,
     const VerilogPreprocess::Config &preprocess_config) {
   return AnalyzeVerilogConstruct("package foo;\n", text, "\nendpackage\n",
                                  filename, preprocess_config);
 }
 
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogLibraryMap(
-    absl::string_view text, absl::string_view filename,
+    std::string_view text, std::string_view filename,
     const VerilogPreprocess::Config &preprocess_config) {
   // The prolog/epilog strings come from verilog.lex as token enums:
   // PD_LIBRARY_SYNTAX_BEGIN and PD_LIBRARY_SYNTAX_END.
@@ -139,12 +139,12 @@ std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogLibraryMap(
 }
 
 std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogWithMode(
-    absl::string_view text, absl::string_view filename, absl::string_view mode,
+    std::string_view text, std::string_view filename, std::string_view mode,
     const VerilogPreprocess::Config &preprocess_config) {
   static const auto *func_map =
-      new std::map<absl::string_view,
+      new std::map<std::string_view,
                    std::function<std::unique_ptr<VerilogAnalyzer>(
-                       absl::string_view, absl::string_view,
+                       std::string_view, std::string_view,
                        const VerilogPreprocess::Config &)>>{
           {"parse-as-statements", &AnalyzeVerilogStatements},
           {"parse-as-expression", &AnalyzeVerilogExpression},

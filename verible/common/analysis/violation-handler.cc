@@ -20,11 +20,11 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/strings/diff.h"
 #include "verible/common/util/file-util.h"
@@ -34,7 +34,7 @@
 namespace verible {
 namespace {
 
-void PrintFix(std::ostream &stream, absl::string_view text,
+void PrintFix(std::ostream &stream, std::string_view text,
               const verible::AutoFix &fix) {
   std::string after = fix.Apply(text);
   verible::LineDiffs diff(text, after);
@@ -42,7 +42,7 @@ void PrintFix(std::ostream &stream, absl::string_view text,
   verible::LineDiffsToUnifiedDiff(stream, diff, 1);
 }
 
-void PrintFixAlternatives(std::ostream &stream, absl::string_view text,
+void PrintFixAlternatives(std::ostream &stream, std::string_view text,
                           const std::vector<verible::AutoFix> &fixes) {
   const bool print_alternative_number = fixes.size() > 1;
   for (size_t i = 0; i < fixes.size(); ++i) {
@@ -61,8 +61,8 @@ void PrintFixAlternatives(std::ostream &stream, absl::string_view text,
 }  // namespace
 
 void ViolationPrinter::HandleViolations(
-    const std::set<LintViolationWithStatus> &violations, absl::string_view base,
-    absl::string_view path) {
+    const std::set<LintViolationWithStatus> &violations, std::string_view base,
+    std::string_view path) {
   verible::LintStatusFormatter formatter(base);
   for (auto violation : violations) {
     formatter.FormatViolation(stream_, *violation.violation, base, path,
@@ -73,8 +73,8 @@ void ViolationPrinter::HandleViolations(
 }
 
 void ViolationWaiverPrinter::HandleViolations(
-    const std::set<LintViolationWithStatus> &violations, absl::string_view base,
-    absl::string_view path) {
+    const std::set<LintViolationWithStatus> &violations, std::string_view base,
+    std::string_view path) {
   verible::LintStatusFormatter formatter(base);
   for (auto violation : violations) {
     formatter.FormatViolation(message_stream_, *violation.violation, base, path,
@@ -88,8 +88,8 @@ void ViolationWaiverPrinter::HandleViolations(
   }
 }
 
-void ViolationFixer::CommitFixes(absl::string_view source_content,
-                                 absl::string_view source_path,
+void ViolationFixer::CommitFixes(std::string_view source_content,
+                                 std::string_view source_path,
                                  const verible::AutoFix &fix) const {
   if (fix.Edits().empty()) {
     return;
@@ -111,8 +111,8 @@ void ViolationFixer::CommitFixes(absl::string_view source_content,
 }
 
 void ViolationFixer::HandleViolations(
-    const std::set<LintViolationWithStatus> &violations, absl::string_view base,
-    absl::string_view path) {
+    const std::set<LintViolationWithStatus> &violations, std::string_view base,
+    std::string_view path) {
   verible::AutoFix fix;
   verible::LintStatusFormatter formatter(base);
   for (auto violation : violations) {
@@ -124,8 +124,8 @@ void ViolationFixer::HandleViolations(
 }
 
 void ViolationFixer::HandleViolation(
-    const verible::LintViolation &violation, absl::string_view base,
-    absl::string_view path, absl::string_view url, absl::string_view rule_name,
+    const verible::LintViolation &violation, std::string_view base,
+    std::string_view path, std::string_view url, std::string_view rule_name,
     const verible::LintStatusFormatter &formatter, verible::AutoFix *fix) {
   std::stringstream violation_message;
   formatter.FormatViolation(&violation_message, violation, base, path, url,
@@ -136,7 +136,7 @@ void ViolationFixer::HandleViolation(
     return;
   }
 
-  static absl::string_view previous_fix_conflict =
+  static std::string_view previous_fix_conflict =
       "The fix conflicts with "
       "previously applied fixes, rejecting.\n";
 
@@ -198,8 +198,8 @@ void ViolationFixer::HandleViolation(
 }
 
 ViolationFixer::Answer ViolationFixer::InteractiveAnswerChooser(
-    const verible::LintViolation &violation, absl::string_view rule_name) {
-  static absl::string_view fixed_help_message =
+    const verible::LintViolation &violation, std::string_view rule_name) {
+  static std::string_view fixed_help_message =
       "n - reject fix\n"
       "a - apply this and all remaining fixes for violations of this rule\n"
       "d - reject this and all remaining fixes for violations of this rule\n"

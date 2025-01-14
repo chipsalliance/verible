@@ -16,11 +16,11 @@
 
 #include <map>
 #include <memory>
+#include <string_view>
 #include <utility>
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/line-lint-rule.h"
 #include "verible/common/analysis/lint-rule-status.h"
@@ -182,7 +182,7 @@ class LineRule1 : public LineLintRule {
     return d;
   }
 
-  void HandleLine(absl::string_view) final {}
+  void HandleLine(std::string_view) final {}
   verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }
@@ -231,7 +231,7 @@ class TextRule1 : public TextStructureLintRule {
     return d;
   }
 
-  void Lint(const verible::TextStructureView &, absl::string_view) final {}
+  void Lint(const verible::TextStructureView &, std::string_view) final {}
   verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }

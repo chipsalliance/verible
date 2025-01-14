@@ -15,8 +15,8 @@
 #include "verible/verilog/analysis/checkers/forbid-defparam-rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -39,7 +39,7 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbidDefparamRule);
 
-static constexpr absl::string_view kMessage = "Do not use defparam.";
+static constexpr std::string_view kMessage = "Do not use defparam.";
 
 const LintRuleDescriptor &ForbidDefparamRule::GetDescriptor() {
   static const LintRuleDescriptor d{

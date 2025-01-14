@@ -18,10 +18,10 @@
 #include <iterator>
 #include <map>
 #include <sstream>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/interval.h"
@@ -811,7 +811,7 @@ TEST(IntervalSetTest, StreamOutputNonEmpty) {
 }
 
 TEST(ParseInclusivesRangesTest, Empty) {
-  const std::initializer_list<absl::string_view> kRanges{};
+  const std::initializer_list<std::string_view> kRanges{};
   interval_set_type iset;
   std::ostringstream errstream;
   EXPECT_TRUE(
@@ -821,7 +821,7 @@ TEST(ParseInclusivesRangesTest, Empty) {
 }
 
 TEST(ParseInclusivesRangesTest, ParseErrorSingle) {
-  const std::initializer_list<absl::string_view> kRanges{"yyy"};
+  const std::initializer_list<std::string_view> kRanges{"yyy"};
   interval_set_type iset;
   std::ostringstream errstream;
   EXPECT_FALSE(
@@ -831,7 +831,7 @@ TEST(ParseInclusivesRangesTest, ParseErrorSingle) {
 }
 
 TEST(ParseInclusivesRangesTest, ParseErrorRange) {
-  const std::initializer_list<absl::string_view> kRanges{"1-x"};
+  const std::initializer_list<std::string_view> kRanges{"1-x"};
   interval_set_type iset;
   std::ostringstream errstream;
   EXPECT_FALSE(
@@ -842,7 +842,7 @@ TEST(ParseInclusivesRangesTest, ParseErrorRange) {
 
 TEST(ParseInclusivesRangesTest, EmptyString) {
   // Empty string can come from splitting.
-  const std::initializer_list<absl::string_view> kRanges{""};
+  const std::initializer_list<std::string_view> kRanges{""};
   interval_set_type iset;
   std::ostringstream errstream;
   EXPECT_TRUE(
@@ -854,7 +854,7 @@ TEST(ParseInclusivesRangesTest, EmptyString) {
 }
 
 TEST(ParseInclusivesRangesTest, SingleValues) {
-  const std::initializer_list<absl::string_view> kRanges{"1", "3", "4", "5"};
+  const std::initializer_list<std::string_view> kRanges{"1", "3", "4", "5"};
   interval_set_type iset;
   std::ostringstream errstream;
   EXPECT_TRUE(
@@ -865,7 +865,7 @@ TEST(ParseInclusivesRangesTest, SingleValues) {
 }
 
 TEST(ParseInclusivesRangesTest, SingleValuesAndEmpty) {
-  const std::initializer_list<absl::string_view> kRanges{"1", "", "4", "5"};
+  const std::initializer_list<std::string_view> kRanges{"1", "", "4", "5"};
   interval_set_type iset;
   std::ostringstream errstream;
   EXPECT_TRUE(
@@ -876,8 +876,8 @@ TEST(ParseInclusivesRangesTest, SingleValuesAndEmpty) {
 }
 
 TEST(ParseInclusivesRangesTest, PairValues) {
-  const std::initializer_list<absl::string_view> kRanges{"1-10", "3-11",
-                                                         "41-52"};
+  const std::initializer_list<std::string_view> kRanges{"1-10", "3-11",
+                                                        "41-52"};
   interval_set_type iset;
   std::ostringstream errstream;
   EXPECT_TRUE(
@@ -888,8 +888,8 @@ TEST(ParseInclusivesRangesTest, PairValues) {
 }
 
 TEST(ParseInclusivesRangesTest, PairValuesCustomSeparator) {
-  const std::initializer_list<absl::string_view> kRanges{"1:10", "3:11",
-                                                         "41:52"};
+  const std::initializer_list<std::string_view> kRanges{"1:10", "3:11",
+                                                        "41:52"};
   interval_set_type iset;
   std::ostringstream errstream;
   EXPECT_TRUE(ParseInclusiveRanges(&iset, kRanges.begin(), kRanges.end(),
@@ -900,8 +900,8 @@ TEST(ParseInclusivesRangesTest, PairValuesCustomSeparator) {
 }
 
 TEST(ParseInclusivesRangesTest, MixedValues) {
-  const std::initializer_list<absl::string_view> kRanges{"2-10", "11-3", "41",
-                                                         "42-52"};
+  const std::initializer_list<std::string_view> kRanges{"2-10", "11-3", "41",
+                                                        "42-52"};
   interval_set_type iset;
   std::ostringstream errstream;
   EXPECT_TRUE(

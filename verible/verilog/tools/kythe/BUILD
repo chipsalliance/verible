@@ -32,7 +32,6 @@ cc_library(
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -57,7 +56,6 @@ cc_library(
         "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/container:node_hash_map",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -67,7 +65,6 @@ cc_test(
     deps = [
         ":kythe-facts",
         ":scope-resolver",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -86,7 +83,6 @@ cc_library(
 cc_library(
     name = "kythe-schema-constants",
     hdrs = ["kythe-schema-constants.h"],
-    deps = ["@abseil-cpp//absl/strings:string_view"],
 )
 
 cc_library(
@@ -107,7 +103,6 @@ cc_library(
         "@abseil-cpp//absl/container:node_hash_set",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@abseil-cpp//absl/time",
     ],
 )
@@ -137,7 +132,6 @@ cc_library(
         "//verible/common/util:tree-operations",
         "//verible/common/util:vector-tree",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -148,7 +142,6 @@ cc_test(
         ":indexing-facts-tree",
         ":verilog-extractor-indexing-fact-type",
         "//verible/common/util:range",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -188,7 +181,6 @@ cc_library(
         "//verible/verilog/parser:verilog-token-enum",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -206,7 +198,6 @@ cc_test(
         "//verible/verilog/analysis:verilog-project",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -247,7 +238,6 @@ cc_binary(
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -284,7 +274,6 @@ cc_library(
         "//verible/common/util:sha256",
         "//verible/common/util:simple-zip",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -305,6 +294,5 @@ cc_binary(
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )

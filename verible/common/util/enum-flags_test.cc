@@ -17,9 +17,9 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace verible {
@@ -60,7 +60,7 @@ std::ostream &operator<<(std::ostream &stream, MyFakeEnum p) {
 // Testing using the absl::flags API, but we're only testing this particular
 // overload, and thus, don't actually need to depend on their library.
 
-bool AbslParseFlag(absl::string_view text, MyFakeEnum *mode,
+bool AbslParseFlag(std::string_view text, MyFakeEnum *mode,
                    std::string *error) {
   return test_map.Parse(text, mode, error, "MyFakeEnum");
 }
@@ -84,7 +84,7 @@ TEST_F(EnumNameMapTest, ParseFlagValueValues) {
 TEST_F(EnumNameMapTest, ParseFlagTestInvalidValue) {
   MyFakeEnum e;
   std::string error;
-  constexpr absl::string_view bad_value("invalidEnumName");
+  constexpr std::string_view bad_value("invalidEnumName");
   EXPECT_FALSE(AbslParseFlag(bad_value, &e, &error));
   // Make sure error message names the offending value, and lists all valid
   // values (map keys).

@@ -15,9 +15,9 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_TOKEN_ANNOTATOR_H_
 #define VERIBLE_VERILOG_FORMATTING_TOKEN_ANNOTATOR_H_
 
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/text-structure.h"
@@ -43,7 +43,7 @@ void AnnotateFormattingInformation(
 //   syntax_tree_root: syntax tree used for context-sensitive behavior.
 //   eof_token: EOF token pointing to the end of the unformatted string.
 void AnnotateFormattingInformation(
-    const FormatStyle &style, absl::string_view::const_iterator buffer_start,
+    const FormatStyle &style, std::string_view::const_iterator buffer_start,
     const verible::Symbol *syntax_tree_root,
     const verible::TokenInfo &eof_token,
     std::vector<verible::PreFormatToken> *format_tokens);

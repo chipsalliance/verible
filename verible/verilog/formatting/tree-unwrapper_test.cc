@@ -20,12 +20,12 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/token-partition-tree.h"
@@ -51,12 +51,12 @@ using verible::UnwrappedLine;
 // Contains the expected token sequence and indentation for an UnwrappedLine
 struct ExpectedUnwrappedLine {
   int indentation_spaces;
-  std::vector<absl::string_view> tokens;  // includes comments
+  std::vector<std::string_view> tokens;  // includes comments
 
   explicit ExpectedUnwrappedLine(int s) : indentation_spaces(s) {}
 
-  ExpectedUnwrappedLine(
-      int s, std::initializer_list<absl::string_view> expected_tokens)
+  ExpectedUnwrappedLine(int s,
+                        std::initializer_list<std::string_view> expected_tokens)
       : indentation_spaces(s), tokens(expected_tokens) {}
 
   void ShowUnwrappedLineDifference(std::ostream *stream,
@@ -132,8 +132,8 @@ bool ExpectedUnwrappedLine::EqualsUnwrappedLine(
       // fields. Stops at first unmatched token
       // TODO(fangism): rewrite this using std::mismatch
       for (size_t i = 0; i < uwline.Size(); i++) {
-        absl::string_view uwline_token = uwline.TokensRange()[i].Text();
-        absl::string_view expected_token = tokens[i];
+        std::string_view uwline_token = uwline.TokensRange()[i].Text();
+        std::string_view expected_token = tokens[i];
         if (uwline_token != expected_token) {
           *stream << "error: unwrapped line token #" << i + 1
                   << " does not match expected token" << std::endl;
@@ -168,13 +168,13 @@ struct TreeUnwrapperTestData {
   const char *test_name;
 
   // The source code for testing must be syntactically correct.
-  absl::string_view source_code;
+  std::string_view source_code;
 
   // The reference values and structure of UnwrappedLines to expect.
   ExpectedUnwrappedLineTree expected_unwrapped_lines;
 
   template <typename... Args>
-  TreeUnwrapperTestData(const char *name, absl::string_view code,
+  TreeUnwrapperTestData(const char *name, std::string_view code,
                         Args &&...nodes)
       : test_name(name),
         source_code(code),
@@ -232,7 +232,7 @@ class TreeUnwrapperTest : public ::testing::Test {
   // Takes a string representation of a verilog file and creates a
   // VerilogAnalyzer which holds a concrete syntax tree and token stream view
   // of the file.
-  void MakeTree(absl::string_view content) {
+  void MakeTree(std::string_view content) {
     analyzer_ = std::make_unique<VerilogAnalyzer>(content, "TEST_FILE");
     absl::Status status = ABSL_DIE_IF_NULL(analyzer_)->Analyze();
     EXPECT_OK(status) << "Rejected code: " << std::endl << content;
@@ -251,7 +251,7 @@ class TreeUnwrapperTest : public ::testing::Test {
   // Creates a TreeUnwrapper populated with a concrete syntax tree and
   // token stream view from the file input
   std::unique_ptr<TreeUnwrapper> CreateTreeUnwrapper(
-      absl::string_view source_code) {
+      std::string_view source_code) {
     MakeTree(source_code);
     const verible::TextStructureView &text_structure_view = analyzer_->Data();
     unwrapper_data_ =
@@ -274,7 +274,7 @@ class TreeUnwrapperTest : public ::testing::Test {
 // Test that TreeUnwrapper produces the correct UnwrappedLines from an empty
 // file
 TEST_F(TreeUnwrapperTest, UnwrapEmptyFile) {
-  const absl::string_view source_code;
+  const std::string_view source_code;
 
   auto tree_unwrapper = CreateTreeUnwrapper(source_code);
   tree_unwrapper->Unwrap();
@@ -287,7 +287,7 @@ TEST_F(TreeUnwrapperTest, UnwrapEmptyFile) {
 // Test that TreeUnwrapper produces the correct UnwrappedLines from a blank
 // line.
 TEST_F(TreeUnwrapperTest, UnwrapBlankLineOnly) {
-  const absl::string_view source_code = "\n";
+  const std::string_view source_code = "\n";
 
   auto tree_unwrapper = CreateTreeUnwrapper(source_code);
   tree_unwrapper->Unwrap();
@@ -311,7 +311,7 @@ ExpectedUnwrappedLineTree N(int spaces, Args &&...nodes) {
 
 // L is for leaf, which is the only type of node that should list tokens
 ExpectedUnwrappedLineTree L(int spaces,
-                            std::initializer_list<absl::string_view> tokens) {
+                            std::initializer_list<std::string_view> tokens) {
   return ExpectedUnwrappedLineTree(ExpectedUnwrappedLine(spaces, tokens));
 }
 

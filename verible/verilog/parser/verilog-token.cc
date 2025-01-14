@@ -15,8 +15,8 @@
 #include "verible/verilog/parser/verilog-token.h"
 
 #include <cstddef>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/verilog/parser/verilog-parser.h"
 #include "verible/verilog/parser/verilog-token-enum.h"
 
@@ -26,7 +26,7 @@ namespace verilog {
 // in verible-verilog-syntax' JSON output. Changing them might
 // break third-party code.
 
-absl::string_view TokenTypeToString(size_t tokentype) {
+std::string_view TokenTypeToString(size_t tokentype) {
   switch (tokentype) {
 // Returns stringified symbol name
 #define CASE_STRINGIFY(val)    \
@@ -55,7 +55,7 @@ absl::string_view TokenTypeToString(size_t tokentype) {
 
     // Returns token type name or its alias (if available) as used in verilog.y
     default: {
-      absl::string_view symbol_name(verilog_symbol_name(tokentype));
+      std::string_view symbol_name(verilog_symbol_name(tokentype));
       if (symbol_name.size() >= 2 &&
           (symbol_name[0] == '"' || symbol_name[0] == '\'')) {
         // Strip quotes

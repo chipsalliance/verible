@@ -18,9 +18,9 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
@@ -45,7 +45,7 @@ class ConstraintNameStyleRule : public verible::SyntaxTreeLintRule {
 
   static const LintRuleDescriptor &GetDescriptor();
 
-  absl::Status Configure(absl::string_view configuration) final;
+  absl::Status Configure(std::string_view configuration) final;
   void HandleSymbol(const verible::Symbol &symbol,
                     const verible::SyntaxTreeContext &context) final;
 
@@ -55,7 +55,7 @@ class ConstraintNameStyleRule : public verible::SyntaxTreeLintRule {
 
  private:
   // Lower snake case, ends with `_c`
-  static constexpr absl::string_view kSuffix = "([a-z0-9]+_)+c";
+  static constexpr std::string_view kSuffix = "([a-z0-9]+_)+c";
 
   std::set<verible::LintViolation> violations_;
   std::unique_ptr<re2::RE2> regex = std::make_unique<re2::RE2>(kSuffix);

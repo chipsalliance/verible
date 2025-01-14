@@ -14,9 +14,9 @@
 
 #include "verible/common/analysis/text-structure-linter.h"
 
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/text-structure-lint-rule.h"
 #include "verible/common/text/text-structure.h"
@@ -25,7 +25,7 @@
 namespace verible {
 
 void TextStructureLinter::Lint(const TextStructureView &text_structure,
-                               absl::string_view filename) {
+                               std::string_view filename) {
   VLOG(1) << "TextStructureLinter analyzing text with " << rules_.size()
           << " rules.";
   for (const auto &rule : rules_) {

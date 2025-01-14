@@ -39,9 +39,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 #include "absl/strings/escaping.h"
-#include "absl/strings/string_view.h"
 
 namespace verible {
 namespace {
@@ -117,7 +117,7 @@ bool Sha256Context::AddLength(unsigned int length) {
 
 // Adds an array of octets as the next portion of the message.  Returns false if
 // the accumulated message is too large (>2 Exabytes).
-bool Sha256Context::AddInput(absl::string_view message) {
+bool Sha256Context::AddInput(std::string_view message) {
   if (overflowed_) return false;
 
   for (const char c : message) {
@@ -251,7 +251,7 @@ std::array<uint8_t, kSha256HashSize> Sha256Context::BuildAndReset() {
   return message_digest;
 }
 
-std::array<uint8_t, kSha256HashSize> Sha256(absl::string_view content) {
+std::array<uint8_t, kSha256HashSize> Sha256(std::string_view content) {
   Sha256Context context;
   context.AddInput(content);
   if (context.IsOverflowed()) {
@@ -260,12 +260,12 @@ std::array<uint8_t, kSha256HashSize> Sha256(absl::string_view content) {
   return context.BuildAndReset();
 }
 
-std::string Sha256Hex(absl::string_view content) {
+std::string Sha256Hex(std::string_view content) {
   auto sha256bytes = Sha256(content);
   if (sha256bytes.empty()) {
     return "";
   }
-  return absl::BytesToHexString(absl::string_view(
+  return absl::BytesToHexString(std::string_view(
       reinterpret_cast<const char *>(sha256bytes.data()), sha256bytes.size()));
 }
 

@@ -19,10 +19,10 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/compare.h"
 #include "verible/common/util/bijective-map.h"
 
@@ -63,7 +63,7 @@ enum class MyEnumType { ... };
 std::ostream& operator<<(std::ostream& stream, MyEnumType p);
 
 // If making this usable as an absl flag, provide the following overloads:
-bool AbslParseFlag(absl::string_view text, MyEnumType* mode,
+bool AbslParseFlag(std::string_view text, MyEnumType* mode,
                    std::string* error);
 std::string AbslUnparseFlag(const MyEnumType& mode);
 
@@ -79,7 +79,7 @@ std::ostream& operator<<(std::ostream& stream, MyEnumType p) {
   return MyEnumTypeNames.Unparse(p, stream);
 }
 
-bool AbslParseFlag(absl::string_view text, MyEnumType* mode,
+bool AbslParseFlag(std::string_view text, MyEnumType* mode,
                    std::string* error) {
   return kLanguageModeStringMap.Parse(text, mode, error, "MyEnumType");
 }
@@ -96,7 +96,7 @@ class EnumNameMap {
   // Using a string_view is safe when the string-memory owned elsewhere is
   // guaranteed to outlive objects of this class.
   // String-literals are acceptable sources of string_views for this purpose.
-  using key_type = absl::string_view;
+  using key_type = std::string_view;
 
   // Storage type for mapping information.
   // StringViewCompare gives the benefit of copy-free heterogeneous lookup.
@@ -116,7 +116,7 @@ class EnumNameMap {
   EnumNameMap &operator=(EnumNameMap &&) = delete;
 
   // Print a list of string representations of the enums.
-  std::ostream &ListNames(std::ostream &stream, absl::string_view sep) const {
+  std::ostream &ListNames(std::ostream &stream, std::string_view sep) const {
     return stream << absl::StrJoin(enum_name_map_.forward_view(), sep,
                                    internal::FirstElementFormatter());
   }
@@ -126,7 +126,7 @@ class EnumNameMap {
   // This variant write diagnostics to the 'errstream' stream.
   // Returns true if successful.
   bool Parse(key_type text, EnumType *enum_value, std::ostream &errstream,
-             absl::string_view type_name) const {
+             std::string_view type_name) const {
     const EnumType *found_value = enum_name_map_.find_forward(text);
     if (found_value != nullptr) {
       *enum_value = *found_value;
@@ -141,7 +141,7 @@ class EnumNameMap {
   // Converts the name of an enum to its corresponding value.
   // This variant write diagnostics to the 'error' string.
   bool Parse(key_type text, EnumType *enum_value, std::string *error,
-             absl::string_view type_name) const {
+             std::string_view type_name) const {
     std::ostringstream stream;
     const bool success = Parse(text, enum_value, stream, type_name);
     *error += stream.str();
@@ -149,7 +149,7 @@ class EnumNameMap {
   }
 
   // Returns the string representation of an enum.
-  absl::string_view EnumName(EnumType value) const {
+  std::string_view EnumName(EnumType value) const {
     const auto *key = enum_name_map_.find_reverse(value);
     if (key == nullptr) return "???";
     return *key;

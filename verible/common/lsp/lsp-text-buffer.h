@@ -20,10 +20,10 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/lsp/json-rpc-dispatcher.h"
 #include "verible/common/lsp/lsp-protocol.h"
 
@@ -36,9 +36,9 @@ namespace lsp {
 // process it.
 class EditTextBuffer {
  public:
-  using ContentProcessFun = std::function<void(absl::string_view)>;
+  using ContentProcessFun = std::function<void(std::string_view)>;
 
-  explicit EditTextBuffer(absl::string_view initial_text);
+  explicit EditTextBuffer(std::string_view initial_text);
   EditTextBuffer(const EditTextBuffer &) = delete;
   EditTextBuffer(EditTextBuffer &&) = delete;
 
@@ -73,8 +73,8 @@ class EditTextBuffer {
   // will not work. Needs to be formulated with something something std::move ?
   using LineVector = std::vector<std::shared_ptr<std::string>>;
 
-  static LineVector GenerateLines(absl::string_view content);
-  void ReplaceDocument(absl::string_view content);
+  static LineVector GenerateLines(std::string_view content);
+  void ReplaceDocument(std::string_view content);
   bool LineEdit(const TextDocumentContentChangeEvent &c, std::string *str);
   bool MultiLineEdit(const TextDocumentContentChangeEvent &c);
 

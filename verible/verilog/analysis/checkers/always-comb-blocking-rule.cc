@@ -16,8 +16,8 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -48,7 +48,7 @@ using verible::matcher::Matcher;
 // Register AlwaysCombBlockingRule
 VERILOG_REGISTER_LINT_RULE(AlwaysCombBlockingRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Use only blocking assignments in \'always_comb\' combinational blocks.";
 
 const LintRuleDescriptor &AlwaysCombBlockingRule::GetDescriptor() {

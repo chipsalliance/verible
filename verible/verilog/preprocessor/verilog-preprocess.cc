@@ -19,13 +19,13 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/lexer/token-generator.h"
 #include "verible/common/lexer/token-stream-adapter.h"
 #include "verible/common/text/macro-definition.h"
@@ -227,7 +227,7 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
     const StreamIteratorGenerator &generator, verible::MacroCall *macro_call,
     const verible::MacroDefinition &macro_definition) {
   // Parsing the macro .
-  const absl::string_view macro_name_str = (*iter)->text().substr(1);
+  const std::string_view macro_name_str = (*iter)->text().substr(1);
   verible::TokenInfo macro_name_token(MacroCallId, macro_name_str);
   macro_call->macro_name = macro_name_token;
 
@@ -288,7 +288,7 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
   // true.
 
   // Finding the macro definition.
-  const absl::string_view sv = (*iter)->text();
+  const std::string_view sv = (*iter)->text();
   const auto *found =
       FindOrNull(preprocess_data_.macro_definitions, sv.substr(1));
   if (!found) {
@@ -333,7 +333,7 @@ void VerilogPreprocess::RegisterMacroDefinition(
 // preprocess_data_.lexed_macros_backup Can be accessed directly after expansion
 // as: preprocess_data_.lexed_macros_backup.back()
 absl::Status VerilogPreprocess::ExpandText(
-    const absl::string_view &definition_text) {
+    const std::string_view &definition_text) {
   VerilogLexer lexer(definition_text);
   verible::TokenSequence lexed_sequence;
   verible::TokenSequence expanded_lexed_sequence;
@@ -382,7 +382,7 @@ absl::Status VerilogPreprocess::ExpandMacro(
     const verible::MacroDefinition *macro_definition) {
   const auto &actual_parameters = macro_call.positional_arguments;
 
-  std::map<absl::string_view, verible::DefaultTokenInfo> subs_map;
+  std::map<std::string_view, verible::DefaultTokenInfo> subs_map;
   if (macro_definition->IsCallable()) {
     RETURN_IF_ERROR(macro_definition->PopulateSubstitutionMap(actual_parameters,
                                                               &subs_map));
@@ -609,7 +609,7 @@ absl::Status VerilogPreprocess::HandleInclude(
         **token_iter, std::string(status_or_file.status().message()));
     return status_or_file.status();
   }
-  const absl::string_view source_contents = *status_or_file;
+  const std::string_view source_contents = *status_or_file;
 
   // Creating a new "VerilogPreprocess" object for the included file,
   // With the same configuration and preprocessing info (defines, incdirs) as

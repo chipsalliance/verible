@@ -17,9 +17,9 @@
 
 #include <memory>
 #include <optional>
+#include <string_view>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/lsp/lsp-protocol.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/concrete-syntax-tree.h"
@@ -50,9 +50,9 @@ class FindBeginLabel : public TreeContextVisitor {
  public:
   // Performs search of the label for end entry, based on its location in
   // string and tags
-  absl::string_view LabelSearch(const verible::ConcreteSyntaxTree &tree,
-                                absl::string_view substring, NodeEnum endtag,
-                                NodeEnum begintag) {
+  std::string_view LabelSearch(const verible::ConcreteSyntaxTree &tree,
+                               std::string_view substring, NodeEnum endtag,
+                               NodeEnum begintag) {
     substring_ = substring;
     begintag_ = begintag;
     endtag_ = endtag;
@@ -99,10 +99,10 @@ class FindBeginLabel : public TreeContextVisitor {
     }
   }
 
-  absl::string_view substring_;
+  std::string_view substring_;
   NodeEnum endtag_;
   NodeEnum begintag_;
-  absl::string_view label_;
+  std::string_view label_;
   bool substring_found_;
   bool finished_;
 };
@@ -145,7 +145,7 @@ class HoverBuilder {
         parsedbuffer->parser().SyntaxTree();
     if (!tree) return;
     FindBeginLabel search;
-    absl::string_view label = search.LabelSearch(
+    std::string_view label = search.LabelSearch(
         tree, token.text(), NodeEnum::kEnd, NodeEnum::kBegin);
     if (label.empty()) return;
     response->contents.value = "### End of block\n\n";
@@ -155,7 +155,7 @@ class HoverBuilder {
 
   void HoverInfoIdentifier(verible::lsp::Hover *response,
                            const verible::TokenInfo &token) {
-    absl::string_view symbol = token.text();
+    std::string_view symbol = token.text();
     const SymbolTableNode *node =
         symbol_table_handler_->FindDefinitionNode(symbol);
     if (!node) return;

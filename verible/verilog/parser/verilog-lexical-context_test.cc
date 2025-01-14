@@ -30,10 +30,10 @@
 #include <memory>
 #include <stack>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/text/text-structure.h"
 #include "verible/common/text/token-info.h"
@@ -61,13 +61,13 @@ using verible::TokenStreamReferenceView;
 // If this were a function, its signature would be:
 // template <typename T>
 // inline void EXPECT_EQ_REASON(const verible::WithReason<T>& r, const T&
-// expected, absl::string_view pattern);
+// expected, std::string_view pattern);
 #define EXPECT_EQ_REASON(expr, expected, pattern)                        \
   {                                                                      \
     const auto &r = expr; /* evaluate expr once, auto-extend lifetime */ \
     EXPECT_EQ(r.value, expected) << r.reason;                            \
     /* value could be correct, but reason could be wrong. */             \
-    EXPECT_TRUE(absl::StrContains(absl::string_view(r.reason), pattern)) \
+    EXPECT_TRUE(absl::StrContains(std::string_view(r.reason), pattern))  \
         << "value: " << r.value << "\nreason: " << r.reason;             \
   }
 
@@ -201,7 +201,7 @@ TEST_F(LastSemicolonStateMachineTest, LifeCycleOneSemicolon) {
 
   // Purely synthesized token sequence for testing:
   // Only enums matter, not text.
-  constexpr absl::string_view text("don't care");
+  constexpr std::string_view text("don't care");
   TokenInfo tokens[] = {
       TokenInfo(TK_module, text),
       TokenInfo(SymbolIdentifier, text),
@@ -254,7 +254,7 @@ TEST_F(LastSemicolonStateMachineTest, LifeCycleFinalSemicolon) {
 
   // Purely synthesized token sequence for testing:
   // Only enums matter, not text.
-  constexpr absl::string_view text("don't care");
+  constexpr std::string_view text("don't care");
   TokenInfo tokens[] = {
       TokenInfo(TK_module, text),
       TokenInfo(SymbolIdentifier, text),

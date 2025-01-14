@@ -15,9 +15,9 @@
 #include "verible/common/util/forward.h"
 
 #include <string>
+#include <string_view>
 #include <type_traits>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace verible {
@@ -51,16 +51,16 @@ TEST(ForwardReferenceElseConstructTest, Construct) {
 }
 
 TEST(ForwardReferenceElseConstructTest, ForwardStringView) {
-  const absl::string_view a("hello");
-  const auto &ref = ForwardReferenceElseConstruct<absl::string_view>()(a);
+  const std::string_view a("hello");
+  const auto &ref = ForwardReferenceElseConstruct<std::string_view>()(a);
   EXPECT_EQ(&ref, &a);  // same object forwarded
 }
 
 TEST(ForwardReferenceElseConstructTest, ConstructString) {
-  const absl::string_view a("hello");
+  const std::string_view a("hello");
   const auto &ref = ForwardReferenceElseConstruct<std::string>()(a);
-  static_assert(!std::is_same_v<decltype(ref), absl::string_view>,
-                "!std::is_same<decltype(ref), absl::string_view>::value");
+  static_assert(!std::is_same_v<decltype(ref), std::string_view>,
+                "!std::is_same<decltype(ref), std::string_view>::value");
 }
 
 TEST(ForwardReferenceElseConstructTest, ForwardString) {
@@ -71,7 +71,7 @@ TEST(ForwardReferenceElseConstructTest, ForwardString) {
 
 TEST(ForwardReferenceElseConstructTest, ConstructStringView) {
   const std::string a("hello");
-  const auto &ref = ForwardReferenceElseConstruct<absl::string_view>()(a);
+  const auto &ref = ForwardReferenceElseConstruct<std::string_view>()(a);
   static_assert(!std::is_same_v<decltype(ref), std::string>,
                 "!std::is_same<decltype(ref), std::string>::value");
 }

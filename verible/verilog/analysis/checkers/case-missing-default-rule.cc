@@ -15,8 +15,8 @@
 #include "verible/verilog/analysis/checkers/case-missing-default-rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher-builders.h"
@@ -40,7 +40,7 @@ using verible::matcher::Matcher;
 // Register CaseMissingDefaultRule
 VERILOG_REGISTER_LINT_RULE(CaseMissingDefaultRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Explicitly define a default case for every case statement or add `unique` "
     "qualifier to the case statement.";
 

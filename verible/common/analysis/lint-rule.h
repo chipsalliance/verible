@@ -18,8 +18,9 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_LINT_RULE_H_
 #define VERIBLE_COMMON_ANALYSIS_LINT_RULE_H_
 
+#include <string_view>
+
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 
 namespace verible {
@@ -37,7 +38,7 @@ class LintRule {
   // on failure, the Error-status will contain a message.
   // By default, rules don't accept any configuration, so only an empty
   // configuration is valid.
-  virtual absl::Status Configure(absl::string_view configuration) {
+  virtual absl::Status Configure(std::string_view configuration) {
     if (configuration.empty()) return absl::OkStatus();
     return absl::InvalidArgumentError("Rule does not support configuration.");
   }

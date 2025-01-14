@@ -16,8 +16,8 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_INSTANCE_SHADOW_RULE_H_
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
 #include "verible/common/text/symbol.h"
@@ -32,7 +32,7 @@ namespace analysis {
 class InstanceShadowRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
+  static std::string_view Name();
 
   // Returns the description of the rule implemented formatted for either the
   // helper flag or markdown depending on the parameter type.

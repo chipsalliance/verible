@@ -17,10 +17,10 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/obfuscator.h"
 #include "verible/common/strings/random.h"
 #include "verible/common/text/token-info.h"
@@ -34,7 +34,7 @@ namespace verilog {
 
 using verible::IdentifierObfuscator;
 
-std::string RandomEqualLengthSymbolIdentifier(absl::string_view in) {
+std::string RandomEqualLengthSymbolIdentifier(std::string_view in) {
   verilog::VerilogLexer lexer("");  // Oracle to check identifier-ness.
   // In rare case we accidentally generate a keyword, try again.
   for (;;) {
@@ -50,7 +50,7 @@ std::string RandomEqualLengthSymbolIdentifier(absl::string_view in) {
 // TODO(fangism): single-char identifiers don't need to be obfuscated.
 // or use a shuffle/permutation to guarantee collision-free reversibility.
 
-static void ObfuscateVerilogCodeInternal(absl::string_view content,
+static void ObfuscateVerilogCodeInternal(std::string_view content,
                                          std::ostream *output,
                                          IdentifierObfuscator *subst) {
   VLOG(1) << __FUNCTION__;
@@ -90,17 +90,17 @@ static void ObfuscateVerilogCodeInternal(absl::string_view content,
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
-static absl::Status ObfuscationError(absl::string_view message,
-                                     absl::string_view original,
-                                     absl::string_view encoded) {
+static absl::Status ObfuscationError(std::string_view message,
+                                     std::string_view original,
+                                     std::string_view encoded) {
   return absl::InternalError(absl::StrCat(message, "\nORIGINAL:\n", original,
                                           "\nENCODED:\n", encoded,
                                           "\n*** Please file a bug. ***\n"));
 }
 
-static absl::Status ReversibilityError(absl::string_view original,
-                                       absl::string_view encoded,
-                                       absl::string_view decoded) {
+static absl::Status ReversibilityError(std::string_view original,
+                                       std::string_view encoded,
+                                       std::string_view decoded) {
   return absl::InternalError(absl::StrCat(
       "Internal error: decode(encode) != original\nORIGINAL:\n", original,
       "\nENCODED:\n", encoded, "\nDECODED:\n", decoded,
@@ -109,8 +109,8 @@ static absl::Status ReversibilityError(absl::string_view original,
 }
 
 // Internal consistency check that decoding restores original text.
-static absl::Status VerifyDecoding(absl::string_view original,
-                                   absl::string_view encoded,
+static absl::Status VerifyDecoding(std::string_view original,
+                                   std::string_view encoded,
                                    const verible::Obfuscator &subst) {
   VLOG(1) << __FUNCTION__;
   // Skip if original transformation was already decoding.
@@ -133,8 +133,8 @@ static absl::Status VerifyDecoding(absl::string_view original,
 }
 
 // Verify that obfuscated output is lexically equivalent to original.
-static absl::Status VerifyEquivalence(absl::string_view original,
-                                      absl::string_view encoded) {
+static absl::Status VerifyEquivalence(std::string_view original,
+                                      std::string_view encoded) {
   VLOG(1) << __FUNCTION__;
   std::ostringstream errstream;
   const auto diff_status =
@@ -157,7 +157,7 @@ static absl::Status VerifyEquivalence(absl::string_view original,
   return absl::OkStatus();
 }
 
-absl::Status ObfuscateVerilogCode(absl::string_view content,
+absl::Status ObfuscateVerilogCode(std::string_view content,
                                   std::ostream *output,
                                   IdentifierObfuscator *subst) {
   VLOG(1) << __FUNCTION__;
