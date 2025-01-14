@@ -40,6 +40,11 @@
 #include "verible/verilog/parser/verilog-parser.h"  // for verilog_symbol_name()
 #include "verible/verilog/parser/verilog-token-enum.h"
 
+std::string GenerateConditionComment(const std::vector<std::string>& stack) {
+    if (stack.empty()) return "";
+    return "  // " + absl::StrJoin(stack, " && ");
+}
+
 namespace verilog {
 
 using verible::TokenGenerator;
@@ -492,13 +497,8 @@ absl::Status VerilogPreprocess::HandleUndef(
 }
 
 absl::Status VerilogPreprocess::HandleIf(
-    const TokenStreamView::const_iterator ifpos,  // `ifdef, `ifndef, `elseif
+    const TokenStreamView::const_iterator ifpos, 
     const StreamIteratorGenerator &generator) {
-  if (!config_.filter_branches) {  // nothing to do.
-    preprocess_data_.preprocessed_token_stream.push_back(*ifpos);
-    return absl::OkStatus();
-  }
-
   auto macro_name_extract = ExtractMacroName(generator);
   if (!macro_name_extract.ok()) {
     return macro_name_extract.status();
@@ -509,58 +509,68 @@ absl::Status VerilogPreprocess::HandleIf(
   const bool name_is_defined = defs.find(macro_name->text()) != defs.end();
   const bool condition_met = (name_is_defined ^ negative_if);
 
+  // Update condition stack for annotation
+  if (negative_if) {
+    condition_stack_.push_back("!" + std::string(macro_name->text()));
+  } else {
+    condition_stack_.push_back(std::string(macro_name->text()));
+  }
+
+  // Annotate with condition
+  const std::string comment = GenerateConditionComment(condition_stack_);
+  preprocess_data_.preprocessed_token_stream.push_back(
+      verible::TokenInfo(PP_ifdef, (*ifpos)->text() + comment));
+
   if ((*ifpos)->token_enum() == PP_elsif) {
     if (conditional_block_.size() <= 1) {
       preprocess_data_.errors.emplace_back(**ifpos, "Unmatched `elsif");
-      return absl::InvalidArgumentError("Unmatched `else");
+      return absl::InvalidArgumentError("Unmatched `elsif");
     }
-    if (!conditional_block_.top().UpdateCondition(**ifpos, condition_met)) {
-      preprocess_data_.errors.emplace_back(**ifpos, "`elsif after `else");
-      preprocess_data_.errors.emplace_back(conditional_block_.top().token(),
-                                           "Previous `else started here.");
-      return absl::InvalidArgumentError("Duplicate `else");
-    }
+    conditional_block_.top().UpdateCondition(**ifpos, condition_met);
   } else {
-    // A new, nested if-branch.
-    const bool scope_enabled = conditional_block_.top().InSelectedBranch();
-    conditional_block_.push(BranchBlock(scope_enabled, condition_met, **ifpos));
+    conditional_block_.push(BranchBlock(conditional_block_.top().InSelectedBranch(), 
+                                        condition_met, **ifpos));
   }
   return absl::OkStatus();
 }
 
+
 absl::Status VerilogPreprocess::HandleElse(
     TokenStreamView::const_iterator else_pos) {
-  if (!config_.filter_branches) {  // nothing to do.
-    preprocess_data_.preprocessed_token_stream.push_back(*else_pos);
-    return absl::OkStatus();
-  }
-
   if (conditional_block_.size() <= 1) {
     preprocess_data_.errors.emplace_back(**else_pos, "Unmatched `else");
     return absl::InvalidArgumentError("Unmatched `else");
   }
 
-  if (!conditional_block_.top().StartElse(**else_pos)) {
-    preprocess_data_.errors.emplace_back(**else_pos, "Duplicate `else");
-    preprocess_data_.errors.emplace_back(conditional_block_.top().token(),
-                                         "Previous `else started here.");
-    return absl::InvalidArgumentError("Duplicate `else");
+  // Negate the last condition for annotation
+  if (!condition_stack_.empty()) {
+    condition_stack_.back() = "!" + condition_stack_.back();
   }
+  const std::string comment = GenerateConditionComment(condition_stack_);
+  preprocess_data_.preprocessed_token_stream.push_back(
+      verible::TokenInfo(PP_else, (*else_pos)->text() + comment));
+
+  conditional_block_.top().StartElse(**else_pos);
   return absl::OkStatus();
 }
 
+
 absl::Status VerilogPreprocess::HandleEndif(
     TokenStreamView::const_iterator endif_pos) {
-  if (!config_.filter_branches) {  // nothing to do.
-    preprocess_data_.preprocessed_token_stream.push_back(*endif_pos);
-    return absl::OkStatus();
-  }
-
   if (conditional_block_.size() <= 1) {
     preprocess_data_.errors.emplace_back(**endif_pos, "Unmatched `endif");
     return absl::InvalidArgumentError("Unmatched `endif");
   }
+
+  // Annotate with resolved condition stack
+  const std::string comment = GenerateConditionComment(condition_stack_);
+  preprocess_data_.preprocessed_token_stream.push_back(
+      verible::TokenInfo(PP_endif, (*endif_pos)->text() + comment));
+
   conditional_block_.pop();
+  if (!condition_stack_.empty()) {
+    condition_stack_.pop_back();
+  }
   return absl::OkStatus();
 }
 
