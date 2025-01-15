@@ -15,8 +15,8 @@
 #include "verible/verilog/analysis/checkers/generate-label-rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/core-matchers.h"
@@ -35,7 +35,7 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(GenerateLabelRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "All generate block statements must have a label";
 
 const LintRuleDescriptor &GenerateLabelRule::GetDescriptor() {

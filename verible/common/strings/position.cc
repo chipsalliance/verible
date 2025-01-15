@@ -14,14 +14,14 @@
 
 #include "verible/common/strings/position.h"
 
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 
 int AdvancingTextNewColumnPosition(int old_column_position,
-                                   absl::string_view advancing_text) {
+                                   std::string_view advancing_text) {
   const auto last_newline = advancing_text.find_last_of('\n');
-  if (last_newline == absl::string_view::npos) {
+  if (last_newline == std::string_view::npos) {
     // No newlines, so treat every character as one column position,
     // even tabs.
     return old_column_position + advancing_text.length();

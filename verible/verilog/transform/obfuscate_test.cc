@@ -16,10 +16,10 @@
 
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/strings/obfuscator.h"
 
@@ -28,7 +28,7 @@ namespace {
 
 using verible::IdentifierObfuscator;
 
-static std::string ExpectNeverToBeCalled(absl::string_view) {
+static std::string ExpectNeverToBeCalled(std::string_view) {
   ADD_FAILURE() << "This identifier generator should've never been called";
   return "";
 }
@@ -44,7 +44,7 @@ TEST(ObfuscateVerilogCodeTest, PreloadedSubstitutions) {
   for (const auto &sub : subs) {
     ASSERT_TRUE(ob.encode(sub.first, sub.second));
   }
-  const std::pair<absl::string_view, absl::string_view> kTestCases[] = {
+  const std::pair<std::string_view, std::string_view> kTestCases[] = {
       {"", ""},  // empty file
       {"\n", "\n"},
       {"//comments unchanged\n", "//comments unchanged\n"},
@@ -109,7 +109,7 @@ TEST(ObfuscateVerilogCodeTest, PreloadedSubstitutions) {
 }
 
 TEST(ObfuscateVerilogCodeTest, InputLexicalError) {
-  const absl::string_view kTestCases[] = {
+  const std::string_view kTestCases[] = {
       "789badid",
       "`FOO(8911badid)\n",
       "`define FOO 911badid\n",

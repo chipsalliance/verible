@@ -18,9 +18,9 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/spacer.h"
 
@@ -126,9 +126,9 @@ TEST(MapTreeTest, EmplaceOneChild) {
 }
 
 struct NonCopyable {
-  absl::string_view text;
+  std::string_view text;
 
-  explicit NonCopyable(absl::string_view text) : text(text) {}
+  explicit NonCopyable(std::string_view text) : text(text) {}
 
   // move-only, no copy
   NonCopyable(const NonCopyable &) = delete;

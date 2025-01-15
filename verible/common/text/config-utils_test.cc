@@ -17,12 +17,12 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "re2/re2.h"
 
@@ -136,8 +136,8 @@ TEST(ConfigUtilsTest, ParseString) {
 }
 
 TEST(ConfigUtilsTest, ParseNamedBitmap) {
-  const std::vector<absl::string_view> kBitNames = {"ZERO", "ONE", "TWO"};
-  const std::pair<absl::string_view, uint32_t> kTestCases[] = {
+  const std::vector<std::string_view> kBitNames = {"ZERO", "ONE", "TWO"};
+  const std::pair<std::string_view, uint32_t> kTestCases[] = {
       {"baz:ONE", 1 << 1},
       {"baz:", 0},
       {"baz:ZERO|TWO", (1 << 0) | (1 << 2)},

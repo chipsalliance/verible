@@ -15,31 +15,31 @@
 #include "verible/common/strings/naming-utils.h"
 
 #include <algorithm>
+#include <string_view>
 
 #include "absl/strings/ascii.h"
-#include "absl/strings/string_view.h"
 
 namespace verible {
 
-bool IsNameAllCapsUnderscoresDigits(absl::string_view text) {
+bool IsNameAllCapsUnderscoresDigits(std::string_view text) {
   return std::all_of(text.begin(), text.end(), [](char c) {
     return absl::ascii_isupper(c) || c == '_' || absl::ascii_isdigit(c);
   });
 }
 
-bool AllUnderscoresFollowedByDigits(absl::string_view text) {
+bool AllUnderscoresFollowedByDigits(std::string_view text) {
   if (text.empty()) return true;
 
   // Return false if the underscore is the last character.
   if (text[text.length() - 1] == '_') return false;
 
-  for (absl::string_view::size_type i = 0; i < text.length() - 1; ++i) {
+  for (std::string_view::size_type i = 0; i < text.length() - 1; ++i) {
     if (text[i] == '_' && !absl::ascii_isdigit(text[i + 1])) return false;
   }
   return true;
 }
 
-bool IsUpperCamelCaseWithDigits(absl::string_view text) {
+bool IsUpperCamelCaseWithDigits(std::string_view text) {
   if (text.empty()) return true;
 
   // Check that the first letter is capital. Not allowing "_foo" cases.
@@ -47,13 +47,13 @@ bool IsUpperCamelCaseWithDigits(absl::string_view text) {
 
   // Check for underscores followed by digits
   auto pos = text.find('_');
-  if (pos != absl::string_view::npos) {
+  if (pos != std::string_view::npos) {
     return AllUnderscoresFollowedByDigits(text.substr(pos));
   }
   return true;
 }
 
-bool IsLowerSnakeCaseWithDigits(absl::string_view text) {
+bool IsLowerSnakeCaseWithDigits(std::string_view text) {
   if (text.empty()) return true;
 
   // Check that the first letter is lowercase. Not allowing "_foo" cases.

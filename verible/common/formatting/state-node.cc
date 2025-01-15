@@ -18,9 +18,9 @@
 #include <memory>
 #include <ostream>
 #include <stack>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/unwrapped-line.h"
@@ -32,7 +32,7 @@
 
 namespace verible {
 
-static constexpr absl::string_view kNotForAlignment =
+static constexpr std::string_view kNotForAlignment =
     "Aligned tokens should never use line-wrap optimization!";
 
 static SpacingDecision FrontTokenSpacing(const FormatTokenRange range) {
@@ -145,7 +145,7 @@ int StateNode::UpdateColumnPosition() {
     // overflow the previous line (and should be penalized accordingly).
     const auto text = current_format_token.Text();
     const auto last_newline_pos = text.find_last_of('\n');
-    if (last_newline_pos != absl::string_view::npos) {
+    if (last_newline_pos != std::string_view::npos) {
       // There was a newline, it doesn't matter what the wrapping decision was.
       // The position is the length of the text after the last newline.
       current_column = text.length() - last_newline_pos - 1;
@@ -193,7 +193,7 @@ int StateNode::UpdateColumnPosition() {
       }
       break;
     case SpacingDecision::kPreserve: {
-      const absl::string_view original_spacing_text =
+      const std::string_view original_spacing_text =
           current_format_token.OriginalLeadingSpaces();
       // prev_state is null when the first token of the unwrapped line was
       // marked as SpacingOptions::Preserve, which indicates that formatting

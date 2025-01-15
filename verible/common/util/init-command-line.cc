@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/base/log_severity.h"
@@ -28,7 +29,6 @@
 #include "absl/log/globals.h"
 #include "absl/log/initialize.h"
 #include "absl/strings/numbers.h"
-#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "verible/common/util/generated-verible-build-version.h"
 
@@ -83,8 +83,8 @@ void SetLoggingLevelsFromEnvironment() {
 }
 
 // We might want to have argc edited in the future, hence non-const param.
-std::vector<absl::string_view> InitCommandLine(
-    absl::string_view usage,
+std::vector<std::string_view> InitCommandLine(
+    std::string_view usage,
     int *argc,  // NOLINT(readability-non-const-parameter)
     char ***argv) {
   absl::InitializeSymbolizer(*argv[0]);

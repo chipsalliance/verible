@@ -17,12 +17,12 @@
 
 #include <iosfwd>
 #include <set>
+#include <string_view>
 #include <vector>
 
 #include "absl/flags/declare.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/line-linter.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/lint-waiver.h"
@@ -63,7 +63,7 @@ std::set<verible::LintViolationWithStatus> GetSortedViolations(
 // TODO(hzeller): the options to this function are a lot and many of them
 //   the same type does not help. Make at least the bool options a struct with
 //   names parameters.
-int LintOneFile(std::ostream *stream, absl::string_view filename,
+int LintOneFile(std::ostream *stream, std::string_view filename,
                 const LinterConfiguration &config,
                 verible::ViolationHandler *violation_handler, bool check_syntax,
                 bool parse_fatal, bool lint_fatal, bool show_context = false);
@@ -76,15 +76,15 @@ class VerilogLinter {
 
   // Configures the internal linters, enabling select rules.
   absl::Status Configure(const LinterConfiguration &configuration,
-                         absl::string_view lintee_filename);
+                         std::string_view lintee_filename);
 
   // Analyzes text structure.
   void Lint(const verible::TextStructureView &text_structure,
-            absl::string_view filename);
+            std::string_view filename);
 
   // Reports lint findings.
   std::vector<verible::LintRuleStatus> ReportStatus(
-      const verible::LineColumnMap &, absl::string_view text_base);
+      const verible::LineColumnMap &, std::string_view text_base);
 
  private:
   // Line based linter.
@@ -107,11 +107,11 @@ class VerilogLinter {
 // If --rules_config_search is configured, uses the given
 // start file to look up the directory chain.
 absl::StatusOr<LinterConfiguration> LinterConfigurationFromFlags(
-    absl::string_view linting_start_file = ".");
+    std::string_view linting_start_file = ".");
 
 // Expands linter configuration from a text file
 absl::Status AppendLinterConfigurationFromFile(
-    LinterConfiguration *config, absl::string_view config_filename);
+    LinterConfiguration *config, std::string_view config_filename);
 
 // VerilogLintTextStructure analyzes Verilog syntax tree for style violations
 // and syntactically detectable pitfalls.
@@ -130,18 +130,18 @@ absl::Status AppendLinterConfigurationFromFile(
 // Returns:
 //   Vector of LintRuleStatuses on success, otherwise error code.
 absl::StatusOr<std::vector<verible::LintRuleStatus>> VerilogLintTextStructure(
-    absl::string_view filename, const LinterConfiguration &config,
+    std::string_view filename, const LinterConfiguration &config,
     const verible::TextStructureView &text_structure);
 
 // Prints the rule, description and default_enabled.
 absl::Status PrintRuleInfo(std::ostream *,
                            const analysis::LintRuleDescriptionsMap &,
-                           absl::string_view);
+                           std::string_view);
 
 // Outputs the descriptions for every rule for the --help_rules flag.
 // TODO(sconwayaus): These are really printers and not getters. Consider
 // renaming
-void GetLintRuleDescriptionsHelpFlag(std::ostream *, absl::string_view);
+void GetLintRuleDescriptionsHelpFlag(std::ostream *, std::string_view);
 
 // Outputs the descriptions for every rule, formatted for markdown.
 // TODO(sconwayaus): These are really printers and not getters. Consider

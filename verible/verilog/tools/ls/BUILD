@@ -44,7 +44,6 @@ cc_library(
         "@abseil-cpp//absl/container:node_hash_map",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@re2",
     ],
 )
@@ -63,7 +62,6 @@ cc_library(
         "//verible/verilog/analysis:verilog-linter-configuration",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -105,7 +103,6 @@ cc_library(
         "//verible/verilog/formatting:formatter",
         "//verible/verilog/parser:verilog-token-enum",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@nlohmann_json//:singleheader-json",
     ],
 )
@@ -163,7 +160,6 @@ cc_library(
         "//verible/verilog/analysis:symbol-table",
         "//verible/verilog/parser:verilog-token-enum",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -194,7 +190,6 @@ cc_library(
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings:str_format",
-        "@abseil-cpp//absl/strings:string_view",
         "@abseil-cpp//absl/time",
         "@abseil-cpp//absl/types:optional",
     ],
@@ -212,7 +207,6 @@ cc_test(
         "//verible/common/util:file-util",
         "//verible/verilog/analysis:verilog-project",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -238,7 +232,6 @@ cc_library(
         "//verible/verilog/analysis:verilog-project",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
         "@nlohmann_json//:singleheader-json",
     ],
 )
@@ -257,7 +250,6 @@ cc_test(
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@nlohmann_json//:singleheader-json",
@@ -273,7 +265,6 @@ cc_binary(
         ":verilog-language-server",
         "//verible/common/util:init-command-line",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -309,7 +300,6 @@ cc_test(
         "//verible/verilog/formatting:formatter",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@nlohmann_json//:singleheader-json",

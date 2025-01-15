@@ -18,8 +18,8 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -114,7 +114,7 @@ static bool IsAnyPort(const verible::Symbol *symbol) {
 
 void ModuleParameterRule::HandleSymbol(
     const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
-  static constexpr absl::string_view kMessage =
+  static constexpr std::string_view kMessage =
       "Pass named parameters for parameterized module instantiations with "
       "more than one parameter";
 
@@ -152,7 +152,7 @@ verible::LintRuleStatus ModuleParameterRule::Report() const {
 
 void ModulePortRule::HandleSymbol(const verible::Symbol &symbol,
                                   const verible::SyntaxTreeContext &context) {
-  static constexpr absl::string_view kMessage =
+  static constexpr std::string_view kMessage =
       "Use named ports for module instantiation with "
       "more than one port";
 

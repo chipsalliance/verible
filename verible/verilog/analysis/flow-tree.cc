@@ -18,7 +18,6 @@
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/logging.h"
 #include "verible/verilog/parser/verilog-token-enum.h"
 

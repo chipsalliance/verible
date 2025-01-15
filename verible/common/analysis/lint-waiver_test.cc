@@ -16,8 +16,8 @@
 
 #include <cstddef>
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/strings/line-column-map.h"
 #include "verible/common/text/text-structure-test-utils.h"
@@ -631,65 +631,65 @@ TEST_F(LintWaiverBuilderTest, FromTextStructureOneWaiverRangeOpened) {
 }
 
 TEST_F(LintWaiverBuilderTest, ApplyExternalWaiversInvalidCases) {
-  std::set<absl::string_view> active_rules;
-  const absl::string_view user_file = "filename";
-  const absl::string_view cfg_file = "waive_file.config";
+  std::set<std::string_view> active_rules;
+  const std::string_view user_file = "filename";
+  const std::string_view cfg_file = "waive_file.config";
 
   // Completely invalid config
-  const absl::string_view cfg_inv = "inv config";
+  const std::string_view cfg_inv = "inv config";
   EXPECT_NOK(ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_inv));
 
-  const absl::string_view cfg_inv_2 = "--line=1";
+  const std::string_view cfg_inv_2 = "--line=1";
   EXPECT_NOK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_inv_2));
 
   // Valid command, invalid parameters
-  const absl::string_view cfg_inv_params = "waive --something";
+  const std::string_view cfg_inv_params = "waive --something";
   EXPECT_NOK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_inv_params));
 
   // Non-registered rule name
-  const absl::string_view cfg_inv_rule = "waive --rule=abc --line=1";
+  const std::string_view cfg_inv_rule = "waive --rule=abc --line=1";
   EXPECT_NOK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_inv_rule));
 
   // register rule
-  const absl::string_view abc_rule = "abc";
+  const std::string_view abc_rule = "abc";
   active_rules.insert(abc_rule);
 
   // Valid rule, missing params
-  const absl::string_view cfg_no_param = "waive --rule=abc";
+  const std::string_view cfg_no_param = "waive --rule=abc";
   EXPECT_NOK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_no_param));
 
   // Valid rule, invalid line number
-  const absl::string_view cfg_inv_lineno = "waive --rule=abc --line=0";
+  const std::string_view cfg_inv_lineno = "waive --rule=abc --line=0";
   EXPECT_NOK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_inv_lineno));
 
   // Valid rule, invalid line range
-  const absl::string_view cfg_inv_range = "waive --rule=abc --line=1:0";
+  const std::string_view cfg_inv_range = "waive --rule=abc --line=1:0";
   EXPECT_NOK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_inv_range));
   // Valid rule, invalid regex
-  const absl::string_view cfg_inv_regex = "waive --rule=abc --regex=\"(\"";
+  const std::string_view cfg_inv_regex = "waive --rule=abc --regex=\"(\"";
   EXPECT_NOK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_inv_regex));
 
   // Valid rule, both regex and lines specified
-  const absl::string_view cfg_conflict =
+  const std::string_view cfg_conflict =
       "waive --rule=abc --regex=\".*\" --line=1";
   EXPECT_NOK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_conflict));
 
   // Missing rulename
-  const absl::string_view cfg_no_rule = "waive --line=1";
+  const std::string_view cfg_no_rule = "waive --line=1";
   EXPECT_NOK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_no_rule));
 
   // Check that even though some rules are invalid, the consecutive ones
   // are still parsed and applied
-  const absl::string_view cfg_mixed =
+  const std::string_view cfg_mixed =
       "waive --line=1\ndasdasda\nwaive --rule=abc --line=10";
   EXPECT_NOK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_mixed));
@@ -699,30 +699,30 @@ TEST_F(LintWaiverBuilderTest, ApplyExternalWaiversInvalidCases) {
 }
 
 TEST_F(LintWaiverBuilderTest, ApplyExternalWaiversValidCases) {
-  const std::set<absl::string_view> active_rules{"abc"};
-  const absl::string_view user_file = "filename";
-  const absl::string_view cfg_file = "waive_file.config";
+  const std::set<std::string_view> active_rules{"abc"};
+  const std::string_view user_file = "filename";
+  const std::string_view cfg_file = "waive_file.config";
 
-  const absl::string_view cfg_line = "waive --rule=abc --line=1";
+  const std::string_view cfg_line = "waive --rule=abc --line=1";
   EXPECT_OK(ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_line));
   EXPECT_TRUE(lint_waiver_.RuleIsWaivedOnLine("abc", 0));
   EXPECT_FALSE(lint_waiver_.RuleIsWaivedOnLine("abc", 1));
 
-  const absl::string_view cfg_line_inv_ord = "waive --line=3 --rule=abc";
+  const std::string_view cfg_line_inv_ord = "waive --line=3 --rule=abc";
   EXPECT_OK(ApplyExternalWaivers(active_rules, user_file, cfg_file,
                                  cfg_line_inv_ord));
   EXPECT_FALSE(lint_waiver_.RuleIsWaivedOnLine("abc", 1));
   EXPECT_TRUE(lint_waiver_.RuleIsWaivedOnLine("abc", 2));
   EXPECT_FALSE(lint_waiver_.RuleIsWaivedOnLine("abc", 3));
 
-  const absl::string_view cfg_quotes = "waive --rule=\"abc\" --line=5";
+  const std::string_view cfg_quotes = "waive --rule=\"abc\" --line=5";
   EXPECT_OK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_quotes));
   EXPECT_FALSE(lint_waiver_.RuleIsWaivedOnLine("abc", 3));
   EXPECT_TRUE(lint_waiver_.RuleIsWaivedOnLine("abc", 4));
   EXPECT_FALSE(lint_waiver_.RuleIsWaivedOnLine("abc", 5));
 
-  const absl::string_view cfg_line_range = "waive --rule=abc --line=7:9";
+  const std::string_view cfg_line_range = "waive --rule=abc --line=7:9";
   EXPECT_OK(
       ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_line_range));
   EXPECT_FALSE(lint_waiver_.RuleIsWaivedOnLine("abc", 5));
@@ -731,28 +731,28 @@ TEST_F(LintWaiverBuilderTest, ApplyExternalWaiversValidCases) {
   EXPECT_TRUE(lint_waiver_.RuleIsWaivedOnLine("abc", 8));
   EXPECT_FALSE(lint_waiver_.RuleIsWaivedOnLine("abc", 9));
 
-  const absl::string_view cfg_line_range_i = "waive --rule=abc --line=11:11";
+  const std::string_view cfg_line_range_i = "waive --rule=abc --line=11:11";
   EXPECT_OK(ApplyExternalWaivers(active_rules, user_file, cfg_file,
                                  cfg_line_range_i));
   EXPECT_FALSE(lint_waiver_.RuleIsWaivedOnLine("abc", 9));
   EXPECT_TRUE(lint_waiver_.RuleIsWaivedOnLine("abc", 10));
   EXPECT_FALSE(lint_waiver_.RuleIsWaivedOnLine("abc", 11));
 
-  const absl::string_view cfg_regex = "waive --rule=abc --regex=abc";
+  const std::string_view cfg_regex = "waive --rule=abc --regex=abc";
   EXPECT_OK(ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_regex));
 
-  const absl::string_view cfg_regex_complex =
+  const std::string_view cfg_regex_complex =
       "waive --rule=abc --regex=\"abc .*\"";
   EXPECT_OK(ApplyExternalWaivers(active_rules, user_file, cfg_file,
                                  cfg_regex_complex));
 }
 
 TEST_F(LintWaiverBuilderTest, LocationOptionNarrowsTestedFile) {
-  const std::set<absl::string_view> active_rules{"abc"};
-  const absl::string_view user_file = "some_fancy_fileName.sv";
-  const absl::string_view cfg_file = "waive_file.config";
+  const std::set<std::string_view> active_rules{"abc"};
+  const std::string_view user_file = "some_fancy_fileName.sv";
+  const std::string_view cfg_file = "waive_file.config";
 
-  absl::string_view cfg_line = R"(
+  std::string_view cfg_line = R"(
     waive --rule=abc --line=100
     waive --rule=abc --line=200 --location=".*foo.*"
     waive --rule=abc --line=300 --location=".*_fancy_.*"
@@ -766,14 +766,14 @@ TEST_F(LintWaiverBuilderTest, LocationOptionNarrowsTestedFile) {
 }
 
 TEST_F(LintWaiverBuilderTest, RegexToLinesSimple) {
-  const std::set<absl::string_view> active_rules{"rule-1"};
-  const absl::string_view user_file = "filename";
-  const absl::string_view cfg_file = "waive_file.config";
+  const std::set<std::string_view> active_rules{"rule-1"};
+  const std::string_view user_file = "filename";
+  const std::string_view cfg_file = "waive_file.config";
 
-  const absl::string_view cfg_regex = "waive --rule=rule-1 --regex=def";
+  const std::string_view cfg_regex = "waive --rule=rule-1 --regex=def";
   EXPECT_OK(ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_regex));
 
-  const absl::string_view file = "abc\ndef\nghi\n";
+  const std::string_view file = "abc\ndef\nghi\n";
   const LineColumnMap line_map(file);
 
   lint_waiver_.RegexToLines(file, line_map);
@@ -785,14 +785,14 @@ TEST_F(LintWaiverBuilderTest, RegexToLinesSimple) {
 }
 
 TEST_F(LintWaiverBuilderTest, RegexToLinesCatchAll) {
-  const std::set<absl::string_view> active_rules{"rule-1"};
-  const absl::string_view user_file = "filename";
-  const absl::string_view cfg_file = "waive_file.config";
+  const std::set<std::string_view> active_rules{"rule-1"};
+  const std::string_view user_file = "filename";
+  const std::string_view cfg_file = "waive_file.config";
 
-  const absl::string_view cfg_regex = "waive --rule=rule-1 --regex=\".*\"";
+  const std::string_view cfg_regex = "waive --rule=rule-1 --regex=\".*\"";
   EXPECT_OK(ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_regex));
 
-  const absl::string_view file = "abc\ndef\nghi\n\n";
+  const std::string_view file = "abc\ndef\nghi\n\n";
   const LineColumnMap line_map(file);
 
   lint_waiver_.RegexToLines(file, line_map);
@@ -808,14 +808,14 @@ TEST_F(LintWaiverBuilderTest, RegexToLinesCatchAll) {
 }
 
 TEST_F(LintWaiverBuilderTest, RegexToLinesMultipleMatches) {
-  const std::set<absl::string_view> active_rules{"rule-1"};
-  const absl::string_view user_file = "filename";
-  const absl::string_view cfg_file = "waive_file.config";
+  const std::set<std::string_view> active_rules{"rule-1"};
+  const std::string_view user_file = "filename";
+  const std::string_view cfg_file = "waive_file.config";
 
-  const absl::string_view cfg_regex = "waive --rule=rule-1 --regex=\"[0-9]\"";
+  const std::string_view cfg_regex = "waive --rule=rule-1 --regex=\"[0-9]\"";
   EXPECT_OK(ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_regex));
 
-  const absl::string_view file = "abc1\ndef\ng2hi\n";
+  const std::string_view file = "abc1\ndef\ng2hi\n";
   const LineColumnMap line_map(file);
 
   lint_waiver_.RegexToLines(file, line_map);

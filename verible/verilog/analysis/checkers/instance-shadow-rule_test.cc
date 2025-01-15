@@ -16,9 +16,9 @@
 
 #include <initializer_list>
 #include <memory>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/linter-test-utils.h"
 #include "verible/common/analysis/syntax-tree-linter-test-utils.h"
@@ -179,9 +179,9 @@ TEST(InstanceShadowingTest, CorrectLocationTest) {
     CHECK_EQ(linter_.ReportStatus()[0].violations.size(), 1);
 
     // Report detailed differences, if any.
-    const absl::string_view base_text = analyzer.Data().Contents();
-    absl::string_view foo = test.FindImportantTokens(base_text)[0].text();
-    absl::string_view bar =
+    const std::string_view base_text = analyzer.Data().Contents();
+    std::string_view foo = test.FindImportantTokens(base_text)[0].text();
+    std::string_view bar =
         linter_.ReportStatus()[0].violations.begin()->token.text();
     ASSERT_TRUE(foo == bar);
   }

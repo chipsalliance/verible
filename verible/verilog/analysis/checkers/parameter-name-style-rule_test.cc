@@ -16,10 +16,10 @@
 
 #include <initializer_list>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/linter-test-utils.h"
 #include "verible/common/analysis/syntax-tree-linter-test-utils.h"
@@ -225,10 +225,10 @@ TEST(ParameterNameStyleRuleTest, ConfigurationPass) {
   absl::Status status;
 
   // Upper Camel Case (may end in _[0-9]+)
-  constexpr absl::string_view kUpperCamelCaseRegex =
+  constexpr std::string_view kUpperCamelCaseRegex =
       "(([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?)";
   // ALL_CAPS
-  constexpr absl::string_view kAllCapsRegex = "([A-Z_0-9]+)";
+  constexpr std::string_view kAllCapsRegex = "([A-Z_0-9]+)";
 
   const std::string default_localparam_regex =
       std::string(kUpperCamelCaseRegex);

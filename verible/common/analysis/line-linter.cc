@@ -15,16 +15,16 @@
 #include "verible/common/analysis/line-linter.h"
 
 #include <memory>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/line-lint-rule.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/util/logging.h"
 
 namespace verible {
 
-void LineLinter::Lint(const std::vector<absl::string_view> &lines) {
+void LineLinter::Lint(const std::vector<std::string_view> &lines) {
   VLOG(1) << "LineLinter analyzing lines with " << rules_.size() << " rules.";
   for (const auto &line : lines) {
     for (const auto &rule : rules_) {

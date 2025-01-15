@@ -19,15 +19,15 @@
 #include <initializer_list>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 
 namespace verible {
 namespace config {
-using ConfigValueSetter = std::function<absl::Status(absl::string_view)>;
+using ConfigValueSetter = std::function<absl::Status(std::string_view)>;
 
 struct NVConfigSpec {
   const char *name;
@@ -66,7 +66,7 @@ struct NVConfigSpec {
 // If none of the called setters returns an error (which otherwise is returned),
 // this function returns with an absl::OkStatus().
 absl::Status ParseNameValues(
-    absl::string_view config_string,
+    std::string_view config_string,
     const std::initializer_list<config::NVConfigSpec> &spec);
 
 namespace config {
@@ -85,7 +85,7 @@ ConfigValueSetter SetString(std::string *value);
 // set is provided as vector for simplicity and to allow the caller to
 // impose a particular importance order when returning an error.
 ConfigValueSetter SetStringOneOf(std::string *value,
-                                 const std::vector<absl::string_view> &allowed);
+                                 const std::vector<std::string_view> &allowed);
 
 // Set a bitmap from the given values, a '|'-separated list of named bits
 // to be set. The bit-names provided in the configuration-string can come
@@ -95,7 +95,7 @@ ConfigValueSetter SetStringOneOf(std::string *value,
 // named in choices[5] modifies (1<<5). Given the uint32 value, this allows
 // up to 32 choices.
 ConfigValueSetter SetNamedBits(uint32_t *value,
-                               const std::vector<absl::string_view> &choices);
+                               const std::vector<std::string_view> &choices);
 
 // Set a Regex
 ConfigValueSetter SetRegex(std::unique_ptr<re2::RE2> *regex);

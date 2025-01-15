@@ -21,7 +21,6 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/util:logging",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -60,7 +59,6 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/util:casts",
         "//verible/common/util:logging",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -75,7 +73,6 @@ cc_library(
         "//verible/common/text:token-info-test-util",
         "//verible/common/util:logging",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",  # for library testonly
     ],
 )
@@ -93,7 +90,6 @@ cc_test(
         "//verible/common/text:symbol",
         "//verible/common/text:token-info",
         "//verible/common/util:casts",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

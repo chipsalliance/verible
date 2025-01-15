@@ -19,11 +19,11 @@
 #include <iosfwd>
 #include <map>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/compare.h"
 #include "verible/common/util/container-iterator-range.h"
 
@@ -31,7 +31,7 @@ namespace verible {
 
 // This should be the same type returned by InitCommandLine in
 // common/util/init_command_line.h
-using SubcommandArgs = std::vector<absl::string_view>;
+using SubcommandArgs = std::vector<std::string_view>;
 using SubcommandArgsIterator = SubcommandArgs::const_iterator;
 using SubcommandArgsRange =
     verible::container_iterator_range<SubcommandArgsIterator>;
@@ -44,7 +44,7 @@ using SubcommandFunction =
 
 // Represents a function selected by the user.
 struct SubcommandEntry {
-  SubcommandEntry(SubcommandFunction fun, absl::string_view usage,
+  SubcommandEntry(SubcommandFunction fun, std::string_view usage,
                   bool show_in_help = true)
       : main(std::move(fun)), usage(usage), show_in_help(show_in_help) {}
 
@@ -74,10 +74,10 @@ class SubcommandRegistry {
   // Add a function to this map.
   // Returned status is an error if a function already exists with the given
   // name.
-  absl::Status RegisterCommand(absl::string_view name, const SubcommandEntry &);
+  absl::Status RegisterCommand(std::string_view name, const SubcommandEntry &);
 
   // Lookup a function in this map by name.
-  const SubcommandEntry &GetSubcommandEntry(absl::string_view command) const;
+  const SubcommandEntry &GetSubcommandEntry(std::string_view command) const;
 
   // Print a help summary of all registered commands.
   std::string ListCommands() const;

@@ -16,9 +16,9 @@
 
 #include <ostream>
 #include <sstream>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/unwrapped-line-test-utils.h"
@@ -355,7 +355,7 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveSpacesNoTokens) {
 }
 
 TEST_F(UnwrappedLineTest, StreamFormatting) {
-  const absl::string_view text("  aaa  bbb   cc");
+  const std::string_view text("  aaa  bbb   cc");
   const std::vector<TokenInfo> tokens = {// "aaa", "bbb", "cc"
                                          {0, text.substr(2, 3)},
                                          {1, text.substr(7, 3)},
@@ -381,7 +381,7 @@ TEST_F(UnwrappedLineTest, StreamFormatting) {
 }
 
 TEST_F(UnwrappedLineTest, FormattedTextPreserveSpacesWithTokens) {
-  const absl::string_view text("  aaa  bbb   cc");
+  const std::string_view text("  aaa  bbb   cc");
   const std::vector<TokenInfo> tokens = {// "aaa", "bbb", "cc"
                                          {0, text.substr(2, 3)},
                                          {1, text.substr(7, 3)},
@@ -409,7 +409,7 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveSpacesWithTokens) {
 }
 
 TEST_F(UnwrappedLineTest, FormattedTextPreserveNewlines) {
-  const absl::string_view text("\n\naaa\n\nbbb\n\n\ncc");
+  const std::string_view text("\n\naaa\n\nbbb\n\n\ncc");
   const std::vector<TokenInfo> tokens = {
       {0, text.substr(2, 3)}, {1, text.substr(7, 3)}, {2, text.substr(13, 2)}};
   CreateTokenInfosExternalStringBuffer(tokens);  // use 'text' buffer
@@ -432,7 +432,7 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveNewlines) {
 }
 
 TEST_F(UnwrappedLineTest, FormattedTextPreserveNewlinesDropSpaces) {
-  const absl::string_view text("   \n   aaa  bbb   cc");
+  const std::string_view text("   \n   aaa  bbb   cc");
   const std::vector<TokenInfo> tokens = {
       {0, text.substr(7, 3)}, {1, text.substr(12, 3)}, {2, text.substr(18, 2)}};
   CreateTokenInfosExternalStringBuffer(tokens);  // use 'text' buffer
@@ -516,7 +516,7 @@ TEST_F(UnwrappedLineTest, AsCodeTextIndent) {
 }
 
 TEST_F(UnwrappedLineTest, AsCodeCustomOriginPrinter) {
-  const absl::string_view text("  aaa  bbb   cc");
+  const std::string_view text("  aaa  bbb   cc");
   const std::vector<TokenInfo> tokens = {// "aaa", "bbb", "cc"
                                          {0, text.substr(2, 3)},
                                          {1, text.substr(7, 3)},

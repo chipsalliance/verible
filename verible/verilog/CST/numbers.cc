@@ -19,9 +19,9 @@
 #include <iterator>
 #include <ostream>
 #include <string>
+#include <string_view>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "verible/common/util/logging.h"
 
@@ -38,7 +38,7 @@ std::ostream &operator<<(std::ostream &stream, const BasedNumber &number) {
   return stream;
 }
 
-BasedNumber::BasedNumber(absl::string_view base_sign, absl::string_view digits)
+BasedNumber::BasedNumber(std::string_view base_sign, std::string_view digits)
     : ok(false) {
   // See definition of 'based_number' nonterminal rule in verilog.y.
   if (!absl::ConsumePrefix(&base_sign, "\'")) return;
@@ -50,7 +50,7 @@ BasedNumber::BasedNumber(absl::string_view base_sign, absl::string_view digits)
   // Next character is the base: [bBdDhHoO].
   CHECK_EQ(base_sign.length(), 1);
   base = std::tolower(base_sign[0]);
-  static const absl::string_view valid_bases("bdho");
+  static const std::string_view valid_bases("bdho");
   if (!absl::StrContains(valid_bases, base)) return;
 
   // Filter out underscores.

@@ -18,9 +18,9 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -85,7 +85,7 @@ static const Matcher &CreateAssignmentMatcher() {
 // TODO(fangism): This function will be useful to many other analyses.
 // Make public and refactor.
 static bool UnqualifiedIdEquals(const SyntaxTreeNode &node,
-                                absl::string_view name) {
+                                std::string_view name) {
   if (node.MatchesTag(NodeEnum::kUnqualifiedId)) {
     if (!node.empty()) {
       // The one-and-only child is the SymbolIdentifier token
@@ -123,7 +123,7 @@ static bool QualifiedCallIsTypeIdCreate(
 
 // Returns string_view of `text` with outermost double-quotes removed.
 // If `text` is not wrapped in quotes, return it as-is.
-static absl::string_view StripOuterQuotes(absl::string_view text) {
+static std::string_view StripOuterQuotes(std::string_view text) {
   if (!text.empty() && text[0] == '\"') {
     return text.substr(1, text.length() - 2);
   }
@@ -167,8 +167,8 @@ static const SyntaxTreeNode *GetFirstExpressionFromArgs(
 }
 
 // Returns a diagnostic message for this lint violation.
-static std::string FormatReason(absl::string_view decl_name,
-                                absl::string_view name_text) {
+static std::string FormatReason(std::string_view decl_name,
+                                std::string_view name_text) {
   return absl::StrCat(
       "The \'name\' argument of type_id::create() must match the name of "
       "the variable to which it is assigned: ",

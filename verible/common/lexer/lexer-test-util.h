@@ -25,9 +25,9 @@
 #include <cstddef>
 #include <initializer_list>
 #include <iosfwd>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/text/constants.h"
 #include "verible/common/text/token-info-test-util.h"
@@ -54,7 +54,7 @@ class FakeLexer {
 // Usage: stream << ShowCode{text};
 // Consider this private, only intended for use in this library.
 struct ShowCode {
-  absl::string_view text;
+  std::string_view text;
 };
 
 std::ostream &operator<<(std::ostream &, const ShowCode &);
@@ -140,8 +140,7 @@ struct SynthesizedLexerTestData : public TokenInfoTestData {
   // A single expected_text can span multiple tokens, when we're only checking
   // string contents, and not checking *how* this excerpt is tokenized.
   template <class Lexer>
-  void DontCareMultiTokens(Lexer *lexer,
-                           absl::string_view expected_text) const {
+  void DontCareMultiTokens(Lexer *lexer, std::string_view expected_text) const {
     // Consume tokens and compare string fragments against the
     // expected_text until the text is fully matched.
     while (!expected_text.empty()) {

@@ -41,7 +41,6 @@ cc_library(
         "//bazel:flex",
         "//verible/common/lexer:flex-lexer-adapter",
         "//verible/common/text:token-info",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -54,7 +53,6 @@ cc_test(
         ":verilog-token-enum",
         "//verible/common/lexer:lexer-test-util",
         "//verible/common/text:token-info",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -202,7 +200,6 @@ cc_test(
         "//verible/verilog/preprocessor:verilog-preprocess",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -221,7 +218,6 @@ cc_test(
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-analyzer",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -254,6 +250,5 @@ cc_library(
     deps = [
         ":verilog-parser",
         ":verilog-token-enum",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )

@@ -19,12 +19,12 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "verible/common/strings/line-column-map.h"
 #include "verible/common/strings/position.h"
@@ -54,29 +54,28 @@ class LintWaiver {
   // Waiver comments on lines with other tokens will only waive that line.
 
   // Adds a single line to the set of waived lines for a single rule.
-  void WaiveOneLine(absl::string_view rule_name, int line_number);
+  void WaiveOneLine(std::string_view rule_name, int line_number);
 
   // Adds a range [line_begin, line_end) over which a waiver applies.
-  void WaiveLineRange(absl::string_view rule_name, int line_begin,
-                      int line_end);
+  void WaiveLineRange(std::string_view rule_name, int line_begin, int line_end);
 
   // Adds a regular expression which will be used to apply a waiver.
-  absl::Status WaiveWithRegex(absl::string_view rule_name,
-                              absl::string_view regex);
+  absl::Status WaiveWithRegex(std::string_view rule_name,
+                              std::string_view regex);
 
   // Converts the prepared regular expressions to line numbers and applies the
   // waivers.
-  void RegexToLines(absl::string_view content, const LineColumnMap &line_map);
+  void RegexToLines(std::string_view content, const LineColumnMap &line_map);
 
   // Returns true if `line_number` should be waived for a particular rule.
-  bool RuleIsWaivedOnLine(absl::string_view rule_name, int line_number) const;
+  bool RuleIsWaivedOnLine(std::string_view rule_name, int line_number) const;
 
   // Returns true if there are no lines waived for any rules.
   bool Empty() const;
 
   // TODO(hzeller): The following methods break abstraction and are only
   // for performance. Reconsider if this is worth it.
-  const LineNumberSet *LookupLineNumberSet(absl::string_view rule_name) const {
+  const LineNumberSet *LookupLineNumberSet(std::string_view rule_name) const {
     return verible::container::FindOrNull(waiver_map_, rule_name);
   }
 
@@ -86,14 +85,14 @@ class LintWaiver {
   }
 
  private:
-  const RE2 *GetOrCreateCachedRegex(absl::string_view regex_str);
+  const RE2 *GetOrCreateCachedRegex(std::string_view regex_str);
 
   // Keys in the maps below are the names of the waived rules. They can be
   // string_view because the static strings for each lint rule class exist,
   // and will outlive all LintWaiver objects. This applies to both waiver_map_
   // and waiver_re_map_.
-  absl::flat_hash_map<absl::string_view, LineNumberSet> waiver_map_;
-  absl::flat_hash_map<absl::string_view, RegexVector> waiver_re_map_;
+  absl::flat_hash_map<std::string_view, LineNumberSet> waiver_map_;
+  absl::flat_hash_map<std::string_view, RegexVector> waiver_re_map_;
 
   absl::flat_hash_map<std::string, std::unique_ptr<re2::RE2>> regex_cache_;
 };
@@ -124,10 +123,10 @@ class LintWaiverBuilder {
   // 'waive_command' is the second argument after the trigger, and is the
   //   command for 'waive-one-line'.
   LintWaiverBuilder(TokenFilterPredicate &&is_comment,
-                    TokenFilterPredicate &&is_space, absl::string_view trigger,
-                    absl::string_view waive_line_command,
-                    absl::string_view waive_start_command,
-                    absl::string_view waive_stop_command)
+                    TokenFilterPredicate &&is_space, std::string_view trigger,
+                    std::string_view waive_line_command,
+                    std::string_view waive_start_command,
+                    std::string_view waive_stop_command)
       : waiver_trigger_keyword_(trigger),
         waive_one_line_keyword_(waive_line_command),
         waive_range_start_keyword_(waive_start_command),
@@ -147,9 +146,9 @@ class LintWaiverBuilder {
   // Takes a set of active linter rules and the affected filename to be linted,
   // and applies waivers from waiver_filename and its content.
   absl::Status ApplyExternalWaivers(
-      const std::set<absl::string_view> &active_rules,
-      absl::string_view lintee_filename, absl::string_view waiver_filename,
-      absl::string_view waivers_config_content);
+      const std::set<std::string_view> &active_rules,
+      std::string_view lintee_filename, std::string_view waiver_filename,
+      std::string_view waivers_config_content);
 
   const LintWaiver &GetLintWaiver() const { return lint_waiver_; }
 
@@ -157,22 +156,22 @@ class LintWaiverBuilder {
   // Parses a comment and extracts a waived rule name.
   // If text does not match the waived form, then return an empty string.
   // `comment_tokens` is just re-used memory to avoid re-allocation.
-  absl::string_view ExtractWaivedRuleFromComment(
-      absl::string_view comment_text,
-      std::vector<absl::string_view> *comment_tokens) const;
+  std::string_view ExtractWaivedRuleFromComment(
+      std::string_view comment_text,
+      std::vector<std::string_view> *comment_tokens) const;
 
   // Special string that leads a comment that is a waiver directive
   // Typically, name of linter tool is used here.
-  absl::string_view waiver_trigger_keyword_;
+  std::string_view waiver_trigger_keyword_;
 
   // Command to waive one line, either the current line if there are tokens
   // on the current line or the next non-comment-non-blank-line.
-  absl::string_view waive_one_line_keyword_;  // e.g. "waive"
+  std::string_view waive_one_line_keyword_;  // e.g. "waive"
 
   // Command pair to start and stop waiving ranges of lines.
   // e.g. "waive-start", "waive-stop"
-  absl::string_view waive_range_start_keyword_;
-  absl::string_view waive_range_stop_keyword_;
+  std::string_view waive_range_start_keyword_;
+  std::string_view waive_range_stop_keyword_;
 
   // Returns true if token is a comment.
   TokenFilterPredicate is_token_comment_;
@@ -182,12 +181,12 @@ class LintWaiverBuilder {
 
   // This holds the set of to-be-applied lint waivers.
   // Element string_views point to string memory that outlives this builder.
-  std::set<absl::string_view> unapplied_oneline_waivers_;
+  std::set<std::string_view> unapplied_oneline_waivers_;
 
   // This holds the set of open ranges of lines, keyed by rule name.
   // Value is the lower-bound of each encountered waiver range.
   // string_view keys point to string memory that outlives this builder.
-  std::map<absl::string_view, int> waiver_open_ranges_;
+  std::map<std::string_view, int> waiver_open_ranges_;
 
   // Set of waived lines per rule.
   LintWaiver lint_waiver_;

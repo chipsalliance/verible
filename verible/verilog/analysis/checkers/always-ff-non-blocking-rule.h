@@ -18,10 +18,10 @@
 #include <cstddef>
 #include <set>
 #include <stack>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
 #include "verible/common/text/symbol.h"
@@ -37,7 +37,7 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
 
   static const LintRuleDescriptor &GetDescriptor();
 
-  absl::Status Configure(absl::string_view configuration) final;
+  absl::Status Configure(std::string_view configuration) final;
   void HandleSymbol(const verible::Symbol &symbol,
                     const verible::SyntaxTreeContext &context) final;
 
@@ -71,7 +71,7 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
   };
 
   // In-order stack of local variable names
-  std::vector<absl::string_view> locals_;
+  std::vector<std::string_view> locals_;
 };
 
 }  // namespace analysis

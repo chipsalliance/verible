@@ -15,9 +15,9 @@
 #include "verible/common/text/parser-verifier.h"
 
 #include <memory>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/text/constants.h"
 #include "verible/common/text/token-info.h"
@@ -29,7 +29,7 @@ namespace verible {
 constexpr int NOT_EOF = 1;  // Fake Token Enumeration
 static_assert(NOT_EOF != TK_EOF, "NOT_EOF cannot be TK_EOF");
 
-static TokenInfo Token(absl::string_view s) { return TokenInfo(NOT_EOF, s); }
+static TokenInfo Token(std::string_view s) { return TokenInfo(NOT_EOF, s); }
 
 static bool equal_text(TokenInfo t1, TokenInfo t2) {
   return t1.text() == t2.text();
@@ -91,8 +91,8 @@ TEST(ParserVerifierTest, AllUnmatched) {
 }
 
 TEST(ParserVerifierTest, PartialUnmatched) {
-  constexpr absl::string_view foo("foo");
-  constexpr absl::string_view bar("bar");
+  constexpr std::string_view foo("foo");
+  constexpr std::string_view bar("bar");
   auto root = Node(Leaf(NOT_EOF, foo));
   TokenSequence stream = {Token(foo), Token(bar)};
   TokenSequence unmatched_expected = {Token(bar)};
@@ -108,10 +108,10 @@ TEST(ParserVerifierTest, PartialUnmatched) {
 }
 
 TEST(ParserVerifierTest, SeveralPartialUnmatched) {
-  constexpr absl::string_view foo("foo");
-  constexpr absl::string_view bar1("bar1");
-  constexpr absl::string_view bar2("bar2");
-  constexpr absl::string_view mee("mee");
+  constexpr std::string_view foo("foo");
+  constexpr std::string_view bar1("bar1");
+  constexpr std::string_view bar2("bar2");
+  constexpr std::string_view mee("mee");
 
   auto root = Node(Leaf(NOT_EOF, foo), Node(Leaf(NOT_EOF, mee)));
   TokenSequence stream = {Token(foo), Token(bar1), Token(bar2), Token(mee)};

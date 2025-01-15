@@ -17,9 +17,9 @@
 #include <iostream>
 #include <iterator>
 #include <set>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/util/algorithm.h"
@@ -51,7 +51,7 @@ static int CompareViolation(const LintViolation &lhs, const TokenInfo &rhs) {
 
 // TODO(b/151371397): refactor this for re-use for multi-findings style tests.
 bool LintTestCase::ExactMatchFindings(
-    const std::set<LintViolation> &found_violations, absl::string_view base,
+    const std::set<LintViolation> &found_violations, std::string_view base,
     std::ostream *diffstream) const {
   // Due to the order in which violations are visited, we can assert that
   // the reported violations are thus ordered.

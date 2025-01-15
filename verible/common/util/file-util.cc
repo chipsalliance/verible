@@ -25,13 +25,13 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <utility>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/mem-block.h"
 #include "verible/common/util/logging.h"
 
@@ -47,26 +47,26 @@ namespace fs = std::filesystem;
 
 namespace verible {
 namespace file {
-absl::string_view Basename(absl::string_view filename) {
+std::string_view Basename(std::string_view filename) {
   auto last_slash_pos = filename.find_last_of("/\\");
 
-  return last_slash_pos == absl::string_view::npos
+  return last_slash_pos == std::string_view::npos
              ? filename
              : filename.substr(last_slash_pos + 1);
 }
 
-absl::string_view Dirname(absl::string_view filename) {
+std::string_view Dirname(std::string_view filename) {
   auto last_slash_pos = filename.find_last_of("/\\");
 
-  return last_slash_pos == absl::string_view::npos
+  return last_slash_pos == std::string_view::npos
              ? filename
              : filename.substr(0, last_slash_pos);
 }
 
-absl::string_view Stem(absl::string_view filename) {
+std::string_view Stem(std::string_view filename) {
   auto last_dot_pos = filename.find_last_of('.');
 
-  return last_dot_pos == absl::string_view::npos
+  return last_dot_pos == std::string_view::npos
              ? filename
              : filename.substr(0, last_dot_pos);
 }
@@ -76,7 +76,7 @@ absl::string_view Stem(absl::string_view filename) {
 // If "sys_error" can not be resolved, creates an UNKNOWN message.
 // The "filename" and "fallback_msg" will be copied, no need for them to
 // stay alive after the call.
-static absl::Status CreateErrorStatusFromSysError(absl::string_view filename,
+static absl::Status CreateErrorStatusFromSysError(std::string_view filename,
                                                   int sys_error,
                                                   const char *fallback_msg) {
   const char *const system_msg =
@@ -101,11 +101,11 @@ static absl::Status CreateErrorStatusFromSysError(absl::string_view filename,
   }
 }
 
-static absl::Status CreateErrorStatusFromErrno(absl::string_view filename,
+static absl::Status CreateErrorStatusFromErrno(std::string_view filename,
                                                const char *fallback_msg) {
   return CreateErrorStatusFromSysError(filename, errno, fallback_msg);
 }
-static absl::Status CreateErrorStatusFromErr(absl::string_view filename,
+static absl::Status CreateErrorStatusFromErr(std::string_view filename,
                                              const std::error_code &err,
                                              const char *fallback_msg) {
   // TODO: this assumes that err.value() returns errno-like values. Might not
@@ -113,8 +113,8 @@ static absl::Status CreateErrorStatusFromErr(absl::string_view filename,
   return CreateErrorStatusFromSysError(filename, err.value(), fallback_msg);
 }
 
-absl::Status UpwardFileSearch(absl::string_view start,
-                              absl::string_view filename, std::string *result) {
+absl::Status UpwardFileSearch(std::string_view start, std::string_view filename,
+                              std::string *result) {
   std::error_code err;
   const std::string search_file(filename);
   fs::path absolute_path = fs::absolute(std::string(start), err);
@@ -155,7 +155,7 @@ absl::Status FileExists(const std::string &filename) {
       absl::StrCat(filename, ": not a regular file."));
 }
 
-absl::StatusOr<std::string> GetContentAsString(absl::string_view filename) {
+absl::StatusOr<std::string> GetContentAsString(std::string_view filename) {
   std::string content;
   FILE *stream = nullptr;
   const bool use_stdin = IsStdin(filename);
@@ -189,13 +189,13 @@ absl::StatusOr<std::string> GetContentAsString(absl::string_view filename) {
 }
 
 static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
-    absl::string_view filename) {
+    std::string_view filename) {
 #ifndef _WIN32
   class MemMapBlock final : public MemBlock {
    public:
     MemMapBlock(char *buffer, size_t size) : buffer_(buffer), size_(size) {}
     ~MemMapBlock() final { munmap(buffer_, size_); }
-    absl::string_view AsStringView() const final { return {buffer_, size_}; }
+    std::string_view AsStringView() const final { return {buffer_, size_}; }
 
    private:
     char *const buffer_;
@@ -233,7 +233,7 @@ static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
 }
 
 absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(
-    absl::string_view filename) {
+    std::string_view filename) {
   auto mmap_result = AttemptMemMapFile(filename);
   if (mmap_result.status().ok()) {
     return mmap_result;
@@ -245,8 +245,7 @@ absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(
   return std::make_unique<StringMemBlock>(std::move(*content_or));
 }
 
-absl::Status SetContents(absl::string_view filename,
-                         absl::string_view content) {
+absl::Status SetContents(std::string_view filename, std::string_view content) {
   VLOG(1) << __FUNCTION__ << ": Writing file: " << filename;
   FILE *out = fopen(std::string(filename).c_str(), "wb");
   if (!out) return CreateErrorStatusFromErrno(filename, "can't write.");
@@ -264,12 +263,12 @@ absl::Status SetContents(absl::string_view filename,
   return absl::OkStatus();
 }
 
-std::string JoinPath(absl::string_view base, absl::string_view name) {
+std::string JoinPath(std::string_view base, std::string_view name) {
   fs::path p = fs::path(std::string(base)) / fs::path(std::string(name));
   return p.lexically_normal().string();
 }
 
-absl::Status CreateDir(absl::string_view dir) {
+absl::Status CreateDir(std::string_view dir) {
   const std::string path(dir);
   std::error_code err;
   if (fs::create_directory(path, err) || err.value() == 0) {
@@ -278,7 +277,7 @@ absl::Status CreateDir(absl::string_view dir) {
   return CreateErrorStatusFromErr(dir, err, "can't create directory");
 }
 
-absl::StatusOr<Directory> ListDir(absl::string_view dir) {
+absl::StatusOr<Directory> ListDir(std::string_view dir) {
   std::error_code err;
   Directory d;
 
@@ -306,20 +305,20 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
   return d;
 }
 
-bool IsStdin(absl::string_view filename) {
-  static constexpr absl::string_view kStdinFilename = "-";
+bool IsStdin(std::string_view filename) {
+  static constexpr std::string_view kStdinFilename = "-";
   return filename == kStdinFilename;
 }
 
 namespace testing {
 
-std::string RandomFileBasename(absl::string_view prefix) {
+std::string RandomFileBasename(std::string_view prefix) {
   return absl::StrCat(prefix, "-", rand());
 }
 
-ScopedTestFile::ScopedTestFile(absl::string_view base_dir,
-                               absl::string_view content,
-                               absl::string_view use_this_filename)
+ScopedTestFile::ScopedTestFile(std::string_view base_dir,
+                               std::string_view content,
+                               std::string_view use_this_filename)
     // There is no secrecy needed for test files,
     // file name just need to be unique enough.
     : filename_(JoinPath(base_dir, use_this_filename.empty()

@@ -28,7 +28,6 @@ cc_library(
         "//verible/common/util:status-macros",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -39,7 +38,6 @@ cc_test(
         ":message-stream-splitter",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -57,7 +55,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//verible/common/util:logging",
-        "@abseil-cpp//absl/strings:string_view",
         "@nlohmann_json//:singleheader-json",
     ],
 )
@@ -72,7 +69,6 @@ cc_test(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         ":json-rpc-dispatcher",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@nlohmann_json//:singleheader-json",
@@ -129,7 +125,6 @@ cc_library(
         "//verible/common/strings:utf8",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -141,7 +136,6 @@ cc_test(
         ":lsp-protocol",
         ":lsp-text-buffer",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -152,10 +146,7 @@ cc_library(
     srcs = ["lsp-file-utils.cc"],
     hdrs = ["lsp-file-utils.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
-    ],
+    deps = ["@abseil-cpp//absl/strings"],
 )
 
 cc_test(
@@ -176,7 +167,6 @@ cc_binary(
         ":message-stream-splitter",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@nlohmann_json//:singleheader-json",
     ],
 )
@@ -190,7 +180,6 @@ cc_binary(
         ":lsp-text-buffer",
         ":message-stream-splitter",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
         "@nlohmann_json//:singleheader-json",
     ],
 )

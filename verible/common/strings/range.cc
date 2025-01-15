@@ -15,24 +15,23 @@
 #include "verible/common/strings/range.h"
 
 #include <iterator>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/util/logging.h"
 #include "verible/common/util/range.h"
 
 namespace verible {
 
-absl::string_view make_string_view_range(
-    absl::string_view::const_iterator begin,
-    absl::string_view::const_iterator end) {
+std::string_view make_string_view_range(std::string_view::const_iterator begin,
+                                        std::string_view::const_iterator end) {
   const int length = std::distance(begin, end);
   CHECK_GE(length, 0) << "Malformed string bounds.";
-  return absl::string_view(&*begin, length);
+  return std::string_view(&*begin, length);
 }
 
-std::pair<int, int> SubstringOffsets(absl::string_view substring,
-                                     absl::string_view superstring) {
+std::pair<int, int> SubstringOffsets(std::string_view substring,
+                                     std::string_view superstring) {
   return SubRangeIndices(substring, superstring);
 }
 

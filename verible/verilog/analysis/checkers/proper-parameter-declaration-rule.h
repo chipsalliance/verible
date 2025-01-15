@@ -16,9 +16,9 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_PROPER_PARAMETER_DECLARATION_RULE_H_
 
 #include <set>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
 #include "verible/common/text/symbol.h"
@@ -50,7 +50,7 @@ class ProperParameterDeclarationRule : public verible::SyntaxTreeLintRule {
 
   verible::LintRuleStatus Report() const final;
 
-  absl::Status Configure(absl::string_view configuration) final;
+  absl::Status Configure(std::string_view configuration) final;
 
  private:
   void ChooseMessagesForConfiguration();
@@ -60,8 +60,8 @@ class ProperParameterDeclarationRule : public verible::SyntaxTreeLintRule {
   bool package_allow_parameter_ = false;
   bool package_allow_localparam_ = true;
 
-  absl::string_view parameter_message_;
-  absl::string_view local_parameter_message_;
+  std::string_view parameter_message_;
+  std::string_view local_parameter_message_;
 };
 
 }  // namespace analysis

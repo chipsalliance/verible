@@ -16,9 +16,9 @@
 
 #include <cstdio>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "third_party/proto/kythe/analysis.pb.h"
 #include "verible/common/util/file-util.h"
 #include "verible/common/util/sha256.h"
@@ -28,16 +28,16 @@ namespace verilog {
 namespace kythe {
 namespace {
 
-constexpr absl::string_view kProtoUnitRoot = "root/pbunits/";
-constexpr absl::string_view kFileRoot = "root/files/";
+constexpr std::string_view kProtoUnitRoot = "root/pbunits/";
+constexpr std::string_view kFileRoot = "root/files/";
 
 constexpr int kKZipCompressionLevel = 9;
 
 }  // namespace
 
-KzipCreator::KzipCreator(absl::string_view output_path)
+KzipCreator::KzipCreator(std::string_view output_path)
     : zip_file_(fopen(std::string(output_path).c_str(), "wb")),
-      archive_(kKZipCompressionLevel, [this](absl::string_view s) {
+      archive_(kKZipCompressionLevel, [this](std::string_view s) {
         return fwrite(s.data(), 1, s.size(), zip_file_.get()) == s.size();
       }) {
   // Create the directory structure.
@@ -46,8 +46,8 @@ KzipCreator::KzipCreator(absl::string_view output_path)
   archive_.AddFile(kProtoUnitRoot, verible::zip::MemoryByteSource(""));
 }
 
-std::string KzipCreator::AddSourceFile(absl::string_view path,
-                                       absl::string_view content) {
+std::string KzipCreator::AddSourceFile(std::string_view path,
+                                       std::string_view content) {
   std::string digest = verible::Sha256Hex(content);
   const std::string archive_path = verible::file::JoinPath(kFileRoot, digest);
   archive_.AddFile(archive_path, verible::zip::MemoryByteSource(content));

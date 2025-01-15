@@ -19,10 +19,10 @@
 
 #include <functional>
 #include <iterator>
+#include <string_view>
 #include <type_traits>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/lexer/lexer.h"
 #include "verible/common/lexer/token-generator.h"
 #include "verible/common/text/token-info.h"
@@ -35,7 +35,7 @@ TokenGenerator MakeTokenGenerator(Lexer *l);
 
 // Populates a TokenSequence with lexed tokens.
 absl::Status MakeTokenSequence(
-    Lexer *lexer, absl::string_view text, TokenSequence *tokens,
+    Lexer *lexer, std::string_view text, TokenSequence *tokens,
     const std::function<void(const TokenInfo &)> &error_token_handler);
 
 // Generic container-to-iterator-generator adapter.

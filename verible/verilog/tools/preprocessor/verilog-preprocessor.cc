@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -22,7 +23,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/text/token-stream-view.h"
 #include "verible/common/util/file-util.h"
 #include "verible/common/util/init-command-line.h"
@@ -46,7 +46,7 @@ static absl::Status StripComments(const SubcommandArgsRange &args,
                                   std::istream &, std::ostream &outs,
                                   std::ostream &) {
   // Parse the arguments into a FileList.
-  std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
+  std::vector<std::string_view> cmdline_args(args.begin(), args.end());
   verilog::FileList file_list;
   RETURN_IF_ERROR(
       verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
@@ -56,7 +56,7 @@ static absl::Status StripComments(const SubcommandArgsRange &args,
     return absl::InvalidArgumentError(
         "Missing file argument.  Use '-' for stdin.");
   }
-  const absl::string_view source_file = files[0];
+  const std::string_view source_file = files[0];
   absl::StatusOr<std::string> source_contents_or =
       verible::file::GetContentAsString(source_file);
   if (!source_contents_or.ok()) {
@@ -66,7 +66,7 @@ static absl::Status StripComments(const SubcommandArgsRange &args,
   if (args.size() == 1) {
     replace_char = ' ';
   } else if (args.size() == 2) {
-    absl::string_view replace_str(args[1]);
+    std::string_view replace_str(args[1]);
     if (replace_str.empty()) {
       replace_char = '\0';
     } else if (replace_str.length() == 1) {
@@ -85,7 +85,7 @@ static absl::Status StripComments(const SubcommandArgsRange &args,
 }
 
 static absl::Status PreprocessSingleFile(
-    absl::string_view source_file,
+    std::string_view source_file,
     const verilog::FileList::PreprocessingInfo &preprocessing_info,
     std::ostream &outs, std::ostream &message_stream) {
   absl::StatusOr<std::string> source_contents_or =
@@ -103,7 +103,7 @@ static absl::Status PreprocessSingleFile(
 
   FileOpener file_opener =
       [&project](
-          absl::string_view filename) -> absl::StatusOr<absl::string_view> {
+          std::string_view filename) -> absl::StatusOr<std::string_view> {
     auto result = project.OpenIncludedFile(filename);
     if (!result.status().ok()) return result.status();
     return (*result)->GetContent();
@@ -140,7 +140,7 @@ static absl::Status MultipleCU(const SubcommandArgsRange &args, std::istream &,
                                std::ostream &outs,
                                std::ostream &message_stream) {
   // Parse the arguments into a FileList.
-  std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
+  std::vector<std::string_view> cmdline_args(args.begin(), args.end());
   verilog::FileList file_list;
   RETURN_IF_ERROR(
       verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
@@ -154,7 +154,7 @@ static absl::Status MultipleCU(const SubcommandArgsRange &args, std::istream &,
   if (files.empty()) {
     return absl::InvalidArgumentError("ERROR: Missing file argument.");
   }
-  for (const absl::string_view source_file : files) {
+  for (const std::string_view source_file : files) {
     RETURN_IF_ERROR(PreprocessSingleFile(source_file, preprocessing_info, outs,
                                          message_stream));
   }
@@ -165,7 +165,7 @@ static absl::Status GenerateVariants(const SubcommandArgsRange &args,
                                      std::istream &, std::ostream &outs,
                                      std::ostream &message_stream) {
   // Parse the arguments into a FileList.
-  std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
+  std::vector<std::string_view> cmdline_args(args.begin(), args.end());
   verilog::FileList file_list;
   RETURN_IF_ERROR(
       verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
@@ -220,7 +220,7 @@ static absl::Status GenerateVariants(const SubcommandArgsRange &args,
       });
 }
 
-static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
+static const std::pair<std::string_view, SubcommandEntry> kCommands[] = {
     {"preprocess",
      {&MultipleCU,
       R"(preprocess [define-include-flags] file [file...]

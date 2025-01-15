@@ -17,9 +17,9 @@
 #include <set>
 #include <stack>
 #include <string>
+#include <string_view>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/token-stream-lint-rule.h"
 #include "verible/common/strings/comment-utils.h"
@@ -40,7 +40,7 @@ using verible::TokenStreamLintRule;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(EndifCommentRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "`endif should be followed on the same line by a comment that matches the "
     "opening `ifdef/`ifndef.";
 
@@ -95,7 +95,7 @@ void EndifCommentRule::HandleToken(const TokenInfo &token) {
       if (conditional_scopes_.empty()) break;  // unbalanced
       // Checking for comment immediately following `endif.
       // Matching comment must be on the same line as the `endif
-      const absl::string_view expect = conditional_scopes_.top().text();
+      const std::string_view expect = conditional_scopes_.top().text();
       switch (token.token_enum()) {
         case TK_SPACE:  // stay in the same state
           break;
@@ -103,7 +103,7 @@ void EndifCommentRule::HandleToken(const TokenInfo &token) {
         case TK_EOL_COMMENT: {
           // check comment text, unwrap comment, unpad whitespace.
           // allow either // COND or /* COND */
-          const absl::string_view contents =
+          const std::string_view contents =
               verible::StripCommentAndSpacePadding(token.text());
           if (contents != expect) {
             violations_.insert(LintViolation(

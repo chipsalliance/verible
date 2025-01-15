@@ -15,10 +15,10 @@
 #include "verible/common/util/expandable-tree-view.h"
 
 #include <sstream>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/vector-tree-test-util.h"
@@ -249,11 +249,11 @@ TEST(ExpandableTreeViewTest, FamilyTreeApplyPreOrder) {
   const auto tree = verible::testing::MakeExampleFamilyTree();
   ExpandableTreeViewTestType tree_view(tree);
 
-  std::vector<absl::string_view> visit_order;
+  std::vector<std::string_view> visit_order;
   tree_view.ApplyPreOrder(
       [=, &visit_order](
           VectorTree<TreeViewNodeInfo<VectorTree<NamedInterval>>> &node) {
-        const absl::string_view name = node.Value().Value().name;
+        const std::string_view name = node.Value().Value().name;
         visit_order.push_back(name);
         if (name[0] == 'p') {
           node.Value().Unexpand();
@@ -282,11 +282,11 @@ TEST(ExpandableTreeViewTest, FamilyTreeApplyPostOrder) {
   const auto tree = verible::testing::MakeExampleFamilyTree();
   ExpandableTreeViewTestType tree_view(tree);
 
-  std::vector<absl::string_view> visit_order;
+  std::vector<std::string_view> visit_order;
   tree_view.ApplyPostOrder(
       [=, &visit_order](
           VectorTree<TreeViewNodeInfo<VectorTree<NamedInterval>>> &node) {
-        const absl::string_view name = node.Value().Value().name;
+        const std::string_view name = node.Value().Value().name;
         visit_order.push_back(name);
         if (name[0] == 'p' && name.back() == '1') {
           node.Value().Unexpand();

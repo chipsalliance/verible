@@ -15,8 +15,8 @@
 #include "verible/common/strings/random.h"
 
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/util/interval-set.h"
 #include "verible/common/util/iterator-range.h"
 #include "verible/common/util/logging.h"
@@ -36,7 +36,7 @@ char RandomAlphaNumChar() {
   return generator();
 }
 
-std::string RandomEqualLengthIdentifier(absl::string_view input) {
+std::string RandomEqualLengthIdentifier(std::string_view input) {
   CHECK(!input.empty());
   std::string s(input.length(), '?');
   s.front() = RandomAlphaChar();

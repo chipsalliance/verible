@@ -16,8 +16,8 @@
 #define VERIBLE_VERILOG_FORMATTING_COMMENT_CONTROLS_H_
 
 #include <ostream>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/line-column-map.h"
 #include "verible/common/strings/position.h"  // for ByteOffsetSet, LineNumberSet
 #include "verible/common/text/token-stream-view.h"
@@ -28,7 +28,7 @@ namespace formatter {
 // Returns a representation of byte offsets where true (membership) means
 // formatting is disabled.
 verible::ByteOffsetSet DisableFormattingRanges(
-    absl::string_view text, const verible::TokenSequence &tokens);
+    std::string_view text, const verible::TokenSequence &tokens);
 
 // TODO(fangism): Move these next functions into common/formatting.
 // Same with the above types.
@@ -46,7 +46,7 @@ verible::ByteOffsetSet EnabledLinesToDisabledByteRanges(
 // preserve.
 // Output is written to 'stream'.
 void FormatWhitespaceWithDisabledByteRanges(
-    absl::string_view text_base, absl::string_view space_text,
+    std::string_view text_base, std::string_view space_text,
     const verible::ByteOffsetSet &disabled_ranges, bool include_disabled_ranges,
     std::ostream &stream);
 

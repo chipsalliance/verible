@@ -16,9 +16,9 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -44,7 +44,7 @@ using verible::matcher::Matcher;
 // Register AlwaysCombRule
 VERILOG_REGISTER_LINT_RULE(AlwaysCombRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Use 'always_comb' instead of 'always @*'.";
 
 const LintRuleDescriptor &AlwaysCombRule::GetDescriptor() {
@@ -87,7 +87,7 @@ void AlwaysCombRule::HandleSymbol(const verible::Symbol &symbol,
     return;
   }
 
-  const absl::string_view fix_message =
+  const std::string_view fix_message =
       always_paren ? "Substitute 'always @(*)' for 'always_comb'"
                    : "Substitute 'always @*' for 'always_comb'";
 
@@ -109,7 +109,7 @@ void AlwaysCombRule::HandleSymbol(const verible::Symbol &symbol,
 
   // always_str will cover the 'always @(*)' (or similar), which we'll
   // substitute for plain 'always_comb'
-  absl::string_view always_str =
+  std::string_view always_str =
       verible::StringSpanOfSymbol(*always_leaf, *event_ctrl);
 
   std::vector<AutoFix> autofixes{

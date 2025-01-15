@@ -16,11 +16,11 @@
 
 #include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/util/container-util.h"
 

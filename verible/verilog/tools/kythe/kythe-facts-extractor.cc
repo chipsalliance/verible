@@ -19,6 +19,7 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -26,7 +27,6 @@
 #include "absl/container/node_hash_set.h"
 #include "absl/hash/hash.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "verible/common/util/auto-pop-stack.h"
@@ -45,7 +45,7 @@ namespace {
 
 // Returns the file path of the file from the given indexing facts tree node
 // tagged with kFile.
-absl::string_view GetFilePathFromRoot(const IndexingFactNode &root) {
+std::string_view GetFilePathFromRoot(const IndexingFactNode &root) {
   CHECK_EQ(root.Value().GetIndexingFactType(), IndexingFactType::kFile);
   return root.Value().Anchors()[0].Text();
 }
@@ -59,7 +59,7 @@ absl::string_view GetFilePathFromRoot(const IndexingFactNode &root) {
 // the last iteration.
 class KytheFactsExtractor {
  public:
-  KytheFactsExtractor(absl::string_view file_path, absl::string_view corpus,
+  KytheFactsExtractor(std::string_view file_path, std::string_view corpus,
                       KytheOutput *facts_output,
                       ScopeResolver *previous_files_scopes)
       : file_path_(file_path),
@@ -91,10 +91,10 @@ class KytheFactsExtractor {
   };
 
   // Returns the full path of the current source file.
-  absl::string_view FilePath() { return file_path_; }
+  std::string_view FilePath() { return file_path_; }
 
   // Returns the corpus to which this file belongs.
-  absl::string_view Corpus() const { return corpus_; }
+  std::string_view Corpus() const { return corpus_; }
 
  public:
   // Extracts kythe facts from the given IndexingFactsTree root. The result is
@@ -223,28 +223,28 @@ class KytheFactsExtractor {
 
   // Appends the signatures of previous containing scope vname to make
   // signatures unique relative to scopes.
-  Signature CreateScopeRelativeSignature(absl::string_view) const;
+  Signature CreateScopeRelativeSignature(std::string_view) const;
 
   // Generates fact strings for Kythe facts.
   // Schema for this fact can be found here:
   // https://kythe.io/docs/schema/writing-an-indexer.html
-  void CreateFact(const VName &vname, absl::string_view name,
-                  absl::string_view value);
+  void CreateFact(const VName &vname, std::string_view name,
+                  std::string_view value);
 
   // Generates edge strings for Kythe edges.
   // Schema for this edge can be found here:
   // https://kythe.io/docs/schema/writing-an-indexer.html
-  void CreateEdge(const VName &source, absl::string_view name,
+  void CreateEdge(const VName &source, std::string_view name,
                   const VName &target);
 
   // Holds the hashes of the output Kythe facts and edges (for deduplication).
   absl::flat_hash_set<int64_t> seen_kythe_hashes_;
 
   // The full path of the current source file.
-  absl::string_view file_path_;
+  std::string_view file_path_;
 
   // The corpus to which this file belongs.
-  absl::string_view corpus_;
+  std::string_view corpus_;
 
   // Output for produced Kythe facts. Not owned.
   KytheOutput *const facts_output_;
@@ -282,7 +282,7 @@ void StreamKytheFactsEntries(KytheOutput *kythe_output,
     const absl::Time extraction_start = absl::Now();
     // 'root' corresponds to the fact tree for a particular file.
     // 'file_path' is path-resolved.
-    const absl::string_view file_path(GetFilePathFromRoot(root));
+    const std::string_view file_path(GetFilePathFromRoot(root));
     VLOG(1) << "child file resolved path: " << file_path;
 
     // Create facts and edges.
@@ -310,7 +310,7 @@ void KytheFactsExtractor::ExtractFile(const IndexingFactNode &root) {
 
 std::optional<SignatureDigest> KytheFactsExtractor::GetParentTypeScope(
     const IndexingFactNode &node) const {
-  absl::string_view node_name = node.Value().Anchors()[0].Text();
+  std::string_view node_name = node.Value().Anchors()[0].Text();
   if (node.Parent() == nullptr) {
     return std::nullopt;
   }
@@ -576,8 +576,7 @@ VName KytheFactsExtractor::DeclareFile(const IndexingFactNode &file_fact_node) {
                       .language = kEmptyKytheLanguage};
   const auto &anchors(file_fact_node.Value().Anchors());
   CHECK_GE(anchors.size(), 2);
-  const absl::string_view code_text =
-      file_fact_node.Value().Anchors()[1].Text();
+  const std::string_view code_text = file_fact_node.Value().Anchors()[1].Text();
 
   CreateFact(file_vname, kFactNodeKind, kNodeFile);
   CreateFact(file_vname, kFactText, code_text);
@@ -1158,14 +1157,14 @@ VName KytheFactsExtractor::CreateAnchor(const Anchor &anchor) {
 }
 
 Signature KytheFactsExtractor::CreateScopeRelativeSignature(
-    absl::string_view signature) const {
+    std::string_view signature) const {
   // Append the given signature to the signature of the parent.
   return Signature(vnames_context_.top().signature, signature);
 }
 
 void KytheFactsExtractor::CreateFact(const VName &vname,
-                                     absl::string_view fact_name,
-                                     absl::string_view fact_value) {
+                                     std::string_view fact_name,
+                                     std::string_view fact_value) {
   Fact fact(vname, fact_name, fact_value);
   auto hash = absl::HashOf(fact);
   if (!seen_kythe_hashes_.contains(hash)) {
@@ -1175,7 +1174,7 @@ void KytheFactsExtractor::CreateFact(const VName &vname,
 }
 
 void KytheFactsExtractor::CreateEdge(const VName &source_node,
-                                     absl::string_view edge_name,
+                                     std::string_view edge_name,
                                      const VName &target_node) {
   Edge edge(source_node, edge_name, target_node);
   auto hash = absl::HashOf(edge);

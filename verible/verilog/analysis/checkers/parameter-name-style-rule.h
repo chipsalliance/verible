@@ -19,9 +19,9 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
@@ -50,7 +50,7 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
 
   verible::LintRuleStatus Report() const final;
 
-  absl::Status Configure(absl::string_view configuration) final;
+  absl::Status Configure(std::string_view configuration) final;
 
   const RE2 *localparam_style_regex() const {
     return localparam_style_regex_.get();
@@ -61,7 +61,7 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
 
  private:
   absl::Status AppendRegex(std::unique_ptr<re2::RE2> *rule_regex,
-                           absl::string_view regex_str);
+                           std::string_view regex_str);
   absl::Status ConfigureRegex(std::unique_ptr<re2::RE2> *rule_regex,
                               uint32_t config_style,
                               std::unique_ptr<re2::RE2> *config_style_regex);

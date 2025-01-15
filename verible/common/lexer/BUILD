@@ -29,7 +29,6 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/text:token-stream-view",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -41,17 +40,13 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/util:logging",
         "@abseil-cpp//absl/log:check",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
 cc_library(
     name = "lexer",
     hdrs = ["lexer.h"],
-    deps = [
-        "//verible/common/text:token-info",
-        "@abseil-cpp//absl/strings:string_view",
-    ],
+    deps = ["//verible/common/text:token-info"],
 )
 
 cc_library(
@@ -64,7 +59,6 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/text:token-info-test-util",
         "//verible/common/util:logging",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",  # for library testonly
     ],
 )
@@ -77,7 +71,6 @@ cc_test(
         "//verible/common/text:constants",
         "//verible/common/text:token-info",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -94,7 +87,6 @@ cc_test(
         "//verible/common/text:token-info",
         "//verible/common/text:token-stream-view",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

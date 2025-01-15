@@ -15,8 +15,8 @@
 #include "verible/verilog/analysis/checkers/explicit-function-lifetime-rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -44,7 +44,7 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitFunctionLifetimeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitFunctionLifetimeRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Explicitly define static or automatic lifetime for non-class functions";
 
 const LintRuleDescriptor &ExplicitFunctionLifetimeRule::GetDescriptor() {

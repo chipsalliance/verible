@@ -15,6 +15,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -23,7 +24,6 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/init-command-line.h"
 #include "verible/common/util/logging.h"
 #include "verible/common/util/status-macros.h"
@@ -67,7 +67,7 @@ struct VerilogProjectConfig {
   std::string file_list_root;
 
   absl::Status LoadFromCommandline(const SubcommandArgsRange &args) {
-    const std::vector<absl::string_view> cmdline{args.begin(), args.end()};
+    const std::vector<std::string_view> cmdline{args.begin(), args.end()};
     auto status = AppendFileListFromCommandline(cmdline, &file_list);
     if (!status.ok()) return status;
 
@@ -250,7 +250,7 @@ static absl::Status ShowFileDependencies(const SubcommandArgsRange &args,
   return absl::OkStatus();
 }
 
-static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
+static const std::pair<std::string_view, SubcommandEntry> kCommands[] = {
     {"symbol-table-defs",        //
      {&BuildAndShowSymbolTable,  //
       R"(symbol-table-defs [project args]

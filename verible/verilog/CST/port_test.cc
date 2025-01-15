@@ -25,10 +25,10 @@
 #include <initializer_list>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/syntax-tree-search-test-utils.h"
 #include "verible/common/analysis/syntax-tree-search.h"
@@ -318,8 +318,8 @@ TEST(FindAllTaskFunctionPortDeclarationsTest, ExpectNoTaskFunctionPorts) {
 }
 
 struct ExpectedPort {
-  absl::string_view id;  // name of port
-  bool have_type;        // is type specified?
+  std::string_view id;  // name of port
+  bool have_type;       // is type specified?
 };
 
 struct TaskFunctionTestCase {

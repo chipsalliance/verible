@@ -16,11 +16,11 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/logging.h"
 #include "verible/verilog/tools/kythe/kythe-facts.h"
 
@@ -40,7 +40,7 @@ void ScopeResolver::SetCurrentScope(const Signature &scope) {
 }
 
 void ScopeResolver::RemoveDefinitionFromCurrentScope(const VName &vname) {
-  absl::string_view name = vname.signature.Names().back();
+  std::string_view name = vname.signature.Names().back();
   auto scopes = variable_to_scoped_vname_.find(name);
   if (scopes == variable_to_scoped_vname_.end()) {
     VLOG(1) << "No definition for '" << name << "'. Nothing to remove.";
@@ -121,7 +121,7 @@ void ScopeResolver::AddDefinitionToCurrentScope(
 }
 
 std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
-    absl::string_view name, const SignatureDigest &scope_focus) {
+    std::string_view name, const SignatureDigest &scope_focus) {
   VLOG(2) << "Find definition for '" << name << "' within scope "
           << ScopeDebug(scope_focus);
   auto scope = variable_to_scoped_vname_.find(name);
@@ -158,7 +158,7 @@ std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
 }
 
 std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
-    absl::string_view name) {
+    std::string_view name) {
   return FindScopeAndDefinition(name, CurrentScopeDigest());
 }
 

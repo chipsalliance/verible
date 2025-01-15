@@ -18,13 +18,13 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
@@ -43,7 +43,7 @@ static constexpr verilog::VerilogPreprocess::Config kPreprocessConfig{
     .filter_branches = true,
 };
 
-VerilogSourceFile::VerilogSourceFile(absl::string_view referenced_path,
+VerilogSourceFile::VerilogSourceFile(std::string_view referenced_path,
                                      const absl::Status &status)
     : referenced_path_(referenced_path), status_(status) {}
 
@@ -62,7 +62,7 @@ absl::Status VerilogSourceFile::Open() {
   return status_;  // status_ is Ok here.
 }
 
-absl::string_view VerilogSourceFile::GetContent() const {
+std::string_view VerilogSourceFile::GetContent() const {
   return content_ ? content_->AsStringView() : "";
 }
 
@@ -121,7 +121,7 @@ std::ostream &operator<<(std::ostream &stream,
 void VerilogProject::ContentToFileIndex::Register(
     const VerilogSourceFile *file) {
   CHECK(file);
-  const absl::string_view content = file->GetContent();
+  const std::string_view content = file->GetContent();
   string_view_map_.must_emplace(content);
   const auto map_inserted =
       buffer_to_analyzer_map_.emplace(content.begin(), file);
@@ -131,7 +131,7 @@ void VerilogProject::ContentToFileIndex::Register(
 void VerilogProject::ContentToFileIndex::Unregister(
     const VerilogSourceFile *file) {
   CHECK(file);
-  const absl::string_view content = file->GetContent();
+  const std::string_view content = file->GetContent();
   auto full_content_found = string_view_map_.find(content);
   if (full_content_found != string_view_map_.end()) {
     string_view_map_.erase(full_content_found);
@@ -140,11 +140,11 @@ void VerilogProject::ContentToFileIndex::Unregister(
 }
 
 const VerilogSourceFile *VerilogProject::ContentToFileIndex::Lookup(
-    absl::string_view content_substring) const {
+    std::string_view content_substring) const {
   // Look for corresponding source text (superstring) buffer start.
   const auto found_superstring = string_view_map_.find(content_substring);
   if (found_superstring == string_view_map_.end()) return nullptr;
-  const absl::string_view::const_iterator buffer_start =
+  const std::string_view::const_iterator buffer_start =
       found_superstring->first;
 
   // Reverse-lookup originating file based on buffer start.
@@ -155,8 +155,8 @@ const VerilogSourceFile *VerilogProject::ContentToFileIndex::Lookup(
 }
 
 absl::StatusOr<VerilogSourceFile *> VerilogProject::OpenFile(
-    absl::string_view referenced_filename, absl::string_view resolved_filename,
-    absl::string_view corpus) {
+    std::string_view referenced_filename, std::string_view resolved_filename,
+    std::string_view corpus) {
   const auto inserted = files_.emplace(
       referenced_filename, std::make_unique<VerilogSourceFile>(
                                referenced_filename, resolved_filename, corpus));
@@ -184,7 +184,7 @@ bool VerilogProject::RemoveByName(const std::string &filename) {
 
 // TODO: explain better in the header what happens with includes.
 bool VerilogProject::RemoveRegisteredFile(
-    absl::string_view referenced_filename) {
+    std::string_view referenced_filename) {
   if (RemoveByName(std::string(referenced_filename))) {
     LOG(INFO) << "Removed " << referenced_filename << " from the project.";
     return true;
@@ -201,7 +201,7 @@ bool VerilogProject::RemoveRegisteredFile(
 }
 
 std::string VerilogProject::GetRelativePathToSource(
-    const absl::string_view absolute_filepath) {
+    const std::string_view absolute_filepath) {
   // TODO add check if the absolute_filepath is out of the VerilogProject
   std::filesystem::path absolutepath{absolute_filepath.begin(),
                                      absolute_filepath.end()};
@@ -212,8 +212,8 @@ std::string VerilogProject::GetRelativePathToSource(
 }
 
 void VerilogProject::UpdateFileContents(
-    absl::string_view path, const verilog::VerilogAnalyzer *parsed) {
-  constexpr absl::string_view kCorpus;
+    std::string_view path, const verilog::VerilogAnalyzer *parsed) {
+  constexpr std::string_view kCorpus;
   const std::string projectpath = GetRelativePathToSource(path);
 
   // If we get a non-null parsed file, use that, otherwise fall back to
@@ -245,7 +245,7 @@ void VerilogProject::UpdateFileContents(
 }
 
 VerilogSourceFile *VerilogProject::LookupRegisteredFileInternal(
-    absl::string_view referenced_filename) const {
+    std::string_view referenced_filename) const {
   const auto opened_file = FindOpenedFile(referenced_filename);
   if (opened_file) {
     if (!opened_file->ok()) {
@@ -267,7 +267,7 @@ VerilogSourceFile *VerilogProject::LookupRegisteredFileInternal(
 }
 
 absl::optional<absl::StatusOr<VerilogSourceFile *>>
-VerilogProject::FindOpenedFile(absl::string_view filename) const {
+VerilogProject::FindOpenedFile(std::string_view filename) const {
   const auto found = files_.find(filename);
   if (found != files_.end()) {
     if (absl::Status status = found->second->Status(); !status.ok()) {
@@ -279,7 +279,7 @@ VerilogProject::FindOpenedFile(absl::string_view filename) const {
 }
 
 absl::StatusOr<VerilogSourceFile *> VerilogProject::OpenTranslationUnit(
-    absl::string_view referenced_filename) {
+    std::string_view referenced_filename) {
   // Check for a pre-existing entry to avoid duplicate files.
   {
     const auto opened_file = FindOpenedFile(referenced_filename);
@@ -303,14 +303,14 @@ absl::StatusOr<VerilogSourceFile *> VerilogProject::OpenTranslationUnit(
 }
 
 absl::Status VerilogProject::IncludeFileNotFoundError(
-    absl::string_view referenced_filename) const {
+    std::string_view referenced_filename) const {
   return absl::NotFoundError(
       absl::StrCat("'", referenced_filename, "' not in any of the ",
                    include_paths_.size(), " include paths"));
 }
 
 absl::StatusOr<VerilogSourceFile *> VerilogProject::OpenIncludedFile(
-    absl::string_view referenced_filename) {
+    std::string_view referenced_filename) {
   VLOG(2) << __FUNCTION__ << ", referenced: " << referenced_filename;
   // Check for a pre-existing entry to avoid duplicate files.
   {
@@ -351,8 +351,8 @@ absl::StatusOr<VerilogSourceFile *> VerilogProject::OpenIncludedFile(
   return inserted.first->second->Status();
 }
 
-void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
-                                    absl::string_view content) {
+void VerilogProject::AddVirtualFile(std::string_view resolved_filename,
+                                    std::string_view content) {
   const auto inserted = files_.emplace(
       resolved_filename,
       std::make_unique<InMemoryVerilogSourceFile>(
@@ -367,7 +367,7 @@ void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
 }
 
 const VerilogSourceFile *VerilogProject::LookupFileOrigin(
-    absl::string_view content_substring) const {
+    std::string_view content_substring) const {
   CHECK(content_index_) << "LookupFileOrigin() not enabled in constructor";
   return content_index_->Lookup(content_substring);
 }

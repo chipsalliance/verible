@@ -16,9 +16,9 @@
 
 #include <cstddef>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/analysis/file-analyzer.h"
 #include "verible/common/strings/line-column-map.h"
@@ -60,7 +60,7 @@ json GetLinterTokenErrorsAsJson(const verilog::VerilogAnalyzer *analyzer,
         rejected_token,
         [&error](const std::string &filename, LineColumnRange range,
                  ErrorSeverity severity, AnalysisPhase phase,
-                 absl::string_view token_text, absl::string_view context_line,
+                 std::string_view token_text, std::string_view context_line,
                  const std::string &message) {
           // TODO: should this do something different for severity = kWarning ?
           error["line"] = range.start.line;  // NB: zero based index

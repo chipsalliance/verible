@@ -19,6 +19,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/flags/flag.h"
@@ -26,7 +27,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/lsp/lsp-file-utils.h"
@@ -52,14 +52,14 @@ using nlohmann::json;
 using verible::lsp::PathToLSPUri;
 
 // TODO (glatosinski) use better sample modules
-static constexpr absl::string_view  //
+static constexpr std::string_view  //
     kSampleModuleA(
         R"(module a;
   assign var1 = 1'b0;
   assign var2 = var1 | 1'b1;
 endmodule
 )");
-static constexpr absl::string_view  //
+static constexpr std::string_view  //
     kSampleModuleB(
         R"(module b;
   assign var1 = 1'b0;
@@ -75,7 +75,7 @@ class VerilogLanguageServerTest : public ::testing::Test {
   // It does not parse the response nor fetch it in any way (for other
   // tests to check e.g. server/client capabilities).
   virtual absl::Status InitializeCommunication() {
-    const absl::string_view initialize =
+    const std::string_view initialize =
         R"({ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": null })";
 
     SetRequest(initialize);
@@ -85,7 +85,7 @@ class VerilogLanguageServerTest : public ::testing::Test {
   // Runs SetRequest and ServerStep, returning the status from the
   // Language Server
   // TODO: accept nlohmann::json object directly ?
-  absl::Status SendRequest(absl::string_view request) {
+  absl::Status SendRequest(std::string_view request) {
     SetRequest(request);
     return ServerStep();
   }
@@ -106,7 +106,7 @@ class VerilogLanguageServerTest : public ::testing::Test {
 
  protected:
   // Wraps request for the Language Server in RPC header
-  void SetRequest(absl::string_view request) {
+  void SetRequest(std::string_view request) {
     request_stream_.clear();
     request_stream_.str(
         absl::StrCat("Content-Length: ", request.size(), "\r\n\r\n", request));
@@ -125,7 +125,7 @@ class VerilogLanguageServerTest : public ::testing::Test {
   // It stores the response in initialize_response field for further processing
   void SetUp() override {  // not yet final
     server_ = std::make_unique<VerilogLanguageServer>(
-        [this](absl::string_view response) { response_stream_ << response; });
+        [this](std::string_view response) { response_stream_ << response; });
 
     absl::Status status = InitializeCommunication();
     EXPECT_TRUE(status.ok()) << "Failed to read request:  " << status;
@@ -185,8 +185,8 @@ TEST_F(VerilogLanguageServerTest, InitializeRequest) {
       << "Invalid Language Server name";
 }
 
-static std::string DidOpenRequest(absl::string_view name,
-                                  absl::string_view content) {
+static std::string DidOpenRequest(std::string_view name,
+                                  std::string_view content) {
   return nlohmann::json{//
                         {"jsonrpc", "2.0"},
                         {"method", "textDocument/didOpen"},
@@ -216,7 +216,7 @@ TEST_F(VerilogLanguageServerTest, SyntaxError) {
       << "No syntax error found";
 
   // query diagnostics explicitly
-  const absl::string_view diagnostic_request = R"(
+  const std::string_view diagnostic_request = R"(
     {
       "jsonrpc": "2.0", "id": 2, "method": "textDocument/diagnostic",
       "params":
@@ -260,7 +260,7 @@ TEST_F(VerilogLanguageServerTest, LintErrorDetection) {
       9);
 
   // Secondly, request a code action at the EOF error message position
-  const absl::string_view action_request =
+  const std::string_view action_request =
       R"({"jsonrpc":"2.0", "id":10, "method":"textDocument/codeAction","params":{"textDocument":{"uri":"file://mini.sv"},"range":{"start":{"line":1,"character":9},"end":{"line":1,"character":9}}}})";
   ASSERT_OK(SendRequest(action_request));
 
@@ -270,7 +270,7 @@ TEST_F(VerilogLanguageServerTest, LintErrorDetection) {
       action["result"][0]["edit"]["changes"]["file://mini.sv"][0]["newText"],
       "\n");
   // Thirdly, apply change suggested by a code action and check diagnostics
-  const absl::string_view apply_fix =
+  const std::string_view apply_fix =
       R"({"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file://mini.sv"},"contentChanges":[{"range":{"start":{"character":9,"line":1},"end":{"character":9,"line":1}},"text":"\n"}]}})";
   ASSERT_OK(SendRequest(apply_fix));
 
@@ -314,7 +314,7 @@ endmodule
       << "textDocument/publishDiagnostics not received";
 
   // Request a document symbol
-  const absl::string_view document_symbol_request =
+  const std::string_view document_symbol_request =
       R"({"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini_pkg.sv"}}})";
   ASSERT_OK(SendRequest(document_symbol_request));
 
@@ -398,7 +398,7 @@ endmodule
       << "textDocument/publishDiagnostics not received";
 
   // Request a document symbol
-  const absl::string_view document_symbol_request =
+  const std::string_view document_symbol_request =
       R"({"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini_pkg.sv"}}})";
   ASSERT_OK(SendRequest(document_symbol_request));
 
@@ -450,7 +450,7 @@ TEST_F(VerilogLanguageServerTest,
   GetResponse();  // ignore response.
 
   // Close the file from the Language Server perspective
-  const absl::string_view closing_request = R"(
+  const std::string_view closing_request = R"(
     {
       "jsonrpc":"2.0",
       "method":"textDocument/didClose",
@@ -464,7 +464,7 @@ TEST_F(VerilogLanguageServerTest,
 
   // Try to request document symbol for closed file (server should return empty
   // response gracefully)
-  const absl::string_view document_symbol_request =
+  const std::string_view document_symbol_request =
       R"({"jsonrpc":"2.0", "id":13, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}})";
   ASSERT_OK(SendRequest(document_symbol_request));
 
@@ -487,7 +487,7 @@ TEST_F(VerilogLanguageServerTest, SymbolHighlightingTest) {
       << "Diagnostics for invalid file";
   EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
       << "The test file has errors";
-  const absl::string_view highlight_request1 =
+  const std::string_view highlight_request1 =
       R"({"jsonrpc":"2.0", "id":20, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":7}}})";
   ASSERT_OK(SendRequest(highlight_request1));
 
@@ -503,7 +503,7 @@ TEST_F(VerilogLanguageServerTest, SymbolHighlightingTest) {
       json::parse(
           R"({"range":{"start":{"line":1, "character": 20}, "end":{"line":1, "character": 21}}})"));
 
-  const absl::string_view highlight_request2 =
+  const std::string_view highlight_request2 =
       R"({"jsonrpc":"2.0", "id":21, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":2}}})";
   ASSERT_OK(SendRequest(highlight_request2));
 
@@ -516,7 +516,7 @@ TEST_F(VerilogLanguageServerTest, SymbolHighlightingTest) {
 struct FormattingRequestParams {
   FormattingRequestParams(int id, int start_line, int start_character,
                           int end_line, int end_character,
-                          absl::string_view new_text, int new_text_start_line,
+                          std::string_view new_text, int new_text_start_line,
                           int new_text_start_character, int new_text_end_line,
                           int new_text_end_character)
       : id(id),
@@ -536,7 +536,7 @@ struct FormattingRequestParams {
   int end_line;
   int end_character;
 
-  absl::string_view new_text;
+  std::string_view new_text;
   int new_text_start_line;
   int new_text_start_character;
   int new_text_end_line;
@@ -545,7 +545,7 @@ struct FormattingRequestParams {
 
 // Creates a textDocument/rangeFormatting request from FormattingRequestParams
 // structure
-std::string FormattingRequest(absl::string_view file,
+std::string FormattingRequest(std::string_view file,
                               const FormattingRequestParams &params) {
   json formattingrequest = {
       {"jsonrpc", "2.0"},
@@ -627,7 +627,7 @@ TEST_F(VerilogLanguageServerTest, FormattingTest) {
   EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
       << "The test file has errors";
 
-  const absl::string_view formatting_request =
+  const std::string_view formatting_request =
       R"({"jsonrpc":"2.0", "id":34, "method":"textDocument/formatting","params":{"textDocument":{"uri":"file://fmt.sv"}}})";
 
   ASSERT_OK(SendRequest(formatting_request));
@@ -651,7 +651,7 @@ TEST_F(VerilogLanguageServerTest, FormattingFileWithEmptyNewline_issue1667) {
 
   GetResponse();  // Ignore diagnostics.
 
-  const absl::string_view formatting_request = R"(
+  const std::string_view formatting_request = R"(
 {"jsonrpc":"2.0", "id":1,
  "method": "textDocument/formatting",
  "params": {"textDocument":{"uri":"file://fmt.sv"}}})";
@@ -679,7 +679,7 @@ TEST_F(VerilogLanguageServerTest, FormattingFileWithSyntaxErrors_issue1843) {
 
   GetResponse();  // Ignore diagnostics.
 
-  const absl::string_view formatting_request = R"(
+  const std::string_view formatting_request = R"(
 {"jsonrpc":"2.0", "id":1,
  "method": "textDocument/formatting",
  "params": {"textDocument":{"uri":"file://fmt.sv"}}})";
@@ -690,8 +690,8 @@ TEST_F(VerilogLanguageServerTest, FormattingFileWithSyntaxErrors_issue1843) {
 }
 
 // Creates a request based on TextDocumentPosition parameters
-std::string TextDocumentPositionBasedRequest(absl::string_view method,
-                                             absl::string_view file, int id,
+std::string TextDocumentPositionBasedRequest(std::string_view method,
+                                             std::string_view file, int id,
                                              int line, int character) {
   verible::lsp::TextDocumentPositionParams params{
       .textDocument = {.uri = {file.begin(), file.end()}},
@@ -702,14 +702,14 @@ std::string TextDocumentPositionBasedRequest(absl::string_view method,
 }
 
 // Creates a textDocument/definition request
-std::string DefinitionRequest(absl::string_view file, int id, int line,
+std::string DefinitionRequest(std::string_view file, int id, int line,
                               int character) {
   return TextDocumentPositionBasedRequest("textDocument/definition", file, id,
                                           line, character);
 }
 
 // Creates a textDocument/references request
-std::string ReferencesRequest(absl::string_view file, int id, int line,
+std::string ReferencesRequest(std::string_view file, int id, int line,
                               int character) {
   return TextDocumentPositionBasedRequest("textDocument/references", file, id,
                                           line, character);
@@ -737,7 +737,7 @@ void CheckDefinitionResponseSingleDefinition(const json &response, int id,
 }
 
 // Creates a textDocument/hover request
-std::string HoverRequest(absl::string_view file, int id, int line,
+std::string HoverRequest(std::string_view file, int id, int line,
                          int character) {
   return TextDocumentPositionBasedRequest("textDocument/hover", file, id, line,
                                           character);
@@ -747,8 +747,8 @@ std::string HoverRequest(absl::string_view file, int id, int line,
 // In this test the hover for "sum" symbol in assign
 // is checked
 TEST_F(VerilogLanguageServerSymbolTableTest, HoverOverSymbol) {
-  absl::string_view filelist_content = "mod.v\n";
-  static constexpr absl::string_view  //
+  std::string_view filelist_content = "mod.v\n";
+  static constexpr std::string_view  //
       module_content(
           R"(module mod(
     input clk,
@@ -786,8 +786,8 @@ endmodule
 
 // Checks if the hover appears on "end" token when block name is available
 TEST_F(VerilogLanguageServerSymbolTableTest, HoverOverEnd) {
-  absl::string_view filelist_content = "mod.v\n";
-  static constexpr absl::string_view  //
+  std::string_view filelist_content = "mod.v\n";
+  static constexpr std::string_view  //
       module_content(
           R"(module mod(
     input clk,
@@ -835,7 +835,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestNoProjectTest) {
 
 // Performs simple textDocument/definition request
 TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
-  absl::string_view filelist_content = "a.sv\n";
+  std::string_view filelist_content = "a.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -866,7 +866,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
 // name (variable name), but in different modules
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestSameVariablesDifferentModules) {
-  absl::string_view filelist_content = "a.sv\nb.sv\n";
+  std::string_view filelist_content = "a.sv\nb.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -913,7 +913,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
 // inside other module edited in buffer
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestSymbolFromDifferentOpenedModule) {
-  absl::string_view filelist_content = "a.sv\nb.sv\n";
+  std::string_view filelist_content = "a.sv\nb.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -950,7 +950,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
 // inside other module that is not edited in buffer
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestSymbolFromDifferentNotOpenedModule) {
-  absl::string_view filelist_content = "a.sv\nb.sv\n";
+  std::string_view filelist_content = "a.sv\nb.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -984,7 +984,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
 // inside other module which was opened and closed
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestSymbolFromDifferentOpenedAndClosedModule) {
-  absl::string_view filelist_content = "a.sv\nb.sv\n";
+  std::string_view filelist_content = "a.sv\nb.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -1041,9 +1041,9 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
 // when there are incorrect files in the project
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestInvalidFileInWorkspace) {
-  absl::string_view filelist_content = "a.sv\nb.sv\n";
+  std::string_view filelist_content = "a.sv\nb.sv\n";
 
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       sample_module_b_with_error(
           R"(module b;
   assign var1 = 1'b0;
@@ -1083,9 +1083,9 @@ endmodule
 // Check textDocument/definition request where we want definition of a symbol
 // inside incorrect file
 TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestInInvalidFile) {
-  absl::string_view filelist_content = "a.sv\nb.sv\n";
+  std::string_view filelist_content = "a.sv\nb.sv\n";
 
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       sample_module_b_with_error(
           R"(module b;
   assign var1 = 1'b0;
@@ -1126,7 +1126,7 @@ endmodule
 
 // Check textDocument/definition request when URI is not supported
 TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestUnsupportedURI) {
-  absl::string_view filelist_content = "a.sv";
+  std::string_view filelist_content = "a.sv";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -1155,7 +1155,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestUnsupportedURI) {
 // Check textDocument/definition when the cursor points at definition
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestCursorAtDefinition) {
-  absl::string_view filelist_content = "a.sv";
+  std::string_view filelist_content = "a.sv";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -1185,7 +1185,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
 // Check textDocument/definition when the cursor points at nothing
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestCursorAtNoSymbol) {
-  absl::string_view filelist_content = "a.sv";
+  std::string_view filelist_content = "a.sv";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -1214,7 +1214,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
 // Check textDocument/definition when the cursor points at nothing
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestCursorAtUnknownSymbol) {
-  absl::string_view filelist_content = "b.sv";
+  std::string_view filelist_content = "b.sv";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -1300,20 +1300,20 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
 }
 
 TEST_F(VerilogLanguageServerSymbolTableTest, MultipleDefinitionsOfSameSymbol) {
-  static constexpr absl::string_view filelist_content =
+  static constexpr std::string_view filelist_content =
       "bar_1.sv\nbar_2.sv\nfoo.sv";
 
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       bar_1(
           R"(module bar();
 endmodule
 )");
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       bar_2(
           R"(module bar();
 endmodule
 )");
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       foo(
           R"(module foo();
   bar x;
@@ -1350,14 +1350,14 @@ endmodule
 }
 
 // Sample of badly styled module
-constexpr static absl::string_view badly_styled_module =
+constexpr static std::string_view badly_styled_module =
     "module my_module(input logic in, output logic out);\n\tassign out = in; "
     "\nendmodule";
 
 // Checks if a given substring (lint rule type) is present
 // in linter diagnostics.
 bool CheckDiagnosticsContainLinterIssue(const json &diagnostics,
-                                        absl::string_view lint_issue_type) {
+                                        std::string_view lint_issue_type) {
   for (const auto &d : diagnostics) {
     if (absl::StrContains(d["message"].get<std::string>(), lint_issue_type)) {
       return true;
@@ -1394,7 +1394,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefaultConfigurationTest) {
 // Checks the work of linter in language server when
 // configuration file with "-no-tabs" file is present
 TEST_F(VerilogLanguageServerSymbolTableTest, ParsingLinterNoTabs) {
-  constexpr absl::string_view lint_config = "-no-tabs";
+  constexpr std::string_view lint_config = "-no-tabs";
   const verible::file::testing::ScopedTestFile module_mod(
       root_dir, badly_styled_module, "my_mod.sv");
   const verible::file::testing::ScopedTestFile lint_file(root_dir, lint_config,
@@ -1423,7 +1423,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, ParsingLinterNoTabs) {
 // rules
 TEST_F(VerilogLanguageServerSymbolTableTest,
        ParsingLinterNoTabsIgnoreModuleName) {
-  constexpr absl::string_view lint_config =
+  constexpr std::string_view lint_config =
       "-module-filename\n-posix-eof\n-no-tabs";
   const verible::file::testing::ScopedTestFile module_mod(
       root_dir, badly_styled_module, "my_mod.sv");
@@ -1473,7 +1473,7 @@ json ReferenceEntry(verible::LineColumn start, verible::LineColumn end,
 // name (variable name) in two modules
 TEST_F(VerilogLanguageServerSymbolTableTest,
        ReferencesRequestSameVariablesDifferentModules) {
-  absl::string_view filelist_content = "a.sv\nb.sv\n";
+  std::string_view filelist_content = "a.sv\nb.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -1552,7 +1552,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
 
 // Check textDocument/references behavior when pointing to an invalid space
 TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceInvalidLocation) {
-  absl::string_view filelist_content = "a.sv\n";
+  std::string_view filelist_content = "a.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -1580,7 +1580,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceInvalidLocation) {
 
 // Check textDocument/references behavior when pointing to a keyword
 TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceKeyword) {
-  absl::string_view filelist_content = "a.sv\n";
+  std::string_view filelist_content = "a.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -1608,7 +1608,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceKeyword) {
 
 // Check textDocument/references behavior when pointing to an unknown symbol
 TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceUnknownSymbol) {
-  absl::string_view filelist_content = "b.sv\n";
+  std::string_view filelist_content = "b.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -1636,7 +1636,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceUnknownSymbol) {
 
 // Checks the definition request for module type in different module
 TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestModule) {
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       instmodule(
           R"(module InstModule (
     o,
@@ -1684,7 +1684,7 @@ endmodule
 
 // Checks the go-to definition when pointing to the definition of the symbol
 TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestSelf) {
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       instmodule(
           R"(module InstModule (
     o,
@@ -1734,7 +1734,7 @@ endmodule
 // This check verifies ports with types defined inside port list
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestPortTypesInsideList) {
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       instmodule(
           R"(module InstModule (
     output logic [31:0] o,
@@ -1768,7 +1768,7 @@ endmodule
 // This check verifies ports with types defined outside port list
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestPortTypesOutsideList) {
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       instmodule(
           R"(module InstModule (
     o,
@@ -1808,7 +1808,7 @@ endmodule
 // * simple port
 TEST_F(VerilogLanguageServerSymbolTableTest,
        DefinitionRequestPortPortIdentifierVariant) {
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       port_identifier(
           R"(module port_identifier(a, rst, clk, out);
     input logic [15:0] a;
@@ -1882,7 +1882,7 @@ endmodule)");
 // definition of the symbol is split into multiple lines,
 // e.g. for port module declarations.
 TEST_F(VerilogLanguageServerSymbolTableTest, MultilinePortDefinitions) {
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       port_identifier(
           R"(module port_identifier(i, o, trigger);
   input trigger;
@@ -1932,7 +1932,7 @@ endmodule
 // Verifies the work of the go-to definition request when
 // definition of the symbol later in the definition list is requested
 TEST_F(VerilogLanguageServerSymbolTableTest, MultilinePortDefinitionsWithList) {
-  static constexpr absl::string_view  //
+  static constexpr std::string_view  //
       port_identifier(
           R"(module port_identifier(a, b, o, trigger);
   input trigger;
@@ -1998,7 +1998,7 @@ std::string PrepareRenameRequest(
 TEST_F(VerilogLanguageServerSymbolTableTest,
        PrepareRenameReturnsRangeOfEditableSymbol) {
   // Create sample file and make sure diagnostics do not have errors
-  std::string file_uri = PathToLSPUri(absl::string_view(root_dir + "/fmt.sv"));
+  std::string file_uri = PathToLSPUri(std::string_view(root_dir + "/fmt.sv"));
   verible::lsp::PrepareRenameParams params;
   params.position.line = 2;
   params.position.character = 1;
@@ -2032,7 +2032,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
 
 TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameReturnsNull) {
   // Create sample file and make sure diagnostics do not have errors
-  std::string file_uri = PathToLSPUri(absl::string_view(root_dir + "/fmt.sv"));
+  std::string file_uri = PathToLSPUri(std::string_view(root_dir + "/fmt.sv"));
   verible::lsp::PrepareRenameParams params;
   params.position.line = 1;
   params.position.character = 1;
@@ -2061,14 +2061,14 @@ TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameReturnsNull) {
 TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolSingleFile) {
   // Create sample file and make sure diagnostics do not have errors
   std::string file_uri =
-      PathToLSPUri(absl::string_view(root_dir + "/rename.sv"));
+      PathToLSPUri(std::string_view(root_dir + "/rename.sv"));
   verible::lsp::RenameParams params;
   params.position.line = 2;
   params.position.character = 1;
   params.textDocument.uri = file_uri;
   params.newName = "foo";
 
-  absl::string_view filelist_content = "rename.sv\n";
+  std::string_view filelist_content = "rename.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -2106,8 +2106,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolSingleFile) {
 
 TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolMultipleFiles) {
   // Create sample file and make sure diagnostics do not have errors
-  std::string top_uri = PathToLSPUri(absl::string_view(root_dir + "/top.sv"));
-  std::string foo_uri = PathToLSPUri(absl::string_view(root_dir + "/foo.sv"));
+  std::string top_uri = PathToLSPUri(std::string_view(root_dir + "/top.sv"));
+  std::string foo_uri = PathToLSPUri(std::string_view(root_dir + "/foo.sv"));
   verible::lsp::RenameParams params;
   params.position.line = 2;
   params.position.character = 9;
@@ -2123,7 +2123,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolMultipleFiles) {
       "module top;\n"
       "  foo::foobar bar;\n"
       "endmodule;\n";
-  absl::string_view filelist_content = "./foo.sv\n./top.sv\n";
+  std::string_view filelist_content = "./foo.sv\n./top.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -2170,7 +2170,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolMultipleFiles) {
 TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestPackageDistinction) {
   // Create sample file and make sure diagnostics do not have errors
   std::string file_uri =
-      PathToLSPUri(absl::string_view(root_dir + "/rename.sv"));
+      PathToLSPUri(std::string_view(root_dir + "/rename.sv"));
   verible::lsp::RenameParams params;
   params.position.line = 7;
   params.position.character = 15;
@@ -2187,7 +2187,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestPackageDistinction) {
       "        foo::foobar baz;\n"
       "    endclass;\n"
       "endpackage;\n";
-  absl::string_view filelist_content = "rename.sv\n";
+  std::string_view filelist_content = "rename.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
       root_dir, filelist_content, "verible.filelist");
@@ -2219,7 +2219,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestPackageDistinction) {
 
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
-  const absl::string_view shutdown_request =
+  const std::string_view shutdown_request =
       R"({"jsonrpc":"2.0", "id":100, "method":"shutdown","params":{}})";
 
   ASSERT_OK(SendRequest(shutdown_request));

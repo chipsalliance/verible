@@ -14,9 +14,9 @@
 
 #include "verible/verilog/tools/kythe/scope-resolver.h"
 
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/verilog/tools/kythe/kythe-facts.h"
@@ -27,7 +27,7 @@ namespace {
 
 using ::testing::UnorderedElementsAreArray;
 
-constexpr absl::string_view names[] = {
+constexpr std::string_view names[] = {
     "signature0", "signature1", "signature2", "signature3",
     "signature4", "signature5", "signature6", "signature7",
     "signature8", "signature9", "",
@@ -99,7 +99,7 @@ TEST(ScopeResolverTests, FindDefinitionInDifferentScope) {
   scope_resolver.AddDefinitionToCurrentScope(vnames[0]);
   scope_resolver.SetCurrentScope(signatures[0]);
 
-  absl::string_view name = vnames[0].signature.Names().back();
+  std::string_view name = vnames[0].signature.Names().back();
   const auto def_in_current_scope = scope_resolver.FindScopeAndDefinition(name);
   EXPECT_FALSE(def_in_current_scope.has_value());
 
@@ -112,7 +112,7 @@ TEST(ScopeResolverTests, RemoveDefinition) {
   ScopeResolver scope_resolver(signatures[5]);
   scope_resolver.AddDefinitionToCurrentScope(vnames[0]);
 
-  absl::string_view name = vnames[0].signature.Names().back();
+  std::string_view name = vnames[0].signature.Names().back();
   const auto def_in_current_scope = scope_resolver.FindScopeAndDefinition(name);
   EXPECT_TRUE(def_in_current_scope.has_value());
 
@@ -122,7 +122,7 @@ TEST(ScopeResolverTests, RemoveDefinition) {
 }
 
 TEST(ScopeResolverTests, SameNameVariableInMultipleScopes) {
-  constexpr absl::string_view name = "a";
+  constexpr std::string_view name = "a";
   Signature sig1(signatures[0], name);
   VName var1{.path = "", .root = "", .signature = sig1, .corpus = ""};
   Signature sig2(signatures[5], name);
@@ -173,7 +173,7 @@ TEST(ScopeResolverTests, AppendScope) {
   scope_resolver.AddDefinitionToCurrentScope(vnames[0]);
   scope_resolver.SetCurrentScope(signatures[0]);
 
-  absl::string_view name = vnames[0].signature.Names().back();
+  std::string_view name = vnames[0].signature.Names().back();
   const auto def_in_current_scope = scope_resolver.FindScopeAndDefinition(name);
   EXPECT_FALSE(def_in_current_scope.has_value());
 

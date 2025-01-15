@@ -17,9 +17,9 @@
 
 #include <functional>
 #include <iosfwd>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/token-partition-tree.h"
 #include "verible/common/formatting/unwrapped-line.h"
@@ -82,7 +82,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   }
 
   // Returns text spanned by the syntax tree being traversed.
-  absl::string_view FullText() const { return text_structure_view_.Contents(); }
+  std::string_view FullText() const { return text_structure_view_.Contents(); }
 
   // Transformation
 

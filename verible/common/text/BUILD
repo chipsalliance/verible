@@ -27,7 +27,6 @@ cc_library(
         "//verible/common/util:logging",
         "//verible/common/util:range",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -49,7 +48,6 @@ cc_library(
     deps = [
         ":token-info",
         "//verible/common/util:logging",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -60,7 +58,6 @@ cc_library(
     deps = [
         ":token-info",
         "//verible/common/util:iterator-range",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -101,7 +98,6 @@ cc_test(
     deps = [
         ":concrete-syntax-leaf",
         ":token-info",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -132,7 +128,6 @@ cc_library(
         "//verible/common/util:logging",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@re2",
     ],
 )
@@ -144,7 +139,6 @@ cc_test(
         ":config-utils",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@re2",
@@ -187,7 +181,6 @@ cc_test(
         ":concrete-syntax-tree",
         ":tree-builder-test-util",
         ":tree-compare",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -216,7 +209,6 @@ cc_test(
         ":syntax-tree-context",
         ":tree-builder-test-util",
         ":tree-context-visitor",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -240,7 +232,6 @@ cc_library(
         "//verible/common/util:value-saver",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -255,7 +246,6 @@ cc_library(
         ":symbol",
         ":tree-utils",
         "//verible/common/util:logging",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -290,7 +280,6 @@ cc_library(
         "//verible/common/util:status-macros",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -307,7 +296,6 @@ cc_library(
         ":tree-builder-test-util",
         "//verible/common/util:logging",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -320,7 +308,6 @@ cc_library(
         "//verible/common/util:container-util",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -369,7 +356,6 @@ cc_test(
         "//verible/common/util:casts",
         "//verible/common/util:logging",
         "//verible/common/util:range",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -398,7 +384,6 @@ cc_test(
         ":constants",
         ":token-info",
         "//verible/common/util:range",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -411,7 +396,6 @@ cc_test(
         ":constants",
         ":token-info",
         ":token-info-json",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@nlohmann_json//:singleheader-json",
@@ -424,7 +408,6 @@ cc_test(
     deps = [
         ":token-info",
         ":token-info-test-util",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -439,7 +422,6 @@ cc_test(
         ":token-info",
         ":token-stream-view",
         "//verible/common/util:iterator-range",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -477,7 +459,6 @@ cc_test(
         "//verible/common/util:range",
         "//verible/common/util:value-saver",
         "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -505,7 +486,6 @@ cc_test(
         ":token-info",
         ":token-stream-view",
         ":tree-builder-test-util",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

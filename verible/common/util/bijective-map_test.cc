@@ -17,10 +17,10 @@
 #include <functional>
 #include <initializer_list>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/strings/compare.h"
 #include "verible/common/util/logging.h"
@@ -159,7 +159,7 @@ TEST(BijectiveMapTest, InsertRandom) {
 }
 
 // Testing heterogenous lookup: internally stored std::string, supporting
-// copy-less lookup with absl::string_view.
+// copy-less lookup with std::string_view.
 using StringMapType = BijectiveMap<std::string, std::string, StringViewCompare,
                                    StringViewCompare>;
 
@@ -167,12 +167,12 @@ TEST(BijectiveMapTest, HeterogeneousStringLookup) {
   StringMapType m;
   EXPECT_TRUE(m.insert("a", "G"));
   EXPECT_TRUE(m.insert("z", "Q"));
-  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_forward(absl::string_view("a"))), "G");
-  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_reverse(absl::string_view("G"))), "a");
-  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_forward(absl::string_view("z"))), "Q");
-  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_reverse(absl::string_view("Q"))), "z");
-  EXPECT_EQ(m.find_forward(absl::string_view("b")), nullptr);
-  EXPECT_EQ(m.find_reverse(absl::string_view("3")), nullptr);
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_forward(std::string_view("a"))), "G");
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_reverse(std::string_view("G"))), "a");
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_forward(std::string_view("z"))), "Q");
+  EXPECT_EQ(*ABSL_DIE_IF_NULL(m.find_reverse(std::string_view("Q"))), "z");
+  EXPECT_EQ(m.find_forward(std::string_view("b")), nullptr);
+  EXPECT_EQ(m.find_reverse(std::string_view("3")), nullptr);
 }
 
 }  // namespace

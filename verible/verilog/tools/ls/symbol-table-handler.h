@@ -20,10 +20,10 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 #include "verible/common/lsp/lsp-protocol.h"
 #include "verible/common/strings/line-column-map.h"
@@ -37,7 +37,7 @@
 namespace verilog {
 
 // Looks for FileList file for SymbolTableHandler
-std::string FindFileList(absl::string_view current_dir);
+std::string FindFileList(std::string_view current_dir);
 
 // A class interfacing the SymbolTable with the LSP messages.
 // It manages the SymbolTable and its necessary components,
@@ -62,10 +62,10 @@ class SymbolTableHandler {
       const verilog::BufferTrackerContainer &parsed_buffers);
 
   // Finds the node of the symbol table with definition for a given symbol.
-  const SymbolTableNode *FindDefinitionNode(absl::string_view symbol);
+  const SymbolTableNode *FindDefinitionNode(std::string_view symbol);
 
   // Finds the symbol of the definition for the given identifier.
-  const verible::Symbol *FindDefinitionSymbol(absl::string_view symbol);
+  const verible::Symbol *FindDefinitionSymbol(std::string_view symbol);
 
   // Finds references of a symbol provided in the ReferenceParams
   // message delivered in textDocument/references message.
@@ -93,7 +93,7 @@ class SymbolTableHandler {
 
   // Provide new parsed content for the given path. If "content" is nullptr,
   // opens the given file instead.
-  void UpdateFileContent(absl::string_view path,
+  void UpdateFileContent(std::string_view path,
                          const verilog::VerilogAnalyzer *parsed);
 
   // Create a listener to be wired up to a buffer tracker. Whenever we
@@ -126,12 +126,12 @@ class SymbolTableHandler {
   // pointed by the file_origin.
   // If given symbol name is not found, std::nullopt is returned.
   std::optional<verible::lsp::Location> GetLocationFromSymbolName(
-      absl::string_view symbol_name, const VerilogSourceFile *file_origin);
+      std::string_view symbol_name, const VerilogSourceFile *file_origin);
 
   // Scans the symbol table tree to find a given symbol.
   // returns pointer to table node with the symbol on success, else nullptr.
   const SymbolTableNode *ScanSymbolTreeForDefinition(
-      const SymbolTableNode *context, absl::string_view symbol);
+      const SymbolTableNode *context, std::string_view symbol);
 
   // Internal function for CollectReferences that iterates over
   // ReferenceComponentNodes
@@ -148,7 +148,7 @@ class SymbolTableHandler {
 
   // Looks for verible.filelist file down in directory structure and loads
   // data to project. It is meant to be executed once per VerilogProject setup
-  bool LoadProjectFileList(absl::string_view current_dir);
+  bool LoadProjectFileList(std::string_view current_dir);
 
   // Parse all the files in the project.
   void ParseProjectFiles();

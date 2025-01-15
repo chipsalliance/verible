@@ -15,19 +15,19 @@
 #include "verible/common/strings/display-utils.h"
 
 #include <sstream>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace verible {
 namespace {
 
 struct TruncateTestCase {
-  absl::string_view input;
+  std::string_view input;
   int max_chars;
-  absl::string_view expected;
+  std::string_view expected;
 };
 
 TEST(AutoTruncateTest, Various) {
@@ -53,7 +53,7 @@ TEST(AutoTruncateTest, Various) {
 }
 
 TEST(VisualizeWhitespaceTest, Various) {
-  constexpr std::pair<absl::string_view, absl::string_view> kTestCases[] = {
+  constexpr std::pair<std::string_view, std::string_view> kTestCases[] = {
       {"", ""},          {"abc", "abc"},
       {"ABC", "ABC"},    {"123", "123"},
       {"   ", "..."},    {"\n\n\n", "\\\n\\\n\\\n"},
@@ -67,7 +67,7 @@ TEST(VisualizeWhitespaceTest, Various) {
 }
 
 TEST(VisualizeWhitespaceTest, OtherSubstitutions) {
-  constexpr std::pair<absl::string_view, absl::string_view> kTestCases[] = {
+  constexpr std::pair<std::string_view, std::string_view> kTestCases[] = {
       {"", ""},          {"abc", "abc"},
       {"ABC", "ABC"},    {"123", "123"},
       {"   ", "---"},    {"\n\n\n", "NNN"},
@@ -81,7 +81,7 @@ TEST(VisualizeWhitespaceTest, OtherSubstitutions) {
 }
 
 TEST(EscapeStringTest, Various) {
-  constexpr std::pair<absl::string_view, absl::string_view> kTestCases[] = {
+  constexpr std::pair<std::string_view, std::string_view> kTestCases[] = {
       {"", ""},
       {"abc", "abc"},
       {"ABC", "ABC"},

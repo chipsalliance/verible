@@ -15,9 +15,9 @@
 #include "verible/common/strings/range.h"
 
 #include <cstddef>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/range.h"
 
@@ -25,38 +25,38 @@ namespace verible {
 namespace {
 
 TEST(MakeStringViewRangeTest, Empty) {
-  absl::string_view text;
+  std::string_view text;
   auto copy_view = make_string_view_range(text.begin(), text.end());
   EXPECT_TRUE(BoundsEqual(copy_view, text));
 }
 
 TEST(MakeStringViewRangeTest, NonEmpty) {
-  absl::string_view text("I'm not empty!!!!");
+  std::string_view text("I'm not empty!!!!");
   auto copy_view = make_string_view_range(text.begin(), text.end());
   EXPECT_TRUE(BoundsEqual(copy_view, text));
 }
 
 TEST(MakeStringViewRangeTest, BadRange) {
-  absl::string_view text("backwards");
+  std::string_view text("backwards");
   EXPECT_DEATH(make_string_view_range(text.end(), text.begin()), "Malformed");
 }
 
 using IntPair = std::pair<int, int>;
 
 TEST(ByteOffsetRangeTest, EmptyInEmpty) {
-  const absl::string_view superstring("");  // NOLINT
+  const std::string_view superstring("");  // NOLINT
   const auto substring = superstring;
   EXPECT_EQ(SubstringOffsets(substring, superstring), IntPair(0, 0));
 }
 
 TEST(ByteOffsetRangeTest, EmptyInNullptrEmpty) {
-  const absl::string_view superstring;  // default constructor init with nullptr
+  const std::string_view superstring;  // default constructor init with nullptr
   const auto substring = superstring;
   EXPECT_EQ(SubstringOffsets(substring, superstring), IntPair(0, 0));
 }
 
 TEST(ByteOffsetRangeTest, RangeInvariant) {
-  const absl::string_view superstring("xxxxxxxx");
+  const std::string_view superstring("xxxxxxxx");
   for (size_t i = 0; i < superstring.length(); ++i) {
     for (size_t j = i; j < superstring.length(); ++j) {
       const auto substring = superstring.substr(i, j - i);
@@ -68,7 +68,7 @@ TEST(ByteOffsetRangeTest, RangeInvariant) {
 
 // Tests that swapping substring with superstring fails.
 TEST(ByteOffsetRangeTest, InsideOut) {
-  const absl::string_view superstring("yyyyyyy");
+  const std::string_view superstring("yyyyyyy");
   for (size_t i = 0; i < superstring.length(); ++i) {
     for (size_t j = i; j < superstring.length(); ++j) {
       const auto substring = superstring.substr(i, j - i);
@@ -83,7 +83,7 @@ TEST(ByteOffsetRangeTest, InsideOut) {
 }
 
 TEST(ByteOffsetRangeTest, PartialOverlap) {
-  const absl::string_view superstring("zzzz");
+  const std::string_view superstring("zzzz");
   for (size_t i = 0; i < superstring.length(); ++i) {
     for (size_t j = 1; j < superstring.length(); ++j) {
       const auto left = superstring.substr(0, i);

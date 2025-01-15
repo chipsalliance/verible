@@ -17,8 +17,8 @@
 
 #include <functional>
 #include <iosfwd>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/text/token-stream-view.h"
 
@@ -45,8 +45,8 @@ std::ostream &operator<<(std::ostream &, DiffStatus);
 // If errstream is provided, print detailed error message to that stream.
 // TODO(fangism): move this to language-agnostic common/analysis library.
 DiffStatus LexicallyEquivalent(
-    absl::string_view left, absl::string_view right,
-    const std::function<bool(absl::string_view, verible::TokenSequence *)>
+    std::string_view left, std::string_view right,
+    const std::function<bool(std::string_view, verible::TokenSequence *)>
         &lexer,
     const std::function<bool(const verible::TokenInfo &)> &recursion_predicate,
     const std::function<bool(const verible::TokenInfo &)> &remove_predicate,
@@ -60,7 +60,7 @@ DiffStatus LexicallyEquivalent(
 // out by remove_predicate, and using the equal_comparator binary predicate.
 // If errstream is provided, print detailed error message to that stream.
 DiffStatus VerilogLexicallyEquivalent(
-    absl::string_view left, absl::string_view right,
+    std::string_view left, std::string_view right,
     const std::function<bool(const verible::TokenInfo &)> &remove_predicate,
     const std::function<bool(const verible::TokenInfo &,
                              const verible::TokenInfo &)> &equal_comparator,
@@ -68,7 +68,7 @@ DiffStatus VerilogLexicallyEquivalent(
 
 // Returns true if both token sequences are equivalent, ignoring whitespace.
 // If errstream is provided, print detailed error message to that stream.
-DiffStatus FormatEquivalent(absl::string_view left, absl::string_view right,
+DiffStatus FormatEquivalent(std::string_view left, std::string_view right,
                             std::ostream *errstream = nullptr);
 
 // Similar to FormatEquivalent except that:
@@ -76,8 +76,7 @@ DiffStatus FormatEquivalent(absl::string_view left, absl::string_view right,
 //   2) identifiers only need to match in length and not string content to be
 //      considered equal.
 // Such equivalence is good for formatter test cases.
-DiffStatus ObfuscationEquivalent(absl::string_view left,
-                                 absl::string_view right,
+DiffStatus ObfuscationEquivalent(std::string_view left, std::string_view right,
                                  std::ostream *errstream = nullptr);
 
 }  // namespace verilog

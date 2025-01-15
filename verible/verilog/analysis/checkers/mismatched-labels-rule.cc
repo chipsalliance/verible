@@ -15,8 +15,8 @@
 #include "verible/verilog/analysis/checkers/mismatched-labels-rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -36,9 +36,9 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(MismatchedLabelsRule);
 
-static constexpr absl::string_view kMessageMismatch =
+static constexpr std::string_view kMessageMismatch =
     "Begin/end block labels must match.";
-static constexpr absl::string_view kMessageMissing =
+static constexpr std::string_view kMessageMissing =
     "Matching begin label is missing.";
 
 const LintRuleDescriptor &MismatchedLabelsRule::GetDescriptor() {

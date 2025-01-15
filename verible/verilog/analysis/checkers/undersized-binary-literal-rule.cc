@@ -18,12 +18,12 @@
 #include <cstddef>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -172,9 +172,9 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
 
 // Generate string representation of why lint error occurred at leaf
 std::string UndersizedBinaryLiteralRule::FormatReason(
-    absl::string_view width, absl::string_view base_text, char base,
-    absl::string_view literal) {
-  absl::string_view base_describe;
+    std::string_view width, std::string_view base_text, char base,
+    std::string_view literal) {
+  std::string_view base_describe;
   switch (base) {
     case 'b':
       base_describe = "Binary";
@@ -193,7 +193,7 @@ std::string UndersizedBinaryLiteralRule::FormatReason(
 }
 
 absl::Status UndersizedBinaryLiteralRule::Configure(
-    absl::string_view configuration) {
+    std::string_view configuration) {
   using verible::config::SetBool;
   return verible::ParseNameValues(configuration,
                                   {{"bin", SetBool(&check_bin_numbers_)},

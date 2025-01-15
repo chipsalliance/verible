@@ -14,9 +14,9 @@
 //
 
 #include <iostream>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/init-command-line.h"
 #include "verible/verilog/tools/ls/verilog-language-server.h"
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
   // -- Input and output is stdin and stdout.
 
   // Output: provided write-function is called with entire response messages.
-  verilog::VerilogLanguageServer server([](absl::string_view reply) {
+  verilog::VerilogLanguageServer server([](std::string_view reply) {
     // Output formatting as header/body chunk as required by LSP spec to stdout.
     std::cout << "Content-Length: " << reply.size() << "\r\n\r\n";
     std::cout << reply << std::flush;

@@ -19,10 +19,10 @@
 #include <iterator>
 #include <memory>
 #include <ostream>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/line-wrap-searcher.h"
@@ -203,7 +203,7 @@ class BlankLineSeparatorDetector {
  private:
   // Keeps track of the end of the previous partition, which is the start
   // of each inter-partition gap (string_view).
-  absl::string_view::const_iterator previous_end_;
+  std::string_view::const_iterator previous_end_;
 };
 
 // Subdivides the 'bounds' range into sub-ranges broken up by blank lines.
@@ -245,7 +245,7 @@ std::vector<TokenPartitionRange> GetSubpartitionsBetweenBlankLines(
   return result;
 }
 
-static absl::string_view StringSpanOfPartitionRange(
+static std::string_view StringSpanOfPartitionRange(
     const TokenPartitionRange &range) {
   CHECK(!range.empty());
   const auto front_range = range.front().Value().TokensRange();
@@ -257,10 +257,10 @@ static absl::string_view StringSpanOfPartitionRange(
 }
 
 bool AnyPartitionSubRangeIsDisabled(TokenPartitionRange range,
-                                    absl::string_view full_text,
+                                    std::string_view full_text,
                                     const ByteOffsetSet &disabled_byte_ranges) {
   if (range.empty()) return false;
-  const absl::string_view span = StringSpanOfPartitionRange(range);
+  const std::string_view span = StringSpanOfPartitionRange(range);
   VLOG(4) << "text spanned: " << AutoTruncate{span, 40};
   const std::pair<int, int> span_offsets = SubstringOffsets(span, full_text);
   ByteOffsetSet diff(disabled_byte_ranges);  // copy
@@ -283,19 +283,18 @@ void AdjustIndentationAbsolute(TokenPartitionTree *tree, int amount) {
   AdjustIndentationRelative(tree, indent_diff);
 }
 
-absl::string_view StringSpanOfTokenRange(const FormatTokenRange &range) {
+std::string_view StringSpanOfTokenRange(const FormatTokenRange &range) {
   if (range.empty()) return {};
   return make_string_view_range(range.front().Text().begin(),
                                 range.back().Text().end());
 }
 
 void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
-                                   absl::string_view full_text,
+                                   std::string_view full_text,
                                    std::vector<PreFormatToken> *ftokens) {
   for (const auto &partition : partition_range) {
     const auto token_range = partition.Value().TokensRange();
-    const absl::string_view partition_text =
-        StringSpanOfTokenRange(token_range);
+    const std::string_view partition_text = StringSpanOfTokenRange(token_range);
     std::pair<int, int> byte_range =
         SubstringOffsets(partition_text, full_text);
     // Tweak byte range to allow the first token to still obey indentation.

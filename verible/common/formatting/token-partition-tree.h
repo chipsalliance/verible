@@ -17,10 +17,10 @@
 
 #include <cstddef>
 #include <iosfwd>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/unwrapped-line.h"
@@ -100,7 +100,7 @@ std::ostream &operator<<(std::ostream &stream,
 // 'full_text' is the original string_view that spans the text from which
 // tokens were lexed, and is used in byte-offset calculation.
 bool AnyPartitionSubRangeIsDisabled(TokenPartitionRange range,
-                                    absl::string_view full_text,
+                                    std::string_view full_text,
                                     const ByteOffsetSet &disabled_byte_ranges);
 
 // Return ranges of subpartitions separated by blank lines.
@@ -121,13 +121,13 @@ void AdjustIndentationRelative(TokenPartitionTree *tree, int amount);
 void AdjustIndentationAbsolute(TokenPartitionTree *tree, int amount);
 
 // Returns the range of text spanned by tokens range.
-absl::string_view StringSpanOfTokenRange(const FormatTokenRange &range);
+std::string_view StringSpanOfTokenRange(const FormatTokenRange &range);
 
 // Mark ranges of tokens (corresponding to formatting-disabled lines) to
 // have their original spacing preserved, except allow the first token
 // to follow the formatter's calculated indentation.
 void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
-                                   absl::string_view full_text,
+                                   std::string_view full_text,
                                    std::vector<PreFormatToken> *ftokens);
 
 // Finalizes formatting of a partition with kAlreadyFormatted policy and

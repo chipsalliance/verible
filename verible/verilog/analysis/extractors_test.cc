@@ -16,9 +16,9 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/verilog/preprocessor/verilog-preprocess.h"
 
@@ -34,7 +34,7 @@ namespace {
 static constexpr VerilogPreprocess::Config kDefaultPreprocess;
 
 TEST(CollectInterfaceNamesTest, NonModuleTests) {
-  const std::pair<absl::string_view, std::set<std::string>> kTestCases[] = {
+  const std::pair<std::string_view, std::set<std::string>> kTestCases[] = {
       {"", {}},
       {"class cls;\nendclass", {}},
       {"function f;\nendfunction", {}},
@@ -49,7 +49,7 @@ TEST(CollectInterfaceNamesTest, NonModuleTests) {
 }
 
 TEST(CollectInterfaceNamesTest, MinimalistModuleTests) {
-  const std::pair<absl::string_view, std::set<std::string>> kTestCases[] = {
+  const std::pair<std::string_view, std::set<std::string>> kTestCases[] = {
       {"module mod;\nendmodule", {"mod"}},
       {"module mod2(input foo);\nendmodule", {"mod2", "foo"}},
       {"module top\nimport pkg::*;\n(input a);\nendmodule",
@@ -67,7 +67,7 @@ TEST(CollectInterfaceNamesTest, MinimalistModuleTests) {
 
 // Tests that serveral instances with many identifiers are working as expected
 TEST(CollectInterfaceNamesTest, BiggerModuleTests) {
-  const std::pair<absl::string_view, std::set<std::string>> kTestCases[] = {
+  const std::pair<std::string_view, std::set<std::string>> kTestCases[] = {
       {"interface TheBus(input clk);\n"
        "  logic [7:0] addr, wdata, rdata;\n"
        "  logic       write_en;\n"

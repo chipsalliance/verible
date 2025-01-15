@@ -30,6 +30,7 @@
 #include <set>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -37,7 +38,6 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/lint-rule-status.h"
@@ -85,7 +85,7 @@ TEST_F(LintOneFileTest, FileNotFound) {
 
 // Tests that clean code exits 0 (success).
 TEST_F(LintOneFileTest, LintCleanFiles) {
-  constexpr absl::string_view kTestCases[] = {
+  constexpr std::string_view kTestCases[] = {
       "",  // empty file
       "\n",
       "class foo;\n"
@@ -116,7 +116,7 @@ TEST_F(LintOneFileTest, LintCleanFiles) {
 
 // Tests that invalid code is handled according to 'parse_fatal' parameter.
 TEST_F(LintOneFileTest, SyntaxError) {
-  constexpr absl::string_view kTestCases[] = {
+  constexpr std::string_view kTestCases[] = {
       "class foo;\n",                     // no endclass
       "endclass : foo\n",                 // no begin class
       "module 444bad_name; endmodule\n",  // lexical error
@@ -163,7 +163,7 @@ TEST_F(LintOneFileTest, SyntaxError) {
 }
 
 TEST_F(LintOneFileTest, LintError) {
-  constexpr absl::string_view kTestCases[] = {
+  constexpr std::string_view kTestCases[] = {
       "task automatic foo;\n"
       "  $psprintf(\"blah\");\n"  // forbidden function
       "endtask\n",
@@ -200,7 +200,7 @@ class VerilogLinterTest : public DefaultLinterConfigTestFixture,
  protected:
   // Returns diagnostic text from analyzing source code.
   std::pair<absl::Status, std::string> LintAnalyzeText(
-      absl::string_view filename, absl::string_view content) const {
+      std::string_view filename, std::string_view content) const {
     // Run the analyzer to produce a syntax tree from source code.
     const auto analyzer = std::make_unique<VerilogAnalyzer>(content, filename);
     const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->Analyze();
@@ -496,7 +496,7 @@ class ViolationFixerTest : public testing::Test {
  protected:
   LinterConfiguration config_;
 
-  absl::Status LintAnalyzeFixText(absl::string_view content,
+  absl::Status LintAnalyzeFixText(std::string_view content,
                                   ViolationFixer *violation_fixer,
                                   std::string *fixed_content) const {
     const ScopedTestFile temp_file(testing::TempDir(), content);
@@ -525,8 +525,8 @@ class ViolationFixerTest : public testing::Test {
 
   void DoFixerTest(
       std::initializer_list<ViolationFixer::Answer> choices,
-      std::initializer_list<absl::string_view> expected_fixed_sources) const {
-    static constexpr std::array<const absl::string_view, 3> input_sources{
+      std::initializer_list<std::string_view> expected_fixed_sources) const {
+    static constexpr std::array<const std::string_view, 3> input_sources{
         // Input source 0:
         // :2:10: no-trailing-spaces
         // :3:10: forbid-consecutive-null-statements
@@ -560,7 +560,7 @@ class ViolationFixerTest : public testing::Test {
     std::initializer_list<ViolationFixer::Answer>::iterator choice_it;
     const ViolationFixer::AnswerChooser answer_chooser =
         [&choice_it, &choices](const verible::LintViolation &,
-                               absl::string_view) {
+                               std::string_view) {
           EXPECT_NE(choice_it, choices.end())
               << "AnswerChooser called more times than expected.";
           return *choice_it++;
@@ -575,7 +575,7 @@ class ViolationFixerTest : public testing::Test {
       std::vector<std::string> fixed_sources(input_sources.size());
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
-        const absl::string_view input_source = input_sources[i];
+        const std::string_view input_source = input_sources[i];
         std::string &fixed_source = fixed_sources[i];
 
         const absl::Status status =
@@ -588,7 +588,7 @@ class ViolationFixerTest : public testing::Test {
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
         const std::string &fixed_source = fixed_sources[i];
-        const absl::string_view expected_fixed_source =
+        const std::string_view expected_fixed_source =
             *(expected_fixed_sources.begin() + i);
 
         EXPECT_EQ(fixed_source, expected_fixed_source);
@@ -605,7 +605,7 @@ class ViolationFixerTest : public testing::Test {
       std::vector<std::string> fixed_sources(input_sources.size());
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
-        const absl::string_view input_source = input_sources[i];
+        const std::string_view input_source = input_sources[i];
         std::string &fixed_source = fixed_sources[i];
 
         const absl::Status status =
@@ -619,9 +619,9 @@ class ViolationFixerTest : public testing::Test {
       bool expect_empty_patch = true;
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
-        const absl::string_view input_source = input_sources[i];
+        const std::string_view input_source = input_sources[i];
         const std::string &fixed_source = fixed_sources[i];
-        const absl::string_view expected_fixed_source =
+        const std::string_view expected_fixed_source =
             *(expected_fixed_sources.begin() + i);
 
         EXPECT_EQ(input_source, fixed_source);

@@ -18,15 +18,14 @@
 #include <cstddef>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
-
-#include "absl/strings/string_view.h"
 
 namespace verilog {
 namespace kythe {
 
-inline constexpr absl::string_view kDefaultKytheLanguage = "verilog";
-inline constexpr absl::string_view kEmptyKytheLanguage;
+inline constexpr std::string_view kDefaultKytheLanguage = "verilog";
+inline constexpr std::string_view kEmptyKytheLanguage;
 
 // Hash-based form of signature for fast and lightweight comparision.
 struct SignatureDigest {
@@ -52,9 +51,9 @@ H AbslHashValue(H state, const SignatureDigest &d) {
 // Unique identifier for Kythe facts.
 class Signature {
  public:
-  explicit Signature(absl::string_view name = "") : names_({name}) {}
+  explicit Signature(std::string_view name = "") : names_({name}) {}
 
-  Signature(const Signature &parent, absl::string_view name)
+  Signature(const Signature &parent, std::string_view name)
       : names_(parent.Names()) {
     names_.push_back(name);
   }
@@ -70,7 +69,7 @@ class Signature {
   // Returns the signature concatenated as a string in base 64.
   std::string ToBase64() const;
 
-  const std::vector<absl::string_view> &Names() const { return names_; }
+  const std::vector<std::string_view> &Names() const { return names_; }
 
   // Returns signature's short form for fast and lightweight comparision.
   SignatureDigest Digest() const;
@@ -86,7 +85,7 @@ class Signature {
   //
   // for "m" ==> ["m"]
   // for "x" ==> ["m", "x"]
-  std::vector<absl::string_view> names_;
+  std::vector<std::string_view> names_;
 };
 template <typename H>
 H AbslHashValue(H state, const Signature &v) {
@@ -100,19 +99,19 @@ struct VName {
   std::ostream &FormatJSON(std::ostream &, bool debug,
                            int indentation = 0) const;
   // Path for the file the VName is extracted from.
-  absl::string_view path;
+  std::string_view path;
 
   // A directory path or project identifier inside the Corpus.
-  absl::string_view root;
+  std::string_view root;
 
   // Unique identifier for this VName.
   Signature signature;
 
   // The corpus of source code this VName belongs to.
-  absl::string_view corpus;
+  std::string_view corpus;
 
   // The language this VName belongs to.
-  absl::string_view language = kDefaultKytheLanguage;
+  std::string_view language = kDefaultKytheLanguage;
 };
 template <typename H>
 H AbslHashValue(H state, const VName &v) {
@@ -126,7 +125,7 @@ std::ostream &operator<<(std::ostream &, const VName &);
 // https://www.kythe.io/docs/kythe-storage.html#_a_id_termfact_a_fact
 // https://www.kythe.io/docs/schema/writing-an-indexer.html#_modeling_kythe_entries
 struct Fact {
-  Fact(const VName &vname, absl::string_view name, absl::string_view value)
+  Fact(const VName &vname, std::string_view name, std::string_view value)
       : node_vname(vname), fact_name(name), fact_value(value) {}
 
   bool operator==(const Fact &other) const;
@@ -139,7 +138,7 @@ struct Fact {
 
   // The name identifying this fact.
   // This is one of the constant strings in "kythe_schema_constants.h"
-  const absl::string_view fact_name;
+  const std::string_view fact_name;
 
   // The given value to this fact.
   const std::string fact_value;
@@ -155,7 +154,7 @@ std::ostream &operator<<(std::ostream &, const Fact &);
 // For more information:
 // https://www.kythe.io/docs/schema/writing-an-indexer.html#_modeling_kythe_entries
 struct Edge {
-  Edge(const VName &source, absl::string_view name, const VName &target)
+  Edge(const VName &source, std::string_view name, const VName &target)
       : source_node(source), edge_name(name), target_node(target) {}
 
   bool operator==(const Edge &other) const;
@@ -169,7 +168,7 @@ struct Edge {
 
   // The edge name which identifies the edge kind.
   // This is one of the constant strings from "kythe_schema_constants.h"
-  const absl::string_view edge_name;
+  const std::string_view edge_name;
 
   // The VName of the target node of this edge.
   const VName target_node;

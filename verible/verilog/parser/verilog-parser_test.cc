@@ -17,10 +17,10 @@
 #include <cstddef>
 #include <initializer_list>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/parser/bison-parser-common.h"
 #include "verible/common/parser/parser-test-util.h"
@@ -6416,7 +6416,7 @@ TEST(VerilogParserTest, InternalStackRealloc) {
 
 // Tests that Tokenize() properly sets the range of the EOF token.
 TEST(VerilogParserTest, TokenizeTerimnatesEOFRange) {
-  constexpr absl::string_view kCode[] = {
+  constexpr std::string_view kCode[] = {
       "",       "\t",       "\n",          "\n\n",
       "module", "module\n", "module foo;", "module foo;\n",
   };

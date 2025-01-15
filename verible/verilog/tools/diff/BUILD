@@ -23,7 +23,6 @@ cc_binary(
         "//verible/verilog/analysis:verilog-equivalence",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 

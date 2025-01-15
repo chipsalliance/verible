@@ -16,11 +16,11 @@
 
 #include <functional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/syntax-tree-search-test-utils.h"
 #include "verible/common/util/file-util.h"
@@ -57,7 +57,7 @@ class TempDir {
 // Groups information for a single temporary source file together.
 struct TestFileEntry {
   // The original source code of the translation.
-  const absl::string_view origin_text;
+  const std::string_view origin_text;
 
   // One file in project, will be given randomly generated name.
   const ScopedTestFile temp_file;
@@ -66,18 +66,17 @@ struct TestFileEntry {
   // opened as a translation unit.
   const VerilogSourceFile *const source_file = nullptr;
 
-  TestFileEntry(
-      absl::string_view code_text, absl::string_view temp_dir,
-      const std::function<const VerilogSourceFile *(absl::string_view)>
-          &file_opener,
-      absl::string_view override_basename = "")
+  TestFileEntry(std::string_view code_text, std::string_view temp_dir,
+                const std::function<const VerilogSourceFile *(std::string_view)>
+                    &file_opener,
+                std::string_view override_basename = "")
       : origin_text(code_text),
         temp_file(temp_dir, origin_text, override_basename),
         // Open this file from inside 'project', save pointer here.
         source_file(file_opener(temp_file.filename())) {}
 
   // Returns the string_view of text owned by this->source_file.
-  absl::string_view SourceText() const {
+  std::string_view SourceText() const {
     CHECK(source_file != nullptr);
     return source_file->GetContent();
   }
@@ -97,13 +96,13 @@ struct TestFileEntry {
 class SimpleTestProject : public TempDir, public VerilogProject {
  public:
   // 'code_text' is the contents of the single translation unit in this project
-  explicit SimpleTestProject(absl::string_view code_text,
+  explicit SimpleTestProject(std::string_view code_text,
                              const std::vector<std::string> &include_paths = {})
       : VerilogProject(temp_dir_, include_paths, /*corpus=*/"unittest",
                        /*provide_lookup_file_origin=*/false),
         code_text_(code_text),
         translation_unit_(code_text, temp_dir_,
-                          [this](absl::string_view full_file_name)
+                          [this](std::string_view full_file_name)
                               -> const VerilogSourceFile * {
                             /* VerilogProject base class is already fully
                              * initialized */
@@ -113,7 +112,7 @@ class SimpleTestProject : public TempDir, public VerilogProject {
 
   const TestFileEntry &XUnit() const { return translation_unit_; }
 
-  absl::string_view OnlyFileName() const {
+  std::string_view OnlyFileName() const {
     return translation_unit_.temp_file.filename();
   }
 
@@ -128,7 +127,7 @@ class SimpleTestProject : public TempDir, public VerilogProject {
   T::value_type ExpectedFileListData() const {
     return {
         IndexingFactType::kFileList,  //
-        Anchor(absl::string_view(temp_dir_)),
+        Anchor(std::string_view(temp_dir_)),
         // file_list is co-located with the files it references
         Anchor(TranslationUnitRoot()),
         // TranslationUnitRoot() == verible::file::Dirname(OnlyFileName())
@@ -158,15 +157,15 @@ class IncludeTestProject : protected SimpleTestProject {
  public:
   // 'code_text' is the contents of the single translation unit in this project.
   // 'include_text' is the contents of the single included file in this project.
-  IncludeTestProject(absl::string_view code_text,
-                     absl::string_view include_file_basename,
-                     absl::string_view include_text,
+  IncludeTestProject(std::string_view code_text,
+                     std::string_view include_file_basename,
+                     std::string_view include_text,
                      const std::vector<std::string> &include_paths = {})
       : SimpleTestProject(code_text, include_paths),
         include_file_(
             include_text, temp_dir_,
             [this](
-                absl::string_view full_file_name) -> const VerilogSourceFile * {
+                std::string_view full_file_name) -> const VerilogSourceFile * {
               /* VerilogProject base class is already fully initialized */
               return *OpenIncludedFile(verible::file::Basename(full_file_name));
             },
@@ -185,9 +184,9 @@ class IncludeTestProject : protected SimpleTestProject {
 };
 
 TEST(FactsTreeExtractor, EqualOperatorTest) {
-  constexpr absl::string_view code_text = "some other code";
-  constexpr absl::string_view file_name = "verilog.v";
-  constexpr absl::string_view file_name_other = "other.v";
+  constexpr std::string_view code_text = "some other code";
+  constexpr std::string_view file_name = "verilog.v";
+  constexpr std::string_view file_name_other = "other.v";
 
   const IndexingFactNode expected(D{
       IndexingFactType::kFile,
@@ -221,8 +220,8 @@ TEST(FactsTreeExtractor, EqualOperatorTest) {
       },
       T(D{
           IndexingFactType::kModule,
-          Anchor(absl::string_view("foo")),
-          Anchor(absl::string_view("foo")),
+          Anchor(std::string_view("foo")),
+          Anchor(std::string_view("foo")),
       }));
 
   const auto P = [&code_text](const IndexingFactNode &n) {
@@ -251,7 +250,7 @@ TEST(FactsTreeExtractor, EqualOperatorTest) {
 }
 
 TEST(FactsTreeExtractor, EmptyCSTTest) {
-  constexpr absl::string_view code_text;
+  constexpr std::string_view code_text;
 
   SimpleTestProject project(code_text);
 
@@ -269,7 +268,7 @@ TEST(FactsTreeExtractor, EmptyCSTTest) {
 
 TEST(FactsTreeExtractor, ParseErrorTest) {
   // These inputs are lexically or syntactically invalid.
-  constexpr absl::string_view code_texts[] = {
+  constexpr std::string_view code_texts[] = {
       "9badid foo;\n",      // lexical error
       "final v;\n",         // syntax error
       "module unfinished",  // syntax error

@@ -15,10 +15,10 @@
 #include "verible/verilog/transform/strip-comments.h"
 
 #include <iostream>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/comment-utils.h"
 #include "verible/common/strings/range.h"
 #include "verible/common/text/token-info.h"
@@ -38,10 +38,10 @@ using verible::TokenInfo;
 
 // Replace non-newline characters with a single char, like <space>.
 // Tabs are considered non-newline characters.
-static void ReplaceNonNewlines(absl::string_view text, std::ostream *output,
+static void ReplaceNonNewlines(std::string_view text, std::ostream *output,
                                char replacement) {
   if (text.empty()) return;
-  const std::vector<absl::string_view> lines(
+  const std::vector<std::string_view> lines(
       absl::StrSplit(text, absl::ByChar('\n')));
   // no newline before first element
   *output << Spacer(lines.front().size(), replacement);
@@ -50,7 +50,7 @@ static void ReplaceNonNewlines(absl::string_view text, std::ostream *output,
   }
 }
 
-void StripVerilogComments(absl::string_view content, std::ostream *output,
+void StripVerilogComments(std::string_view content, std::ostream *output,
                           char replacement) {
   VLOG(1) << __FUNCTION__;
   verilog::VerilogLexer lexer(content);
@@ -64,7 +64,7 @@ void StripVerilogComments(absl::string_view content, std::ostream *output,
     if (token.isEOF()) break;
 
     VLOG(2) << "token: " << verible::TokenWithContext{token, context};
-    const absl::string_view text = token.text();
+    const std::string_view text = token.text();
     switch (token.token_enum()) {
       case verilog_tokentype::TK_EOL_COMMENT:
         switch (replacement) {
@@ -78,8 +78,8 @@ void StripVerilogComments(absl::string_view content, std::ostream *output,
             break;
           default: {
             // Retain the "//" but erase everything thereafter.
-            const absl::string_view body(StripComment(text));
-            const absl::string_view head(
+            const std::string_view body(StripComment(text));
+            const std::string_view head(
                 make_string_view_range(text.begin(), body.begin()));
             *output << head << Spacer(body.length(), replacement);
             break;
@@ -100,10 +100,10 @@ void StripVerilogComments(absl::string_view content, std::ostream *output,
             break;
           default: {
             // Retain the "/*" and "*/" but erase everything in between.
-            const absl::string_view body(StripComment(text));
-            const absl::string_view head(
+            const std::string_view body(StripComment(text));
+            const std::string_view head(
                 make_string_view_range(text.begin(), body.begin()));
-            const absl::string_view tail(
+            const std::string_view tail(
                 make_string_view_range(body.end(), text.end()));
 
             *output << head;

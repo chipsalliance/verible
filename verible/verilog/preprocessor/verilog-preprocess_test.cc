@@ -17,13 +17,13 @@
 #include <algorithm>
 #include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/text/macro-definition.h"
@@ -52,7 +52,7 @@ using FileOpener = VerilogPreprocess::FileOpener;
 
 class LexerTester {
  public:
-  explicit LexerTester(absl::string_view text) : lexer_(text) {
+  explicit LexerTester(std::string_view text) : lexer_(text) {
     for (lexer_.DoNextToken(); !lexer_.GetLastToken().isEOF();
          lexer_.DoNextToken()) {
       lexed_sequence_.push_back(lexer_.GetLastToken());
@@ -70,12 +70,12 @@ class LexerTester {
 
 class PreprocessorTester {
  public:
-  PreprocessorTester(absl::string_view text,
+  PreprocessorTester(std::string_view text,
                      const VerilogPreprocess::Config &config)
       : analyzer_(text, "<<inline-file>>", config),
         status_(analyzer_.Analyze()) {}
 
-  explicit PreprocessorTester(absl::string_view text)
+  explicit PreprocessorTester(std::string_view text)
       : PreprocessorTester(text, VerilogPreprocess::Config()) {}
 
   const VerilogPreprocessData &PreprocessorData() const {
@@ -94,7 +94,7 @@ class PreprocessorTester {
 };
 
 struct FailTest {
-  absl::string_view input;
+  std::string_view input;
   int offset;
 };
 TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
@@ -148,7 +148,7 @@ TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
 
 // Verify that VerilogPreprocess works without any directives.
 TEST(VerilogPreprocessTest, WorksWithoutDefinitions) {
-  absl::string_view test_cases[] = {
+  std::string_view test_cases[] = {
       "",
       "\n",
       "module foo;\nendmodule\n",
@@ -164,7 +164,7 @@ TEST(VerilogPreprocessTest, WorksWithoutDefinitions) {
 }
 
 TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsNoValue) {
-  absl::string_view test_cases[] = {
+  std::string_view test_cases[] = {
       "`define FOOOO\n",
       "`define     FOOOO\n",
       "module foo;\nendmodule\n"
@@ -322,9 +322,9 @@ TEST(VerilogPreprocessTest, DefaultPreprocessorKeepsDefineInStream) {
 }
 
 struct BranchFailTest {
-  absl::string_view input;
+  std::string_view input;
   int offset;
-  absl::string_view expected_error;
+  std::string_view expected_error;
 };
 TEST(VerilogPreprocessTest, IncompleteOrUnbalancedIfdef) {
   const BranchFailTest test_cases[] = {
@@ -357,9 +357,9 @@ TEST(VerilogPreprocessTest, IncompleteOrUnbalancedIfdef) {
 }
 
 struct RawAndFiltered {
-  absl::string_view description;
-  absl::string_view pp_input;
-  absl::string_view equivalent;
+  std::string_view description;
+  std::string_view pp_input;
+  std::string_view equivalent;
 };
 TEST(VerilogPreprocess, FilterPPBranches) {
   const RawAndFiltered test_cases[] = {
@@ -887,9 +887,9 @@ static void IncludeFileTestWithIncludeBracket(const char *start_inc,
                                               const char *end_inc) {
   const auto tempdir = testing::TempDir();
   const std::string includes_dir = JoinPath(tempdir, "includes");
-  constexpr absl::string_view included_content(
+  constexpr std::string_view included_content(
       "module included_file(); endmodule");
-  const absl::string_view included_filename = "included_file.sv";
+  const std::string_view included_filename = "included_file.sv";
   const std::string included_absolute_path =
       JoinPath(includes_dir, included_filename);
 
@@ -901,7 +901,7 @@ static void IncludeFileTestWithIncludeBracket(const char *start_inc,
 
   FileOpener file_opener =
       [included_absolute_path, included_content](
-          absl::string_view filename) -> absl::StatusOr<absl::string_view> {
+          std::string_view filename) -> absl::StatusOr<std::string_view> {
     if (filename == included_absolute_path) return included_content;
     return absl::NotFoundError(absl::StrCat(filename, " is not found"));
   };
@@ -947,9 +947,9 @@ TEST(VerilogPreprocessTest, IncludingFileWithRelativePath) {
   const auto tempdir = testing::TempDir();
   const std::string includes_dir = JoinPath(tempdir, "includes");
   EXPECT_TRUE(CreateDir(includes_dir).ok());
-  constexpr absl::string_view included_content(
+  constexpr std::string_view included_content(
       "module included_file(); endmodule");
-  const absl::string_view included_filename = "included_file.sv";
+  const std::string_view included_filename = "included_file.sv";
   const ScopedTestFile tf(includes_dir, included_content, included_filename);
 
   const std::string src_content = absl::StrCat("`include \"", included_filename,
@@ -962,7 +962,7 @@ TEST(VerilogPreprocessTest, IncludingFileWithRelativePath) {
   verilog::VerilogProject project(".", {"/", includes_dir});
   FileOpener file_opener =
       [&project](
-          absl::string_view filename) -> absl::StatusOr<absl::string_view> {
+          std::string_view filename) -> absl::StatusOr<std::string_view> {
     auto result = project.OpenIncludedFile(filename);
     if (!result.status().ok()) return result.status();
     return (*result)->GetContent();
@@ -1003,9 +1003,9 @@ TEST(VerilogPreprocessTest,
   const auto tempdir = testing::TempDir();
   const std::string includes_dir = JoinPath(tempdir, "includes");
   EXPECT_TRUE(CreateDir(includes_dir).ok());
-  constexpr absl::string_view included_content(
+  constexpr std::string_view included_content(
       "module included_file(); endmodule\n");
-  const absl::string_view included_filename = "included_file.sv";
+  const std::string_view included_filename = "included_file.sv";
   const ScopedTestFile tf(includes_dir, included_content, included_filename);
   const std::string src_content = absl::StrCat("`include \"", included_filename,
                                                "\"\nmodule src(); endmodule\n");
@@ -1015,7 +1015,7 @@ TEST(VerilogPreprocessTest,
   verilog::VerilogProject project(".", {"/"});
   FileOpener file_opener =
       [&project](
-          absl::string_view filename) -> absl::StatusOr<absl::string_view> {
+          std::string_view filename) -> absl::StatusOr<std::string_view> {
     auto result = project.OpenIncludedFile(filename);
     if (!result.status().ok()) return result.status();
     return (*result)->GetContent();

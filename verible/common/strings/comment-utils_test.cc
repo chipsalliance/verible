@@ -14,7 +14,8 @@
 
 #include "verible/common/strings/comment-utils.h"
 
-#include "absl/strings/string_view.h"
+#include <string_view>
+
 #include "gtest/gtest.h"
 #include "verible/common/util/range.h"
 
@@ -22,13 +23,13 @@ namespace verible {
 namespace {
 
 struct TestData {
-  absl::string_view input;
+  std::string_view input;
   const char *expect;
 };
 
 // Test that non-comments are left unmodified.
 TEST(StripCommentTest, NotComment) {
-  constexpr absl::string_view test_cases[] = {
+  constexpr std::string_view test_cases[] = {
       "",
       "/",  // too short to be a comment
       "foo",

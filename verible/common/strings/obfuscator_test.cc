@@ -15,9 +15,9 @@
 #include "verible/common/strings/obfuscator.h"
 
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/strings/random.h"
 #include "verible/common/util/bijective-map.h"
@@ -33,7 +33,7 @@ static char Rot13(char c) {
 }
 
 // Non-random generator, just for the sake of testing.
-static std::string RotateGenerator(absl::string_view input) {
+static std::string RotateGenerator(std::string_view input) {
   std::string s(input);
   for (auto &ch : s) ch = Rot13(ch);
   return s;

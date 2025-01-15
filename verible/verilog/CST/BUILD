@@ -100,7 +100,6 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/util:logging",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -126,7 +125,6 @@ cc_library(
         "//verible/common/analysis:syntax-tree-search-test-utils",
         "//verible/common/text:text-structure",
         "//verible/verilog/analysis:verilog-analyzer",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",  # for library testonly
     ],
 )
@@ -159,7 +157,6 @@ cc_test(
         "//verible/common/text:text-structure",
         "//verible/common/text:token-info",
         "//verible/verilog/analysis:verilog-analyzer",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -289,7 +286,6 @@ cc_library(
         "//verible/verilog/parser:verilog-token-classifications",
         "//verible/verilog/parser:verilog-token-enum",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -351,7 +347,6 @@ cc_test(
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-analyzer",
         "//verible/verilog/parser:verilog-token-enum",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -388,7 +383,6 @@ cc_test(
         "//verible/common/text:text-structure",
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-analyzer",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -426,7 +420,6 @@ cc_test(
         "//verible/common/util:logging",
         "//verible/common/util:range",
         "//verible/verilog/analysis:verilog-analyzer",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -460,7 +453,6 @@ cc_test(
         "//verible/common/text:text-structure",
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-analyzer",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -644,7 +636,6 @@ cc_test(
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-analyzer",
         "//verible/verilog/parser:verilog-token-enum",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -684,7 +675,6 @@ cc_test(
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-analyzer",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -760,7 +750,6 @@ cc_test(
         "//verible/common/text:tree-utils",
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-analyzer",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -801,7 +790,6 @@ cc_test(
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-analyzer",
         "//verible/verilog/parser:verilog-token-enum",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -841,7 +829,6 @@ cc_test(
         "//verible/common/text:tree-utils",
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-analyzer",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -863,7 +850,6 @@ cc_library(
     deps = [
         "//verible/common/util:logging",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -881,7 +867,6 @@ cc_library(
         "//verible/common/util:value-saver",
         "//verible/verilog/parser:verilog-parser",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -901,7 +886,6 @@ cc_library(
         "//verible/verilog/parser:verilog-token",
         "//verible/verilog/parser:verilog-token-classifications",
         "//verible/verilog/parser:verilog-token-enum",
-        "@abseil-cpp//absl/strings:string_view",
         "@nlohmann_json//:singleheader-json",
     ],
 )
@@ -927,7 +911,6 @@ cc_test(
     srcs = ["numbers_test.cc"],
     deps = [
         ":numbers",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

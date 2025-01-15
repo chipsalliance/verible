@@ -14,10 +14,10 @@
 
 #include "verible/verilog/analysis/flow-tree.h"
 
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/text/token-stream-view.h"
@@ -29,7 +29,7 @@ namespace {
 using testing::StartsWith;
 
 // Lexes a SystemVerilog source code, and returns a TokenSequence.
-verible::TokenSequence LexToSequence(absl::string_view source_contents) {
+verible::TokenSequence LexToSequence(std::string_view source_contents) {
   verible::TokenSequence lexed_sequence;
   VerilogLexer lexer(source_contents);
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
@@ -42,7 +42,7 @@ verible::TokenSequence LexToSequence(absl::string_view source_contents) {
 }
 
 TEST(FlowTree, MultipleConditionalsSameMacro) {
-  const absl::string_view test_case =
+  const std::string_view test_case =
       R"(
     `ifdef A
       A_TRUE_1
@@ -92,7 +92,7 @@ TEST(FlowTree, MultipleConditionalsSameMacro) {
 }
 
 TEST(FlowTree, UnmatchedElses) {
-  const absl::string_view test_cases[] = {
+  const std::string_view test_cases[] = {
       R"(
     `elsif A
       A_TRUE
@@ -132,7 +132,7 @@ TEST(FlowTree, UnmatchedElses) {
 }
 
 TEST(FlowTree, UnvalidConditionals) {
-  const absl::string_view test_cases[] = {
+  const std::string_view test_cases[] = {
       R"(
     `ifdef A
       A_TRUE
@@ -162,7 +162,7 @@ TEST(FlowTree, UnvalidConditionals) {
 }
 
 TEST(FlowTree, UncompletedConditionals) {
-  const absl::string_view test_cases[] = {
+  const std::string_view test_cases[] = {
       R"(
     `ifdef A
       A_TRUE
@@ -189,7 +189,7 @@ TEST(FlowTree, UncompletedConditionals) {
 }
 
 TEST(FlowTree, NestedConditionals) {
-  const absl::string_view test_cases[] = {
+  const std::string_view test_cases[] = {
       R"(
     `ifdef A
       `ifdef B
@@ -229,7 +229,7 @@ TEST(FlowTree, NestedConditionals) {
 }
 
 TEST(FlowTree, MultipleElseIfs) {
-  const absl::string_view test_case =
+  const std::string_view test_case =
       R"(
     `ifdef A
       A_TRUE
@@ -275,7 +275,7 @@ TEST(FlowTree, MultipleElseIfs) {
 }
 
 TEST(FlowTree, SwappedNegatedIfs) {
-  const absl::string_view test_case =
+  const std::string_view test_case =
       R"(
     `ifndef A
       A_FALSE
@@ -316,7 +316,7 @@ TEST(FlowTree, SwappedNegatedIfs) {
 }
 
 TEST(FlowTree, CompleteConditional) {
-  const absl::string_view test_case =
+  const std::string_view test_case =
       R"(
     `ifdef A
       A_TRUE

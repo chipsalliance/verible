@@ -21,11 +21,11 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/lsp/lsp-protocol.h"
@@ -52,7 +52,7 @@ using verible::lsp::TextEdit;
 // Generate a specific code action and extract text edits from it
 std::vector<TextEdit> AutoExpandCodeActionToTextEdits(
     SymbolTableHandler *symbol_table_handler, const BufferTracker *tracker,
-    Range range, absl::string_view title) {
+    Range range, std::string_view title) {
   CodeActionParams p = {.textDocument = {tracker->current()->uri()},
                         .range = range};
   nlohmann::json changes;
@@ -100,16 +100,15 @@ struct TestRun {
 };
 
 // Checks if the given Verilog source has correct syntax
-void CheckSyntax(const absl::string_view filename,
-                 const absl::string_view text) {
+void CheckSyntax(const std::string_view filename, const std::string_view text) {
   verilog::VerilogAnalyzer analyzer(text, filename);
   const absl::Status status = analyzer.Analyze();
   ASSERT_TRUE(status.ok());
 }
 
 // Helper function that formats the given Verilog string
-std::string Format(const absl::string_view filename,
-                   const absl::string_view text_before_formatting) {
+std::string Format(const std::string_view filename,
+                   const std::string_view text_before_formatting) {
   std::stringstream strstr;
   formatter::FormatStyle format_style;
   formatter::InitializeFromFlags(&format_style);
@@ -124,8 +123,8 @@ std::string Format(const absl::string_view filename,
 // effect
 void TestTextEditsWithProject(
 
-    const std::vector<absl::string_view> &project_file_contents,
-    absl::string_view text_before, const absl::string_view text_golden,
+    const std::vector<std::string_view> &project_file_contents,
+    std::string_view text_before, const std::string_view text_golden,
     std::deque<TestRun> runs = TestRun::defaultRuns()) {
   if (runs.empty()) return;
   const auto &run = runs.front();
@@ -134,7 +133,7 @@ void TestTextEditsWithProject(
   const std::shared_ptr<VerilogProject> proj =
       std::make_shared<VerilogProject>(".", std::vector<std::string>());
   size_t i = 0;
-  for (const absl::string_view file_contents : project_file_contents) {
+  for (const std::string_view file_contents : project_file_contents) {
     const std::string filename = absl::StrCat("<<project-file-", i, ">>");
     proj->AddVirtualFile(filename, Format(filename, file_contents));
     i++;
@@ -174,7 +173,7 @@ void TestTextEditsWithProject(
         .range = edit.range, .has_range = true, .text = edit.newText});
   }
   // Check the result and (possibly) test again to check idempotence
-  buffer.RequestContent([&](const absl::string_view text_after) {
+  buffer.RequestContent([&](const std::string_view text_after) {
     if (run.check_golden) {
       if (run.check_formatting) {
         // TODO: Check multiple formatting styles
@@ -195,8 +194,8 @@ void TestTextEditsWithProject(
 }
 
 // Same as above, without the project file parameter
-void TestTextEdits(const absl::string_view text_before,
-                   const absl::string_view text_golden,
+void TestTextEdits(const std::string_view text_before,
+                   const std::string_view text_golden,
                    const std::deque<TestRun> &runs = TestRun::defaultRuns()) {
   TestTextEditsWithProject({}, text_before, text_golden, runs);
 }

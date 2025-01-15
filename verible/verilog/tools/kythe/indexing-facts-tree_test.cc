@@ -16,8 +16,8 @@
 
 #include <sstream>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/range.h"
 #include "verible/verilog/tools/kythe/verilog-extractor-indexing-fact-type.h"
@@ -34,15 +34,15 @@ class TestAnchor : public Anchor {
 };
 
 TEST(AnchorTest, DebugStringUsingOffsets) {
-  constexpr absl::string_view text("abcdefghij");
+  constexpr std::string_view text("abcdefghij");
   const Anchor anchor(text.substr(4, 3), /*begin=*/4, /*length=*/3);
   const std::string debug_string(anchor.DebugString());
   EXPECT_EQ(debug_string, "{efg @4-7}");
 }
 
 TEST(AnchorTest, EqualityNotOwned) {
-  constexpr absl::string_view text1("abcd");
-  constexpr absl::string_view text2("defg");
+  constexpr std::string_view text1("abcd");
+  constexpr std::string_view text2("defg");
   EXPECT_EQ(Anchor(text1), Anchor(text1));
   EXPECT_EQ(Anchor(text2), Anchor(text2));
   EXPECT_NE(Anchor(text1), Anchor(text2));
@@ -67,12 +67,12 @@ TEST(AnchorTest, EqualityOwned) {
 
 TEST(AnchorTest, EqualityMixed) {
   const Anchor anchor1("PWNED");
-  const Anchor anchor2(absl::string_view("PWNED"));
+  const Anchor anchor2(std::string_view("PWNED"));
   EXPECT_EQ(anchor1, anchor2);
   EXPECT_EQ(anchor2, anchor1);
 
   const Anchor anchor3("stoned");
-  const Anchor anchor4(absl::string_view("STONED"));
+  const Anchor anchor4(std::string_view("STONED"));
   EXPECT_NE(anchor1, anchor3);
   EXPECT_NE(anchor3, anchor1);
   EXPECT_NE(anchor1, anchor4);
@@ -90,8 +90,8 @@ TEST(IndexingNodeDataTest, ConstructionNoAnchor) {
 }
 
 TEST(IndexingNodeDataTest, ConstructionVariadicAnchors) {
-  constexpr absl::string_view text1("abc");
-  constexpr absl::string_view text2("xyzzy");
+  constexpr std::string_view text1("abc");
+  constexpr std::string_view text2("xyzzy");
   {
     const IndexingNodeData indexing_data(IndexingFactType::kFile,
                                          Anchor(text1));
@@ -110,8 +110,8 @@ TEST(IndexingNodeDataTest, ConstructionVariadicAnchors) {
 }
 
 TEST(IndexingNodeDataTest, SwapAnchors) {
-  constexpr absl::string_view text1("abc");
-  constexpr absl::string_view text2("xyzzy");
+  constexpr std::string_view text1("abc");
+  constexpr std::string_view text2("xyzzy");
   IndexingNodeData indexing_data1(IndexingFactType::kFile, Anchor(text1));
   IndexingNodeData indexing_data2(IndexingFactType::kFile, Anchor(text2));
   indexing_data1.SwapAnchors(&indexing_data2);
@@ -132,26 +132,26 @@ TEST(IndexingNodeDataTest, Equality) {
   EXPECT_NE(data2, data1);
 
   const IndexingNodeData data3(IndexingFactType::kFile,
-                               Anchor(absl::string_view("fgh")));
+                               Anchor(std::string_view("fgh")));
   EXPECT_EQ(data3, data3);
   // different number of anchors
   EXPECT_NE(data1, data3);
   EXPECT_NE(data3, data1);
 
   const IndexingNodeData data4(IndexingFactType::kFile,
-                               Anchor(absl::string_view("ijk")));
+                               Anchor(std::string_view("ijk")));
   // same number of anchors, different text contents
   EXPECT_NE(data1, data4);
   EXPECT_NE(data4, data1);
 }
 
 TEST(IndexingNodeDataTest, DebugStringUsingOffsets) {
-  constexpr absl::string_view text("abcdefghij");
+  constexpr std::string_view text("abcdefghij");
   const IndexingNodeData data(
       IndexingFactType::kClass,
       Anchor(text.substr(1, 2), /*begin=*/1, /*length=*/2),
       Anchor(text.substr(4, 3), /*begin=*/4, /*length=*/3));
-  constexpr absl::string_view expected("kClass: [{bc @1-3}, {efg @4-7}]");
+  constexpr std::string_view expected("kClass: [{bc @1-3}, {efg @4-7}]");
   {
     std::ostringstream stream;
     data.DebugString(&stream);
@@ -165,7 +165,7 @@ TEST(IndexingNodeDataTest, DebugStringUsingOffsets) {
 }
 
 TEST(IndexingFactNodeTest, StreamPrint) {
-  constexpr absl::string_view text("abcdefghij");
+  constexpr std::string_view text("abcdefghij");
   using Node = IndexingFactNode;
   const Node node(
       IndexingNodeData(IndexingFactType::kClass,
@@ -174,7 +174,7 @@ TEST(IndexingFactNodeTest, StreamPrint) {
       Node(IndexingNodeData(
           IndexingFactType::kClass,
           Anchor(text.substr(3, 5), /*begin=*/3, /*length=*/5))));
-  constexpr absl::string_view expected(
+  constexpr std::string_view expected(
       "{ (kClass: [{bc @1-3}, {efg @4-7}])\n"
       "  { (kClass: [{defgh @3-8}]) }\n"
       "}");

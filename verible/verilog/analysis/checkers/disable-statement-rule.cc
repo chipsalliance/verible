@@ -16,8 +16,8 @@
 
 #include <iterator>
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -41,10 +41,10 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(DisableStatementNoLabelsRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Invalid usage of disable statement. Preferred construction is: disable "
     "fork;";
-static constexpr absl::string_view kMessageSeqBlock =
+static constexpr std::string_view kMessageSeqBlock =
     "Invalid usage of disable statement. Preferred construction is: disable "
     "label_of_seq_block;";
 
@@ -72,7 +72,7 @@ void DisableStatementNoLabelsRule::HandleSymbol(
   if (!DisableMatcher().Matches(symbol, &manager)) {
     return;
   }
-  absl::string_view message_final = kMessage;
+  std::string_view message_final = kMessage;
   // if no kDisable label, return, nothing to be checked
   const auto &disableLabels = FindAllSymbolIdentifierLeafs(symbol);
   if (disableLabels.empty()) {

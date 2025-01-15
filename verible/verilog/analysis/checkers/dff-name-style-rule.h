@@ -20,12 +20,12 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
@@ -85,10 +85,10 @@ namespace analysis {
 class DffNameStyleRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static constexpr absl::string_view kDefaultInputSuffixes = "next,n,d";
-  static constexpr absl::string_view kDefaultOutputSuffixes = "reg,r,ff,q";
-  static constexpr absl::string_view kDefaultWaiveRegex = "(?i)mem.*";
-  static constexpr absl::string_view kDefaultWaiveConditions =
+  static constexpr std::string_view kDefaultInputSuffixes = "next,n,d";
+  static constexpr std::string_view kDefaultOutputSuffixes = "reg,r,ff,q";
+  static constexpr std::string_view kDefaultWaiveRegex = "(?i)mem.*";
+  static constexpr std::string_view kDefaultWaiveConditions =
       "!rst_ni,flush_i,!rst_ni || flush_i,flush_i || !rst_ni";
 
   static const LintRuleDescriptor &GetDescriptor();
@@ -98,7 +98,7 @@ class DffNameStyleRule : public verible::SyntaxTreeLintRule {
 
   verible::LintRuleStatus Report() const final;
 
-  absl::Status Configure(absl::string_view) final;
+  absl::Status Configure(std::string_view) final;
 
   // Identifiers can optionally include a trailing number
   // indicating the pipeline stage where the signal originates from.
@@ -111,14 +111,13 @@ class DffNameStyleRule : public verible::SyntaxTreeLintRule {
   // ExtractPipelineStage("data_q1") => {"data_q1", {})}
   // ExtractPipelineStage("data_q2") => {"data_q", 2)}
   // https://github.com/lowRISC/style-guides/blob/9b47bff75b19696e23a43f38ee7161112705e1e3/VerilogCodingStyle.md#suffixes-for-signals-and-types
-  static std::pair<absl::string_view, std::optional<uint64_t>>
-  ExtractPipelineStage(absl::string_view id);
+  static std::pair<std::string_view, std::optional<uint64_t>>
+  ExtractPipelineStage(std::string_view id);
 
  private:
-  absl::string_view CheckSuffix(const verible::SyntaxTreeContext &context,
-                                const verible::Symbol &root,
-                                absl::string_view id,
-                                const std::vector<std::string> &suffixes);
+  std::string_view CheckSuffix(const verible::SyntaxTreeContext &context,
+                               const verible::Symbol &root, std::string_view id,
+                               const std::vector<std::string> &suffixes);
 
   void HandleBlockingAssignments(const verible::Symbol &symbol,
                                  const verible::SyntaxTreeContext &context);
@@ -132,7 +131,7 @@ class DffNameStyleRule : public verible::SyntaxTreeLintRule {
   // "q,ff,reg" => { "q", "ff", "reg" }
   //
   // Used to initialize `valid_input_suffixes` and `valid_output_suffixes`
-  static std::vector<std::string> ProcessSuffixes(absl::string_view config);
+  static std::vector<std::string> ProcessSuffixes(std::string_view config);
 
   std::set<verible::LintViolation> violations_;
 

@@ -16,10 +16,10 @@
 
 #include <iosfwd>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/basic-format-style.h"
@@ -55,7 +55,7 @@ class TokenPartitionTreeTestFixture : public ::testing::Test,
 
  protected:
   const std::string sample_;
-  const std::vector<absl::string_view> tokens_;
+  const std::vector<std::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 };
 
@@ -1235,7 +1235,7 @@ class GetSubpartitionsBetweenBlankLinesTest
     : public ::testing::Test,
       public UnwrappedLineMemoryHandler {
  public:
-  explicit GetSubpartitionsBetweenBlankLinesTest(absl::string_view text)
+  explicit GetSubpartitionsBetweenBlankLinesTest(std::string_view text)
       : sample_(text),
         tokens_(
             absl::StrSplit(sample_, absl::ByAnyChar(" \n"), absl::SkipEmpty())),
@@ -1274,7 +1274,7 @@ class GetSubpartitionsBetweenBlankLinesTest
 
  protected:
   const std::string sample_;
-  const std::vector<absl::string_view> tokens_;
+  const std::vector<std::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
   TokenPartitionTree partition_;
 };
@@ -2712,7 +2712,7 @@ class ReshapeFittingSubpartitionsTestFixture
 
  protected:
   const std::string sample_;
-  const std::vector<absl::string_view> tokens_;
+  const std::vector<std::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 };
 

@@ -17,9 +17,9 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/util/range.h"
@@ -30,7 +30,7 @@ namespace {
 TEST(LintTestCaseExactMatchFindingsTest, AllEmpty) {
   const LintTestCase test{};
   const std::set<LintViolation> found_violations;
-  const absl::string_view text;
+  const std::string_view text;
   std::ostringstream diffstream;
   EXPECT_TRUE(test.ExactMatchFindings(found_violations, text, &diffstream));
 }
@@ -43,12 +43,12 @@ TEST(LintTestCaseExactMatchFindingsTest, OneMatchingViolation) {
       "ghi",
   };
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text = text_view.substr(3, 3);
+  const std::string_view bad_text = text_view.substr(3, 3);
   const std::set<LintViolation> found_violations{
       {{kToken, bad_text}, "some reason"},
   };
@@ -67,13 +67,13 @@ TEST(LintTestCaseExactMatchFindingsTest, MultipleMatchingViolations) {
       {kToken, "jkl"},
   };
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text1 = text_view.substr(3, 3);
-  const absl::string_view bad_text2 = text_view.substr(9, 3);
+  const std::string_view bad_text1 = text_view.substr(3, 3);
+  const std::string_view bad_text2 = text_view.substr(9, 3);
   const std::set<LintViolation> found_violations{
       // must be sorted on location
       {{kToken, bad_text1}, "some reason"},
@@ -85,21 +85,21 @@ TEST(LintTestCaseExactMatchFindingsTest, MultipleMatchingViolations) {
   EXPECT_TRUE(diffstream.str().empty());
 }
 
-constexpr absl::string_view kFoundNotExpectedMessage(
+constexpr std::string_view kFoundNotExpectedMessage(
     "FOUND these violations, but did not match the expected ones");
-constexpr absl::string_view kExpectedNotFoundMessage(
+constexpr std::string_view kExpectedNotFoundMessage(
     "EXPECTED these violations, but did not match the ones found");
 
 TEST(LintTestCaseExactMatchFindingsTest, OneFoundNotExpected) {
   constexpr int kToken = 42;
   const LintTestCase test{"abcdefghi"};  // no expected violations
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text = text_view.substr(3, 3);
+  const std::string_view bad_text = text_view.substr(3, 3);
   const std::set<LintViolation> found_violations{
       {{kToken, bad_text}, "some reason"},
   };
@@ -115,12 +115,12 @@ TEST(LintTestCaseExactMatchFindingsTest, OneExpectedNotFound) {
   constexpr int kToken = 42;
   const LintTestCase test{"abc", {kToken, "def"}, "ghi"};
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text = text_view.substr(3, 3);
+  const std::string_view bad_text = text_view.substr(3, 3);
   const std::set<LintViolation> found_violations;  // none expected
   std::ostringstream diffstream;
   EXPECT_FALSE(
@@ -134,12 +134,12 @@ TEST(LintTestCaseExactMatchFindingsTest, OneMismatchEach) {
   constexpr int kToken = 42;
   const LintTestCase test{"abc", {kToken, "def"}, "ghi"};
   const std::string text_copy(test.code);
-  const absl::string_view text_view(text_copy);
+  const std::string_view text_view(text_copy);
 
   // string buffers are in different memory
-  EXPECT_FALSE(BoundsEqual(absl::string_view(test.code), text_view));
+  EXPECT_FALSE(BoundsEqual(std::string_view(test.code), text_view));
 
-  const absl::string_view bad_text = text_view.substr(4, 3);  // "efg"
+  const std::string_view bad_text = text_view.substr(4, 3);  // "efg"
   const std::set<LintViolation> found_violations{
       {{kToken, bad_text}, "some reason"},
   };

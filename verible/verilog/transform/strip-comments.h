@@ -16,8 +16,7 @@
 #define VERIBLE_VERILOG_TRANSFORM_STRIP_COMMENTS_H_
 
 #include <iosfwd>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verilog {
 
@@ -33,7 +32,7 @@ namespace verilog {
 //       This preserves byte offsets and line numbers of all unchanged text.
 //       This option is good for visibility.
 // All lexical errors are ignored.
-void StripVerilogComments(absl::string_view content, std::ostream *output,
+void StripVerilogComments(std::string_view content, std::ostream *output,
                           char replacement = '\0');
 
 }  // namespace verilog

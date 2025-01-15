@@ -16,10 +16,10 @@
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_EXTRACTOR_H_
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/verilog/analysis/verilog-project.h"
 #include "verible/verilog/tools/kythe/indexing-facts-tree.h"
 
@@ -30,7 +30,7 @@ namespace kythe {
 // IndexingFactsTree for the given files.
 // The returned tree will have the files as children and they will retain their
 // original ordering from the file list.
-IndexingFactNode ExtractFiles(absl::string_view file_list_path,
+IndexingFactNode ExtractFiles(std::string_view file_list_path,
                               VerilogProject *project,
                               const std::vector<std::string> &file_names,
                               std::vector<absl::Status> *errors = nullptr);

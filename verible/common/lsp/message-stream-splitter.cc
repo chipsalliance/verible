@@ -17,12 +17,12 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/util/status-macros.h"
 
 namespace verible {
@@ -42,25 +42,25 @@ absl::Status MessageStreamSplitter::PullFrom(const ReadFun &read_fun) {
 // On success, returns the offset to the body and its size in "body_size"
 static constexpr int kIncompleteHeader = -1;
 static constexpr int kGarbledHeader = -2;
-int MessageStreamSplitter::ParseHeaderGetBodyOffset(absl::string_view data,
+int MessageStreamSplitter::ParseHeaderGetBodyOffset(std::string_view data,
                                                     int *body_size) {
   // TODO(hzeller): Make this more robust. Parse each \r\n section separately.
-  static constexpr absl::string_view kEndHeaderMarker = "\r\n\r\n";
-  static constexpr absl::string_view kContentLengthHeader = "Content-Length: ";
+  static constexpr std::string_view kEndHeaderMarker = "\r\n\r\n";
+  static constexpr std::string_view kContentLengthHeader = "Content-Length: ";
 
   int header_marker_len = kEndHeaderMarker.length();
   auto end_of_header = data.find(kEndHeaderMarker);
-  if (end_of_header == absl::string_view::npos) return kIncompleteHeader;
+  if (end_of_header == std::string_view::npos) return kIncompleteHeader;
 
   // Very dirty search for header - we don't check if starts with line.
-  const absl::string_view header_content(data.data(), end_of_header);
+  const std::string_view header_content(data.data(), end_of_header);
   auto found_ContentLength_header = header_content.find(kContentLengthHeader);
-  if (found_ContentLength_header == absl::string_view::npos) {
+  if (found_ContentLength_header == std::string_view::npos) {
     return kGarbledHeader;
   }
 
   size_t end_key = found_ContentLength_header + kContentLengthHeader.size();
-  absl::string_view header_value = header_content.substr(end_key);
+  std::string_view header_value = header_content.substr(end_key);
   auto end_of_digit = std::find_if(header_value.begin(), header_value.end(),
                                    [](char c) { return c < '0' || c > '9'; });
   header_value = header_value.substr(0, end_of_digit - header_value.begin());
@@ -75,12 +75,12 @@ int MessageStreamSplitter::ParseHeaderGetBodyOffset(absl::string_view data,
 // Updates "data" to return the remaining unprocessed data.
 // Returns ok() status encountered a corrupted header.
 absl::Status MessageStreamSplitter::ProcessContainedMessages(
-    absl::string_view *data) {
+    std::string_view *data) {
   while (!data->empty()) {
     int body_size = 0;
     const int body_offset = ParseHeaderGetBodyOffset(*data, &body_size);
     if (body_offset == kGarbledHeader) {
-      absl::string_view limited_view(
+      std::string_view limited_view(
           data->data(), std::min(data->size(), static_cast<size_t>(256)));
       return absl::InvalidArgumentError(
           absl::StrCat("No `Content-Length:` header. '",
@@ -93,8 +93,8 @@ absl::Status MessageStreamSplitter::ProcessContainedMessages(
       return absl::OkStatus();  // Only insufficient partial buffer available.
     }
 
-    absl::string_view header(data->data(), body_offset);
-    absl::string_view body(data->data() + body_offset, body_size);
+    std::string_view header(data->data(), body_offset);
+    std::string_view body(data->data() + body_offset, body_size);
     message_processor_(header, body);
 
     stats_largest_body_ = std::max(stats_largest_body_, body.size());
@@ -137,7 +137,7 @@ absl::Status MessageStreamSplitter::ReadInput(const ReadFun &read_fun) {
   }
   stats_total_bytes_read_ += bytes_read;
 
-  absl::string_view data(read_buffer_.data(), write_offset + bytes_read);
+  std::string_view data(read_buffer_.data(), write_offset + bytes_read);
   RETURN_IF_ERROR(ProcessContainedMessages(&data));
 
   pending_data_ = data;  // Remember for next round.

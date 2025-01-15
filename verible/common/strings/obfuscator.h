@@ -17,9 +17,9 @@
 
 #include <functional>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/compare.h"
 #include "verible/common/util/bijective-map.h"
 
@@ -40,7 +40,7 @@ namespace verible {
 // substitutions written/read from a text file.
 class Obfuscator {
  public:
-  using generator_type = std::function<std::string(absl::string_view)>;
+  using generator_type = std::function<std::string(std::string_view)>;
   using translator_type = BijectiveMap<std::string, std::string,
                                        StringViewCompare, StringViewCompare>;
 
@@ -50,7 +50,7 @@ class Obfuscator {
   // used in obfuscation.  This is useful for applying previously used
   // translations.  Returns true if key-value pair was successfully inserted,
   // else returns false if either key or value were already mapped.
-  bool encode(absl::string_view key, absl::string_view value);
+  bool encode(std::string_view key, std::string_view value);
 
   void set_decode_mode(bool decode) { decode_mode_ = decode; }
 
@@ -58,7 +58,7 @@ class Obfuscator {
 
   // Obfuscates input string with a replacement, and records the substitution
   // for later re-use.  Returns the replacement string.
-  absl::string_view operator()(absl::string_view input);
+  std::string_view operator()(std::string_view input);
 
   // Read-only view of string translation map.
   const translator_type &GetTranslator() const { return translator_; }
@@ -66,7 +66,7 @@ class Obfuscator {
   // Parses a mapping dictionary, and pre-loads the translator map with it.
   // Format: one entry per line, each line is space-separated pair of
   // identifiers.
-  absl::Status load(absl::string_view);
+  absl::Status load(std::string_view);
 
   // Returns a string representation of the internal identifier map.
   // See format description for ::load().
@@ -93,7 +93,7 @@ class IdentifierObfuscator : public Obfuscator {
   explicit IdentifierObfuscator(const generator_type &g) : Obfuscator(g) {}
 
   // Same as inherited method, but verifies that key and value are equal length.
-  bool encode(absl::string_view key, absl::string_view value);
+  bool encode(std::string_view key, std::string_view value);
 };
 
 }  // namespace verible

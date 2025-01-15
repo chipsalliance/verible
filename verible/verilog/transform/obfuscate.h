@@ -17,16 +17,16 @@
 
 #include <iosfwd>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/obfuscator.h"
 
 namespace verilog {
 
 // Returns an identifier ([alpha][alnum]*) of equal length to input, and
 // makes sure that it is a valid symbol identifier, not another Verilog keyword.
-std::string RandomEqualLengthSymbolIdentifier(absl::string_view in);
+std::string RandomEqualLengthSymbolIdentifier(std::string_view in);
 
 // Obfuscates Verilog code.  Identifiers are randomized as equal length
 // replacements, and transformations are recorded (in subst) and re-applied
@@ -34,7 +34,7 @@ std::string RandomEqualLengthSymbolIdentifier(absl::string_view in);
 // not necessary syntactically valid.  Transformations apply to macro
 // arguments and macro definition bodies.
 // Returned status signals success or possible an internal error.
-absl::Status ObfuscateVerilogCode(absl::string_view content,
+absl::Status ObfuscateVerilogCode(std::string_view content,
                                   std::ostream *output,
                                   verible::IdentifierObfuscator *subst);
 

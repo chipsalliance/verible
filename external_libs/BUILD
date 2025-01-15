@@ -22,7 +22,6 @@ cc_test(
     deps = [
         ":editscript",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

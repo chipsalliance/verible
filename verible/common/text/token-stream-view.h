@@ -18,9 +18,9 @@
 #define VERIBLE_COMMON_TEXT_TOKEN_STREAM_VIEW_H_
 
 #include <functional>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/util/iterator-range.h"
 
@@ -62,7 +62,7 @@ void FilterTokenStreamViewInPlace(const TokenFilterPredicate &keep,
 // Returns iterator range of TokenSequence iterators that span the given file
 // offsets. The second iterator points 1-past-the-end of the range.
 TokenViewRange TokenViewRangeSpanningOffsets(const TokenStreamView &view,
-                                             absl::string_view range);
+                                             std::string_view range);
 
 }  // namespace verible
 

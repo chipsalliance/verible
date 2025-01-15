@@ -16,18 +16,18 @@
 
 #include <numeric>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/lsp/json-rpc-dispatcher.h"
 #include "verible/common/lsp/lsp-protocol.h"
 #include "verible/common/strings/utf8.h"
 
 namespace verible {
 namespace lsp {
-EditTextBuffer::EditTextBuffer(absl::string_view initial_text) {
+EditTextBuffer::EditTextBuffer(std::string_view initial_text) {
   ReplaceDocument(initial_text);
 }
 
@@ -54,9 +54,9 @@ bool EditTextBuffer::ApplyChange(const TextDocumentContentChangeEvent &c) {
 }
 
 /*static*/ EditTextBuffer::LineVector EditTextBuffer::GenerateLines(
-    absl::string_view content) {
+    std::string_view content) {
   LineVector result;
-  for (const absl::string_view s : absl::StrSplit(content, '\n')) {
+  for (const std::string_view s : absl::StrSplit(content, '\n')) {
     result.emplace_back(new std::string(s));
     result.back()->append("\n");
   }
@@ -71,7 +71,7 @@ bool EditTextBuffer::ApplyChange(const TextDocumentContentChangeEvent &c) {
   return result;
 }
 
-void EditTextBuffer::ReplaceDocument(absl::string_view content) {
+void EditTextBuffer::ReplaceDocument(std::string_view content) {
   document_length_ = content.length();
   if (content.empty()) return;
   lines_ = GenerateLines(content);
@@ -90,7 +90,7 @@ bool EditTextBuffer::LineEdit(const TextDocumentContentChangeEvent &c,
   if (end_char < c.range.start.character) return false;
 
   document_length_ -= str->length();
-  const absl::string_view assembly = *str;
+  const std::string_view assembly = *str;
   const auto before = utf8_substr(assembly, 0, c.range.start.character);
   const auto after = utf8_substr(assembly, end_char);
   *str = absl::StrCat(before, c.text, after);
@@ -100,10 +100,10 @@ bool EditTextBuffer::LineEdit(const TextDocumentContentChangeEvent &c,
 
 // Returns success (always succeeds);
 bool EditTextBuffer::MultiLineEdit(const TextDocumentContentChangeEvent &c) {
-  const absl::string_view start_line = *lines_[c.range.start.line];
+  const std::string_view start_line = *lines_[c.range.start.line];
   const auto before = utf8_substr(start_line, 0, c.range.start.character);
 
-  const absl::string_view end_line = *lines_[c.range.end.line];
+  const std::string_view end_line = *lines_[c.range.end.line];
   const auto after = utf8_substr(end_line, c.range.end.character);
 
   // Assemble the full content to replace the range of lines with including

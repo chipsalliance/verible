@@ -18,11 +18,11 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/text-structure.h"
 #include "verible/common/text/token-info.h"
@@ -33,7 +33,7 @@
 namespace verible {
 
 std::string JoinLinesOfTokensIntoString(const LinesOfTokens &lines_of_tokens) {
-  std::vector<absl::string_view> token_strings;
+  std::vector<std::string_view> token_strings;
   std::vector<std::string> line_strings;
   line_strings.reserve(lines_of_tokens.size());
   // Concatenate string_views over all tokens and all lines.
@@ -73,7 +73,7 @@ std::unique_ptr<TextStructureView> MakeTextStructureViewHelloWorld() {
   auto text_structure_view =
       std::make_unique<TextStructureView>("hello, world");
   TokenSequence &tokens = text_structure_view->MutableTokenStream();
-  const absl::string_view text_view = text_structure_view->Contents();
+  const std::string_view text_view = text_structure_view->Contents();
   tokens.push_back(TokenInfo(0, text_view.substr(0, 5)));  // "hello"
   tokens.push_back(TokenInfo(1, text_view.substr(5, 1)));  // ","
   tokens.push_back(TokenInfo(2, text_view.substr(6, 1)));  // " "

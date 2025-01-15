@@ -18,9 +18,9 @@
 #include <iterator>  // for std::back_inserter
 #include <list>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/util/iterator-range.h"
@@ -41,7 +41,7 @@ int CharCompare(int i, char c) {
 
 TEST(SetSymmetricDifferenceSplitTest, EmptyInputs) {
   std::vector<int> seq1, diff1;
-  absl::string_view seq2;
+  std::string_view seq2;
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -52,7 +52,7 @@ TEST(SetSymmetricDifferenceSplitTest, EmptyInputs) {
 
 TEST(SetSymmetricDifferenceSplitTest, EmptyInputsPreallocatedOutput) {
   std::vector<int> seq1, diff1(3);
-  absl::string_view seq2;
+  std::string_view seq2;
   std::string diff2(3, 'x');
   auto p = set_symmetric_difference_split(
       seq1.begin(), seq1.end(), seq2.begin(), seq2.end(), diff1.begin(),
@@ -63,7 +63,7 @@ TEST(SetSymmetricDifferenceSplitTest, EmptyInputsPreallocatedOutput) {
 
 TEST(SetSymmetricDifferenceSplitTest, FirstSequenceEmpty) {
   std::vector<int> seq1, diff1;
-  absl::string_view seq2("ace");
+  std::string_view seq2("ace");
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -74,7 +74,7 @@ TEST(SetSymmetricDifferenceSplitTest, FirstSequenceEmpty) {
 
 TEST(SetSymmetricDifferenceSplitTest, FirstSequenceEmptyPreallocatedOutput) {
   std::vector<int> seq1, diff1(3);
-  absl::string_view seq2("ace");
+  std::string_view seq2("ace");
   std::string diff2(4, 'x');
   auto p = set_symmetric_difference_split(
       seq1.begin(), seq1.end(), seq2.begin(), seq2.end(), diff1.begin(),
@@ -86,7 +86,7 @@ TEST(SetSymmetricDifferenceSplitTest, FirstSequenceEmptyPreallocatedOutput) {
 
 TEST(SetSymmetricDifferenceSplitTest, SecondSequenceEmpty) {
   std::vector<int> seq1({2, 4, 6}), diff1;
-  absl::string_view seq2;
+  std::string_view seq2;
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -97,7 +97,7 @@ TEST(SetSymmetricDifferenceSplitTest, SecondSequenceEmpty) {
 
 TEST(SetSymmetricDifferenceSplitTest, SecondSequenceEmptyPreallocatedOutput) {
   std::vector<int> seq1({2, 4, 6}), diff1(3);
-  absl::string_view seq2;
+  std::string_view seq2;
   std::string diff2(3, 'x');
   auto p = set_symmetric_difference_split(
       seq1.begin(), seq1.end(), seq2.begin(), seq2.end(), diff1.begin(),
@@ -109,7 +109,7 @@ TEST(SetSymmetricDifferenceSplitTest, SecondSequenceEmptyPreallocatedOutput) {
 
 TEST(SetSymmetricDifferenceSplitTest, CompleteMatch) {
   std::vector<int> seq1({2, 4, 6}), diff1;
-  absl::string_view seq2("bdf");
+  std::string_view seq2("bdf");
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -120,7 +120,7 @@ TEST(SetSymmetricDifferenceSplitTest, CompleteMatch) {
 
 TEST(SetSymmetricDifferenceSplitTest, CompleteMatchPreallocatedOutput) {
   std::vector<int> seq1({2, 4, 6}), diff1(3);
-  absl::string_view seq2("bdf");
+  std::string_view seq2("bdf");
   std::string diff2(3, 'x');
   auto p = set_symmetric_difference_split(
       seq1.begin(), seq1.end(), seq2.begin(), seq2.end(), diff1.begin(),
@@ -131,7 +131,7 @@ TEST(SetSymmetricDifferenceSplitTest, CompleteMatchPreallocatedOutput) {
 
 TEST(SetSymmetricDifferenceSplitTest, CompleteMismatchInterleaved) {
   std::vector<int> seq1({3, 5, 7}), diff1;
-  absl::string_view seq2("bdf");
+  std::string_view seq2("bdf");
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -142,7 +142,7 @@ TEST(SetSymmetricDifferenceSplitTest, CompleteMismatchInterleaved) {
 
 TEST(SetSymmetricDifferenceSplitTest, CompleteMismatchNonoverlapping1) {
   std::vector<int> seq1({7, 8, 9}), diff1;
-  absl::string_view seq2("bdf");
+  std::string_view seq2("bdf");
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -153,7 +153,7 @@ TEST(SetSymmetricDifferenceSplitTest, CompleteMismatchNonoverlapping1) {
 
 TEST(SetSymmetricDifferenceSplitTest, CompleteMismatchNonoverlapping2) {
   std::vector<int> seq1({1, 2, 4}), diff1;
-  absl::string_view seq2("xyz");
+  std::string_view seq2("xyz");
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -164,7 +164,7 @@ TEST(SetSymmetricDifferenceSplitTest, CompleteMismatchNonoverlapping2) {
 
 TEST(SetSymmetricDifferenceSplitTest, PartialMatch1) {
   std::vector<int> seq1({2, 3, 6}), diff1;
-  absl::string_view seq2("bdf");
+  std::string_view seq2("bdf");
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -175,7 +175,7 @@ TEST(SetSymmetricDifferenceSplitTest, PartialMatch1) {
 
 TEST(SetSymmetricDifferenceSplitTest, PartialMatch1PreallocatedOutput) {
   std::vector<int> seq1({2, 3, 6}), diff1(3);
-  absl::string_view seq2("bdf");
+  std::string_view seq2("bdf");
   std::string diff2(3, 'x');
   auto p = set_symmetric_difference_split(
       seq1.begin(), seq1.end(), seq2.begin(), seq2.end(), diff1.begin(),
@@ -188,7 +188,7 @@ TEST(SetSymmetricDifferenceSplitTest, PartialMatch1PreallocatedOutput) {
 
 TEST(SetSymmetricDifferenceSplitTest, PartialMatch2) {
   std::vector<int> seq1({1, 4, 5}), diff1;
-  absl::string_view seq2("bdf");
+  std::string_view seq2("bdf");
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -199,7 +199,7 @@ TEST(SetSymmetricDifferenceSplitTest, PartialMatch2) {
 
 TEST(SetSymmetricDifferenceSplitTest, CompleteSubset) {
   std::vector<int> seq1({2, 4, 6}), diff1;
-  absl::string_view seq2("bcdf");
+  std::string_view seq2("bcdf");
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -210,7 +210,7 @@ TEST(SetSymmetricDifferenceSplitTest, CompleteSubset) {
 
 TEST(SetSymmetricDifferenceSplitTest, CompleteSubset2) {
   std::vector<int> seq1({2, 4, 5, 6}), diff1;
-  absl::string_view seq2("bdf");
+  std::string_view seq2("bdf");
   std::string diff2;
   set_symmetric_difference_split(seq1.begin(), seq1.end(), seq2.begin(),
                                  seq2.end(), std::back_inserter(diff1),
@@ -295,8 +295,8 @@ TEST(FindAllTest, PartitionAfterEveryZero2) {
 }
 
 TEST(FindAllTest, StrSplitAtEqual) {
-  const absl::string_view seq("aa=b=cc");
-  std::vector<absl::string_view::const_iterator> bounds;
+  const std::string_view seq("aa=b=cc");
+  std::vector<std::string_view::const_iterator> bounds;
   find_all(seq.begin(), seq.end(), std::back_inserter(bounds),
            [](char i) { return i == '='; });
   const auto b = seq.begin();
@@ -304,8 +304,8 @@ TEST(FindAllTest, StrSplitAtEqual) {
 }
 
 TEST(FindAllTest, StrSplitAfterEqual) {
-  const absl::string_view seq("aa=b=cd");
-  std::vector<absl::string_view::const_iterator> bounds;
+  const std::string_view seq("aa=b=cd");
+  std::vector<std::string_view::const_iterator> bounds;
   char prev = 0;
   find_all(seq.begin(), seq.end(), std::back_inserter(bounds), [&](char i) {
     // Split *after* each '='.
@@ -337,8 +337,8 @@ class EveryN {
 };
 
 TEST(FindAllTest, StrSplitEveryN) {
-  const absl::string_view seq("xxxxyyyyaaaabbb");
-  std::vector<absl::string_view::const_iterator> bounds;
+  const std::string_view seq("xxxxyyyyaaaabbb");
+  std::vector<std::string_view::const_iterator> bounds;
   find_all(seq.begin(), seq.end(), std::back_inserter(bounds), EveryN(4));
   const auto b = seq.begin();
   EXPECT_THAT(bounds, ElementsAre(b + 4, b + 8, b + 12));

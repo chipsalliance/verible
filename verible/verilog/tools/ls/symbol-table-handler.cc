@@ -21,6 +21,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
@@ -29,7 +30,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "verible/common/lsp/lsp-file-utils.h"
@@ -79,7 +79,7 @@ static void LogFullIfVLog(const std::vector<absl::Status> &statuses) {
     LOG(WARNING) << "skipped remaining; switch VLOG(2) on for all "
                  << statuses.size() << " statuses.";
     LOG(INFO) << "Here a summary";
-    std::map<int, absl::string_view> sort_by_count;
+    std::map<int, std::string_view> sort_by_count;
     for (const auto &stat : status_counts) {
       sort_by_count.emplace(stat.second, stat.first);
     }
@@ -89,7 +89,7 @@ static void LogFullIfVLog(const std::vector<absl::Status> &statuses) {
   }
 }
 
-std::string FindFileList(absl::string_view current_dir) {
+std::string FindFileList(std::string_view current_dir) {
   // search for FileList file up the directory hierarchy
   std::string projectpath;
   if (auto status = verible::file::UpwardFileSearch(
@@ -149,7 +149,7 @@ std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
   return buildstatus;
 }
 
-bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
+bool SymbolTableHandler::LoadProjectFileList(std::string_view current_dir) {
   VLOG(1) << __FUNCTION__;
   if (!curr_project_) return false;
   if (filelist_path_.empty()) {
@@ -186,7 +186,7 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
 
   // add directory containing filelist to includes
   // TODO (glatosinski): should we do this?
-  const absl::string_view filelist_dir = verible::file::Dirname(filelist_path_);
+  const std::string_view filelist_dir = verible::file::Dirname(filelist_path_);
   curr_project_->AddIncludePath(filelist_dir);
   VLOG(1) << "Adding \"" << filelist_dir << "\" to include directories";
   // update include directories in project
@@ -224,7 +224,7 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
 }
 
 const SymbolTableNode *ScanSymbolTreeForDefinitionReferenceComponents(
-    const ReferenceComponentNode *ref, absl::string_view symbol) {
+    const ReferenceComponentNode *ref, std::string_view symbol) {
   if (verible::IsSubRange(symbol, ref->Value().identifier)) {
     return ref->Value().resolved_symbol;
   }
@@ -237,7 +237,7 @@ const SymbolTableNode *ScanSymbolTreeForDefinitionReferenceComponents(
 }
 
 const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
-    const SymbolTableNode *context, absl::string_view symbol) {
+    const SymbolTableNode *context, std::string_view symbol) {
   if (!context) {
     return nullptr;
   }
@@ -345,7 +345,7 @@ SymbolTableHandler::GetTokenRangeAtTextDocumentPosition(
 }
 std::optional<verible::lsp::Location>
 SymbolTableHandler::GetLocationFromSymbolName(
-    absl::string_view symbol_name, const VerilogSourceFile *file_origin) {
+    std::string_view symbol_name, const VerilogSourceFile *file_origin) {
   // TODO (glatosinski) add iterating over multiple definitions
   if (!file_origin && curr_project_) {
     file_origin = curr_project_->LookupFileOrigin(symbol_name);
@@ -371,7 +371,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   std::optional<verible::TokenInfo> token =
       GetTokenAtTextDocumentPosition(params, parsed_buffers);
   if (!token) return {};
-  absl::string_view symbol = token->text();
+  std::string_view symbol = token->text();
 
   VLOG(1) << "Looking for symbol:  " << symbol;
   VerilogSourceFile *reffile =
@@ -399,13 +399,13 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
 }
 
 const SymbolTableNode *SymbolTableHandler::FindDefinitionNode(
-    absl::string_view symbol) {
+    std::string_view symbol) {
   Prepare();
   return ScanSymbolTreeForDefinition(&symbol_table_->Root(), symbol);
 }
 
 const verible::Symbol *SymbolTableHandler::FindDefinitionSymbol(
-    absl::string_view symbol) {
+    std::string_view symbol) {
   const SymbolTableNode *symbol_table_node = FindDefinitionNode(symbol);
   if (symbol_table_node) return symbol_table_node->Value().syntax_origin;
   return nullptr;
@@ -418,7 +418,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindReferencesLocations(
   std::optional<verible::TokenInfo> token =
       GetTokenAtTextDocumentPosition(params, parsed_buffers);
   if (!token) return {};
-  const absl::string_view symbol = token->text();
+  const std::string_view symbol = token->text();
   const SymbolTableNode &root = symbol_table_->Root();
   const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
   if (!node) {
@@ -457,7 +457,7 @@ SymbolTableHandler::FindRenameLocationsAndCreateEdits(
   std::optional<verible::TokenInfo> token =
       GetTokenAtTextDocumentPosition(params, parsed_buffers);
   if (!token) return {};
-  absl::string_view symbol = token->text();
+  std::string_view symbol = token->text();
   const SymbolTableNode &root = symbol_table_->Root();
   const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
   if (!node) return {};
@@ -469,7 +469,7 @@ SymbolTableHandler::FindRenameLocationsAndCreateEdits(
   std::vector<verible::lsp::TextEdit> textedits;
   CollectReferences(&root, node, &locations);
   if (locations.empty()) return {};
-  std::map<absl::string_view, std::vector<verible::lsp::TextEdit>>
+  std::map<std::string_view, std::vector<verible::lsp::TextEdit>>
       file_edit_pairs;
   for (const auto &loc : locations) {
     file_edit_pairs[loc.uri].reserve(locations.size());
@@ -528,7 +528,7 @@ void SymbolTableHandler::CollectReferences(
 }
 
 void SymbolTableHandler::UpdateFileContent(
-    absl::string_view path, const verilog::VerilogAnalyzer *parsed) {
+    std::string_view path, const verilog::VerilogAnalyzer *parsed) {
   files_dirty_ = true;
   curr_project_->UpdateFileContents(path, parsed);
 }

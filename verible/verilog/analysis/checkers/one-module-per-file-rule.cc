@@ -18,10 +18,10 @@
 #include <iterator>
 #include <memory>
 #include <set>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-search.h"
 #include "verible/common/text/text-structure.h"
@@ -40,7 +40,7 @@ using verible::TextStructureView;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(OneModulePerFileRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Each file should have only one module declaration. Found: ";
 
 const LintRuleDescriptor &OneModulePerFileRule::GetDescriptor() {
@@ -53,7 +53,7 @@ const LintRuleDescriptor &OneModulePerFileRule::GetDescriptor() {
 }
 
 void OneModulePerFileRule::Lint(const TextStructureView &text_structure,
-                                absl::string_view) {
+                                std::string_view) {
   const auto &tree = text_structure.SyntaxTree();
   if (tree == nullptr) return;
 

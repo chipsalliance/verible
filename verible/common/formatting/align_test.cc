@@ -20,12 +20,12 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/format-token.h"
@@ -68,7 +68,7 @@ TEST(AlignmentPolicyTest, InvalidEnum) {
 class AlignmentTestFixture : public ::testing::Test,
                              public UnwrappedLineMemoryHandler {
  public:
-  explicit AlignmentTestFixture(absl::string_view text)
+  explicit AlignmentTestFixture(std::string_view text)
       : sample_backing_(text),
         sample_(sample_backing_),
         tokens_(absl::StrSplit(sample_, absl::ByAnyChar(" \n"),
@@ -82,8 +82,8 @@ class AlignmentTestFixture : public ::testing::Test,
 
  protected:
   const std::string sample_backing_;
-  const absl::string_view sample_;
-  const std::vector<absl::string_view> tokens_;
+  const std::string_view sample_;
+  const std::vector<std::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 };
 
@@ -171,7 +171,7 @@ TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
 
 class MatrixTreeAlignmentTestFixture : public AlignmentTestFixture {
  public:
-  explicit MatrixTreeAlignmentTestFixture(absl::string_view text)
+  explicit MatrixTreeAlignmentTestFixture(std::string_view text)
       : AlignmentTestFixture(text),
         syntax_tree_(nullptr),  // for subclasses to initialize
         partition_(/* temporary */ UnwrappedLine()) {}
@@ -200,7 +200,7 @@ class MatrixTreeAlignmentTestFixture : public AlignmentTestFixture {
 class Sparse3x3MatrixAlignmentTest : public MatrixTreeAlignmentTestFixture {
  public:
   explicit Sparse3x3MatrixAlignmentTest(
-      absl::string_view text = "one two three four five six")
+      std::string_view text = "one two three four five six")
       : MatrixTreeAlignmentTestFixture(text) {
     // From the sample_ text, each pair of tokens will span a subpartition.
     // Construct a 2-level partition that looks like this:
@@ -607,7 +607,7 @@ class MultiAlignmentGroupTest : public AlignmentTestFixture {
   std::string Render() {
     std::ostringstream stream;
     int position = 0;
-    const absl::string_view text(sample_);
+    const std::string_view text(sample_);
     for (auto &child : partition_.Children()) {
       const auto policy = child.Value().PartitionPolicy();
       if (policy == PartitionPolicyEnum::kAlreadyFormatted) {
@@ -617,7 +617,7 @@ class MultiAlignmentGroupTest : public AlignmentTestFixture {
       // emulate preserving vertical spacing
       const auto tokens_range = child.Value().TokensRange();
       const auto front_offset = tokens_range.front().token->left(text);
-      const absl::string_view spaces =
+      const std::string_view spaces =
           text.substr(position, front_offset - position);
       const auto newlines =
           std::max<int>(std::count(spaces.begin(), spaces.end(), '\n') - 1, 0);
@@ -713,7 +713,7 @@ class GetPartitionAlignmentSubrangesTestFixture : public AlignmentTestFixture {
  protected:
   static AlignmentGroupAction PartitionSelector(
       const TokenPartitionTree &partition) {
-    const absl::string_view text =
+    const std::string_view text =
         partition.Value().TokensRange().front().Text();
     if (text == "match") {
       return AlignmentGroupAction::kMatch;
@@ -813,12 +813,12 @@ class GetPartitionAlignmentSubrangesSubtypedTestFixture
  protected:
   static AlignedPartitionClassification PartitionSelector(
       const TokenPartitionTree &partition) {
-    const absl::string_view text =
+    const std::string_view text =
         partition.Value().TokensRange().front().Text();
     if (absl::StartsWith(text, "match")) {
       const auto toks = absl::StrSplit(text, absl::ByChar(':'));
       CHECK(toks.begin() != toks.end());
-      absl::string_view last = *std::next(toks.begin());
+      std::string_view last = *std::next(toks.begin());
       // Use the first character after the : as the subtype, so 'X', 'Y', 'Z'.
       return {AlignmentGroupAction::kMatch, static_cast<int>(last.front())};
     }
@@ -862,7 +862,7 @@ TEST_F(GetPartitionAlignmentSubrangesSubtypedTestFixture, VariousRanges) {
 class Dense2x2MatrixAlignmentTest : public MatrixTreeAlignmentTestFixture {
  public:
   explicit Dense2x2MatrixAlignmentTest(
-      absl::string_view text = "one two three four")
+      std::string_view text = "one two three four")
       : MatrixTreeAlignmentTestFixture(text) {
     CHECK_EQ(tokens_.size(), 4);
 
@@ -1041,7 +1041,7 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
 class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
  public:
   explicit SubcolumnsTreeAlignmentTest(
-      absl::string_view text =
+      std::string_view text =
           "zero\n"
           "( one two three )\n"
           "( four ( five six ) seven )\n"
@@ -1272,7 +1272,7 @@ TEST_F(SubcolumnsTreeAlignmentTest,
 class MultiSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
  public:
   explicit MultiSubcolumnsTreeAlignmentTest(
-      absl::string_view text =
+      std::string_view text =
           "zero\n"
           "( one two three )\n"
           "( four ( five six ) seven )\n"
@@ -1284,7 +1284,7 @@ class MultiSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
   std::string Render() {
     std::ostringstream stream;
     int position = 0;
-    const absl::string_view text(sample_);
+    const std::string_view text(sample_);
     for (auto &child : partition_.Children()) {
       const auto policy = child.Value().PartitionPolicy();
       if (policy == PartitionPolicyEnum::kAlreadyFormatted) {
@@ -1294,7 +1294,7 @@ class MultiSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
       // emulate preserving vertical spacing
       const auto tokens_range = child.Value().TokensRange();
       const auto front_offset = tokens_range.front().token->left(text);
-      const absl::string_view spaces =
+      const std::string_view spaces =
           text.substr(position, front_offset - position);
       const auto newlines =
           std::max<int>(std::count(spaces.begin(), spaces.end(), '\n') - 1, 0);
@@ -1326,7 +1326,7 @@ TEST_F(MultiSubcolumnsTreeAlignmentTest, BlankLineSeparatedGroups) {
 class InferSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
  public:
   explicit InferSubcolumnsTreeAlignmentTest(
-      absl::string_view text =
+      std::string_view text =
           "zero\n"
           "( one     two                   three )\n"
           "( four    ( five     six )      seven )\n"
@@ -1367,7 +1367,7 @@ TEST_F(InferSubcolumnsTreeAlignmentTest, InferUserIntent) {
 
 class SubcolumnsTreeWithDelimitersTest : public SubcolumnsTreeAlignmentTest {
  public:
-  explicit SubcolumnsTreeWithDelimitersTest(absl::string_view text =
+  explicit SubcolumnsTreeWithDelimitersTest(std::string_view text =
                                                 "( One Two , )\n"
                                                 "( Three Four )\n"
                                                 "\n"
@@ -1390,7 +1390,7 @@ TEST_F(SubcolumnsTreeWithDelimitersTest, ContainsDelimiterTest) {
 template <class Tree>
 struct ColumnsTreeFormatterTestCase {
   Tree input;
-  absl::string_view expected;
+  std::string_view expected;
 };
 
 TEST(ColumnsTreeFormatter, ColumnPositionTreePrinter) {
@@ -1465,20 +1465,20 @@ class OutsideCharPairs {
   explicit OutsideCharPairs(char start, char stop)
       : start_(start), stop_(stop) {}
 
-  absl::string_view Find(absl::string_view text, size_t pos) const {
+  std::string_view Find(std::string_view text, size_t pos) const {
     if (text[pos] == start_) {
       const size_t stop_pos = text.find(stop_, pos + 1);
-      if (stop_pos == absl::string_view::npos) {
-        return absl::string_view(text.data() + text.size(), 0);
+      if (stop_pos == std::string_view::npos) {
+        return std::string_view(text.data() + text.size(), 0);
       }
       const size_t start_pos = text.find(start_, stop_pos + 1);
-      if (start_pos == absl::string_view::npos) {
+      if (start_pos == std::string_view::npos) {
         return text.substr(stop_pos + 1);
       }
       return text.substr(stop_pos + 1, start_pos - stop_pos - 1);
     }
     const size_t start_pos = text.find(start_, pos);
-    if (start_pos == absl::string_view::npos) return text.substr(pos);
+    if (start_pos == std::string_view::npos) return text.substr(pos);
     return text.substr(pos, start_pos - pos);
   }
 
@@ -1491,7 +1491,7 @@ class FormatUsingOriginalSpacingTest : public ::testing::Test,
                                        public UnwrappedLineMemoryHandler {
  public:
   explicit FormatUsingOriginalSpacingTest(
-      absl::string_view text =
+      std::string_view text =
           "<NoSpacing><nospacing>"
           " <1Space> <1space>"
           "    <4Spaces>    <4spaces>"
@@ -1522,8 +1522,8 @@ class FormatUsingOriginalSpacingTest : public ::testing::Test,
   }
 
   const std::string sample_backing_;
-  const absl::string_view sample_;
-  const std::vector<absl::string_view> tokens_;
+  const std::string_view sample_;
+  const std::vector<std::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 };
 

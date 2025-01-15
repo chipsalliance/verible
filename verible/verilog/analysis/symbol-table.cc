@@ -22,6 +22,7 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -29,7 +30,6 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -77,7 +77,7 @@ using verible::ValueSaver;
 
 // Returns string_view of `text` with outermost double-quotes removed.
 // If `text` is not wrapped in quotes, return it as-is.
-static absl::string_view StripOuterQuotes(absl::string_view text) {
+static std::string_view StripOuterQuotes(std::string_view text) {
   return absl::StripSuffix(absl::StripPrefix(text, "\""), "\"");
 }
 
@@ -107,12 +107,12 @@ std::ostream &operator<<(std::ostream &stream, SymbolMetaType symbol_type) {
   return SymbolMetaTypeNames().Unparse(symbol_type, stream);
 }
 
-absl::string_view SymbolMetaTypeAsString(SymbolMetaType type) {
+std::string_view SymbolMetaTypeAsString(SymbolMetaType type) {
   return SymbolMetaTypeNames().EnumName(type);
 }
 
 // Root SymbolTableNode has no key, but we identify it as "$root"
-static constexpr absl::string_view kRoot("$root");
+static constexpr std::string_view kRoot("$root");
 
 std::ostream &SymbolTableNodeFullPath(std::ostream &stream,
                                       const SymbolTableNode &node) {
@@ -170,8 +170,8 @@ static ReferenceComponentNode *CheckedNewChildReferenceNode(
 }
 
 static absl::Status DiagnoseMemberSymbolResolutionFailure(
-    absl::string_view name, const SymbolTableNode &context) {
-  const absl::string_view context_name =
+    std::string_view name, const SymbolTableNode &context) {
+  const std::string_view context_name =
       context.Parent() == nullptr ? kRoot : *context.Key();
   return absl::NotFoundError(
       absl::StrCat("No member symbol \"", name, "\" in parent scope (",
@@ -180,7 +180,7 @@ static absl::Status DiagnoseMemberSymbolResolutionFailure(
 }
 
 static const SymbolTableNode *LookupSymbolUpwards(
-    const SymbolTableNode &context, absl::string_view symbol);
+    const SymbolTableNode &context, std::string_view symbol);
 
 class SymbolTable::Builder : public TreeContextVisitor {
  public:
@@ -497,7 +497,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     CHECK(struct_type.MatchesTag(NodeEnum::kStructType));
     // Structs do not inherently have names, so they are all anonymous.
     // Type declarations (typedefs) create named alias elsewhere.
-    const absl::string_view anon_name =
+    const std::string_view anon_name =
         current_scope_->Value().CreateAnonymousScope("struct");
     SymbolTableNode *new_struct = DeclareScopedElementAndDescend(
         struct_type, anon_name, SymbolMetaType::kStruct);
@@ -522,7 +522,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   void DescendEnumType(const SyntaxTreeNode &enum_type) {
     CHECK(enum_type.MatchesTag(NodeEnum::kEnumType));
-    const absl::string_view anon_name =
+    const std::string_view anon_name =
         current_scope_->Value().CreateAnonymousScope("enum");
     SymbolTableNode *new_enum = DeclareScopedElementAndDescend(
         enum_type, anon_name, SymbolMetaType::kEnumType);
@@ -611,7 +611,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void HandleIdentifier(const SyntaxTreeLeaf &leaf) {
-    const absl::string_view text = leaf.get().text();
+    const std::string_view text = leaf.get().text();
     VLOG(2) << __FUNCTION__ << ": " << text;
     VLOG(2) << "current context: " << CurrentScopeFullPath();
     if (Context().DirectParentIs(NodeEnum::kParamType)) {
@@ -1016,7 +1016,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // Suitable for SystemVerilog language elements: functions, tasks, packages,
   // classes, modules, etc...
   SymbolTableNode *EmplaceElementInCurrentScope(const verible::Symbol &element,
-                                                absl::string_view name,
+                                                std::string_view name,
                                                 SymbolMetaType metatype) {
     const auto [kv, did_emplace] = current_scope_->TryEmplace(
         name, SymbolInfo{metatype, source_, &element});
@@ -1141,7 +1141,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // Checks potential multiline declaration of port
   // against correctness
   void CheckMultilinePortDeclarationCorrectness(SymbolTableNode *existing_node,
-                                                absl::string_view name) {
+                                                std::string_view name) {
     DeclarationTypeInfo &new_decl_info =
         *ABSL_DIE_IF_NULL(declaration_type_info_);
     DeclarationTypeInfo &old_decl_info = existing_node->Value().declared_type;
@@ -1176,7 +1176,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // Suitable for SystemVerilog language elements: nets, parameter, variables,
   // instances, functions (using their return types).
   SymbolTableNode &EmplaceTypedElementInCurrentScope(
-      const verible::Symbol &element, absl::string_view name,
+      const verible::Symbol &element, std::string_view name,
       SymbolMetaType metatype) {
     VLOG(2) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
     VLOG(3) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
@@ -1202,7 +1202,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // Suitable for SystemVerilog module port declarations, where
   // there are multiple lines defining the symbol.
   SymbolTableNode &EmplacePortIdentifierInCurrentScope(
-      const verible::Symbol &element, absl::string_view name,
+      const verible::Symbol &element, std::string_view name,
       SymbolMetaType metatype) {
     VLOG(2) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
     VLOG(3) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
@@ -1226,7 +1226,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // inside the new element's scope.
   // Returns the new scope.
   SymbolTableNode *DeclareScopedElementAndDescend(const SyntaxTreeNode &element,
-                                                  absl::string_view name,
+                                                  std::string_view name,
                                                   SymbolMetaType type) {
     SymbolTableNode *enter_scope =
         EmplaceElementInCurrentScope(element, name, type);
@@ -1241,7 +1241,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
                                    SymbolMetaType::kModule);
   }
 
-  absl::string_view GetScopeNameFromGenerateBody(const SyntaxTreeNode &body) {
+  std::string_view GetScopeNameFromGenerateBody(const SyntaxTreeNode &body) {
     if (body.MatchesTag(NodeEnum::kGenerateBlock)) {
       const SyntaxTreeNode *gen_block = GetGenerateBlockBegin(body);
       const TokenInfo *label =
@@ -1437,7 +1437,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const verible::TokenInfo *instance_name_token =
         GetModuleInstanceNameTokenInfoFromGateInstance(instance);
     if (!instance_name_token) return;
-    const absl::string_view instance_name(instance_name_token->text());
+    const std::string_view instance_name(instance_name_token->text());
     const SymbolTableNode &new_instance(EmplaceTypedElementInCurrentScope(
         instance, instance_name, SymbolMetaType::kDataNetVariableInstance));
 
@@ -1467,7 +1467,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const SyntaxTreeLeaf *net_variable_name =
         GetNameLeafOfNetVariable(net_variable);
     if (!net_variable_name) return;
-    const absl::string_view net_name(net_variable_name->get().text());
+    const std::string_view net_name(net_variable_name->get().text());
     EmplaceTypedElementInCurrentScope(net_variable, net_name,
                                       SymbolMetaType::kDataNetVariableInstance);
     Descend(net_variable);
@@ -1477,7 +1477,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const SyntaxTreeLeaf *register_variable_name =
         GetNameLeafOfRegisterVariable(reg_variable);
     if (!register_variable_name) return;
-    const absl::string_view net_name(register_variable_name->get().text());
+    const std::string_view net_name(register_variable_name->get().text());
     EmplaceTypedElementInCurrentScope(reg_variable, net_name,
                                       SymbolMetaType::kDataNetVariableInstance);
     Descend(reg_variable);
@@ -1487,14 +1487,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const SyntaxTreeLeaf *unqualified_id =
         GetUnqualifiedIdFromVariableDeclarationAssignment(variable);
     if (unqualified_id) {
-      const absl::string_view var_name(unqualified_id->get().text());
+      const std::string_view var_name(unqualified_id->get().text());
       EmplaceTypedElementInCurrentScope(
           variable, var_name, SymbolMetaType::kDataNetVariableInstance);
     }
     Descend(variable);
   }
 
-  void DiagnoseSymbolAlreadyExists(absl::string_view name,
+  void DiagnoseSymbolAlreadyExists(std::string_view name,
                                    const SymbolTableNode &previous_symbol) {
     std::ostringstream here_print;
     here_print << source_->GetTextStructure()->GetRangeForText(name);
@@ -1536,7 +1536,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // Lookup inner symbol in outer_scope, but also allow injection of the
     // inner symbol name into the outer_scope (with diagnostic).
     ReferenceComponent &inner_ref = ref.components->Children().front().Value();
-    const absl::string_view inner_key = inner_ref.identifier;
+    const std::string_view inner_key = inner_ref.identifier;
 
     const auto p = outer_scope->TryEmplace(
         inner_key, SymbolInfo{metatype, source_, definition_syntax});
@@ -1617,10 +1617,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
         GetFileFromPreprocessorInclude(preprocessor_include);
     if (included_filename == nullptr) return;
 
-    const absl::string_view filename_text = included_filename->get().text();
+    const std::string_view filename_text = included_filename->get().text();
 
     // Remove the double quotes from the filename.
-    const absl::string_view filename_unquoted = StripOuterQuotes(filename_text);
+    const std::string_view filename_unquoted = StripOuterQuotes(filename_text);
     VLOG(3) << "got: `include \"" << filename_unquoted << "\"";
 
     // Opening included file requires a VerilogProject.
@@ -1876,7 +1876,7 @@ static const SymbolTableNode *CanonicalizeTypeForMemberLookup(
 
 // Search through base class's scopes for a symbol.
 static const SymbolTableNode *LookupSymbolThroughInheritedScopes(
-    const SymbolTableNode &context, absl::string_view symbol) {
+    const SymbolTableNode &context, std::string_view symbol) {
   const SymbolTableNode *current_context = &context;
   do {
     // Look directly in current scope.
@@ -1904,7 +1904,7 @@ static const SymbolTableNode *LookupSymbolThroughInheritedScopes(
 
 // Search up-scope, stopping at the first symbol found in the nearest scope.
 static const SymbolTableNode *LookupSymbolUpwards(
-    const SymbolTableNode &context, absl::string_view symbol) {
+    const SymbolTableNode &context, std::string_view symbol) {
   const SymbolTableNode *current_context = &context;
   do {
     const SymbolTableNode *found =
@@ -1918,7 +1918,7 @@ static const SymbolTableNode *LookupSymbolUpwards(
 }
 
 static absl::Status DiagnoseUnqualifiedSymbolResolutionFailure(
-    absl::string_view name, const SymbolTableNode &context) {
+    std::string_view name, const SymbolTableNode &context) {
   return absl::NotFoundError(absl::StrCat("Unable to resolve symbol \"", name,
                                           "\" from context ",
                                           ContextFullPath(context), "."));
@@ -1930,7 +1930,7 @@ static void ResolveReferenceComponentNodeLocal(ReferenceComponentNode *node,
   VLOG(2) << __FUNCTION__ << ": " << component;
   // If already resolved, skip.
   if (component.resolved_symbol != nullptr) return;  // already bound
-  const absl::string_view key(component.identifier);
+  const std::string_view key(component.identifier);
   CHECK(node->Parent() == nullptr);  // is root
   // root node: lookup this symbol from its context upward
   CHECK_EQ(component.ref_type, ReferenceType::kUnqualified);
@@ -1947,7 +1947,7 @@ static void ResolveUnqualifiedName(ReferenceComponent *component,
                                    const SymbolTableNode &context,
                                    std::vector<absl::Status> *diagnostics) {
   VLOG(2) << __FUNCTION__ << ": " << component;
-  const absl::string_view key(component->identifier);
+  const std::string_view key(component->identifier);
   // Find the first symbol whose name matches, without regard to its metatype.
   const SymbolTableNode *resolved = LookupSymbolUpwards(context, key);
   if (resolved == nullptr) {
@@ -1969,7 +1969,7 @@ static void ResolveImmediateMember(ReferenceComponent *component,
                                    const SymbolTableNode &context,
                                    std::vector<absl::Status> *diagnostics) {
   VLOG(2) << __FUNCTION__ << ": " << component;
-  const absl::string_view key(component->identifier);
+  const std::string_view key(component->identifier);
   const auto found = context.Find(key);
   if (found == context.end()) {
     diagnostics->emplace_back(
@@ -2001,7 +2001,7 @@ static void ResolveDirectMember(ReferenceComponent *component,
     return;
   }
 
-  const absl::string_view key(component->identifier);
+  const std::string_view key(component->identifier);
   const auto *found =
       LookupSymbolThroughInheritedScopes(*canonical_context, key);
   if (found == nullptr) {
@@ -2137,7 +2137,7 @@ absl::StatusOr<SymbolTableNode *> DependentReferences::ResolveOnlyBaseLocally(
   CHECK(base.ref_type == ReferenceType::kUnqualified ||
         base.ref_type == ReferenceType::kImmediate)
       << "Inconsistent reference type: " << base.ref_type;
-  const absl::string_view key(base.identifier);
+  const std::string_view key(base.identifier);
   const auto found = context->Find(key);
   if (found == context->end()) {
     return DiagnoseMemberSymbolResolutionFailure(key, *context);
@@ -2193,7 +2193,7 @@ void DeclarationTypeInfo::VerifySymbolTableRoot(
   }
 }
 
-absl::string_view SymbolInfo::CreateAnonymousScope(absl::string_view base) {
+std::string_view SymbolInfo::CreateAnonymousScope(std::string_view base) {
   const size_t n = anonymous_scope_names.size();
   anonymous_scope_names.emplace_back(std::make_unique<const std::string>(
       // Starting with a non-alpha character guarantees it cannot collide with
@@ -2357,7 +2357,7 @@ void SymbolTable::Build(std::vector<absl::Status> *diagnostics) {
 }
 
 void SymbolTable::BuildSingleTranslationUnit(
-    absl::string_view referenced_file_name,
+    std::string_view referenced_file_name,
     std::vector<absl::Status> *diagnostics) {
   const auto translation_unit_or_status =
       project_->OpenTranslationUnit(referenced_file_name);

@@ -20,10 +20,10 @@
 #include <iterator>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace diff {
@@ -168,8 +168,8 @@ TEST(DiffTest, CheckNonConstStringVectorDiffResults) {
 }
 
 TEST(DiffTest, CompleteDeletion) {
-  const std::vector<absl::string_view> tokens1{"the", "fox"};
-  const std::vector<absl::string_view> tokens2;
+  const std::vector<std::string_view> tokens1{"the", "fox"};
+  const std::vector<std::string_view> tokens2;
 
   const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
                                      tokens2.begin(), tokens2.end());
@@ -182,8 +182,8 @@ TEST(DiffTest, CompleteDeletion) {
 }
 
 TEST(DiffTest, CompleteInsertion) {
-  const std::vector<absl::string_view> tokens1;
-  const std::vector<absl::string_view> tokens2{"jumped", "over", "me"};
+  const std::vector<std::string_view> tokens1;
+  const std::vector<std::string_view> tokens2{"jumped", "over", "me"};
 
   const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
                                      tokens2.begin(), tokens2.end());
@@ -196,8 +196,8 @@ TEST(DiffTest, CompleteInsertion) {
 }
 
 TEST(DiffTest, ReplaceFromOneDifferentElement) {
-  const std::vector<absl::string_view> tokens1{"fox"};
-  const std::vector<absl::string_view> tokens2{"jumped", "over", "me"};
+  const std::vector<std::string_view> tokens1{"fox"};
+  const std::vector<std::string_view> tokens2{"jumped", "over", "me"};
 
   const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
                                      tokens2.begin(), tokens2.end());
@@ -211,8 +211,8 @@ TEST(DiffTest, ReplaceFromOneDifferentElement) {
 }
 
 TEST(DiffTest, ReplaceToOneDifferentElement) {
-  const std::vector<absl::string_view> tokens1{"jumped", "over", "me"};
-  const std::vector<absl::string_view> tokens2{"fox"};
+  const std::vector<std::string_view> tokens1{"jumped", "over", "me"};
+  const std::vector<std::string_view> tokens2{"fox"};
 
   const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
                                      tokens2.begin(), tokens2.end());
@@ -226,8 +226,8 @@ TEST(DiffTest, ReplaceToOneDifferentElement) {
 }
 
 TEST(DiffTest, CompleteReplacement) {
-  const std::vector<absl::string_view> tokens1{"the", "fox"};
-  const std::vector<absl::string_view> tokens2{"jumped", "over", "me"};
+  const std::vector<std::string_view> tokens1{"the", "fox"};
+  const std::vector<std::string_view> tokens2{"jumped", "over", "me"};
 
   const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
                                      tokens2.begin(), tokens2.end());
@@ -241,9 +241,9 @@ TEST(DiffTest, CompleteReplacement) {
 }
 
 TEST(DiffTest, StrictSubsequence) {
-  const std::vector<absl::string_view> tokens1{"the", "fox", "jumped", "over",
-                                               "the", "dog", "."};
-  const std::vector<absl::string_view> tokens2{"fox", "jumped", "over"};
+  const std::vector<std::string_view> tokens1{"the", "fox", "jumped", "over",
+                                              "the", "dog", "."};
+  const std::vector<std::string_view> tokens2{"fox", "jumped", "over"};
 
   const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
                                      tokens2.begin(), tokens2.end());
@@ -258,9 +258,9 @@ TEST(DiffTest, StrictSubsequence) {
 }
 
 TEST(DiffTest, StrictSupersequence) {
-  const std::vector<absl::string_view> tokens1{"fox", "jumped", "over"};
-  const std::vector<absl::string_view> tokens2{"the", "fox", "jumped", "over",
-                                               "the", "dog", "."};
+  const std::vector<std::string_view> tokens1{"fox", "jumped", "over"};
+  const std::vector<std::string_view> tokens2{"the", "fox", "jumped", "over",
+                                              "the", "dog", "."};
 
   const Edits actual = GetTokenDiffs(tokens1.begin(), tokens1.end(),
                                      tokens2.begin(), tokens2.end());

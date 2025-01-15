@@ -16,8 +16,8 @@
 
 #include <map>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -36,8 +36,8 @@ TEST(StringViewCompareTest, ConstCharPointers) {
 }
 
 TEST(StringViewCompareTest, StringViews) {
-  const absl::string_view a("aaa");
-  const absl::string_view b("bbb");
+  const std::string_view a("aaa");
+  const std::string_view b("bbb");
   StringViewCompare comp;
   EXPECT_TRUE(comp(a, b));
   EXPECT_FALSE(comp(b, a));
@@ -54,7 +54,7 @@ TEST(StringViewCompareTest, StdStrings) {
 TEST(StringViewCompareTest, HeterogeneousStrings) {
   const char a[] = "aaa";
   const std::string b("bbb");
-  const absl::string_view c("ccc");
+  const std::string_view c("ccc");
   StringViewCompare comp;
   EXPECT_TRUE(comp(a, b));
   EXPECT_FALSE(comp(b, a));
@@ -77,7 +77,7 @@ TEST(StringViewCompareTest, MapStdStringKey) {
 }
 
 TEST(StringViewCompareTest, MapStringViewKey) {
-  const std::map<absl::string_view, int, StringViewCompare> numbers{
+  const std::map<std::string_view, int, StringViewCompare> numbers{
       {"one", 1},
       {"two", 2},
       {"three", 3},

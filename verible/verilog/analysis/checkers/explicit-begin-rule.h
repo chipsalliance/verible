@@ -16,9 +16,9 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_EXPLICIT_BEGIN_RULE_H_
 
 #include <set>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/token-stream-lint-rule.h"
 #include "verible/common/text/token-info.h"
@@ -37,7 +37,7 @@ class ExplicitBeginRule : public verible::TokenStreamLintRule {
 
   static const LintRuleDescriptor &GetDescriptor();
 
-  absl::Status Configure(absl::string_view configuration) final;
+  absl::Status Configure(std::string_view configuration) final;
 
   void HandleToken(const verible::TokenInfo &token) final;
 

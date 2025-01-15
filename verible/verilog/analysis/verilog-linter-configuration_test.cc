@@ -17,12 +17,12 @@
 #include <iosfwd>
 #include <map>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/line-lint-rule.h"
@@ -119,7 +119,7 @@ class TestRule4 : public LineLintRule {
     return d;
   }
 
-  void HandleLine(absl::string_view) final {}
+  void HandleLine(std::string_view) final {}
 
   verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
@@ -137,7 +137,7 @@ class TestRule5 : public TextStructureLintRule {
     return d;
   }
 
-  void Lint(const TextStructureView &, absl::string_view) final {}
+  void Lint(const TextStructureView &, std::string_view) final {}
 
   verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
@@ -162,12 +162,12 @@ class FakeTextStructureView : public TextStructureView {
 static const verible::LineColumnMap dummy_map("");
 
 // Don't care about file name for these tests.
-static constexpr absl::string_view filename;
+static constexpr std::string_view filename;
 
 TEST(ProjectPolicyTest, MatchesAnyPath) {
   struct TestCase {
     ProjectPolicy policy;
-    absl::string_view filename;
+    std::string_view filename;
     const char *expected_match;
   };
   const TestCase kTestCases[] = {
@@ -182,7 +182,7 @@ TEST(ProjectPolicyTest, MatchesAnyPath) {
   for (const auto &test : kTestCases) {
     const char *match = test.policy.MatchesAnyPath(test.filename);
     if (test.expected_match != nullptr) {
-      EXPECT_EQ(absl::string_view(match), test.expected_match);
+      EXPECT_EQ(std::string_view(match), test.expected_match);
     } else {
       EXPECT_EQ(match, nullptr);
     }
@@ -192,7 +192,7 @@ TEST(ProjectPolicyTest, MatchesAnyPath) {
 TEST(ProjectPolicyTest, MatchesAnyExclusions) {
   struct TestCase {
     ProjectPolicy policy;
-    absl::string_view filename;
+    std::string_view filename;
     const char *expected_match;
   };
   const TestCase kTestCases[] = {
@@ -207,7 +207,7 @@ TEST(ProjectPolicyTest, MatchesAnyExclusions) {
   for (const auto &test : kTestCases) {
     const char *match = test.policy.MatchesAnyExclusions(test.filename);
     if (test.expected_match != nullptr) {
-      EXPECT_EQ(absl::string_view(match), test.expected_match);
+      EXPECT_EQ(std::string_view(match), test.expected_match);
     } else {
       EXPECT_EQ(match, nullptr);
     }
@@ -243,7 +243,7 @@ TEST(ProjectPolicyTest, IsValid) {
 }
 
 TEST(ProjectPolicyTest, ListPathGlobs) {
-  const std::pair<ProjectPolicy, absl::string_view> kTestCases[] = {
+  const std::pair<ProjectPolicy, std::string_view> kTestCases[] = {
       {{"policyX", {}, {}, {}, {}, {}}, ""},
       {{"policyX", {"path"}, {}, {}, {}, {}}, "*path*"},
       {{"policyX", {"path1", "path2"}, {}, {}, {}, {}}, "*path1* | *path2*"},
@@ -645,7 +645,7 @@ TEST(RuleBundleTest, UnparseRuleBundleEmpty) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleEmpty) {
-  constexpr absl::string_view text;
+  constexpr std::string_view text;
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -656,7 +656,7 @@ TEST(RuleBundleTest, ParseRuleBundleEmpty) {
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptSeveral) {
   // Allow for an optional '+' to enable a rule for symmetry with '-' disable
-  constexpr absl::string_view text = "test-rule-1,test-rule-2,+test-rule-3";
+  constexpr std::string_view text = "test-rule-1,test-rule-2,+test-rule-3";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -669,7 +669,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptSeveral) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptConfiguration) {
-  constexpr absl::string_view text =
+  constexpr std::string_view text =
       "test-rule-1=foo,test-rule-2=,test-rule-3,-test-rule-4=bar";
   RuleBundle bundle;
   std::string error;
@@ -692,7 +692,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptConfiguration) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleWithQuotationMarks) {
-  constexpr absl::string_view text =
+  constexpr std::string_view text =
       "test-rule-1=\"foo\",test-rule-2=\"\",test-rule-3,-test-rule-4=\"bar\"";
   RuleBundle bundle;
   std::string error;
@@ -715,7 +715,7 @@ TEST(RuleBundleTest, ParseRuleBundleWithQuotationMarks) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptOne) {
-  constexpr absl::string_view text = "test-rule-1";
+  constexpr std::string_view text = "test-rule-1";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -726,7 +726,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptOne) {
 }
 
 TEST(RuleBundleTest, ParseRuleWhitespaceAroundAllowed) {
-  constexpr absl::string_view text =
+  constexpr std::string_view text =
       "\t test-rule-1 \t, +test-rule-2=foo:bar \t";
   RuleBundle bundle;
   std::string error;
@@ -740,7 +740,7 @@ TEST(RuleBundleTest, ParseRuleWhitespaceAroundAllowed) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptSeveralTurnOff) {
-  constexpr absl::string_view text = "test-rule-1,-test-rule-2";
+  constexpr std::string_view text = "test-rule-1,-test-rule-2";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -752,7 +752,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptSeveralTurnOff) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptOneTurnOff) {
-  constexpr absl::string_view text = "-test-rule-1";
+  constexpr std::string_view text = "-test-rule-1";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -763,7 +763,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptOneTurnOff) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleReject) {
-  constexpr absl::string_view text = "test-rule-1,bad-flag";
+  constexpr std::string_view text = "test-rule-1,bad-flag";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -772,7 +772,7 @@ TEST(RuleBundleTest, ParseRuleBundleReject) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptGoodRulesEvenWhenRejecting) {
-  constexpr absl::string_view text = "test-rule-unknown-rules\ntest-rule-1";
+  constexpr std::string_view text = "test-rule-unknown-rules\ntest-rule-1";
   {
     RuleBundle bundle;
     std::string error;
@@ -786,7 +786,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptGoodRulesEvenWhenRejecting) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptMultiline) {
-  constexpr absl::string_view text = "test-rule-1\n-test-rule-2";
+  constexpr std::string_view text = "test-rule-1\n-test-rule-2";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, '\n', &error);
@@ -798,7 +798,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptMultiline) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleRejectMultiline) {
-  constexpr absl::string_view text = "test-rule-1\nbad-flag\n-test-rule-2";
+  constexpr std::string_view text = "test-rule-1\nbad-flag\n-test-rule-2";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, '\n', &error);
@@ -807,7 +807,7 @@ TEST(RuleBundleTest, ParseRuleBundleRejectMultiline) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleSkipComments) {
-  constexpr absl::string_view text =
+  constexpr std::string_view text =
       "    # some comment after whitespace\n"
       "# more comment\n"
       "test-rule-1\n"
@@ -830,7 +830,7 @@ TEST(RuleBundleTest, ParseRuleBundleSkipComments) {
 TEST(RuleBundleTest, ParseRuleBundleIgnoreExtraComma) {
   // Multiline rules might still have a comma from the one-line
   // rule configuration. They shouldn't harm.
-  constexpr absl::string_view text =
+  constexpr std::string_view text =
       "test-rule-1,,,  \n"
       "-test-rule-2=a:b,\n"
       "+test-rule-3=bar:baz,  # config-comment\n";
@@ -850,7 +850,7 @@ TEST(RuleBundleTest, ParseRuleBundleIgnoreExtraComma) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleDontWarnIfNoConfig) {
-  constexpr absl::string_view text = "test-rule-1,\ntest-rule-1";
+  constexpr std::string_view text = "test-rule-1,\ntest-rule-1";
   {
     RuleBundle bundle;
     std::string error;
@@ -863,7 +863,7 @@ TEST(RuleBundleTest, ParseRuleBundleDontWarnIfNoConfig) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleWarnConfigOverride) {
-  constexpr absl::string_view text = "test-rule-1=a,\ntest-rule-1=b";
+  constexpr std::string_view text = "test-rule-1=a,\ntest-rule-1=b";
   {
     RuleBundle bundle;
     std::string error;

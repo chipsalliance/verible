@@ -15,8 +15,8 @@
 #include "verible/verilog/analysis/checkers/explicit-function-task-parameter-type-rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -40,7 +40,7 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitFunctionTaskParameterTypeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitFunctionTaskParameterTypeRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Explicitly define a storage type for every function parameter.";
 
 const LintRuleDescriptor &

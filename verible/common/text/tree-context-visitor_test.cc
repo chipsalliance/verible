@@ -15,10 +15,10 @@
 #include "verible/common/text/tree-context-visitor.h"
 
 #include <sstream>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
@@ -331,7 +331,7 @@ TEST(NextSiblingPathTest, Various) {
 }
 
 TEST(TreePathFormatterTest, Various) {
-  const std::pair<SyntaxTreePath, absl::string_view> kTestCases[] = {
+  const std::pair<SyntaxTreePath, std::string_view> kTestCases[] = {
       {{}, "[]"},                        //
       {{0}, "[0]"},                      //
       {{1}, "[1]"},                      //

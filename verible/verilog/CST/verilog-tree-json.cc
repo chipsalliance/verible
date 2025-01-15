@@ -15,9 +15,9 @@
 #include "verible/verilog/CST/verilog-tree-json.h"
 
 #include <ostream>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/concrete-syntax-tree.h"
@@ -37,7 +37,7 @@ namespace verilog {
 
 class VerilogTreeToJsonConverter : public verible::SymbolVisitor {
  public:
-  explicit VerilogTreeToJsonConverter(absl::string_view base);
+  explicit VerilogTreeToJsonConverter(std::string_view base);
 
   void Visit(const verible::SyntaxTreeLeaf &) final;
   void Visit(const verible::SyntaxTreeNode &) final;
@@ -56,7 +56,7 @@ class VerilogTreeToJsonConverter : public verible::SymbolVisitor {
   json *value_;
 };
 
-VerilogTreeToJsonConverter::VerilogTreeToJsonConverter(absl::string_view base)
+VerilogTreeToJsonConverter::VerilogTreeToJsonConverter(std::string_view base)
     : context_(base,
                [](std::ostream &stream, int e) {
                  stream << TokenTypeToString(static_cast<verilog_tokentype>(e));
@@ -66,7 +66,7 @@ VerilogTreeToJsonConverter::VerilogTreeToJsonConverter(absl::string_view base)
 void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeLeaf &leaf) {
   const verilog_tokentype tokentype =
       static_cast<verilog_tokentype>(leaf.Tag().tag);
-  absl::string_view type_str = TokenTypeToString(tokentype);
+  std::string_view type_str = TokenTypeToString(tokentype);
   // Don't include token's text for operators, keywords, or anything that is a
   // part of Verilog syntax. For such types, TokenTypeToString() is equal to
   // token's text. Exception has to be made for identifiers, because things like
@@ -94,7 +94,7 @@ void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeNode &node) {
 }
 
 json ConvertVerilogTreeToJson(const verible::Symbol &root,
-                              absl::string_view base) {
+                              std::string_view base) {
   VerilogTreeToJsonConverter converter(base);
   root.Accept(&converter);
   return converter.TakeJsonValue();

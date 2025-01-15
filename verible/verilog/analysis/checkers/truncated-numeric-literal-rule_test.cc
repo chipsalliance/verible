@@ -16,9 +16,9 @@
 
 #include <initializer_list>
 #include <string>
+#include <string_view>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/linter-test-utils.h"
 #include "verible/common/analysis/syntax-tree-linter-test-utils.h"
@@ -66,7 +66,7 @@ TEST(TruncatedNumericLiteralRuleTest, TooShortHexNumbers) {
   constexpr int kToken = TK_HexDigits;
   const std::string superlong(1001, 'F');
   const std::string exp = absl::StrCat("localparam x = 4004'h", superlong, ";");
-  const absl::string_view good_long_expression = exp;
+  const std::string_view good_long_expression = exp;
 
   const std::initializer_list<LintTestCase> kTestCases = {
       {"localparam x = 1'h1;"},
@@ -136,7 +136,7 @@ TEST(TruncatedNumericLiteralRuleTest, TruncatedDecimalNumbers) {
   // A number longer than can be parsed as double to force fallback of fallback.
   const std::string superlong(500, '9');
   const std::string exp = absl::StrCat("localparam x = 1661'd", superlong, ";");
-  const absl::string_view good_long_expression = exp;
+  const std::string_view good_long_expression = exp;
 
   const std::initializer_list<LintTestCase> kTestCases = {
       {"localparam x = 1'd1;"},

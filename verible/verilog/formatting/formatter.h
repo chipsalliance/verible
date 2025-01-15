@@ -17,9 +17,9 @@
 
 #include <iosfwd>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/strings/position.h"
 #include "verible/common/text/text-structure.h"
 #include "verible/common/util/interval.h"
@@ -73,7 +73,7 @@ struct ExecutionControl {
 // If this is empty, interpret as all lines enabled for formatting.
 // Does verification of the resulting format (re-parse and compare) and
 // convergence test (if enabled in "control")
-absl::Status FormatVerilog(absl::string_view text, absl::string_view filename,
+absl::Status FormatVerilog(std::string_view text, std::string_view filename,
                            const FormatStyle &style,
                            std::ostream &formatted_stream,
                            const verible::LineNumberSet &lines = {},
@@ -81,7 +81,7 @@ absl::Status FormatVerilog(absl::string_view text, absl::string_view filename,
 // Ditto, but with TextStructureView as input and std::string as output.
 // This does verification of the resulting format, but _no_ convergence test.
 absl::Status FormatVerilog(const verible::TextStructureView &text_structure,
-                           absl::string_view filename, const FormatStyle &style,
+                           std::string_view filename, const FormatStyle &style,
                            std::string *formatted_text,
                            const verible::LineNumberSet &lines = {},
                            const ExecutionControl &control = {});
@@ -91,8 +91,8 @@ absl::Status FormatVerilog(const verible::TextStructureView &text_structure,
 // to "formatted_stream".
 // Used for interactive formatting, e.g. in editors and does not do convergence
 // tests.
-absl::Status FormatVerilogRange(absl::string_view full_content,
-                                absl::string_view filename,
+absl::Status FormatVerilogRange(std::string_view full_content,
+                                std::string_view filename,
                                 const FormatStyle &style,
                                 std::string *formatted_text,
                                 const verible::Interval<int> &line_range,

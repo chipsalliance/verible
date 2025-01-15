@@ -20,10 +20,10 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/lsp/lsp-text-buffer.h"
 #include "verible/common/util/logging.h"
@@ -43,8 +43,7 @@ namespace verilog {
 // std::future<>s evaluated in separate threads.
 class ParsedBuffer {
  public:
-  ParsedBuffer(int64_t version, absl::string_view uri,
-               absl::string_view content);
+  ParsedBuffer(int64_t version, std::string_view uri, std::string_view content);
 
   bool parsed_successfully() const {
     return parser_->LexStatus().ok() && parser_->ParseStatus().ok();

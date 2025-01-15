@@ -18,9 +18,9 @@
 #include <initializer_list>
 #include <iterator>
 #include <ostream>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/unwrapped-line-test-utils.h"
@@ -4722,14 +4722,14 @@ struct OriginalSpacingSensitiveTestCase {
 
   // TODO(fangism): group this into a TokenInfo.
   int left_token_enum;
-  absl::string_view left_token_string;
+  std::string_view left_token_string;
 
   // This spacing may influence token-annotation behavior.
-  absl::string_view whitespace_between;
+  std::string_view whitespace_between;
 
   // TODO(fangism): group this into a TokenInfo.
   int right_token_enum;
-  absl::string_view right_token_string;
+  std::string_view right_token_string;
 
   InitializedSyntaxTreeContext left_context;
   InitializedSyntaxTreeContext right_context;

@@ -25,12 +25,12 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/align.h"
@@ -54,8 +54,8 @@ namespace formatter {
 
 // private, extern function in formatter.cc, directly tested here.
 absl::Status VerifyFormatting(const verible::TextStructureView &text_structure,
-                              absl::string_view formatted_output,
-                              absl::string_view filename);
+                              std::string_view formatted_output,
+                              std::string_view filename);
 
 namespace {
 
@@ -69,7 +69,7 @@ using verible::LineNumberSet;
 
 // Tests that clean output passes.
 TEST(VerifyFormattingTest, NoError) {
-  const absl::string_view code("class c;endclass\n");
+  const std::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto &text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
@@ -79,11 +79,11 @@ TEST(VerifyFormattingTest, NoError) {
 
 // Tests that un-lexable outputs are caught as errors.
 TEST(VerifyFormattingTest, LexError) {
-  const absl::string_view code("class c;endclass\n");
+  const std::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto &text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
-  const absl::string_view bad_code("1class c;endclass\n");  // lexical error
+  const std::string_view bad_code("1class c;endclass\n");  // lexical error
   const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), StatusCode::kDataLoss);
@@ -91,11 +91,11 @@ TEST(VerifyFormattingTest, LexError) {
 
 // Tests that un-parseable outputs are caught as errors.
 TEST(VerifyFormattingTest, ParseError) {
-  const absl::string_view code("class c;endclass\n");
+  const std::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto &text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
-  const absl::string_view bad_code("classc;endclass\n");  // syntax error
+  const std::string_view bad_code("classc;endclass\n");  // syntax error
   const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), StatusCode::kDataLoss);
@@ -103,19 +103,19 @@ TEST(VerifyFormattingTest, ParseError) {
 
 // Tests that lexical differences are caught as errors.
 TEST(VerifyFormattingTest, LexicalDifference) {
-  const absl::string_view code("class c;endclass\n");
+  const std::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto &text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
-  const absl::string_view bad_code("class c;;endclass\n");  // different tokens
+  const std::string_view bad_code("class c;;endclass\n");  // different tokens
   const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), StatusCode::kDataLoss);
 }
 
 struct FormatterTestCase {
-  absl::string_view input;
-  absl::string_view expected;
+  std::string_view input;
+  std::string_view expected;
 };
 
 static const LineNumberSet kEnableAllLines;
@@ -17147,9 +17147,9 @@ TEST(FormatterEndToEndTest, NamedParametersIndentNotWrap) {
 }
 
 struct SelectLinesTestCase {
-  absl::string_view input;
+  std::string_view input;
   LineNumberSet lines;  // explicit set of lines to enable formatting
-  absl::string_view expected;
+  std::string_view expected;
 };
 
 // Tests that formatter honors selected line numbers.
@@ -17990,7 +17990,7 @@ TEST(FormatterEndToEndTest, UnfinishedLineWrapSearching) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
 
-  const absl::string_view code("parameter int x = 1+1;\n");
+  const std::string_view code("parameter int x = 1+1;\n");
 
   std::ostringstream stream, debug_stream;
   ExecutionControl control;
@@ -18161,8 +18161,8 @@ TEST(FormatterEndToEndTest, OnelineFormatExpandTest) {
 }
 
 struct DimensionsAlignmentTestCase {
-  absl::string_view input;
-  absl::string_view expected[4];
+  std::string_view input;
+  std::string_view expected[4];
 };
 
 static constexpr DimensionsAlignmentTestCase
@@ -18620,10 +18620,10 @@ TEST(FormatterEndToEndTest, FunctionCallsWithComments) {
 
 // Extracts the first non-whitespace token and prepends it with number of
 // of newlines seen in front of it. So "\n \n\n  foo" -> "3foo"
-std::string NLCountAndfirstWord(absl::string_view str) {
+std::string NLCountAndfirstWord(std::string_view str) {
   std::string result;
   int newline_count = 0;
-  absl::string_view::const_iterator begin = str.begin();
+  std::string_view::const_iterator begin = str.begin();
   for (/**/; begin < str.end(); ++begin) {
     if (!isspace(*begin)) break;
     newline_count += (*begin == '\n');
@@ -18631,7 +18631,7 @@ std::string NLCountAndfirstWord(absl::string_view str) {
   // Emit number of newlines seen up to first token.
   result.append(1,
                 static_cast<char>(newline_count + '0'));  // single digit itoa
-  absl::string_view::const_iterator end_str = begin;
+  std::string_view::const_iterator end_str = begin;
   for (/**/; end_str < str.end() && !isspace(*end_str); ++end_str) {
   }
   result.append(begin, end_str);
@@ -18640,16 +18640,16 @@ std::string NLCountAndfirstWord(absl::string_view str) {
 
 // Similar to NLCountAndfirstWord() but looking at the last token and trailing
 // newlines.
-std::string lastWordAndNLCount(absl::string_view str) {
+std::string lastWordAndNLCount(std::string_view str) {
   std::string result;
   int newline_count = 0;
-  absl::string_view::const_iterator back = str.end() - 1;
+  std::string_view::const_iterator back = str.end() - 1;
   for (/**/; back >= str.begin(); --back) {
     if (!isspace(*back)) break;
     newline_count += (*back == '\n');
   }
 
-  absl::string_view::const_iterator start_str = back;
+  std::string_view::const_iterator start_str = back;
   for (/**/; start_str >= str.begin() && !isspace(*start_str); --start_str) {
   }
   result.append(&*(start_str + 1), back - start_str);
@@ -18661,7 +18661,7 @@ std::string lastWordAndNLCount(absl::string_view str) {
 
 // Testing the tester...
 TEST(FormatterTestInternal, TokenExtractorAndLineCounterTestFixtureTest) {
-  absl::string_view str = "\n \nhello world \n \n";
+  std::string_view str = "\n \nhello world \n \n";
   ASSERT_EQ(NLCountAndfirstWord(str), "2hello");
   ASSERT_EQ(NLCountAndfirstWord(str.substr(1)), "1hello");
   ASSERT_EQ(NLCountAndfirstWord(str.substr(3)), "0hello");
@@ -18677,7 +18677,7 @@ TEST(FormatterTestInternal, TokenExtractorAndLineCounterTestFixtureTest) {
 
 TEST(FormatterEndToEndTest, RangeFormattingOnlyEmittingRelevantLines) {
   // Including some empty lines to make sure the formatting
-  static constexpr absl::string_view unformatted =
+  static constexpr std::string_view unformatted =
       R"(     module foo (// non-port comment
 
      // some comment
@@ -18690,7 +18690,7 @@ foobar, input    bit [4] foobaz,
         ); endmodule
 )";
 
-  std::vector<absl::string_view> lines = absl::StrSplit(unformatted, '\n');
+  std::vector<std::string_view> lines = absl::StrSplit(unformatted, '\n');
   const int kLineCount = lines.size();
 
   FormatStyle style;
@@ -18722,8 +18722,8 @@ foobar, input    bit [4] foobaz,
       // Area we cover in the input (include the final newline);
       const auto source_begin = lines[start_line].begin();
       const auto source_end = lines[end_line - 1].end() + 1;  // include \n
-      const absl::string_view range_unformatted(&*source_begin,
-                                                source_end - source_begin);
+      const std::string_view range_unformatted(&*source_begin,
+                                               source_end - source_begin);
 
       // To compare that we indeed formatted the requested reqgion, we make
       // sure that the first and last token (simplified: non-whitespace word)
@@ -18753,14 +18753,14 @@ foobar, input    bit [4] foobaz,
 // Creates a string_view spanning a whole string literal.
 // Works correctly with strings containing null bytes.
 template <std::size_t N>
-constexpr absl::string_view string_view_from_literal(const char (&s)[N]) {
-  return absl::string_view(s, N - 1);
+constexpr std::string_view string_view_from_literal(const char (&s)[N]) {
+  return std::string_view(s, N - 1);
 }
 
 // The following regressions have been found by a fuzzer, so the input might
 // look a bit 'funny'. Nevertheless, they expose real bugs in the code.
 
-[[maybe_unused]] void TestForNonCrash(absl::string_view input) {
+[[maybe_unused]] void TestForNonCrash(std::string_view input) {
   using verible::EscapeString;
   FormatStyle style;
   std::ostringstream stream;

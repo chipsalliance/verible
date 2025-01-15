@@ -16,9 +16,9 @@
 #define VERIBLE_COMMON_STRINGS_DIFF_H_
 
 #include <iosfwd>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "external_libs/editscript.h"
 #include "verible/common/strings/position.h"
 
@@ -33,14 +33,14 @@ namespace verible {
 //   LineDiffs diffs(old_text, new_text);
 //
 struct LineDiffs {
-  const absl::string_view before_text;
-  const absl::string_view after_text;
-  const std::vector<absl::string_view> before_lines;  // lines
-  const std::vector<absl::string_view> after_lines;   // lines
+  const std::string_view before_text;
+  const std::string_view after_text;
+  const std::vector<std::string_view> before_lines;  // lines
+  const std::vector<std::string_view> after_lines;   // lines
   const diff::Edits edits;  // line difference/edit-sequence between texts.
 
   // Computes the line-difference between before_text and after_text.
-  LineDiffs(absl::string_view before_text, absl::string_view after_text);
+  LineDiffs(std::string_view before_text, std::string_view after_text);
 
   std::ostream &PrintEdit(std::ostream &, const diff::Edit &) const;
 };
@@ -80,8 +80,8 @@ std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits &edits,
 
 void LineDiffsToUnifiedDiff(std::ostream &stream, const LineDiffs &linediffs,
                             unsigned common_context,
-                            absl::string_view file_a = {},
-                            absl::string_view file_b = {});
+                            std::string_view file_a = {},
+                            std::string_view file_b = {});
 
 }  // namespace verible
 

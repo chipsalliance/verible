@@ -17,7 +17,8 @@
 #ifndef VERIBLE_COMMON_LEXER_LEXER_H_
 #define VERIBLE_COMMON_LEXER_LEXER_H_
 
-#include "absl/strings/string_view.h"
+#include <string_view>
+
 #include "verible/common/text/token-info.h"
 
 namespace verible {
@@ -36,7 +37,7 @@ class Lexer {
   virtual const TokenInfo &DoNextToken() = 0;
 
   // Reset lexer to new input.  Overrides should discard all previous state.
-  virtual void Restart(absl::string_view) = 0;
+  virtual void Restart(std::string_view) = 0;
 
   // Return true if token is a lexical error.
   virtual bool TokenIsError(const TokenInfo &) const = 0;

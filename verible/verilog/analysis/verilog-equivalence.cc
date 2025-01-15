@@ -22,8 +22,8 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/lexer/token-stream-adapter.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/text/token-stream-view.h"
@@ -59,7 +59,7 @@ std::ostream &operator<<(std::ostream &stream, DiffStatus status) {
 // Lex a token into smaller substrings/subtokens.
 // Lexical errors are reported to errstream.
 // Returns true if lexing succeeded, false on error.
-static bool LexText(absl::string_view text, TokenSequence *subtokens,
+static bool LexText(std::string_view text, TokenSequence *subtokens,
                     std::ostream *errstream) {
   VLOG(1) << __FUNCTION__;
   VerilogLexer lexer(text);
@@ -90,7 +90,7 @@ static bool ShouldRecursivelyAnalyzeToken(const TokenInfo &token) {
 }
 
 DiffStatus VerilogLexicallyEquivalent(
-    absl::string_view left, absl::string_view right,
+    std::string_view left, std::string_view right,
     const std::function<bool(const verible::TokenInfo &)> &remove_predicate,
     const std::function<bool(const verible::TokenInfo &,
                              const verible::TokenInfo &)> &equal_comparator,
@@ -98,7 +98,7 @@ DiffStatus VerilogLexicallyEquivalent(
   // Bind some Verilog-specific parameters.
   return LexicallyEquivalent(
       left, right,
-      [=](absl::string_view text, TokenSequence *tokens) {
+      [=](std::string_view text, TokenSequence *tokens) {
         return LexText(text, tokens, errstream);
       },
       ShouldRecursivelyAnalyzeToken,  //
@@ -109,8 +109,8 @@ DiffStatus VerilogLexicallyEquivalent(
 }
 
 DiffStatus LexicallyEquivalent(
-    absl::string_view left_text, absl::string_view right_text,
-    const std::function<bool(absl::string_view, TokenSequence *)> &lexer,
+    std::string_view left_text, std::string_view right_text,
+    const std::function<bool(std::string_view, TokenSequence *)> &lexer,
     const std::function<bool(const verible::TokenInfo &)> &recursion_predicate,
     const std::function<bool(const verible::TokenInfo &)> &remove_predicate,
     const std::function<bool(const verible::TokenInfo &,
@@ -242,7 +242,7 @@ DiffStatus LexicallyEquivalent(
   return DiffStatus::kDifferent;
 }
 
-DiffStatus FormatEquivalent(absl::string_view left, absl::string_view right,
+DiffStatus FormatEquivalent(std::string_view left, std::string_view right,
                             std::ostream *errstream) {
   return VerilogLexicallyEquivalent(
       left, right,
@@ -272,8 +272,7 @@ static bool ObfuscationEquivalentTokens(const TokenInfo &l,
   return l.EquivalentWithoutLocation(r);
 }
 
-DiffStatus ObfuscationEquivalent(absl::string_view left,
-                                 absl::string_view right,
+DiffStatus ObfuscationEquivalent(std::string_view left, std::string_view right,
                                  std::ostream *errstream) {
   return VerilogLexicallyEquivalent(
       left, right,

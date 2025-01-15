@@ -15,7 +15,8 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_ALIGN_H_
 #define VERIBLE_VERILOG_FORMATTING_ALIGN_H_
 
-#include "absl/strings/string_view.h"
+#include <string_view>
+
 #include "verible/common/formatting/token-partition-tree.h"
 #include "verible/common/strings/position.h"  // for ByteOffsetSet
 #include "verible/verilog/formatting/format-style.h"
@@ -27,7 +28,7 @@ namespace formatter {
 // tokens by inserting padding-spaces.
 // TODO(fangism): pass in disabled formatting ranges
 void TabularAlignTokenPartitions(
-    const FormatStyle &style, absl::string_view full_text,
+    const FormatStyle &style, std::string_view full_text,
     const verible::ByteOffsetSet &disabled_byte_ranges,
     verible::TokenPartitionTree *partition_ptr);
 

@@ -17,9 +17,9 @@
 
 #include <cstddef>
 #include <iosfwd>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/util/tree-operations.h"
 #include "verible/common/util/vector-tree.h"
 
@@ -30,9 +30,9 @@ namespace testing {
 struct NamedInterval {
   int left;
   int right;
-  absl::string_view name;
+  std::string_view name;
 
-  NamedInterval(int l, int r, absl::string_view n)
+  NamedInterval(int l, int r, std::string_view n)
       : left(l), right(r), name(n) {}
 
   NamedInterval(const NamedInterval &) = default;

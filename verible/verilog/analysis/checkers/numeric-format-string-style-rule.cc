@@ -18,9 +18,9 @@
 #include <cstddef>
 #include <initializer_list>
 #include <set>
+#include <string_view>
 
 #include "absl/strings/ascii.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/token-stream-lint-rule.h"
 #include "verible/common/text/token-info.h"
@@ -41,7 +41,7 @@ using verible::TokenStreamLintRule;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(NumericFormatStringStyleRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Formatting string must contain proper style-compilant numeric specifiers.";
 
 const LintRuleDescriptor &NumericFormatStringStyleRule::GetDescriptor() {
@@ -62,7 +62,7 @@ class TD;
 void NumericFormatStringStyleRule::CheckAndReportViolation(
     const TokenInfo &token, size_t pos, size_t len,
     std::initializer_list<unsigned char> prefixes) {
-  const absl::string_view text(token.text());
+  const std::string_view text(token.text());
 
   // Check for prefix
   if (pos >= 2 && (text[pos - 2] == '0' || text[pos - 2] == '\'')) {
@@ -83,7 +83,7 @@ void NumericFormatStringStyleRule::CheckAndReportViolation(
 
 void NumericFormatStringStyleRule::HandleToken(const TokenInfo &token) {
   const auto token_enum = static_cast<verilog_tokentype>(token.token_enum());
-  const absl::string_view text(token.text());
+  const std::string_view text(token.text());
 
   if (IsUnlexed(verilog_tokentype(token.token_enum()))) {
     // recursively lex to examine inside macro definition bodies, etc.

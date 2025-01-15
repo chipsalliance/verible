@@ -22,6 +22,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -31,7 +32,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/line-lint-rule.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
 #include "verible/common/analysis/text-structure-lint-rule.h"
@@ -54,7 +54,7 @@ using verible::TokenStreamLintRule;
 using verible::container::FindOrNull;
 
 template <typename List>
-static const char *MatchesAnyItem(absl::string_view filename,
+static const char *MatchesAnyItem(std::string_view filename,
                                   const List &items) {
   for (const auto item : items) {
     if (absl::StrContains(filename, item)) {
@@ -64,12 +64,12 @@ static const char *MatchesAnyItem(absl::string_view filename,
   return nullptr;
 }
 
-const char *ProjectPolicy::MatchesAnyPath(absl::string_view filename) const {
+const char *ProjectPolicy::MatchesAnyPath(std::string_view filename) const {
   return MatchesAnyItem(filename, path_substrings);
 }
 
 const char *ProjectPolicy::MatchesAnyExclusions(
-    absl::string_view filename) const {
+    std::string_view filename) const {
   return MatchesAnyItem(filename, path_exclusions);
 }
 
@@ -85,18 +85,18 @@ bool ProjectPolicy::IsValid() const {
 
 std::string ProjectPolicy::ListPathGlobs() const {
   return absl::StrJoin(path_substrings.begin(), path_substrings.end(), " | ",
-                       [](std::string *out, absl::string_view pattern) {
+                       [](std::string *out, std::string_view pattern) {
                          absl::StrAppend(out, "*", pattern, "*");
                        });
 }
 
-bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
+bool RuleBundle::ParseConfiguration(std::string_view text, char separator,
                                     std::string *error) {
   // Clear the vector to overwrite any existing value.
   rules.clear();
 
   bool parsed_correctly = true;
-  for (absl::string_view part :
+  for (std::string_view part :
        absl::StrSplit(text, separator, absl::SkipEmpty())) {
     if (separator == '\n') {
       // In configuration files, we can ignore #-comments
@@ -105,7 +105,7 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
       // case we need to expand this to parse out 'within # quotes' parts.
       // ... then this will finally become a more complex lexer.
       const auto comment_pos = part.find('#');
-      if (comment_pos != absl::string_view::npos) {
+      if (comment_pos != std::string_view::npos) {
         part = part.substr(0, comment_pos);
       }
     }
@@ -132,7 +132,7 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
     // Independent of the enabled-ness: extract a configuration string
     // if there is any assignment.
     const auto equals_pos = rule_name_with_config.find('=');
-    if (equals_pos != absl::string_view::npos) {
+    if (equals_pos != std::string_view::npos) {
       auto config = rule_name_with_config.substr(equals_pos + 1);
 
       // https://github.com/chipsalliance/verible/issues/1121
@@ -243,7 +243,7 @@ void LinterConfiguration::UseRuleBundle(const RuleBundle &rule_bundle) {
 }
 
 void LinterConfiguration::UseProjectPolicy(const ProjectPolicy &policy,
-                                           absl::string_view filename) {
+                                           std::string_view filename) {
   if (const char *matched_path = policy.MatchesAnyPath(filename)) {
     VLOG(1) << "File \"" << filename << "\" matches path \"" << matched_path
             << "\" from project policy [" << policy.name << "], applying it.";
@@ -333,7 +333,7 @@ bool LinterConfiguration::operator==(const LinterConfiguration &config) const {
 }
 
 absl::Status LinterConfiguration::AppendFromFile(
-    absl::string_view config_filename) {
+    std::string_view config_filename) {
   // Read local configuration file
   absl::StatusOr<std::string> config_or =
       verible::file::GetContentAsString(config_filename);
@@ -371,7 +371,7 @@ absl::Status LinterConfiguration::ConfigureFromOptions(
   } else if (options.rules_config_search) {
     // Search upward if search is enabled and no configuration file is
     // specified
-    static constexpr absl::string_view linter_config = ".rules.verible_lint";
+    static constexpr std::string_view linter_config = ".rules.verible_lint";
     std::string resolved_config_file;
     if (verible::file::UpwardFileSearch(options.linting_start_file,
                                         linter_config, &resolved_config_file)
@@ -425,7 +425,7 @@ std::string AbslUnparseFlag(const RuleSet &rules) {
   return stream.str();
 }
 
-bool AbslParseFlag(absl::string_view text, RuleSet *rules, std::string *error) {
+bool AbslParseFlag(std::string_view text, RuleSet *rules, std::string *error) {
   return RuleSetEnumStringMap().Parse(text, rules, error, "--ruleset value");
 }
 
@@ -433,7 +433,7 @@ std::string AbslUnparseFlag(const RuleBundle &bundle) {
   return bundle.UnparseConfiguration(',');
 }
 
-bool AbslParseFlag(absl::string_view text, RuleBundle *bundle,
+bool AbslParseFlag(std::string_view text, RuleBundle *bundle,
                    std::string *error) {
   return bundle->ParseConfiguration(text, ',', error);
 }

@@ -16,11 +16,11 @@
 
 #include <initializer_list>
 #include <optional>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/linter-test-utils.h"
 #include "verible/common/analysis/syntax-tree-linter-test-utils.h"
@@ -215,8 +215,8 @@ TEST(DffNameStyleRuleTest, Reject) {
 
 TEST(DffNameStyleRuleTest, ExtractPipelineStage) {
   struct Test {
-    absl::string_view str;
-    std::pair<absl::string_view, std::optional<int>> expected;
+    std::string_view str;
+    std::pair<std::string_view, std::optional<int>> expected;
   };
   const std::vector<Test> kTestCases = {
       {"data_q0", {"data_q0", {}}}, {"data_q1", {"data_q", {1}}},

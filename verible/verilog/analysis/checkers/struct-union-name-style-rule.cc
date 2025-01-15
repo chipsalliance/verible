@@ -17,13 +17,13 @@
 #include <algorithm>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -46,8 +46,8 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static constexpr absl::string_view kMessageStruct = "Struct names";
-static constexpr absl::string_view kMessageUnion = "Union names";
+static constexpr std::string_view kMessageStruct = "Struct names";
+static constexpr std::string_view kMessageUnion = "Union names";
 
 const LintRuleDescriptor &StructUnionNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -76,7 +76,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
     // have consistent shape for all kTypeDeclaration nodes.
     const bool is_struct = !FindAllStructTypes(symbol).empty();
     if (!is_struct && FindAllUnionTypes(symbol).empty()) return;
-    const absl::string_view msg = is_struct ? kMessageStruct : kMessageUnion;
+    const std::string_view msg = is_struct ? kMessageStruct : kMessageUnion;
 
     const auto *identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
@@ -124,7 +124,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
 }
 
 absl::Status StructUnionNameStyleRule::Configure(
-    absl::string_view configuration) {
+    std::string_view configuration) {
   using verible::config::SetString;
   std::string raw_tokens;
   auto status = verible::ParseNameValues(

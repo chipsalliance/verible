@@ -20,10 +20,10 @@
 #include <ostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/lexer/lexer.h"
 #include "verible/common/lexer/token-stream-adapter.h"
 #include "verible/common/parser/parse.h"
@@ -143,7 +143,7 @@ void FileAnalyzer::ExtractLinterTokenErrorDetail(
     const RejectedToken &error_token,
     const ReportLinterErrorFunction &error_report) const {
   const LineColumnRange range = Data().GetRangeForToken(error_token.token_info);
-  absl::string_view context_line;
+  std::string_view context_line;
   const auto &lines = Data().Lines();
   if (range.start.line < static_cast<int>(lines.size())) {
     context_line = lines[range.start.line];
@@ -162,7 +162,7 @@ std::string FileAnalyzer::LinterTokenErrorMessage(
       error_token,
       [&](const std::string &filename, LineColumnRange range,
           ErrorSeverity severity, AnalysisPhase phase,
-          absl::string_view token_text, absl::string_view context_line,
+          std::string_view token_text, std::string_view context_line,
           const std::string &message) {
         out << filename_ << ':' << range << " " << phase << " " << severity;
         if (error_token.token_info.isEOF()) {

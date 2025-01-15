@@ -15,9 +15,9 @@
 #include "verible/verilog/CST/tasks.h"
 
 #include <memory>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/syntax-tree-search-test-utils.h"
 #include "verible/common/analysis/syntax-tree-search.h"

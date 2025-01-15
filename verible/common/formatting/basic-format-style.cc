@@ -17,8 +17,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "verible/common/util/enum-flags.h"
 
 namespace verible {
@@ -37,7 +37,7 @@ std::ostream &operator<<(std::ostream &stream, IndentationStyle p) {
   return IndentationStyleStrings().Unparse(p, stream);
 }
 
-bool AbslParseFlag(absl::string_view text, IndentationStyle *mode,
+bool AbslParseFlag(std::string_view text, IndentationStyle *mode,
                    std::string *error) {
   return IndentationStyleStrings().Parse(text, mode, error, "IndentationStyle");
 }

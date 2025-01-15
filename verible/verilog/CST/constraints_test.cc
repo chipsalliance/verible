@@ -16,10 +16,10 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/syntax-tree-search-test-utils.h"
 #include "verible/common/analysis/syntax-tree-search.h"
@@ -69,7 +69,7 @@ TEST(FindAllConstraintDeclarationsTest, BasicTests) {
 }
 
 TEST(IsOutOfLineConstraintDefinitionTest, BasicTests) {
-  constexpr std::pair<absl::string_view, bool> kTestCases[] = {
+  constexpr std::pair<std::string_view, bool> kTestCases[] = {
       {"class foo; rand logic a; constraint Bar { a < 16; } endclass", false},
       {"constraint classname::constraint_c { a <= b; }", true},
   };
@@ -91,7 +91,7 @@ TEST(IsOutOfLineConstraintDefinitionTest, BasicTests) {
 // Tests that GetSymbolIdentifierFromConstraintDeclaration correctly returns
 // the token of the symbol identifier.
 TEST(GetSymbolIdentifierFromConstraintDeclarationTest, BasicTests) {
-  const std::pair<std::string, absl::string_view> kTestCases[] = {
+  const std::pair<std::string, std::string_view> kTestCases[] = {
       {"class foo; rand logic a; constraint Bar { a < 16; } endclass", "Bar"},
       {"class foo; rand logic a; constraint b { a >= 16; } endclass", "b"},
       {"class foo; rand logic a; constraint stH { a == 16; } endclass", "stH"},

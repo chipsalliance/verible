@@ -14,7 +14,8 @@
 
 #include "verible/verilog/analysis/checkers/suggest-parentheses-rule.h"
 
-#include "absl/strings/string_view.h"
+#include <string_view>
+
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/symbol.h"
@@ -36,7 +37,7 @@ using verible::AutoFix;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Parenthesize condition expressions that appear in the true-clause of "
     "another condition expression.";
 

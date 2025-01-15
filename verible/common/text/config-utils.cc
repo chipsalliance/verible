@@ -21,6 +21,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -31,13 +32,12 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "verible/common/util/logging.h"
 
 namespace verible {
-using absl::string_view;
 using config::NVConfigSpec;
+using std::string_view;
 
 // TODO(hzeller): consider using flex for a more readable tokenization that
 // can also much easier deal with whitespaces, strings etc.
@@ -161,7 +161,7 @@ ConfigValueSetter SetStringOneOf(std::string* value,
 
 ConfigValueSetter SetNamedBits(
     uint32_t* value,
-    const std::vector<absl::string_view>& choices) {
+    const std::vector<std::string_view>& choices) {
   CHECK(value) << "Must provide pointer to uint32_t to store.";
   CHECK_LE(choices.size(), 32) << "Too many choices for 32-bit bitmap";
   return [value, choices](string_view v) {

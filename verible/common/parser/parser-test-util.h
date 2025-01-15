@@ -18,10 +18,10 @@
 #define VERIBLE_COMMON_PARSER_PARSER_TEST_UTIL_H_
 
 #include <string>  // for string
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/matcher/descent-path.h"
 #include "verible/common/text/parser-verifier.h"
@@ -35,7 +35,7 @@ namespace verible {
 // class AnalyzerType is any class with a absl::Status AnalyzerType::Analyze()
 // method.
 template <class AnalyzerType>
-void TestParserAcceptValid(absl::string_view code, int i) {
+void TestParserAcceptValid(std::string_view code, int i) {
   VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
   AnalyzerType analyzer(code, "<<inline-test>>");
   absl::Status status = analyzer.Analyze();
@@ -71,7 +71,7 @@ void TestParserRejectInvalid(const TokenInfoTestData &test, int i) {
     const auto &rejected_tokens = analyzer.GetRejectedTokens();
     ASSERT_FALSE(rejected_tokens.empty());
 
-    const absl::string_view base_text = analyzer.Data().Contents();
+    const std::string_view base_text = analyzer.Data().Contents();
     const auto expected_error_tokens = test.FindImportantTokens(base_text);
     ASSERT_FALSE(expected_error_tokens.empty());
     // Only check the first rejected token, ignore the rest.
@@ -117,7 +117,7 @@ void TestParserErrorRecovered(const ErrorRecoveryTestCase &test, int i) {
 }
 
 template <class AnalyzerType>
-void TestParserAllMatched(absl::string_view code, int i) {
+void TestParserAllMatched(std::string_view code, int i) {
   VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
 
   AnalyzerType analyzer(code, "<<inline-test>>");

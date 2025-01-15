@@ -18,13 +18,13 @@
 #include <cstddef>
 #include <filesystem>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -91,7 +91,7 @@ TEST(FileUtil, GetContentAsMemBlock) {
   EXPECT_FALSE(result.status().ok());
 
   const std::string test_file = file::JoinPath(testing::TempDir(), "blockfile");
-  constexpr absl::string_view kTestContent = "Some file content\nbaz\r\n";
+  constexpr std::string_view kTestContent = "Some file content\nbaz\r\n";
   EXPECT_OK(file::SetContents(test_file, kTestContent));
 
   result = file::GetContentAsMemBlock(test_file);
@@ -140,7 +140,7 @@ TEST(FileUtil, JoinPath) {
 TEST(FileUtil, CreateDir) {
   const std::string test_dir = file::JoinPath(testing::TempDir(), "test_dir");
   const std::string test_file = file::JoinPath(test_dir, "foo");
-  const absl::string_view test_content = "directory create test";
+  const std::string_view test_content = "directory create test";
 
   EXPECT_OK(file::CreateDir(test_dir));
   EXPECT_OK(file::CreateDir(test_dir));  // Creating twice should succeed
@@ -168,7 +168,7 @@ TEST(FileUtil, StatusErrorReporting) {
   unlink(test_file.c_str());  // Remove file if left from previous test.
   // Add a bunch of text 'special' characcters to make sure even on Windows
   // they roundtrip correctly.
-  constexpr absl::string_view kTestContent = "foo\nbar\r\nbaz\rquux";
+  constexpr std::string_view kTestContent = "foo\nbar\r\nbaz\rquux";
   EXPECT_OK(file::SetContents(test_file, kTestContent));
 
   // Writing again, should not append, but re-write.
@@ -222,14 +222,14 @@ TEST(FileUtil, StatusErrorReporting) {
 }
 
 TEST(FileUtil, ScopedTestFile) {
-  const absl::string_view test_content = "Hello World!";
+  const std::string_view test_content = "Hello World!";
   ScopedTestFile test_file(testing::TempDir(), test_content);
   auto read_back_content_or = file::GetContentAsString(test_file.filename());
   ASSERT_TRUE(read_back_content_or.ok());
   EXPECT_EQ(test_content, *read_back_content_or);
 }
 
-static ScopedTestFile TestFileGenerator(absl::string_view content) {
+static ScopedTestFile TestFileGenerator(std::string_view content) {
   return ScopedTestFile(testing::TempDir(), content);
 }
 
@@ -275,9 +275,9 @@ TEST(FileUtil, FileExistsDirectoryErrorMessage) {
   EXPECT_THAT(s.message(), HasSubstr("is a directory"));
 }
 
-static bool CreateFsStructure(absl::string_view base_dir,
-                              const std::vector<absl::string_view> &tree) {
-  for (absl::string_view path : tree) {
+static bool CreateFsStructure(std::string_view base_dir,
+                              const std::vector<std::string_view> &tree) {
+  for (std::string_view path : tree) {
     const std::string full_path = file::JoinPath(base_dir, path);
     if (absl::EndsWith(path, "/")) {
       if (!file::CreateDir(full_path).ok()) return false;
@@ -364,7 +364,7 @@ TEST(FileUtil, ReadDirectory) {
   ASSERT_TRUE(file::CreateDir(test_subdir1).ok());
   ASSERT_TRUE(file::CreateDir(test_subdir2).ok());
 
-  const absl::string_view test_content = "Hello World!";
+  const std::string_view test_content = "Hello World!";
   file::testing::ScopedTestFile test_file1(test_dir, test_content);
   file::testing::ScopedTestFile test_file2(test_dir, test_content);
   file::testing::ScopedTestFile test_file3(test_dir, test_content);

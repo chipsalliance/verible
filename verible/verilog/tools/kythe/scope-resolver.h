@@ -17,12 +17,12 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_map.h"
-#include "absl/strings/string_view.h"
 #include "verible/verilog/tools/kythe/kythe-facts.h"
 
 namespace verilog {
@@ -92,12 +92,12 @@ class ScopeResolver {
 
   // Returns the scope and definition of the symbol under the given name. The
   // search is restricted to the current scope.
-  std::optional<ScopedVname> FindScopeAndDefinition(absl::string_view name);
+  std::optional<ScopedVname> FindScopeAndDefinition(std::string_view name);
 
   // Returns the scope and definition of the symbol under the given name. The
   // search is restricted to the provided scope.
   std::optional<ScopedVname> FindScopeAndDefinition(
-      absl::string_view name, const SignatureDigest &scope);
+      std::string_view name, const SignatureDigest &scope);
 
   static SignatureDigest GlobalScope() { return Signature("").Digest(); }
 

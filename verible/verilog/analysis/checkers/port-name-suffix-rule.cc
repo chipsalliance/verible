@@ -17,10 +17,10 @@
 #include <map>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -46,11 +46,11 @@ using verible::matcher::Matcher;
 // Register PortNameSuffixRule.
 VERILOG_REGISTER_LINT_RULE(PortNameSuffixRule);
 
-static constexpr absl::string_view kMessageIn =
+static constexpr std::string_view kMessageIn =
     "input port names must end with _i, _ni or _pi";
-static constexpr absl::string_view kMessageOut =
+static constexpr std::string_view kMessageOut =
     "output port names must end with _o, _no, or _po";
-static constexpr absl::string_view kMessageInOut =
+static constexpr std::string_view kMessageInOut =
     "inout port names must end with _io, _nio or _pio";
 
 const LintRuleDescriptor &PortNameSuffixRule::GetDescriptor() {
@@ -71,7 +71,7 @@ static const Matcher &PortMatcher() {
   return matcher;
 }
 
-void PortNameSuffixRule::Violation(absl::string_view direction,
+void PortNameSuffixRule::Violation(std::string_view direction,
                                    const TokenInfo &token,
                                    const SyntaxTreeContext &context) {
   if (direction == "input") {
@@ -83,12 +83,12 @@ void PortNameSuffixRule::Violation(absl::string_view direction,
   }
 }
 
-bool PortNameSuffixRule::IsSuffixCorrect(absl::string_view suffix,
-                                         absl::string_view direction) {
-  static const std::map<absl::string_view, std::set<absl::string_view>>
-      suffixes = {{"input", {"i", "ni", "pi"}},
-                  {"output", {"o", "no", "po"}},
-                  {"inout", {"io", "nio", "pio"}}};
+bool PortNameSuffixRule::IsSuffixCorrect(std::string_view suffix,
+                                         std::string_view direction) {
+  static const std::map<std::string_view, std::set<std::string_view>> suffixes =
+      {{"input", {"i", "ni", "pi"}},
+       {"output", {"o", "no", "po"}},
+       {"inout", {"io", "nio", "pio"}}};
 
   // At this point it is guaranteed that the direction will be set to
   // one of the expected values (used as keys in the map above).
@@ -98,7 +98,7 @@ bool PortNameSuffixRule::IsSuffixCorrect(absl::string_view suffix,
 
 void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
                                       const SyntaxTreeContext &context) {
-  constexpr absl::string_view implicit_direction = "input";
+  constexpr std::string_view implicit_direction = "input";
   verible::matcher::BoundSymbolManager manager;
   if (PortMatcher().Matches(symbol, &manager)) {
     const auto *identifier_leaf = GetIdentifierFromPortDeclaration(symbol);

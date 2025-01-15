@@ -17,10 +17,10 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
@@ -48,7 +48,7 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static constexpr absl::string_view kDefaultStyleRegex = "[a-z_0-9]+";
+static constexpr std::string_view kDefaultStyleRegex = "[a-z_0-9]+";
 
 SignalNameStyleRule::SignalNameStyleRule()
     : style_regex_(
@@ -122,7 +122,7 @@ void SignalNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
   }
 }
 
-absl::Status SignalNameStyleRule::Configure(absl::string_view configuration) {
+absl::Status SignalNameStyleRule::Configure(std::string_view configuration) {
   using verible::config::SetRegex;
   absl::Status s = verible::ParseNameValues(
       configuration, {{"style_regex", SetRegex(&style_regex_)}});
