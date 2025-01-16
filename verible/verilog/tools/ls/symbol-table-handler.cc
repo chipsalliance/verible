@@ -24,6 +24,7 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/base/config.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
@@ -48,6 +49,10 @@
 #include "verible/verilog/analysis/verilog-project.h"
 #include "verible/verilog/tools/ls/lsp-conversion.h"
 #include "verible/verilog/tools/ls/lsp-parse-buffer.h"
+
+#if ABSL_LTS_RELEASE_VERSION > 20240200
+#include "absl/log/vlog_is_on.h"
+#endif
 
 ABSL_FLAG(std::string, file_list_path, "verible.filelist",
           "Name of the file with Verible FileList for the project");

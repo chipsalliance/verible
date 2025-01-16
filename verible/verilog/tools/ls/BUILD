@@ -184,6 +184,7 @@ cc_library(
         "//verible/verilog/analysis:verilog-analyzer",
         "//verible/verilog/analysis:verilog-filelist",
         "//verible/verilog/analysis:verilog-project",
+        "@abseil-cpp//absl/base:config",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",

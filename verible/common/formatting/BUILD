@@ -144,6 +144,7 @@ cc_library(
         "//verible/common/util:tree-operations",
         "//verible/common/util:value-saver",
         "//verible/common/util:vector-tree",
+        "@abseil-cpp//absl/base:config",
         "@abseil-cpp//absl/container:fixed_array",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",

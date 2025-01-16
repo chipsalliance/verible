@@ -28,6 +28,7 @@
 #include <ostream>
 #include <utility>
 
+#include "absl/base/config.h"
 #include "absl/container/fixed_array.h"
 #include "absl/log/log.h"
 #include "verible/common/formatting/basic-format-style.h"
@@ -39,6 +40,10 @@
 #include "verible/common/util/logging.h"
 #include "verible/common/util/tree-operations.h"
 #include "verible/common/util/value-saver.h"
+
+#if ABSL_LTS_RELEASE_VERSION > 20240200
+#include "absl/log/vlog_is_on.h"
+#endif
 
 namespace verible {
 
