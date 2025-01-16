@@ -17,7 +17,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <string_view>
 
 #include "verible/common/analysis/citation.h"
 #include "verible/common/analysis/lint-rule-status.h"

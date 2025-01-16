@@ -16,7 +16,6 @@
 
 #include <set>
 #include <string>
-#include <string_view>
 
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
