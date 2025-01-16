@@ -26,6 +26,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/config.h"
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -54,6 +55,10 @@
 #include "verible/verilog/analysis/verilog-linter-constants.h"
 #include "verible/verilog/parser/verilog-token-classifications.h"
 #include "verible/verilog/parser/verilog-token-enum.h"
+
+#if ABSL_LTS_RELEASE_VERSION > 20240200
+#include "absl/log/vlog_is_on.h"
+#endif
 
 // TODO(hzeller): make --rules repeatable and cumulative
 

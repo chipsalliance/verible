@@ -146,7 +146,10 @@ cc_library(
     srcs = ["lsp-file-utils.cc"],
     hdrs = ["lsp-file-utils.h"],
     visibility = ["//visibility:public"],
-    deps = ["@abseil-cpp//absl/strings"],
+    deps = [
+        "@abseil-cpp//absl/base:config",
+        "@abseil-cpp//absl/strings",
+    ],
 )
 
 cc_test(

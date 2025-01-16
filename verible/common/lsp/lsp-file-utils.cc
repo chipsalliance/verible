@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 
+#include "absl/base/config.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -56,7 +57,12 @@ std::string DecodeURI(std::string_view uri) {
       pos++;
       if (pos + 2 <= uri.size() && std::isxdigit(uri[pos]) &&
           std::isxdigit(uri[pos + 1])) {
-        std::string hex = absl::HexStringToBytes(uri.substr(pos, 2));
+        std::string hex;
+#if ABSL_LTS_RELEASE_VERSION > 20240200
+        if (!absl::HexStringToBytes(uri.substr(pos, 2), &hex)) break;
+#else
+        hex = absl::HexStringToBytes(uri.substr(pos, 2));
+#endif
         absl::StrAppend(&result, hex.length() == 1 ? hex : uri.substr(pos, 2));
         pos += 2;
       } else {
