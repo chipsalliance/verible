@@ -15,7 +15,6 @@
 #include "verible/common/util/vector-tree-test-util.h"
 
 #include <iostream>
-#include <string_view>
 
 #include "gtest/gtest.h"
 #include "verible/common/util/vector-tree.h"

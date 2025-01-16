@@ -15,7 +15,6 @@
 #include "verible/verilog/CST/expression.h"
 
 #include <memory>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/numbers.h"

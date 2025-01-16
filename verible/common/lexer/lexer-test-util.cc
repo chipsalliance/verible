@@ -15,7 +15,6 @@
 #include "verible/common/lexer/lexer-test-util.h"
 
 #include <ostream>
-#include <string_view>
 #include <vector>
 
 #include "verible/common/text/token-info.h"

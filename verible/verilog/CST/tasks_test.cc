@@ -15,7 +15,6 @@
 #include "verible/verilog/CST/tasks.h"
 
 #include <memory>
-#include <string_view>
 #include <vector>
 
 #include "gtest/gtest.h"
