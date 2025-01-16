@@ -453,4 +453,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2025-01-15 18:24:59 -0800 from [85f511d](https://github.com/google/verible/commit/85f511d39f50f4b78b6e7935f1c67c21d01ea96e)
+Generated on 2025-01-15 19:18:35 -0800 from [f9d9743](https://github.com/google/verible/commit/f9d97437584ae51baac2d31de6585942389f4aa2)
