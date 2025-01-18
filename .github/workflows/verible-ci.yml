@@ -221,6 +221,8 @@ jobs:
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
       run: |
         bazel build -c fastbuild :install-binaries
+        # Litmus test
+        bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax --version
         .github/bin/simple-install.sh $VERIBLE_BINDIR
         tar cfv verible-bin.tar -C $VERIBLE_BINDIR .
 
@@ -331,8 +333,8 @@ jobs:
       with:
         path: |
           /private/var/tmp/_bazel_runner
-        key: bazelcache_macos1_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_macos1_
+        key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_macos_
 
     - name: Tests
       # MacOS has a broken patch utility:
@@ -340,7 +342,10 @@ jobs:
       run: bazel test -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis -- //... -//verible/verilog/tools/lint:lint-tool_test
 
     - name: Build
-      run: bazel build -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis :install-binaries
+      run: |
+        bazel build -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis :install-binaries
+        # Litmus test
+        bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax --version
 
     - name: Pack up
       run: |
@@ -385,8 +390,8 @@ jobs:
       uses: actions/cache@v3
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
-        key: bazelcache_windows3_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_windows3_
+        key: bazelcache_windows_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_windows_
 
     - name: Install dependencies
       run: |
@@ -404,7 +409,10 @@ jobs:
       run: C:/ProgramData/chocolatey/lib/bazel/bazel.exe test --keep_going --noshow_progress --test_output=errors //...
 
     - name: Build Verible Binaries
-      run: C:/ProgramData/chocolatey/lib/bazel/bazel.exe build --keep_going --noshow_progress -c opt :install-binaries
+      run: |
+        C:/ProgramData/chocolatey/lib/bazel/bazel.exe build --keep_going --noshow_progress -c opt :install-binaries
+        # Litmus test
+        bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax --version
 
     - name: Prepare release
       run: |
