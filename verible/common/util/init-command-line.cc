@@ -36,21 +36,27 @@ namespace verible {
 
 std::string GetRepositoryVersion() {
 #ifdef VERIBLE_GIT_DESCRIBE
-  return VERIBLE_GIT_DESCRIBE;
+  return VERIBLE_GIT_DESCRIBE;  // from --workspace_status_command
+#elif defined(VERIBLE_MODULE_VERSION)
+  return VERIBLE_MODULE_VERSION;  // from MODULE.bazel via module-version.bzl
 #else
   return "<unknown repository version>";
 #endif
 }
 
 // Long-form of build version, might contain multiple lines
+// Build a version string with as much as possible info.
 static std::string GetBuildVersion() {
   std::string result;
-  // Build a version string with as much as possible info.
-#ifdef VERIBLE_GIT_DESCRIBE
-  result.append(VERIBLE_GIT_DESCRIBE).append("\n");
-#endif
-#ifdef VERIBLE_GIT_DATE
-  result.append("Commit\t").append(VERIBLE_GIT_DATE).append("\n");
+  result.append("Version\t").append(GetRepositoryVersion()).append("\n");
+#ifdef VERIBLE_COMMIT_TIMESTAMP
+  result.append("Commit-Timestamp\t")
+      .append(absl::FormatTime("%Y-%m-%dT%H:%M:%SZ",
+                               absl::FromTimeT(VERIBLE_COMMIT_TIMESTAMP),
+                               absl::UTCTimeZone()))
+      .append("\n");
+#elif defined(VERIBLE_GIT_DATE)  // Legacy
+  result.append("Commit-Date\t").append(VERIBLE_GIT_DATE).append("\n");
 #endif
 #ifdef VERIBLE_BUILD_TIMESTAMP
   result.append("Built\t")

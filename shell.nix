@@ -18,9 +18,9 @@ verible_used_stdenv.mkDerivation {
 
       # For scripts used inside bzl rules and tests
       gnused
-      python3
 
       # To run error-log-analyzer
+      python3
       python3Packages.mdutils
       ripgrep
 

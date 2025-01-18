@@ -1,6 +1,8 @@
 # 'util' contains generic containers, adapters, algorithms
 # Any verible package may directly depend on this.
 
+load(":module-version.bzl", "get_version_define_from_module")
+
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = [
@@ -100,6 +102,7 @@ cc_library(
     name = "init-command-line",
     srcs = ["init-command-line.cc"],
     hdrs = ["init-command-line.h"],
+    copts = get_version_define_from_module(),
     deps = [
         # these deps are needed by init_command_line.cc:
         ":build-version",

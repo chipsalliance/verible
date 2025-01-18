@@ -7,11 +7,7 @@ build --define="absl=1"
 build --enable_platform_specific_config
 
 # Gather build version information
-build:linux --workspace_status_command="bazel/build-version.py"
-build:freebsd --workspace_status_command="bazel/build-version.py"
-build:openbsd --workspace_status_command="bazel/build-version.py"
-build:macos --workspace_status_command="bazel/build-version.py"
-build:windows --workspace_status_command="python bazel/build-version.py"
+build --workspace_status_command="bash bazel/build-version.sh"
 
 # Systems with gcc or clang
 common:linux   --cxxopt=-xc++ --host_cxxopt=-xc++ --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
