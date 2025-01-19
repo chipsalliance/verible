@@ -167,6 +167,9 @@ cc_library(
     name = "symbol-table-handler",
     srcs = ["symbol-table-handler.cc"],
     hdrs = ["symbol-table-handler.h"],
+    # Can only add @abseil-cpp//absl/log:vlog_is_on after > absl 20240116
+    # https://github.com/chipsalliance/verible/issues/2336
+    features = ["-layering_check"],
     deps = [
         ":lsp-conversion",
         ":lsp-parse-buffer",
