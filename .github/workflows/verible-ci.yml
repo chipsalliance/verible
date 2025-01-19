@@ -48,13 +48,6 @@ jobs:
         echo "--- check potential problems ---"
         ./.github/bin/check-potential-problems.sh
 
-    - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v3
-      if: success() || failure()
-      with:
-        name: "diag"
-        path: "**/plot_*.svg"
-
   ClangTidy:
     container: ubuntu:jammy
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
@@ -436,9 +429,41 @@ jobs:
         rm c:/users/runneradmin/_bazel_runneradmin/*/java.log
 
 
+  PackReleaseSource:
+    name: 📦 Pack Sources
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Pack Sources
+      run: |
+        TAG_VERSION=$(git describe --match=v*)
+        MODULE_VERSION=$(git describe --match=v* 2>/dev/null \
+                         | sed 's/v\([^-]*\)-\([0-9]*\)-.*/\1.\2/')
+
+        OUT_SRC=verible-${TAG_VERSION}
+
+        mkdir ../${OUT_SRC}
+        cp -r . ../${OUT_SRC}
+
+        # Bake in current version into MODULE.bazel
+        sed "s/\(.*version.*\"\)\(head\)\(\".*\)/\1${MODULE_VERSION}\3/" \
+           -i ../${OUT_SRC}/MODULE.bazel
+
+        tar --exclude=.git -cvzf ${OUT_SRC}.tar.gz ../${OUT_SRC}
+
+    - name: 📤 Upload Source tar
+      uses: actions/upload-artifact@v4
+      with:
+        path: verible-*.tar.gz
+
   Release:
     name: 📦 Release
-    needs: [ Check, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
+    needs: [ Check, PackReleaseSource, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
     runs-on: ubuntu-20.04
     permissions:
       contents: write
