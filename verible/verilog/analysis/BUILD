@@ -164,6 +164,9 @@ cc_library(
         "verilog-analyzer.h",
         "verilog-excerpt-parse.h",
     ],
+    # Can only add @abseil-cpp//absl/log:vlog_is_on after > absl 20240116
+    # https://github.com/chipsalliance/verible/issues/2336
+    features = ["-layering_check"],
     deps = [
         "//verible/common/analysis:file-analyzer",
         "//verible/common/lexer:token-stream-adapter",
@@ -241,6 +244,9 @@ cc_library(
     name = "verilog-linter",
     srcs = ["verilog-linter.cc"],
     hdrs = ["verilog-linter.h"],
+    # Can only add @abseil-cpp//absl/log:vlog_is_on after > absl 20240116
+    # https://github.com/chipsalliance/verible/issues/2336
+    features = ["-layering_check"],
     deps = [
         ":default-rules",
         ":lint-rule-registry",

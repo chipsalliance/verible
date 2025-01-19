@@ -18,6 +18,7 @@ bazel_dep(name = "rules_bison", version = "0.3")
 # abseil-cpp and googletest can not be updated beyond the following currently,
 # as newer googletest is not compatible with bazel 6 anymore, and abseil-cpp
 # depends on it :( -- to support all active bazel's, we're stuck till EOL bazel6
+# See https://github.com/chipsalliance/verible/issues/2336
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1", dev_dependency = True)
 
 bazel_dep(name = "abseil-cpp", version = "20240116.2")
