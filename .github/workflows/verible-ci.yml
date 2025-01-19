@@ -457,7 +457,7 @@ jobs:
         tar --exclude=.git -cvzf ${OUT_SRC}.tar.gz ../${OUT_SRC}
 
     - name: 📤 Upload Source tar
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         path: verible-*.tar.gz
 
