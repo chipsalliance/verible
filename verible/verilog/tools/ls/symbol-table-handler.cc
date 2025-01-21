@@ -24,7 +24,7 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/base/config.h"
+#include "absl/base/config.h"  // for ABSL_LTS_RELEASE_VERSION
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
@@ -51,6 +51,7 @@
 #include "verible/verilog/tools/ls/lsp-parse-buffer.h"
 
 #if ABSL_LTS_RELEASE_VERSION > 20240200
+// https://github.com/chipsalliance/verible/issues/2336
 #include "absl/log/vlog_is_on.h"
 #endif
 
