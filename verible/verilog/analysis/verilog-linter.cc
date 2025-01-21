@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/config.h"
+#include "absl/base/config.h"  // for ABSL_LTS_RELEASE_VERSION
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -57,6 +57,7 @@
 #include "verible/verilog/parser/verilog-token-enum.h"
 
 #if ABSL_LTS_RELEASE_VERSION > 20240200
+// https://github.com/chipsalliance/verible/issues/2336
 #include "absl/log/vlog_is_on.h"
 #endif
 
