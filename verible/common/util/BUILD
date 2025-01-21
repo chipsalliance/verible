@@ -665,7 +665,6 @@ cc_library(
     hdrs = ["simple-zip.h"],
     deps = [
         "//third_party/portable_endian",
-        "@abseil-cpp//absl/strings:string_view",
         "@zlib",
     ],
 )
