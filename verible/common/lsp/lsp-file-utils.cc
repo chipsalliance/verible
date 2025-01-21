@@ -21,7 +21,7 @@
 #include <string>
 #include <string_view>
 
-#include "absl/base/config.h"  // for ABSL_LTS_RELEASE_VERSION
+#include "absl/base/config.h"  // NOLINT for ABSL_LTS_RELEASE_VERSION
 #include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"

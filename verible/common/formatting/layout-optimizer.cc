@@ -28,7 +28,7 @@
 #include <ostream>
 #include <utility>
 
-#include "absl/base/config.h"  // for ABSL_LTS_RELEASE_VERSION
+#include "absl/base/config.h"  // NOLINT for ABSL_LTS_RELEASE_VERSION
 #include "absl/container/fixed_array.h"
 #include "absl/log/log.h"
 #include "verible/common/formatting/basic-format-style.h"

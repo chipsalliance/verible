@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/config.h"  // for ABSL_LTS_RELEASE_VERSION
+#include "absl/base/config.h"  // NOLINT for ABSL_LTS_RELEASE_VERSION
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
