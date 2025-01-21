@@ -21,8 +21,15 @@ EXIT_CODE=0
 
 # absl has a string_view but there is also std::string_view.
 # Use the std::string_view throughout.
-find verible -name "*.h" -o -name "*.cc" | \
-  xargs grep -n "absl::string_view"
+find verible -name "*.h" -o -name "*.cc" | xargs grep -n "absl::string_view"
+if [ $? -eq 0 ]; then
+  echo "::error:: use std::string_view instead of absl::string_view"
+  echo
+  EXIT_CODE=1
+fi
+
+# ... same for absl string_view dependency.
+find verible -name BUILD | xargs grep -n absl/strings:string_view
 if [ $? -eq 0 ]; then
   echo "::error:: use std::string_view instead of absl::string_view"
   echo
