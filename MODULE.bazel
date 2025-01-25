@@ -32,4 +32,4 @@ bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "rules_proto", version = "6.0.0-rc2")
 
 # To build compilation DB and run build-cleaning
-bazel_dep(name = "bant", version = "0.1.11", dev_dependency = True)
+bazel_dep(name = "bant", version = "0.1.13", dev_dependency = True)
