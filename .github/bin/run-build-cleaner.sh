@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2024 The Verible Authors.
+# Copyright 2024-2025 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,15 +23,19 @@ BANT=${BANT:-needs-to-be-compiled-locally}
 if [ "${BANT}" = "needs-to-be-compiled-locally" ]; then
   # Bant not given, compile from bzlmod dep.
   ${BAZEL} build -c opt --cxxopt=-std=c++20 @bant//bant:bant >/dev/null 2>&1
-  BANT=$(realpath bazel-bin/external/bant*/bant/bant)
+  BANT=$(realpath bazel-bin/external/bant*/bant/bant | head -1)
 fi
 
 DWYU_OUT="${TMPDIR:-/tmp}/dwyu.out"
 
 if "${BANT}" -q dwyu ... ; then
-  echo "Dependencies ok"
+  echo "Dependencies ok." >&2
 else
-  echo
-  echo "^ Please run buildozer commands to fix the dependencies and amend PR"
+  cat >&2 <<EOF
+
+Build dependency issues found, the following one-liner will fix it. Amend PR.
+
+source <(.github/bin/run-build-cleaner.sh)
+EOF
   exit 1
 fi

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2021 The Verible Authors.
+# Copyright 2021-2025 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ fi
 BAZEL_OPTS="-c opt --noshow_progress"
 # Bazel-build all targets that generate files, so that they can be
 # seen in dependency analysis.
-${BAZEL} build ${BAZEL_OPTS} $(${BANT} list-targets | \
-  egrep "genrule|cc_proto_library|genlex|genyacc" | awk '{print $3}')
+${BAZEL} build ${BAZEL_OPTS} $(${BANT} list-targets \
+  | awk '/genrule|cc_proto_library|genlex|genyacc/ {print $3}')
 
 # Some selected targets to trigger all dependency fetches from MODULE.bazel
 # verilog-y-final to create a header, kzip creator to trigger build of any.pb.h
@@ -42,7 +42,7 @@ ${BAZEL} build ${BAZEL_OPTS} //verible/verilog/parser:verilog-y-final \
   //verible/verilog/tools/kythe:verible-verilog-kythe-kzip-writer \
   //verible/common/lsp:json-rpc-dispatcher_test
 
-# bant does not distinguish the includes per file yet, so instead of
+# bant does not distinguish the compile flags per file yet, so instead of
 # a compile_commands.json, we can just as well create a simpler
 # compile_flags.txt which is easier to digest for all kinds of tools anyway.
 ${BANT} compile-flags 2>/dev/null > compile_flags.txt
