@@ -15,21 +15,11 @@ bazel_dep(name = "rules_m4", version = "0.2.3")
 bazel_dep(name = "rules_flex", version = "0.3")
 bazel_dep(name = "rules_bison", version = "0.3")
 
-# abseil-cpp and googletest can not be updated beyond the following currently,
-# as newer googletest is not compatible with bazel 6 anymore, and abseil-cpp
-# depends on it :( -- to support all active bazel's, we're stuck till EOL bazel6
-# See https://github.com/chipsalliance/verible/issues/2336
-bazel_dep(name = "googletest", version = "1.14.0.bcr.1", dev_dependency = True)
-
+# Last versions compatible w/ bazel6 https://github.com/chipsalliance/verible/issues/2336
 bazel_dep(name = "abseil-cpp", version = "20240116.2")
+bazel_dep(name = "protobuf", version = "28.3")
 
-# Last protobuf version working with windows without strange linking errors.
-# This also means that we unfortunately can't use the @protobuf//bazel rules
-# but have to use rules_cc and rules_proto.
-# TODO: figure out how we can make proto compile beyond 24.4 on Windows.
-bazel_dep(name = "protobuf", version = "24.4")
-bazel_dep(name = "rules_cc", version = "0.0.9")
-bazel_dep(name = "rules_proto", version = "6.0.0-rc2")
+bazel_dep(name = "googletest", version = "1.14.0.bcr.1", dev_dependency = True)
 
 # To build compilation DB and run build-cleaning
 bazel_dep(name = "bant", version = "0.1.13", dev_dependency = True)

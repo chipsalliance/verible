@@ -30,6 +30,8 @@ build --cxxopt="-Wno-unknown-warning-option" --host_cxxopt="-Wno-unknown-warning
 build --cxxopt="-Wno-dangling-reference" --host_cxxopt="-Wno-dangling-reference"
 # Newer bisons create an unused label.
 build --cxxopt="-Wno-unused-label" --host_cxxopt="-Wno-unused-label"
+# c++20 warning on protobuf 28.1
+build --cxxopt="-Wno-missing-requires" --host_cxxopt="-Wno-missing-requires"
 
 # For 3rd party code: Disable warnings entirely.
 # They are not actionable and just create noise.
