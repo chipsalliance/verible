@@ -128,8 +128,8 @@ case "$MODE" in
   test-c++20|test-c++20-clang)
     # Compile with C++ 20 to make sure to be compatible with the next version.
     if [[ ${MODE} == "test-c++20" ]]; then
-       # Assignment of 1-char strings: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
-       BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-restrict"
+      # Assignment of 1-char strings: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
+      BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-restrict --cxxopt=-Wno-missing-requires"
     fi
     bazel test --keep_going --test_output=errors ${BAZEL_OPTS} --cxxopt=-std=c++20 -- ${CHOSEN_TARGETS}
     ;;
@@ -137,8 +137,8 @@ case "$MODE" in
   test-c++23|test-c++23-clang)
     # Same; c++23
     if [[ ${MODE} == "test-c++23" ]]; then
-       # Assignment of 1-char strings: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
-       BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-restrict"
+      # Assignment of 1-char strings: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
+      BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-restrict --cxxopt=-Wno-missing-requires"
     fi
     bazel test --keep_going --test_output=errors ${BAZEL_OPTS} --cxxopt=-std=c++2b -- ${CHOSEN_TARGETS}
     ;;
