@@ -1173,6 +1173,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     // trailing subpartitions greedily as long as they fit, wrapping as
     // needed.
     case NodeEnum::kPreprocessorDefine:
+    case NodeEnum::kTimescaleDirective:
+    case NodeEnum::kTopLevelDirective:
     case NodeEnum::kClassConstructorPrototype:
     case NodeEnum::kTaskHeader:
     case NodeEnum::kFunctionHeader:
