@@ -60,8 +60,8 @@ struct LineRanges {
 
 LineRanges::storage_type LineRanges::values;  // global initializer
 
-bool AbslParseFlag(std::string_view flag_arg, LineRanges * /* unused */,
-                   std::string *error) {
+static bool AbslParseFlag(std::string_view flag_arg, LineRanges * /* unused */,
+                          std::string *error) {
   auto &values = LineRanges::values;
   // Pre-split strings, so that "--flag v1,v2" and "--flag v1 --flag v2" are
   // equivalent.
@@ -75,7 +75,7 @@ bool AbslParseFlag(std::string_view flag_arg, LineRanges * /* unused */,
   return true;
 }
 
-std::string AbslUnparseFlag(LineRanges /* unused */) {
+static std::string AbslUnparseFlag(LineRanges /* unused */) {
   const auto &values = LineRanges::values;
   return absl::StrJoin(values.begin(), values.end(), ",",
                        absl::StreamFormatter());

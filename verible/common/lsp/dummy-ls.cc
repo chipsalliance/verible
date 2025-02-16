@@ -44,7 +44,7 @@ using verible::lsp::JsonRpcDispatcher;
 using verible::lsp::MessageStreamSplitter;
 
 // The "initialize" method requests server capabilities.
-InitializeResult InitializeServer(const nlohmann::json &params) {
+static InitializeResult InitializeServer(const nlohmann::json &params) {
   // Ignore passed client capabilities from params right now,
   // just announce what we do.
   InitializeResult result;

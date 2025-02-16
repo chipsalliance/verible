@@ -132,7 +132,8 @@ struct AlignmentCell {
 using AlignmentRow = VectorTree<AlignmentCell>;
 using AlignmentMatrix = std::vector<AlignmentRow>;
 
-std::ostream &operator<<(std::ostream &stream, const AlignmentCell &cell) {
+static std::ostream &operator<<(std::ostream &stream,
+                                const AlignmentCell &cell) {
   if (!cell.tokens.empty()) {
     // See UnwrappedLine::AsCode for similar printing.
     stream << absl::StrJoin(cell.tokens, " ",
@@ -480,8 +481,8 @@ static std::pair<std::string, char> GetColumnDataCellLabel(
   return {label.str(), node.Value().properties.flush_left ? '<' : '>'};
 }
 
-std::ostream &operator<<(std::ostream &stream,
-                         const VectorTree<AggregateColumnData> &tree) {
+static std::ostream &operator<<(std::ostream &stream,
+                                const VectorTree<AggregateColumnData> &tree) {
   ColumnsTreeFormatter<AggregateColumnData>(
       stream, tree, GetColumnDataCellLabel<AggregateColumnData>);
   return stream;
@@ -493,8 +494,8 @@ std::ostream &operator<<(std::ostream &stream, const ColumnPositionTree &tree) {
   return stream;
 }
 
-std::ostream &operator<<(std::ostream &stream,
-                         const VectorTree<AlignmentCell> &tree) {
+static std::ostream &operator<<(std::ostream &stream,
+                                const VectorTree<AlignmentCell> &tree) {
   ColumnsTreeFormatter<AlignmentCell>(
       stream, tree,
       [](const VectorTree<AlignmentCell> &node)
@@ -515,8 +516,8 @@ std::ostream &operator<<(std::ostream &stream,
   return stream;
 }
 
-std::ostream &operator<<(std::ostream &stream,
-                         const VectorTree<AlignedColumnConfiguration> &tree) {
+static std::ostream &operator<<(
+    std::ostream &stream, const VectorTree<AlignedColumnConfiguration> &tree) {
   ColumnsTreeFormatter<AlignedColumnConfiguration>(
       stream, tree, [](const VectorTree<AlignedColumnConfiguration> &node) {
         const auto &cell = node.Value();

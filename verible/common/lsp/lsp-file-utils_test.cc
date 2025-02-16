@@ -23,7 +23,7 @@
 namespace verible {
 namespace lsp {
 
-std::string PathPrefix(const std::string &path) {
+static std::string PathPrefix(const std::string &path) {
 #ifdef _WIN32
   return absl::StrCat("y:/", path);
 #else
@@ -31,7 +31,7 @@ std::string PathPrefix(const std::string &path) {
 #endif
 }
 
-std::string URIPrefix(const std::string &path) {
+static std::string URIPrefix(const std::string &path) {
 #ifdef _WIN32
   return absl::StrCat("file:///y%3a/", path);
 #else

@@ -61,18 +61,18 @@ static const verible::EnumNameMap<AutofixMode> &AutofixModeEnumStringMap() {
   return kAutofixModeEnumStringMap;
 }
 
-std::ostream &operator<<(std::ostream &stream, AutofixMode mode) {
+static std::ostream &operator<<(std::ostream &stream, AutofixMode mode) {
   return AutofixModeEnumStringMap().Unparse(mode, stream);
 }
 
-std::string AbslUnparseFlag(const AutofixMode &mode) {
+static std::string AbslUnparseFlag(const AutofixMode &mode) {
   std::ostringstream stream;
   AutofixModeEnumStringMap().Unparse(mode, stream);
   return stream.str();
 }
 
-bool AbslParseFlag(std::string_view text, AutofixMode *mode,
-                   std::string *error) {
+static bool AbslParseFlag(std::string_view text, AutofixMode *mode,
+                          std::string *error) {
   return AutofixModeEnumStringMap().Parse(text, mode, error, "--autofix value");
 }
 

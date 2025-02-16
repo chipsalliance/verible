@@ -174,7 +174,7 @@ TokenScannerStateStrings() {
 }
 
 // Conventional stream printer (declared in header providing enum).
-std::ostream &operator<<(std::ostream &stream, TokenScannerState p) {
+static std::ostream &operator<<(std::ostream &stream, TokenScannerState p) {
   return TokenScannerStateStrings().Unparse(p, stream);
 }
 
@@ -638,12 +638,12 @@ static const verible::EnumNameMap<ContextHint> &ContextHintStrings() {
   return kContextHintStringMap;
 }
 
-std::ostream &operator<<(std::ostream &stream, ContextHint p) {
+static std::ostream &operator<<(std::ostream &stream, ContextHint p) {
   return ContextHintStrings().Unparse(p, stream);
 }
 
-std::ostream &operator<<(std::ostream &stream,
-                         const std::vector<ContextHint> &f) {
+static std::ostream &operator<<(std::ostream &stream,
+                                const std::vector<ContextHint> &f) {
   return stream << verible::SequenceFormatter(f);
 }
 
@@ -1623,7 +1623,8 @@ static void AttachSeparatorToPreviousOrNextPartition(
   partition->Value().SetOrigin(nullptr);
 }
 
-void AttachSeparatorsToListElementPartitions(TokenPartitionTree *partition) {
+static void AttachSeparatorsToListElementPartitions(
+    TokenPartitionTree *partition) {
   CHECK_NOTNULL(partition);
   // Skip the first partition, it can't contain just a separator.
   for (int i = 1; i < static_cast<int>(partition->Children().size()); ++i) {

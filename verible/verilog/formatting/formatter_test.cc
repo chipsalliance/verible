@@ -53,9 +53,9 @@ namespace verilog {
 namespace formatter {
 
 // private, extern function in formatter.cc, directly tested here.
-absl::Status VerifyFormatting(const verible::TextStructureView &text_structure,
-                              std::string_view formatted_output,
-                              std::string_view filename);
+extern absl::Status VerifyFormatting(
+    const verible::TextStructureView &text_structure,
+    std::string_view formatted_output, std::string_view filename);
 
 namespace {
 

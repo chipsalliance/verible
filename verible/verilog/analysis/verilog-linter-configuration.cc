@@ -412,7 +412,7 @@ static const verible::EnumNameMap<RuleSet> &RuleSetEnumStringMap() {
   return kRuleSetEnumStringMap;
 }
 
-std::ostream &operator<<(std::ostream &stream, RuleSet rules) {
+static std::ostream &operator<<(std::ostream &stream, RuleSet rules) {
   return RuleSetEnumStringMap().Unparse(rules, stream);
 }
 

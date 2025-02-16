@@ -129,7 +129,7 @@ const SyntaxTreeNode *GetAssertionStatementAssertClause(
                           NodeEnum::kAssertionClause);
 }
 
-const SyntaxTreeNode *GetAssertionClauseStatementBody(
+static const SyntaxTreeNode *GetAssertionClauseStatementBody(
     const Symbol &assertion_clause) {
   const auto *body_node = GetGenericStatementBody(MatchNodeEnumOrNull(
       SymbolCastToNode(assertion_clause), NodeEnum::kAssertionClause));
@@ -154,7 +154,7 @@ const SyntaxTreeNode *GetAssumeStatementAssumeClause(
                           NodeEnum::kAssumeClause);
 }
 
-const SyntaxTreeNode *GetAssumeClauseStatementBody(
+static const SyntaxTreeNode *GetAssumeClauseStatementBody(
     const Symbol &assume_clause) {
   const auto *body_node = GetGenericStatementBody(MatchNodeEnumOrNull(
       SymbolCastToNode(assume_clause), NodeEnum::kAssumeClause));
@@ -197,7 +197,7 @@ const SyntaxTreeNode *GetAssertPropertyStatementAssertClause(
                           NodeEnum::kAssertPropertyClause);
 }
 
-const SyntaxTreeNode *GetAssertPropertyStatementBody(
+static const SyntaxTreeNode *GetAssertPropertyStatementBody(
     const Symbol &assert_clause) {
   const auto *body_node = GetGenericStatementBody(MatchNodeEnumOrNull(
       SymbolCastToNode(assert_clause), NodeEnum::kAssertPropertyClause));
@@ -225,7 +225,7 @@ const SyntaxTreeNode *GetAssumePropertyStatementAssumeClause(
                           NodeEnum::kAssumePropertyClause);
 }
 
-const SyntaxTreeNode *GetAssumePropertyStatementBody(
+static const SyntaxTreeNode *GetAssumePropertyStatementBody(
     const Symbol &assume_clause) {
   const auto *body_node = GetGenericStatementBody(MatchNodeEnumOrNull(
       SymbolCastToNode(assume_clause), NodeEnum::kAssumePropertyClause));
@@ -253,7 +253,7 @@ const SyntaxTreeNode *GetExpectPropertyStatementExpectClause(
                           NodeEnum::kExpectPropertyClause);
 }
 
-const SyntaxTreeNode *GetExpectPropertyStatementBody(
+static const SyntaxTreeNode *GetExpectPropertyStatementBody(
     const Symbol &expect_clause) {
   const auto *body_node = GetGenericStatementBody(MatchNodeEnumOrNull(
       SymbolCastToNode(expect_clause), NodeEnum::kExpectPropertyClause));
@@ -274,7 +274,7 @@ const SyntaxTreeNode *GetExpectPropertyStatementElseClause(
                              NodeEnum::kElseClause);
 }
 
-const SyntaxTreeNode *GetCoverPropertyStatementBody(
+static const SyntaxTreeNode *GetCoverPropertyStatementBody(
     const Symbol &cover_property) {
   const auto *body_node = GetGenericStatementBody(MatchNodeEnumOrNull(
       SymbolCastToNode(cover_property), NodeEnum::kCoverPropertyStatement));
@@ -283,7 +283,7 @@ const SyntaxTreeNode *GetCoverPropertyStatementBody(
       GetSubtreeAsSymbol(*body_node, NodeEnum::kCoverPropertyBody, 0));
 }
 
-const SyntaxTreeNode *GetCoverSequenceStatementBody(
+static const SyntaxTreeNode *GetCoverSequenceStatementBody(
     const Symbol &cover_sequence) {
   const auto *body_node = GetGenericStatementBody(MatchNodeEnumOrNull(
       SymbolCastToNode(cover_sequence), NodeEnum::kCoverSequenceStatement));
