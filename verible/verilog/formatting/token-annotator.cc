@@ -240,9 +240,7 @@ static WithReason<int> SpacesRequiredBetween(
       }
 
       int spaces = right.OriginalLeadingSpaces().length();
-      if (spaces > 1) {
-        spaces = 1;
-      }
+      spaces = std::min(spaces, 1);
       return {spaces, "Limit <= 1 space before binary operator inside []."};
     }
     if (left.format_token_enum == FormatTokenType::binary_operator &&

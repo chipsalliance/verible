@@ -402,7 +402,7 @@ LayoutFunction LayoutFunctionFactory::Stack(
         if ((segment_it + 1).IsEnd()) continue;
         const int column = (segment_it + 1)->column;
         CHECK_GE(column, current_column);
-        if (column < next_column) next_column = column;
+        next_column = std::min(column, next_column);
       }
       current_column = next_column;
     }
@@ -434,7 +434,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
 
       const int column =
           (segment_it + 1).IsEnd() ? kInfinity : segment_it[1].column;
-      if (column < next_knot) next_knot = column;
+      next_knot = std::min(column, next_knot);
     }
 
     do {
