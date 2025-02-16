@@ -118,11 +118,11 @@ case "$MODE" in
     ;;
 
   compile|compile-clang|clean)
-    bazel build --keep_going ${BAZEL_OPTS} :install-binaries
+    bazel build -c opt --keep_going ${BAZEL_OPTS} :install-binaries
     ;;
 
   compile-static|compile-static-clang)
-    bazel build --keep_going --config=create_static_linked_executables ${BAZEL_OPTS} :install-binaries
+    bazel build -c opt --keep_going --config=create_static_linked_executables ${BAZEL_OPTS} :install-binaries
     ;;
 
   test-c++20|test-c++20-clang)
