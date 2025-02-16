@@ -30,7 +30,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -58,7 +58,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -108,10 +108,10 @@ jobs:
             || ( cat verible_clang-tidy.out ; exit 1)
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: success() || failure()
       with:
-        name: "diag"
+        name: "diag-clang-tidy"
         path: "**/plot_*.svg"
 
   Check:
@@ -158,7 +158,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -212,8 +212,9 @@ jobs:
 
     - name: Gather and pack binaries
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
+      # these are used for building the gh-pages.
       run: |
-        bazel build -c fastbuild :install-binaries
+        bazel build -c opt :install-binaries
         # Litmus test
         bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax --version
         .github/bin/simple-install.sh $VERIBLE_BINDIR
@@ -221,7 +222,7 @@ jobs:
 
     - name: Upload bazel-bin
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: verible-bin
         path: verible-bin.tar
@@ -236,15 +237,16 @@ jobs:
         tar cvzf verible-${VERSION}-linux-static-${{matrix.arch}}.tar.gz verible-${VERSION}
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: verible-install-${{ matrix.arch }}
         path: verible-*.tar.gz
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: success() || failure()
       with:
-        name: "diag"
+        name: "diag-${{ matrix.arch }}-${{ matrix.mode }}"
         path: "**/plot_*.svg"
 
 
@@ -255,7 +257,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -280,7 +282,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -298,7 +300,7 @@ jobs:
         ./.github/bin/run-kythe.sh
 
     - name: 📤 Upload Kythe xRefs to the action artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: kythe_output/*.kzip
 
@@ -311,7 +313,7 @@ jobs:
         echo "USE_BAZEL_VERSION=6.5.0" >> $GITHUB_ENV
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -347,8 +349,9 @@ jobs:
         tar cvzf verible-${VERSION}-macOS.tar.gz verible-${VERSION}-macOS
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: verible-install-macos
         path: verible-*.tar.gz
 
   PrepareVSPlugin:
@@ -356,7 +359,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -369,7 +372,7 @@ jobs:
     runs-on: windows-2019
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -414,8 +417,9 @@ jobs:
         7z a "verible-${VERSION}-win64.zip" "c:/verible-${VERSION}-win64"
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: verible-install-win
         path: verible-*.zip
 
     # We need to shut down bazel to let go of the filedescriptors in the
@@ -457,8 +461,9 @@ jobs:
         tar --exclude=.git -cvzf ${OUT_SRC}.tar.gz ../${OUT_SRC}
 
     - name: 📤 Upload Source tar
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: src
         path: verible-*.tar.gz
 
   Release:
@@ -472,13 +477,15 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
 
     - name: 📥 Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
 
     - name: Generate and apply TAG
       run: |
@@ -525,9 +532,9 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: verible-bin
 
