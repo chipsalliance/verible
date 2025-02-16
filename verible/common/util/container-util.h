@@ -43,7 +43,8 @@ struct ValueTypeFromKeyType<KeyType, std::pair<const KeyType, MappedType>> {
 template <class KeyType>
 struct ValueTypeFromKeyType<KeyType, KeyType> {
   const KeyType &operator()(const KeyType &k) const {
-    return k;  // just forward the key
+    // Just forward the key
+    return k;  // NOLINT(bugprone-return-const-ref-from-parameter)
   }
 };
 }  // namespace internal

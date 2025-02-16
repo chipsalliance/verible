@@ -113,7 +113,7 @@ struct TestTrace {
            std::equal(values.begin(), values.end(), other.values.begin());
   }
 
-  friend std::ostream &operator<<(std::ostream &s, TestTrace obj) {
+  friend std::ostream &operator<<(std::ostream &s, const TestTrace &obj) {
     switch (obj.triggered_method) {
       case ContainerProxyEvent::kUnknown:
         s << "UNKNOWN";

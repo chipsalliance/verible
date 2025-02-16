@@ -104,7 +104,7 @@ const TokenInfo &MacroDefinition::SubstituteText(
     }
   }
   // Didn't match enum type nor find map entry, so don't substitute.
-  return token_info;
+  return token_info;  // NOLINT(bugprone-return-const-ref-from-parameter)
 }
 
 }  // namespace verible
