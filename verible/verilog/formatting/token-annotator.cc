@@ -922,11 +922,11 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
 // Extern linkage for sake of direct testing, though not exposed in public
 // headers.
 // TODO(fangism): could move this to a -internal.h header.
-void AnnotateFormatToken(const FormatStyle &style,
-                         const PreFormatToken &prev_token,
-                         PreFormatToken *curr_token,
-                         const SyntaxTreeContext &prev_context,
-                         const SyntaxTreeContext &curr_context) {
+extern void AnnotateFormatToken(const FormatStyle &style,
+                                const PreFormatToken &prev_token,
+                                PreFormatToken *curr_token,
+                                const SyntaxTreeContext &prev_context,
+                                const SyntaxTreeContext &curr_context) {
   const auto p = SpacesRequiredBetween(style, prev_token, *curr_token,
                                        prev_context, curr_context);
   curr_token->before.spaces_required = p.spaces_required;

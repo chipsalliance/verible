@@ -72,7 +72,7 @@ TEST(FilterTokensTest, EmptyTokens) {
 }
 
 // Create a one-token token stream and syntax tree.
-void OneTokenTextStructureView(TextStructureView *view) {
+static void OneTokenTextStructureView(TextStructureView *view) {
   TokenInfo token(1, view->Contents());
   view->MutableTokenStream().push_back(token);
   view->MutableTokenStreamView().push_back(view->TokenStream().begin());
@@ -80,7 +80,7 @@ void OneTokenTextStructureView(TextStructureView *view) {
 }
 
 // Create a two-token token stream, no syntax tree.
-void MultiTokenTextStructureViewNoTree(TextStructureView *view) {
+static void MultiTokenTextStructureViewNoTree(TextStructureView *view) {
   const auto contents = view->Contents();
   CHECK_GE(contents.length(), 5);
   auto &stream = view->MutableTokenStream();
@@ -467,7 +467,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesEmpty) {
 }
 
 // Splits a single token into a syntax tree node with two leaves.
-void FakeParseToken(TextStructureView *data, int offset, int node_tag) {
+static void FakeParseToken(TextStructureView *data, int offset, int node_tag) {
   TokenSequence &tokens = data->MutableTokenStream();
   tokens.push_back(TokenInfo(11, data->Contents().substr(0, offset)));
   tokens.push_back(TokenInfo(12, data->Contents().substr(offset)));

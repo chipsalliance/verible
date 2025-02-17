@@ -234,7 +234,7 @@ class VerilogColumnSchemaScanner : public ColumnSchemaScanner {
 };
 
 template <class ScannerType>
-std::function<verible::AlignmentCellScannerFunction(const FormatStyle &)>
+static std::function<verible::AlignmentCellScannerFunction(const FormatStyle &)>
 UnstyledAlignmentCellScannerGenerator() {
   return [](const FormatStyle &vstyle) {
     return AlignmentCellScannerGenerator<ScannerType>(
@@ -243,9 +243,10 @@ UnstyledAlignmentCellScannerGenerator() {
 }
 
 template <class ScannerType>
-std::function<verible::AlignmentCellScannerFunction(const FormatStyle &)>
-UnstyledAlignmentCellScannerGenerator(
-    const verible::NonTreeTokensScannerFunction &non_tree_column_scanner) {
+std::function<verible::AlignmentCellScannerFunction(
+    const FormatStyle
+        &)> static UnstyledAlignmentCellScannerGenerator(const verible::NonTreeTokensScannerFunction
+                                                             &non_tree_column_scanner) {
   return [non_tree_column_scanner](const FormatStyle &vstyle) {
     return AlignmentCellScannerGenerator<ScannerType>(
         [vstyle] { return ScannerType(vstyle); }, non_tree_column_scanner);
@@ -1292,8 +1293,8 @@ struct AlignmentGroupHandlers {
 // Returns the referenced member by value.
 // TODO(fangism): move this to an STL-style util/functional library
 template <typename MemberType, typename StructType>
-std::function<MemberType(const StructType &)> function_from_pointer_to_member(
-    MemberType StructType::*member) {
+static std::function<MemberType(const StructType &)>
+function_from_pointer_to_member(MemberType StructType::*member) {
   return [member](const StructType &obj) { return obj.*member; };
 }
 

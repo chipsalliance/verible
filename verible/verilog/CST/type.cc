@@ -350,7 +350,7 @@ const verible::SyntaxTreeLeaf *GetSymbolIdentifierFromEnumName(
   return verible::GetSubtreeAsLeaf(enum_name, NodeEnum::kEnumName, 0);
 }
 
-const verible::SyntaxTreeLeaf *GetTypeIdentifierFromInterfaceType(
+static const verible::SyntaxTreeLeaf *GetTypeIdentifierFromInterfaceType(
     const verible::Symbol &interface_type) {
   return verible::GetSubtreeAsLeaf(interface_type, NodeEnum::kInterfaceType, 2);
 }

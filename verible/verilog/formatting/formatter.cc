@@ -115,9 +115,10 @@ class Formatter {
 };
 
 // TODO(b/148482625): make this public/re-usable for general content comparison.
-Status VerifyFormatting(const verible::TextStructureView &text_structure,
-                        std::string_view formatted_output,
-                        std::string_view filename) {
+// Not declared in any header, but also used in formatter_test
+extern Status VerifyFormatting(const verible::TextStructureView &text_structure,
+                               std::string_view formatted_output,
+                               std::string_view filename) {
   // Verify that the formatted output creates the same lexical
   // stream (filtered) as the original.  If any tokens were lost, fall back to
   // printing the original source unformatted.
