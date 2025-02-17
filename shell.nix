@@ -38,15 +38,15 @@ verible_used_stdenv.mkDerivation {
       lcov              # coverage html generation.
       bazel-buildtools  # buildifier
 
-      clang-tools_18    # for clang-tidy
-      clang-tools_17    # for clang-format
+      llvmPackages_19.clang-tools    # for clang-tidy
+      llvmPackages_17.clang-tools    # for clang-format
     ];
   shellHook = ''
       # clang tidy: use latest.
-      export CLANG_TIDY=${pkgs.clang-tools_18}/bin/clang-tidy
+      export CLANG_TIDY=${pkgs.llvmPackages_19.clang-tools}/bin/clang-tidy
 
       # There is too much volatility between even micro-versions of
-      # clang-format 18. Let's use 17 for now.
-      export CLANG_FORMAT=${pkgs.clang-tools_17}/bin/clang-format
+      # later clang-format. Let's use stable 17 for now.
+      export CLANG_FORMAT=${pkgs.llvmPackages_17.clang-tools}/bin/clang-format
   '';
 }

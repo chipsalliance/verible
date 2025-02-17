@@ -26,6 +26,7 @@ cc_library(
         "//verible/common/text:text-structure",
         "//verible/common/text:token-info",
         "//verible/common/text:tree-utils",
+        "//verible/common/util:interval",
         "//verible/common/util:logging",
         "//verible/verilog/CST:declaration",
         "//verible/verilog/CST:dimensions",
