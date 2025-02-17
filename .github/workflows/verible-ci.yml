@@ -498,13 +498,13 @@ jobs:
         git tag "$TAG" || true
         echo "TAG=$TAG" >> $GITHUB_ENV
 
-        ls -lah artifact
+        ls -l verible-v*
 
     - name: Deploy release and assets
       uses: svenstaro/upload-release-action@2.9.0
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: artifact/verible*.{tar.gz,zip}
+        file: verible-v*.{tar.gz,zip}"
         tag: ${{ env.TAG }}
         overwrite: true
         file_glob: true
