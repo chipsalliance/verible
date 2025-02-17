@@ -45,6 +45,7 @@
 #include "verible/common/text/text-structure.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/text/tree-utils.h"
+#include "verible/common/util/interval.h"
 #include "verible/common/util/logging.h"
 #include "verible/verilog/CST/declaration.h"
 #include "verible/verilog/CST/dimensions.h"
