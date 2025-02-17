@@ -1084,7 +1084,7 @@ static int MaxOfPositives2D(const std::vector<std::vector<int>> &values) {
   for (const auto &row : values) {
     for (const int delta : row) {
       // Only accumulate positive values.
-      if (delta > result) result = delta;
+      result = std::max(delta, result);
     }
   }
   return result;

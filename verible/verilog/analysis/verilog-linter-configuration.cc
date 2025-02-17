@@ -281,7 +281,8 @@ void LinterConfiguration::GetRuleBundle(RuleBundle *rule_bundle) const {
 template <typename T>
 static absl::StatusOr<std::vector<std::unique_ptr<T>>> CreateRules(
     const std::map<analysis::LintRuleId, RuleSetting> &config,
-    std::function<std::unique_ptr<T>(const analysis::LintRuleId &)> factory) {
+    const std::function<std::unique_ptr<T>(const analysis::LintRuleId &)>
+        &factory) {
   std::vector<std::unique_ptr<T>> rule_instances;
   for (const auto &rule_pair : config) {
     const RuleSetting &setting = rule_pair.second;

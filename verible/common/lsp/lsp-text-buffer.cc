@@ -14,6 +14,7 @@
 
 #include "verible/common/lsp/lsp-text-buffer.h"
 
+#include <algorithm>
 #include <numeric>
 #include <string>
 #include <string_view>
@@ -86,7 +87,7 @@ bool EditTextBuffer::LineEdit(const TextDocumentContentChangeEvent &c,
   if (!str->empty() && str->back() == '\n') --str_end;
 
   if (c.range.start.character > str_end) return false;
-  if (end_char > str_end) end_char = str_end;
+  end_char = std::min(end_char, str_end);
   if (end_char < c.range.start.character) return false;
 
   document_length_ -= str->length();

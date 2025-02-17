@@ -54,11 +54,9 @@ SyntaxTreeNode &SymbolCastToNode(Symbol &);  // NOLINT
 // The following no-op overloads allow SymbolCastToNode() to work with zero
 // overhead when the argument type is statically known to be the same.
 inline const SyntaxTreeNode &SymbolCastToNode(const SyntaxTreeNode &node) {
-  return node;
+  return node;  // NOLINT(bugprone-return-const-ref-from-parameter)
 }
-inline SyntaxTreeNode &SymbolCastToNode(SyntaxTreeNode &node) {  // NOLINT
-  return node;
-}
+inline SyntaxTreeNode &SymbolCastToNode(SyntaxTreeNode &node) { return node; }
 
 // Returns a SyntaxTreeLeaf down_casted from a Symbol.
 const SyntaxTreeLeaf &SymbolCastToLeaf(const Symbol &);

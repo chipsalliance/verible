@@ -179,10 +179,10 @@ absl::StatusOr<std::string> GetContentAsString(std::string_view filename) {
   }
   char buffer[4096];
   int bytes_read;
-  do {
-    bytes_read = fread(buffer, 1, sizeof(buffer), stream);
+  while (!ferror(stream) && !feof(stream) &&
+         (bytes_read = fread(buffer, 1, sizeof(buffer), stream)) >= 0) {
     content.append(buffer, bytes_read);
-  } while (bytes_read > 0);
+  }
   fclose(stream);
 
   return content;
