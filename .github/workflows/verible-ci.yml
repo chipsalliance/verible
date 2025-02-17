@@ -504,7 +504,7 @@ jobs:
       uses: svenstaro/upload-release-action@2.9.0
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: verible-v*.{tar.gz,zip}"
+        file: verible-v*.{tar.gz,zip}
         tag: ${{ env.TAG }}
         overwrite: true
         file_glob: true
