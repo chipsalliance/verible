@@ -248,12 +248,31 @@ enum class AlignmentPolicy {
   kInferUserIntent,
 };
 
+// Specific enum for named port alignment that combines regular alignment
+// options with parenthesis alignment options
+enum class NamedAlignmentPolicy {
+  // Standard alignment options (from AlignmentPolicy)
+  kPreserve,
+  kFlushLeft,
+  kAlign,
+  kInferUserIntent,
+
+  // Parenthesis alignment options
+  kAlignBoth,
+  kAlignBothSeparated,
+  kAlignBothSpaced
+};
+
 std::ostream &operator<<(std::ostream &, AlignmentPolicy);
+std::ostream &operator<<(std::ostream &, NamedAlignmentPolicy);
 
 bool AbslParseFlag(std::string_view text, AlignmentPolicy *policy,
                    std::string *error);
+bool AbslParseFlag(std::string_view text, NamedAlignmentPolicy *policy,
+                   std::string *error);
 
 std::string AbslUnparseFlag(const AlignmentPolicy &policy);
+std::string AbslUnparseFlag(const NamedAlignmentPolicy &policy);
 
 // This represents one unit of alignable work, which is usually a filtered
 // subset of partitions within a contiguous range of partitions.
