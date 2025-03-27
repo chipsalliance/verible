@@ -247,7 +247,7 @@ absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(
 
 absl::Status SetContents(std::string_view filename, std::string_view content) {
   VLOG(1) << __FUNCTION__ << ": Writing file: " << filename;
-  FILE *out = fopen(std::string(filename).c_str(), "wb");
+  FILE *out = fopen(std::string(filename).c_str(), "w");
   if (!out) return CreateErrorStatusFromErrno(filename, "can't write.");
   const int64_t expected_write = content.size();
   int64_t total_written = 0;
