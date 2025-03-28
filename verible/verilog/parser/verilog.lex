@@ -102,7 +102,7 @@
 
 /* identifier */
 Alpha [a-zA-Z]
-RejectChar [\x7F-\xFF]
+RejectChar [\x7F-\xFF]+
 IdentifierStart {Alpha}|"_"
 Letter {IdentifierStart}|"$"
 Digit [0-9]
