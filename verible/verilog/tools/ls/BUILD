@@ -269,6 +269,7 @@ cc_binary(
     deps = [
         ":verilog-language-server",
         "//verible/common/util:init-command-line",
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/status",
     ],
 )
