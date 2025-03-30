@@ -22,4 +22,4 @@ bazel_dep(name = "protobuf", version = "28.3")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1", dev_dependency = True)
 
 # To build compilation DB and run build-cleaning
-bazel_dep(name = "bant", version = "0.1.13", dev_dependency = True)
+bazel_dep(name = "bant", version = "0.2.0", dev_dependency = True)

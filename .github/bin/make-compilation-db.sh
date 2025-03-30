@@ -18,16 +18,7 @@ set -e
 
 # Which bazel and bant to use can be chosen by environment variables
 BAZEL=${BAZEL:-bazel}
-BANT=${BANT:-needs-to-be-compiled-locally}
-
-if [ "${BANT}" = "needs-to-be-compiled-locally" ]; then
-  # Bant not given, compile from bzlmod dep. We need to do that before
-  # we run other bazel rules below as we change the cxxopt flags. Remember
-  # the full realpath of the resulting binary to be immune to symbolic-link
-  # switcharoo by bazel.
-  ${BAZEL} build -c opt --cxxopt=-std=c++20 @bant//bant:bant >/dev/null 2>&1
-  BANT=$(realpath bazel-bin/external/bant*/bant/bant | head -1)
-fi
+BANT=$($(dirname $0)/get-bant-path.sh)
 
 BAZEL_OPTS="-c opt --noshow_progress"
 # Bazel-build all targets that generate files, so that they can be
