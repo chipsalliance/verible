@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2024-2025 The Verible Authors.
+# Copyright 2025 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,19 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -u
-set -e
+# Print path to a bant binary. Can be provided by an environment variable
+# or built from our dependency.
 
-BANT=$($(dirname $0)/get-bant-path.sh)
+BAZEL=${BAZEL:-bazel}
+BANT=${BANT:-needs-to-be-compiled-locally}
 
-if "${BANT}" -q dwyu ... ; then
-  echo "Dependencies ok." >&2
-else
-  cat >&2 <<EOF
-
-Build dependency issues found, the following one-liner will fix it. Amend PR.
-
-source <(.github/bin/run-build-cleaner.sh)
-EOF
-  exit 1
+# Bant not given, compile from bzlmod dep.
+if [ "${BANT}" = "needs-to-be-compiled-locally" ]; then
+  "${BAZEL}" build -c opt --cxxopt=-std=c++20 @bant//bant:bant 2>/dev/null
+  BANT=$(realpath bazel-bin/external/bant*/bant/bant | head -1)
 fi
+
+echo $BANT

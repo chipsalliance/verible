@@ -45,4 +45,5 @@ if [ ! -r "${COVERAGE_DATA}" ]; then
 fi
 
 genhtml --ignore-errors inconsistent -o ${OUTPUT_DIR} ${COVERAGE_DATA}
-echo "Output in $(realpath ${OUTPUT_DIR}/index.html)"
+echo
+echo "Output in file://$(realpath ${OUTPUT_DIR}/index.html)"

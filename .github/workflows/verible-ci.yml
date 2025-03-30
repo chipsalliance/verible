@@ -42,7 +42,7 @@ jobs:
     - name: Run formatting style check
       run: |
         echo "--- check formatting ---"
-        CLANG_FORMAT=clang-format-17 ./.github/bin/run-format.sh
+        CLANG_FORMAT=clang-format-17 ./.github/bin/run-format.sh --show-diff
         echo "--- check build dependencies ---"
         ./.github/bin/run-build-cleaner.sh
         echo "--- check potential problems ---"
