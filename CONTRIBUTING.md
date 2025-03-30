@@ -49,6 +49,13 @@ a pull request:
 clang-format --style=file -i <your-modified-c++-files>
 ```
 
+There is a script that runs build cleaning, formatting, clang-tidy and
+tests in one go:
+
+```
+.github/bin/before-submit.sh
+```
+
 ### Testing
 
 Testing is a critical component to any code contribution. Make sure your the
@@ -62,9 +69,8 @@ consider _negative_ tests. Try to keep the majority of tests small and focused.
 
 #### Running Code Coverage
 
-Code coverage is run in each pull request and tracked on [codecov].
-Tests for any new feature should exercise all possible branches;
-pull requests should strive for 100% differential coverage.
+Coverage is a useful tool to find branches that are never exercised in any
+test, so make sure tests for new features exercise all possible branches.
 
 To inspect coverage locally, run
 
