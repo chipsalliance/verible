@@ -27,6 +27,12 @@ else
   NORM=""
 fi
 
+# Compilation DB is needed for clang-tidy, but also
+# makes sure all external dependencies have been fetched so that
+# bant build cleaner can do a good job.
+echo "${BOLD}-- Refresh compilation db --${NORM}"
+.github/bin/make-compilation-db.sh
+
 echo "${BOLD}-- Run build cleaner --${NORM}"
 . <(${BANT} dwyu ...)
 
@@ -34,8 +40,6 @@ echo "${BOLD}-- Run all tests --${NORM}"
 bazel test -c opt ...
 
 if [ "${RUN_CLANG_TIDY}" -eq 1 ]; then
-  # Run clang-tidy; needs a compilation DB first
-  .github/bin/make-compilation-db.sh
   echo "${BOLD}-- Running clang-tidy and cache results --${NORM}"
   echo "This will take a while if run the first time and no cache has"
   echo "been created yet. Can't wait ? Skip with "
