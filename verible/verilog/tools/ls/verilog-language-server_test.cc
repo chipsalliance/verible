@@ -124,7 +124,9 @@ class VerilogLanguageServerTest : public ::testing::Test {
   // sends textDocument/initialize request.
   // It stores the response in initialize_response field for further processing
   void SetUp() override {  // not yet final
+    const bool push_notifications = true;
     server_ = std::make_unique<VerilogLanguageServer>(
+        push_notifications,
         [this](std::string_view response) { response_stream_ << response; });
 
     absl::Status status = InitializeCommunication();

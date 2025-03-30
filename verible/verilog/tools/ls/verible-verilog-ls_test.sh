@@ -115,7 +115,7 @@ cat > "${JSON_EXPECTED}" <<EOF
 ]
 EOF
 
-"${LSP_SERVER}" < ${TMP_IN} 2> "${MSG_OUT}" \
+"${LSP_SERVER}" --push_diagnostic_notifications < ${TMP_IN} 2> "${MSG_OUT}" \
   | ${JSON_RPC_EXPECT} ${JSON_EXPECTED}
 
 JSON_RPC_EXIT=$?

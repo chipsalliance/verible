@@ -16,6 +16,7 @@
 #include <iostream>
 #include <string_view>
 
+#include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "verible/common/util/init-command-line.h"
 #include "verible/verilog/tools/ls/verilog-language-server.h"
@@ -29,6 +30,11 @@
 // Windows doesn't have Posix read(), but something called _read
 #define read(fd, buf, size) _read(fd, buf, size)
 #endif
+
+// These days, editors mostly request the diagnostic and don't want them
+// as notification (in fact, they might show it multiple times)
+ABSL_FLAG(bool, push_diagnostic_notifications, false,
+          "Send diagnostic as notifications.");
 
 // Since it is hard to see what exactly the editor passes to the language
 // server, let's log it, so it can be inspected in the log.
@@ -57,11 +63,14 @@ int main(int argc, char *argv[]) {
   // -- Input and output is stdin and stdout.
 
   // Output: provided write-function is called with entire response messages.
-  verilog::VerilogLanguageServer server([](std::string_view reply) {
-    // Output formatting as header/body chunk as required by LSP spec to stdout.
-    std::cout << "Content-Length: " << reply.size() << "\r\n\r\n";
-    std::cout << reply << std::flush;
-  });
+  verilog::VerilogLanguageServer server(
+      absl::GetFlag(FLAGS_push_diagnostic_notifications),
+      [](std::string_view reply) {
+        // Output formatting as header/body chunk as required by LSP spec to
+        // stdout.
+        std::cout << "Content-Length: " << reply.size() << "\r\n\r\n";
+        std::cout << reply << std::flush;
+      });
 
   // Input: Messages received from the read function are dispatched and
   // processed until shutdown message received.

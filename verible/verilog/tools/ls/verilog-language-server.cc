@@ -42,7 +42,8 @@ ABSL_FLAG(bool, variables_in_outline, true,
 
 namespace verilog {
 
-VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
+VerilogLanguageServer::VerilogLanguageServer(bool push_diagnostic_notification,
+                                             const WriteFun &write_fun)
     : dispatcher_(write_fun), text_buffers_(&dispatcher_) {
   // All bodies the stream splitter extracts are pushed to the json dispatcher
   stream_splitter_.SetMessageProcessor(
@@ -55,11 +56,13 @@ VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
 
   // Whenever there is a new parse result ready, use that as an opportunity
   // to send diagnostics to the client.
-  parsed_buffers_.AddChangeListener(
-      [this](const std::string &uri,
-             const verilog::BufferTracker *buffer_tracker) {
-        if (buffer_tracker) SendDiagnostics(uri, *buffer_tracker);
-      });
+  if (push_diagnostic_notification) {
+    parsed_buffers_.AddChangeListener(
+        [this](const std::string &uri,
+               const verilog::BufferTracker *buffer_tracker) {
+          if (buffer_tracker) SendDiagnostics(uri, *buffer_tracker);
+        });
+  }
   SetRequestHandlers();
 }
 
