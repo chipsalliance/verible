@@ -44,6 +44,11 @@
 #include "verible/verilog/formatting/format-style.h"
 #include "verible/verilog/formatting/formatter.h"
 
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 using absl::StatusCode;
 using verible::LineNumberSet;
 using verilog::formatter::ExecutionControl;
@@ -245,6 +250,11 @@ static bool formatOneFile(std::string_view filename,
 }
 
 int main(int argc, char **argv) {
+#ifdef _WIN32
+  // Windows messes with newlines by default. Fix this here.
+  _setmode(_fileno(stdout), _O_BINARY);
+#endif
+
   const auto usage = absl::StrCat("usage: ", argv[0],
                                   " [options] <file> [<file...>]\n"
                                   "To pipe from stdin, use '-' as <file>.");
