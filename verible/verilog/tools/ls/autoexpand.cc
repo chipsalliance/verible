@@ -1689,6 +1689,7 @@ std::vector<CodeAction> GenerateAutoExpandCodeActions(
     const BufferTracker *const tracker, const CodeActionParams &p) {
   Interval<size_t> line_range{static_cast<size_t>(p.range.start.line),
                               static_cast<size_t>(p.range.end.line)};
+  if (!line_range.valid()) return {};
   if (!tracker) return {};
   const auto current = tracker->current();
   if (!current) return {};  // Can only expand if we have latest version
