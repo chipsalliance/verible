@@ -23,6 +23,7 @@
 
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
+#include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/strings/comment-utils.h"
 #include "verible/common/strings/display-utils.h"
 #include "verible/common/strings/line-column-map.h"
@@ -31,7 +32,6 @@
 #include "verible/common/text/token-stream-view.h"
 #include "verible/common/util/logging.h"
 #include "verible/common/util/range.h"
-#include "verible/common/util/spacer.h"
 #include "verible/verilog/parser/verilog-parser.h"
 #include "verible/verilog/parser/verilog-token-classifications.h"
 #include "verible/verilog/parser/verilog-token-enum.h"
@@ -121,7 +121,7 @@ static size_t NewlineCount(std::string_view s) {
 void FormatWhitespaceWithDisabledByteRanges(
     std::string_view text_base, std::string_view space_text,
     const ByteOffsetSet &disabled_ranges, bool include_disabled_ranges,
-    std::ostream &stream) {
+    std::ostream &stream, verible::LineTerminatorStyle line_terminator_style) {
   VLOG(3) << __FUNCTION__;
   CHECK(verible::IsSubRange(space_text, text_base));
   const int start = std::distance(text_base.begin(), space_text.begin());
@@ -136,7 +136,7 @@ void FormatWhitespaceWithDisabledByteRanges(
   if (space_text.empty() && start != 0) {
     if (!disabled_ranges.Contains(start)) {
       VLOG(3) << "output: 1*\"\\n\" (empty space text)";
-      stream << '\n';
+      verible::EmitLineTerminator(line_terminator_style, stream);
       return;
     }
   }
@@ -159,7 +159,9 @@ void FormatWhitespaceWithDisabledByteRanges(
           text_base.substr(range.first, range.second - range.first));
       const size_t newline_count = NewlineCount(enabled);
       VLOG(3) << "output: " << newline_count << "*\"\\n\" (formatted)";
-      stream << verible::Spacer(newline_count, '\n');
+      for (size_t i = 0; i < newline_count; i++) {
+        verible::EmitLineTerminator(line_terminator_style, stream);
+      }
       partially_enabled = true;
       total_enabled_newlines += newline_count;
     }
@@ -177,7 +179,7 @@ void FormatWhitespaceWithDisabledByteRanges(
   // Print at least one newline if some subrange was format-enabled.
   if (partially_enabled && total_enabled_newlines == 0 && start != 0) {
     VLOG(3) << "output: 1*\"\\n\"";
-    stream << '\n';
+    verible::EmitLineTerminator(line_terminator_style, stream);
   }
 }
 
