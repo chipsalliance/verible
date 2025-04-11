@@ -42,5 +42,9 @@ else
     wget --no-verbose -O kythe.tar.gz \
       "https://github.com/kythe/kythe/releases/download/$KYTHE_VERSION/kythe-$KYTHE_VERSION.tar.gz"
     tar -xzf kythe.tar.gz
+    # Bazel renamed @com_google_protobuf to @protobuf while Kythe is still
+    # using it in their BUILD targets. Manually rename until the fixed Kythe is
+    # released.
+    sed -i 's/@com_google_protobuf/@protobuf/' "kythe-${KYTHE_VERSION}/BUILD"
   )
 fi

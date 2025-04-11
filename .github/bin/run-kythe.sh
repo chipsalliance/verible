@@ -37,6 +37,12 @@ then
     //...
 else
   # Use kythe's released tools.
+  cat >WORKSPACE.bzlmod <<EOL
+local_repository(
+    name = "kythe_release",
+    path = "${KYTHE_DIR_ABS}",
+)
+EOL
   # --override_repository kythe_release expects an absolute dir
   bazel \
     --bazelrc="${KYTHE_DIR_ABS}/extractors.bazelrc" \
