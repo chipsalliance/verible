@@ -35,6 +35,6 @@ export BAZEL_OPTS="-c opt --noshow_progress"
 export BAZEL_VERSION=6.5.0
 
 # Kythe version for extracting xRefs
-export KYTHE_VERSION=v0.0.52
+export KYTHE_VERSION=v0.0.68
 # Kythe version for fetching tools (verification tools, etc.)
 export KYTHE_TOOLS_VERSION=${KYTHE_VERSION}
