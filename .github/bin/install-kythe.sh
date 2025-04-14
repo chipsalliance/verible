@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -x
+
 if [ -z "${KYTHE_VERSION}" ]; then
         echo "Set \$KYTHE_VERSION"
         exit 1

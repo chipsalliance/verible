@@ -14,6 +14,7 @@
 # limitations under the License.
 
 set -e
+set -x
 
 KYTHE_DIRNAME="kythe-${KYTHE_VERSION}"
 KYTHE_DIR_ABS="$(readlink -f "kythe-bin/${KYTHE_DIRNAME}")"
