@@ -123,7 +123,6 @@ jobs:
         mode:
         - test
         - test-clang
-        - test-nortti
         - test-c++20
         - test-c++23
         - smoke-test
@@ -139,8 +138,6 @@ jobs:
         - x86_64
         - arm64
         exclude:
-          - mode: test-nortti
-            arch: arm64
           - mode: test-c++20
             arch: arm64
           - mode: test-c++23
