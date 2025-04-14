@@ -52,11 +52,11 @@ To pipe from stdin, use '-' as <file>.
     --module_net_variable_alignment (Format net/variable declarations:
       {align,flush-left,preserve,infer}); default: infer;
     --named_parameter_alignment (Format named actual parameters:
-      {align,flush-left,preserve,infer}); default: infer;
+      {align,flush-left,preserve,infer,align-both,align-both-separated,align-both-spaced}); default: align-both-spaced;
     --named_parameter_indentation (Indent named parameter assignments:
       {indent,wrap}); default: wrap;
     --named_port_alignment (Format named port connections:
-      {align,flush-left,preserve,infer}); default: infer;
+      {align,flush-left,preserve,infer,align-both,align-both-separated,align-both-spaced}); default: align-both-spaced;
     --named_port_indentation (Indent named port connections: {indent,wrap});
       default: wrap;
     --port_declarations_alignment (Format port declarations:
@@ -345,18 +345,18 @@ tree to work with.
 
 Before outputting the formatted result, several properties are checked:
 
-*   **Equivalence**: The output is lexically equivalent to the input, meaning
-    that only whitespaces may have changed, but all other tokens are equal. For
-    example, if two identifiers accidentally got merged together into one (by
-    removing spaces between them), this check would fail. Lexical equivalence
-    also implies that the output is still parseable.
-*   **Convergence**: Re-formatting the _output_ results in no further changes.
-    This property is particularly important when the formatter is used to
-    _check_ that a file is formatted properly. Without convergence, such a check
-    would fail after formatting, potentially asking the user to run formatting
-    two or more times. Note that this requirement is stricter than _eventual
-    convergence_, which allows multiple iterations before reaching a
-    fixed-point.
+- **Equivalence**: The output is lexically equivalent to the input, meaning
+  that only whitespaces may have changed, but all other tokens are equal. For
+  example, if two identifiers accidentally got merged together into one (by
+  removing spaces between them), this check would fail. Lexical equivalence
+  also implies that the output is still parseable.
+- **Convergence**: Re-formatting the _output_ results in no further changes.
+  This property is particularly important when the formatter is used to
+  _check_ that a file is formatted properly. Without convergence, such a check
+  would fail after formatting, potentially asking the user to run formatting
+  two or more times. Note that this requirement is stricter than _eventual
+  convergence_, which allows multiple iterations before reaching a
+  fixed-point.
 
 ### Internal Limits
 
