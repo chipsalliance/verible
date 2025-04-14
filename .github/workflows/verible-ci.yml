@@ -276,7 +276,8 @@ jobs:
 
 
   KytheXrefs:
-    runs-on: ubuntu-24.04
+    container: ubuntu:jammy
+    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
 
     steps:
 
