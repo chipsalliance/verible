@@ -3600,6 +3600,43 @@ endmodule
   );
 }
 
+TEST(Autoexpand, InvalidLineRange) {
+  TestTextEdits(
+      R"(
+module foo (  /*AUTOARG*/);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+
+  /* qux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE (
+         .o1(out_a[]),
+         .o2(out_b[])
+     ); */
+  bar b (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module foo (  /*AUTOARG*/);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+
+  /* qux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE (
+         .o1(out_a[]),
+         .o2(out_b[])
+     ); */
+  bar b (  /*AUTOINST*/);
+endmodule
+)",
+      TestRun{.edit_fn = [](SymbolTableHandler *symbol_table_handler,
+                            BufferTracker *tracker) {
+        return AutoExpandCodeActionToTextEdits(
+            symbol_table_handler, tracker,
+            {.start = {.line = 5}, .end = {.line = 1}},
+            "Expand with invalid range");
+      }}.repeat());
+}
+
 TEST(Autoexpand, InstanceNotModule) {
   TestTextEdits(
       R"(
