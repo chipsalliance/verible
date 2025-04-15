@@ -14,6 +14,7 @@
 # limitations under the License.
 
 set -e
+set -x
 
 KYTHE_DIRNAME="kythe-${KYTHE_VERSION}"
 KYTHE_DIR_ABS="$(readlink -f "kythe-bin/${KYTHE_DIRNAME}")"
@@ -37,6 +38,12 @@ then
     //...
 else
   # Use kythe's released tools.
+  cat >WORKSPACE.bzlmod <<EOL
+local_repository(
+    name = "kythe_release",
+    path = "${KYTHE_DIR_ABS}",
+)
+EOL
   # --override_repository kythe_release expects an absolute dir
   bazel \
     --bazelrc="${KYTHE_DIR_ABS}/extractors.bazelrc" \

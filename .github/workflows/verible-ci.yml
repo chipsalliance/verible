@@ -276,8 +276,8 @@ jobs:
 
 
   KytheXrefs:
-    runs-on: ubuntu-20.04
-    if: false   # Currently disabled, need to investigate failure.
+    container: ubuntu:jammy
+    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
 
     steps:
 
@@ -289,8 +289,14 @@ jobs:
 
     - name: Install Dependencies
       run: |
+        set -x
+        apt -qqy update
+        apt -qq -y install build-essential wget git python3 python-is-python3 default-jdk cmake python3-pip ripgrep
+        apt -qq -y install gcc-10 g++-10
+        apt -qq -y install gcc-12 g++-12
+        apt -qq -y install clang-12
         source ./.github/settings.sh
-        ./.github/bin/set-compiler.sh 10
+        ./.github/bin/set-compiler.sh 11
         ./.github/bin/install-bazel.sh
         ./.github/bin/install-kythe.sh
 
@@ -310,7 +316,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        echo "USE_BAZEL_VERSION=6.5.0" >> $GITHUB_ENV
+        echo "USE_BAZEL_VERSION=7.6.1" >> $GITHUB_ENV
 
     - name: Checkout code
       uses: actions/checkout@v4
@@ -391,7 +397,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        choco install bazel --force --version=6.5.0
+        choco install bazel --force --version=7.6.1
         choco install winflexbison3
         choco install llvm --allow-downgrade --version=17.0.6
 
