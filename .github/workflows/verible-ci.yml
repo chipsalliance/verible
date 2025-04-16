@@ -251,7 +251,7 @@ jobs:
 
 
   KytheVerification:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: false   # Currently disabled, need to investigate further
 
     steps:
@@ -276,7 +276,7 @@ jobs:
 
 
   KytheXrefs:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: false   # Currently disabled, need to investigate failure.
 
     steps:
@@ -469,7 +469,7 @@ jobs:
   Release:
     name: 📦 Release
     needs: [ Check, PackReleaseSource, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
 
@@ -527,7 +527,7 @@ jobs:
   GhPages:
     name: Build and deploy GitHub pages
     needs: [Check]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
 
