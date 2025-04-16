@@ -215,6 +215,7 @@ cc_library(
     srcs = ["comment-controls.cc"],
     hdrs = ["comment-controls.h"],
     deps = [
+        "//verible/common/formatting:basic-format-style",
         "//verible/common/strings:comment-utils",
         "//verible/common/strings:display-utils",
         "//verible/common/strings:line-column-map",
