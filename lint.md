@@ -382,4 +382,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2025-04-16 09:23:03 -0700 from [d0f83bf](https://github.com/google/verible/commit/d0f83bfdc3963a40a43a3fa639a0ee28f2e2067d)
+Generated on 2025-04-22 11:53:50 -0700 from [6a70680](https://github.com/google/verible/commit/6a70680a475de8d94e2491e37d7f6f2b8ad09d05)
