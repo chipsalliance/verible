@@ -335,7 +335,6 @@ cc_library(
         "//verible/common/formatting:__pkg__",
         "//verible/common/lexer:__pkg__",
         "//verible/verilog/CST:__pkg__",
-        "//verible/verilog/analysis:__pkg__",
         "//verible/verilog/analysis/checkers:__pkg__",
         "//verible/verilog/formatting:__pkg__",
         "//verible/verilog/parser:__pkg__",
