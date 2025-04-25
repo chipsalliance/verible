@@ -42,3 +42,8 @@ ${BANT} compile-flags 2>/dev/null > compile_flags.txt
 for d in bazel-out/../../../external/*flex*/src/FlexLexer.h ; do
   echo "-I$(dirname $d)" >> compile_flags.txt
 done
+
+# clang-tidy sometimes has issues figuring out if a file is c++,
+# so let's tell it. Bant can't always exctract that yet from --config redirects
+# in .bazelrc
+echo "-xc++" >> compile_flags.txt
