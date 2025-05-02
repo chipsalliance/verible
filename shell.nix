@@ -12,8 +12,7 @@ verible_used_stdenv.mkDerivation {
   name = "verible-build-environment";
   buildInputs = with pkgs;
     [
-      bazel_6
-      jdk11
+      bazel_7
       git
 
       # For scripts used inside bzl rules and tests
