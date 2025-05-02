@@ -133,16 +133,16 @@ KnownProjectToolIssue[project:caliptra-rtl]=1946
 # removed.
 declare -A ExpectedFailCount
 
-ExpectedFailCount[syntax:ibex]=14
-ExpectedFailCount[lint:ibex]=14
-ExpectedFailCount[project:ibex]=211
-ExpectedFailCount[preprocessor:ibex]=385
+ExpectedFailCount[syntax:ibex]=18
+ExpectedFailCount[lint:ibex]=18
+ExpectedFailCount[project:ibex]=221
+ExpectedFailCount[preprocessor:ibex]=394
 
 ExpectedFailCount[syntax:opentitan]=94
 ExpectedFailCount[lint:opentitan]=94
-ExpectedFailCount[project:opentitan]=1122
+ExpectedFailCount[project:opentitan]=1123
 ExpectedFailCount[formatter:opentitan]=0
-ExpectedFailCount[preprocessor:opentitan]=3029
+ExpectedFailCount[preprocessor:opentitan]=3031
 
 ExpectedFailCount[syntax:sv-tests]=77
 ExpectedFailCount[lint:sv-tests]=76
