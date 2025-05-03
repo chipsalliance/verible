@@ -35,14 +35,14 @@ EOF
 cp ${MY_INPUT_FILE} ${MY_EXPECT_FILE}
 
 for original_newline in LF CRLF; do
-  if [[ "$original_newline" == "CRLF" ]] then
+  if [[ "$original_newline" == "CRLF" ]]; then
     unix2dos ${MY_INPUT_FILE}
   else
     dos2unix ${MY_INPUT_FILE}
   fi
 
   for target_newline in LF CRLF; do
-    if [[ "$target_newline" == "CRLF" ]] then
+    if [[ "$target_newline" == "CRLF" ]]; then
       unix2dos ${MY_EXPECT_FILE}
     else
       dos2unix ${MY_EXPECT_FILE}
