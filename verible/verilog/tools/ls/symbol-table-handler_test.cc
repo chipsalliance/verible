@@ -50,8 +50,23 @@ static constexpr std::string_view  //
 endmodule
 )");
 
+class SymbolTableHandlerTest : public ::testing::Test {
+ protected:
+  void SetUp() final {
+    sources_dir = verible::file::JoinPath(
+        ::testing::TempDir(),
+        ::testing::UnitTest::GetInstance()->current_test_info()->name());
+    const absl::Status status = verible::file::CreateDir(sources_dir);
+    ASSERT_TRUE(status.ok()) << status;
+  }
+
+  void TearDown() final { std::filesystem::remove(sources_dir); }
+
+  std::string sources_dir;
+};
+
 // Tests the behavior of SymbolTableHandler for not existing directory.
-TEST(SymbolTableHandlerTest, InitializationNoRoot) {
+TEST_F(SymbolTableHandlerTest, InitializationNoRoot) {
   std::shared_ptr<VerilogProject> project = std::make_shared<VerilogProject>(
       "non-existing-root", std::vector<std::string>());
 
@@ -61,12 +76,7 @@ TEST(SymbolTableHandlerTest, InitializationNoRoot) {
 }
 
 // Tests the behavior of SymbolTableHandler for an empty directory.
-TEST(SymbolTableHandlerTest, EmptyDirectoryProject) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest, EmptyDirectoryProject) {
   std::shared_ptr<VerilogProject> project =
       std::make_shared<VerilogProject>(sources_dir, std::vector<std::string>());
 
@@ -77,17 +87,12 @@ TEST(SymbolTableHandlerTest, EmptyDirectoryProject) {
   symbol_table_handler.BuildProjectSymbolTable();
 }
 
-TEST(SymbolTableHandlerTest, NullVerilogProject) {
+TEST_F(SymbolTableHandlerTest, NullVerilogProject) {
   SymbolTableHandler symbol_table_handler;
   symbol_table_handler.SetProject(nullptr);
 }
 
-TEST(SymbolTableHandlerTest, InvalidFileListSyntax) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest, InvalidFileListSyntax) {
   const verible::file::testing::ScopedTestFile filelist(sources_dir, "@@",
                                                         "verible.filelist");
 
@@ -100,12 +105,7 @@ TEST(SymbolTableHandlerTest, InvalidFileListSyntax) {
   symbol_table_handler.BuildProjectSymbolTable();
 }
 
-TEST(SymbolTableHandlerTest, LoadFileList) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest, LoadFileList) {
   std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
@@ -128,12 +128,7 @@ TEST(SymbolTableHandlerTest, LoadFileList) {
   ASSERT_EQ(diagnostics.size(), 0);
 }
 
-TEST(SymbolTableHandlerTest, FileListWithNonExistingFile) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest, FileListWithNonExistingFile) {
   std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
@@ -154,12 +149,7 @@ TEST(SymbolTableHandlerTest, FileListWithNonExistingFile) {
   ASSERT_EQ(diagnostics.size(), 1);
 }
 
-TEST(SymbolTableHandlerTest, MissingFileList) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest, MissingFileList) {
   const verible::file::testing::ScopedTestFile module_a(sources_dir,
                                                         kSampleModuleA, "a.sv");
   const verible::file::testing::ScopedTestFile module_b(sources_dir,
@@ -176,12 +166,7 @@ TEST(SymbolTableHandlerTest, MissingFileList) {
   ASSERT_EQ(diagnostics.size(), 0);
 }
 
-TEST(SymbolTableHandlerTest, DefinitionNotTrackedFile) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest, DefinitionNotTrackedFile) {
   std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
@@ -218,13 +203,8 @@ TEST(SymbolTableHandlerTest, DefinitionNotTrackedFile) {
   EXPECT_EQ(location.size(), 0);
 }
 
-TEST(SymbolTableHandlerTest,
-     FindRenamableRangeAtCursorReturnsNullUntrackedFile) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest,
+       FindRenamableRangeAtCursorReturnsNullUntrackedFile) {
   std::string_view filelist_content = "b.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
@@ -267,13 +247,8 @@ TEST(SymbolTableHandlerTest,
 // is of type module a, so it should complain about a null definition. However,
 // the renamable range actually returns something useful.
 // (verify: is this #1678 fixing it ?)
-TEST(SymbolTableHandlerTest,
-     FindRenamableRangeAtCursorReturnsNullDefinitionUnknown) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest,
+       FindRenamableRangeAtCursorReturnsNullDefinitionUnknown) {
   std::string_view filelist_content = "b.sv\n";
 
   const verible::file::testing::ScopedTestFile filelist(
@@ -315,12 +290,7 @@ TEST(SymbolTableHandlerTest,
   ASSERT_TRUE(edit_range.has_value());
 }
 
-TEST(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
   std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
@@ -364,13 +334,8 @@ TEST(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
     EXPECT_EQ(edit_range.value().start.character, 9);
   }
 }
-TEST(SymbolTableHandlerTest,
-     FindRenameLocationsAndCreateEditsReturnsLocationsTest) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest,
+       FindRenameLocationsAndCreateEditsReturnsLocationsTest) {
   std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
@@ -416,13 +381,8 @@ TEST(SymbolTableHandlerTest,
       1);
 }
 
-TEST(SymbolTableHandlerTest,
-     FindRenameLocationsAndCreateEditsReturnsLocationsOnDirtyFilesTest) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest,
+       FindRenameLocationsAndCreateEditsReturnsLocationsOnDirtyFilesTest) {
   std::string_view filelist_content =
       "a.sv\n"
       "b.sv\n";
@@ -478,12 +438,7 @@ TEST(SymbolTableHandlerTest,
       1);
 }
 
-TEST(SymbolTableHandlerTest, UpdateWithUnparseableEditorContentRegression) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir =
-      verible::file::JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
-
+TEST_F(SymbolTableHandlerTest, UpdateWithUnparseableEditorContentRegression) {
   std::string_view filelist_content;
   const verible::file::testing::ScopedTestFile filelist(
       sources_dir, filelist_content, "verible.filelist");
@@ -527,7 +482,7 @@ TEST(SymbolTableHandlerTest, UpdateWithUnparseableEditorContentRegression) {
   parsed_buffers.GetSubscriptionCallback()(uri, &a_buffer);
 }
 
-TEST(SymbolTableHandlerTest, MissingVerilogProject) {
+TEST_F(SymbolTableHandlerTest, MissingVerilogProject) {
   SymbolTableHandler symbol_table_handler;
   std::vector<absl::Status> diagnostics =
       symbol_table_handler.BuildProjectSymbolTable();
