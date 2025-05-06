@@ -14,6 +14,7 @@
 
 #include "verible/verilog/tools/ls/symbol-table-handler.h"
 
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
