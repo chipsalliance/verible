@@ -15,6 +15,7 @@
 #include "verible/verilog/analysis/symbol-table.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <iostream>
 #include <iterator>
 #include <memory>
@@ -385,7 +386,22 @@ TEST(SymbolTablePrintTest, PrintClass) {
   }
 }
 
-TEST(BuildSymbolTableTest, IntegrityCheckResolvedSymbol) {
+class BuildSymbolTableTest : public ::testing::Test {
+ protected:
+  void SetUp() final {
+    sources_dir = verible::file::JoinPath(
+        ::testing::TempDir(),
+        ::testing::UnitTest::GetInstance()->current_test_info()->name());
+    const absl::Status status = verible::file::CreateDir(sources_dir);
+    ASSERT_TRUE(status.ok()) << status;
+  }
+
+  void TearDown() final { std::filesystem::remove(sources_dir); }
+
+  std::string sources_dir;
+};
+
+TEST_F(BuildSymbolTableTest, IntegrityCheckResolvedSymbol) {
   const auto test_func = []() {
     SymbolTable::Tester symbol_table_1(nullptr), symbol_table_2(nullptr);
     SymbolTableNode &root1(symbol_table_1.MutableRoot());
@@ -407,7 +423,7 @@ TEST(BuildSymbolTableTest, IntegrityCheckResolvedSymbol) {
                "Resolved symbols must point to a node in the same SymbolTable");
 }
 
-TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
+TEST_F(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
   const auto test_func = []() {
     SymbolTable::Tester symbol_table_1(nullptr), symbol_table_2(nullptr);
     SymbolTableNode &root1(symbol_table_1.MutableRoot());
@@ -431,7 +447,7 @@ TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
                "Resolved symbols must point to a node in the same SymbolTable");
 }
 
-TEST(BuildSymbolTableTest, InvalidSyntax) {
+TEST_F(BuildSymbolTableTest, InvalidSyntax) {
   constexpr std::string_view invalid_codes[] = {
       "module;\nendmodule\n",
   };
@@ -456,7 +472,7 @@ TEST(BuildSymbolTableTest, InvalidSyntax) {
   }
 }
 
-TEST(BuildSymbolTableTest, AvoidCrashFromFuzzer) {
+TEST_F(BuildSymbolTableTest, AvoidCrashFromFuzzer) {
   // All that matters is that these test cases do not trigger crashes.
   constexpr std::string_view codes[] = {
       // some of these test cases come from fuzz testing
@@ -484,7 +500,7 @@ TEST(BuildSymbolTableTest, AvoidCrashFromFuzzer) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationSingleEmpty) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationSingleEmpty) {
   TestVerilogSourceFile src("foobar.sv", "module m;\nendmodule\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
@@ -507,7 +523,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationSingleEmpty) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationLocalNetsVariables) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationLocalNetsVariables) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m;\n"
                             "  wire w1, w2;\n"
@@ -543,7 +559,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalNetsVariables) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationLocalDuplicateNets) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationLocalDuplicateNets) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m;\n"
                             "  wire y1;\n"
@@ -574,7 +590,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalDuplicateNets) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateAnonymous) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateAnonymous) {
   constexpr std::string_view source_variants[] = {
       // with begin/end
       "module m;\n"
@@ -647,7 +663,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateAnonymous) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateLabeled) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateLabeled) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m;\n"
                             "  if (1) begin : cc\n"
@@ -699,7 +715,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateLabeled) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m (\n"
                             "  input wire clk,\n"
@@ -736,7 +752,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationMultiple) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationMultiple) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m1;\nendmodule\n"
                             "module m2;\nendmodule\n");
@@ -764,7 +780,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationMultiple) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationDuplicate) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationDuplicate) {
   TestVerilogSourceFile src("foobar.sv",
                             "module mm;\nendmodule\n"
                             "module mm;\nendmodule\n");
@@ -793,7 +809,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationDuplicate) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationDuplicateSeparateFiles) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationDuplicateSeparateFiles) {
   TestVerilogSourceFile src("foobar.sv", "module mm;\nendmodule\n");
   TestVerilogSourceFile src2("foobar-2.sv", "module mm;\nendmodule\n");
   const auto status = src.Parse();
@@ -824,7 +840,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationDuplicateSeparateFiles) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationNested) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationNested) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m_outer;\n"
                             "  module m_inner;\n"
@@ -859,7 +875,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNested) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationNestedDuplicate) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationNestedDuplicate) {
   TestVerilogSourceFile src("foobar.sv",
                             "module outer;\n"
                             "  module mm;\nendmodule\n"
@@ -886,7 +902,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNestedDuplicate) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleInstance) {
+TEST_F(BuildSymbolTableTest, ModuleInstance) {
   // The following code variants should yield the same symbol table results:
   static constexpr std::string_view source_variants[] = {
       // pp defined earlier in file
@@ -969,7 +985,7 @@ TEST(BuildSymbolTableTest, ModuleInstance) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
+TEST_F(BuildSymbolTableTest, ModuleInstanceUndefined) {
   TestVerilogSourceFile src("foobar.sv",
                             "module qq;\n"
                             "  pp rr();\n"  // instance, pp undefined
@@ -1032,7 +1048,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
+TEST_F(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
   static constexpr std::string_view source_variants[] = {
       // The following all yield equivalent symbol tables bindings.
       "module pp;\n"
@@ -1123,7 +1139,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleInstancePositionalPortConnection) {
+TEST_F(BuildSymbolTableTest, ModuleInstancePositionalPortConnection) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m (\n"
                             "  input wire clk,\n"
@@ -1186,7 +1202,7 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalPortConnection) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
+TEST_F(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m (\n"
                             "  input wire clk,\n"
@@ -1276,8 +1292,8 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnection) {
   }
 }
 
-TEST(BuildSymbolTableTest,
-     ModuleInstanceNamedPortConnectionResolveLocallyOnly) {
+TEST_F(BuildSymbolTableTest,
+       ModuleInstanceNamedPortConnectionResolveLocallyOnly) {
   // Similar to ModuleInstanceNamedPortConnection, but will not resolve
   // non-local references.
   TestVerilogSourceFile src("foobar.sv",
@@ -1371,7 +1387,7 @@ TEST(BuildSymbolTableTest,
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
+TEST_F(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m #(\n"
                             "  int N = 1\n"
@@ -1425,7 +1441,7 @@ TEST(BuildSymbolTableTest, ModuleInstancePositionalParameterAssignment) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
+TEST_F(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m #(\n"
                             "  int N = 0,\n"
@@ -1497,7 +1513,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
   }
 }
 
-TEST(BuildSymbolTableTest, TimerAsModuleNameRegressionIssue917) {
+TEST_F(BuildSymbolTableTest, TimerAsModuleNameRegressionIssue917) {
   TestVerilogSourceFile src("foobar.sv",
                             "module foo;\n"
                             " timer #(.N(1)) t;\n"
@@ -1514,7 +1530,7 @@ TEST(BuildSymbolTableTest, TimerAsModuleNameRegressionIssue917) {
   MUST_ASSIGN_LOOKUP_SYMBOL(timer_instance_node, foo_node, "t");
 }
 
-TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
+TEST_F(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m #(\n"
                             "  int N = 0\n"
@@ -1582,7 +1598,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterIsPort) {
+TEST_F(BuildSymbolTableTest, ModuleInstanceNamedParameterIsPort) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m #(\n"
                             "  int N = 0\n"
@@ -1651,7 +1667,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterIsPort) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
+TEST_F(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m (\n"
                             "  input wire clk,\n"
@@ -1724,7 +1740,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedPortConnectionNonexistentPort) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterNonexistentError) {
+TEST_F(BuildSymbolTableTest, ModuleInstanceNamedParameterNonexistentError) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m #(\n"
                             "  int N = 0,\n"
@@ -1798,7 +1814,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterNonexistentError) {
   }
 }
 
-TEST(BuildSymbolTableTest, OneGlobalIntParameter) {
+TEST_F(BuildSymbolTableTest, OneGlobalIntParameter) {
   TestVerilogSourceFile src("foobar.sv", "localparam int mint = 1;\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
@@ -1823,7 +1839,7 @@ TEST(BuildSymbolTableTest, OneGlobalIntParameter) {
   }
 }
 
-TEST(BuildSymbolTableTest, OneGlobalUndefinedTypeParameter) {
+TEST_F(BuildSymbolTableTest, OneGlobalUndefinedTypeParameter) {
   TestVerilogSourceFile src("foobar.sv", "localparam foo_t gun = 1;\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
@@ -1855,7 +1871,7 @@ TEST(BuildSymbolTableTest, OneGlobalUndefinedTypeParameter) {
   }
 }
 
-TEST(BuildSymbolTableTest, ReferenceOneParameterExpression) {
+TEST_F(BuildSymbolTableTest, ReferenceOneParameterExpression) {
   TestVerilogSourceFile src("foobar.sv",
                             "localparam int mint = 1;\n"
                             "localparam int tea = mint;\n");
@@ -1898,7 +1914,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterExpression) {
   }
 }
 
-TEST(BuildSymbolTableTest, OneUnresolvedReferenceInExpression) {
+TEST_F(BuildSymbolTableTest, OneUnresolvedReferenceInExpression) {
   TestVerilogSourceFile src("foobar.sv", "localparam int mint = spice;\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
@@ -1939,7 +1955,7 @@ TEST(BuildSymbolTableTest, OneUnresolvedReferenceInExpression) {
   }
 }
 
-TEST(BuildSymbolTableTest, PackageDeclarationSingle) {
+TEST_F(BuildSymbolTableTest, PackageDeclarationSingle) {
   TestVerilogSourceFile src("foobar.sv", "package my_pkg;\nendpackage\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
@@ -1962,7 +1978,7 @@ TEST(BuildSymbolTableTest, PackageDeclarationSingle) {
   }
 }
 
-TEST(BuildSymbolTableTest, ReferenceOneParameterFromPackageToRoot) {
+TEST_F(BuildSymbolTableTest, ReferenceOneParameterFromPackageToRoot) {
   TestVerilogSourceFile src("foobar.sv",
                             "localparam int mint = 1;\n"
                             "package p;\n"
@@ -2005,7 +2021,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromPackageToRoot) {
   }
 }
 
-TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
+TEST_F(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
   TestVerilogSourceFile src(
       "foobar.sv",
       "package p;\n"
@@ -2055,7 +2071,8 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackage) {
   }
 }
 
-TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
+TEST_F(BuildSymbolTableTest,
+       ReferenceOneParameterFromRootToPackageNoSuchMember) {
   TestVerilogSourceFile src("foobar.sv",
                             "package p;\n"
                             "localparam int mint = 1;\n"
@@ -2106,7 +2123,7 @@ TEST(BuildSymbolTableTest, ReferenceOneParameterFromRootToPackageNoSuchMember) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationWithParameters) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationWithParameters) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m #(\n"
                             "  int W = 2,\n"
@@ -2172,7 +2189,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithParameters) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
+TEST_F(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m #(\n"
                             "  parameter int N = 2\n"
@@ -2228,7 +2245,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalsDependOnParameter) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleSingleImplicitDeclaration) {
+TEST_F(BuildSymbolTableTest, ModuleSingleImplicitDeclaration) {
   TestVerilogSourceFile src("foo.sv",
                             "module m;"
                             "assign a = 1'b0;"
@@ -2282,7 +2299,7 @@ TEST(BuildSymbolTableTest, ModuleSingleImplicitDeclaration) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleReferenceToImplicitDeclaration) {
+TEST_F(BuildSymbolTableTest, ModuleReferenceToImplicitDeclaration) {
   TestVerilogSourceFile src("foo.sv",
                             "module m;"
                             "assign a = 1'b0;"
@@ -2345,7 +2362,7 @@ TEST(BuildSymbolTableTest, ModuleReferenceToImplicitDeclaration) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleReferenceToImplicitDeclarationInSubScope) {
+TEST_F(BuildSymbolTableTest, ModuleReferenceToImplicitDeclarationInSubScope) {
   TestVerilogSourceFile src("foo.sv",
                             "module m;"
                             " assign a = 1'b0;"
@@ -2428,7 +2445,7 @@ TEST(BuildSymbolTableTest, ModuleReferenceToImplicitDeclarationInSubScope) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleExplicitDeclarationInSubScope) {
+TEST_F(BuildSymbolTableTest, ModuleExplicitDeclarationInSubScope) {
   TestVerilogSourceFile src("foo.sv",
                             "module m;"
                             " assign a = 1'b0;"
@@ -2520,7 +2537,7 @@ TEST(BuildSymbolTableTest, ModuleExplicitDeclarationInSubScope) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleExplicitAndImplicitDeclarations) {
+TEST_F(BuildSymbolTableTest, ModuleExplicitAndImplicitDeclarations) {
   TestVerilogSourceFile src("foo.sv",
                             "module m;"
                             "wire b;"
@@ -2600,7 +2617,7 @@ TEST(BuildSymbolTableTest, ModuleExplicitAndImplicitDeclarations) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModuleImplicitRedeclared) {
+TEST_F(BuildSymbolTableTest, ModuleImplicitRedeclared) {
   TestVerilogSourceFile src("foo.sv",
                             "module m;\n"
                             "assign a = 1'b0;\n"
@@ -2618,7 +2635,7 @@ TEST(BuildSymbolTableTest, ModuleImplicitRedeclared) {
             "at 2:8:");
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationSingle) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationSingle) {
   TestVerilogSourceFile src("foobar.sv", "class ccc;\nendclass\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
@@ -2641,7 +2658,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingle) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationNested) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationNested) {
   TestVerilogSourceFile src("foobar.sv",
                             "package pp;\n"
                             "  class c_outer;\n"
@@ -2683,7 +2700,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationNested) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationWithParameter) {
   TestVerilogSourceFile src("foobar.sv",
                             "class cc #(\n"
                             "  int N = 2\n"
@@ -2718,7 +2735,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationWithParameter) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationDataMember) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationDataMember) {
   TestVerilogSourceFile src("member_accessor.sv",
                             "class cc;\n"
                             "  int size;\n"
@@ -2765,7 +2782,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMember) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationDataMemberMultiDeclaration) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationDataMemberMultiDeclaration) {
   TestVerilogSourceFile src("member_accessor.sv",
                             "class cc;\n"
                             "  real height, width;\n"
@@ -2812,7 +2829,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberMultiDeclaration) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationDataMemberAccessedFromMethod) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationDataMemberAccessedFromMethod) {
   TestVerilogSourceFile src("member_accessor.sv",
                             "class cc;\n"
                             "  int size;\n"
@@ -2863,7 +2880,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationDataMemberAccessedFromMethod) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDataMemberAccessedDirectly) {
+TEST_F(BuildSymbolTableTest, ClassDataMemberAccessedDirectly) {
   TestVerilogSourceFile src("member_accessor.sv",
                             "class cc;\n"
                             "  int size;\n"
@@ -2926,7 +2943,7 @@ TEST(BuildSymbolTableTest, ClassDataMemberAccessedDirectly) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
   TestVerilogSourceFile src("member_accessor.sv",
                             "class base;\n"
                             "endclass\n"
@@ -2979,7 +2996,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritance) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritanceAcrossPackage) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationSingleInheritanceAcrossPackage) {
   TestVerilogSourceFile src("member_accessor.sv",
                             "package pp;\n"
                             "  class base;\n"
@@ -3048,7 +3065,8 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritanceAcrossPackage) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritancePackageToPackage) {
+TEST_F(BuildSymbolTableTest,
+       ClassDeclarationSingleInheritancePackageToPackage) {
   TestVerilogSourceFile src("member_accessor.sv",
                             "package pp;\n"
                             "  class base;\n"
@@ -3123,7 +3141,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationSingleInheritancePackageToPackage) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
   TestVerilogSourceFile src("classilicious.sv",
                             "class pp;\n"
                             "  class base;\n"
@@ -3197,7 +3215,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationInLineConstructorDefinition) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationInLineConstructorDefinition) {
   TestVerilogSourceFile src("ctor.sv",
                             "class C;\n"
                             "  function new();\n"
@@ -3232,7 +3250,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationInLineConstructorDefinition) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationOutOfLineConstructorDefinition) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationOutOfLineConstructorDefinition) {
   TestVerilogSourceFile src("ctor.sv",
                             "class C;\n"
                             "  extern function new;\n"
@@ -3286,7 +3304,8 @@ TEST(BuildSymbolTableTest, ClassDeclarationOutOfLineConstructorDefinition) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedMemberFromMethod) {
+TEST_F(BuildSymbolTableTest,
+       ClassDeclarationReferenceInheritedMemberFromMethod) {
   TestVerilogSourceFile src("member_from_parent.sv",
                             "class base;\n"
                             "  int count;\n"
@@ -3353,7 +3372,7 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedMemberFromMethod) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationReferenceGrandparentMember) {
+TEST_F(BuildSymbolTableTest, ClassDeclarationReferenceGrandparentMember) {
   TestVerilogSourceFile src("member_from_parent.sv",
                             "class base;\n"
                             "  int count;\n"
@@ -3450,8 +3469,8 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceGrandparentMember) {
   }
 }
 
-TEST(BuildSymbolTableTest,
-     ClassDeclarationReferenceInheritedMemberDirectAccess) {
+TEST_F(BuildSymbolTableTest,
+       ClassDeclarationReferenceInheritedMemberDirectAccess) {
   TestVerilogSourceFile src("member_from_parent.sv",
                             "class base;\n"
                             "  int count;\n"
@@ -3555,7 +3574,8 @@ TEST(BuildSymbolTableTest,
   }
 }
 
-TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedBaseClassMethod) {
+TEST_F(BuildSymbolTableTest,
+       ClassDeclarationReferenceInheritedBaseClassMethod) {
   TestVerilogSourceFile src("member_from_parent.sv",
                             "class base;\n"
                             "  function int count();\n"
@@ -3623,8 +3643,8 @@ TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedBaseClassMethod) {
   }
 }
 
-TEST(BuildSymbolTableTest,
-     ClassDeclarationReferenceInheritedBaseMethodFromObject) {
+TEST_F(BuildSymbolTableTest,
+       ClassDeclarationReferenceInheritedBaseMethodFromObject) {
   TestVerilogSourceFile src("member_from_parent.sv",
                             "class base;\n"
                             "  function int count();\n"
@@ -3729,7 +3749,7 @@ TEST(BuildSymbolTableTest,
   }
 }
 
-TEST(BuildSymbolTableTest, TypeParameterizedModuleDeclaration) {
+TEST_F(BuildSymbolTableTest, TypeParameterizedModuleDeclaration) {
   TestVerilogSourceFile src("camelot_param_alot.sv",
                             "module mm #(parameter type T = bit);\n"
                             "endmodule\n");
@@ -3760,7 +3780,7 @@ TEST(BuildSymbolTableTest, TypeParameterizedModuleDeclaration) {
   }
 }
 
-TEST(BuildSymbolTableTest, TypeParameterizedClassDataDeclarations) {
+TEST_F(BuildSymbolTableTest, TypeParameterizedClassDataDeclarations) {
   TestVerilogSourceFile src("i_push_the_param_alot.sv",
                             "class cc #(parameter type T = bit);\n"
                             "endclass\n"
@@ -3823,8 +3843,8 @@ TEST(BuildSymbolTableTest, TypeParameterizedClassDataDeclarations) {
   }
 }
 
-TEST(BuildSymbolTableTest,
-     TypeParameterizedClassDataDeclarationsPackageQualifiedTwoParams) {
+TEST_F(BuildSymbolTableTest,
+       TypeParameterizedClassDataDeclarationsPackageQualifiedTwoParams) {
   TestVerilogSourceFile src(
       "i_eat_ham_and_jam_and_spam_alot.sv",
       "package pp;\n"
@@ -3915,7 +3935,7 @@ TEST(BuildSymbolTableTest,
   }
 }
 
-TEST(BuildSymbolTableTest, NestedTypeParameterizedClassDataDeclaration) {
+TEST_F(BuildSymbolTableTest, NestedTypeParameterizedClassDataDeclaration) {
   TestVerilogSourceFile src(
       "its_fun_down_here_in_Camelot.sv",
       "class outer #(parameter type S = int);\n"
@@ -4007,8 +4027,8 @@ TEST(BuildSymbolTableTest, NestedTypeParameterizedClassDataDeclaration) {
   }
 }
 
-TEST(BuildSymbolTableTest,
-     TypeParameterizedClassDataDeclarationNamedParameters) {
+TEST_F(BuildSymbolTableTest,
+       TypeParameterizedClassDataDeclarationNamedParameters) {
   TestVerilogSourceFile src("its_fun_down_here_in_Camelot.sv",
                             "class cc #(\n"
                             "  parameter type S = int,\n"
@@ -4087,8 +4107,8 @@ TEST(BuildSymbolTableTest,
   }
 }
 
-TEST(BuildSymbolTableTest,
-     NestedTypeParameterizedClassDataDeclarationNamedParameters) {
+TEST_F(BuildSymbolTableTest,
+       NestedTypeParameterizedClassDataDeclarationNamedParameters) {
   TestVerilogSourceFile src(
       "i_need_to_upgrade_my_RAM_alot.sv",
       "class outer #(parameter type S = int);\n"
@@ -4207,7 +4227,7 @@ TEST(BuildSymbolTableTest,
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
+TEST_F(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
   TestVerilogSourceFile src("funkytown.sv",
                             "function ff;\n"
                             "endfunction\n");
@@ -4234,7 +4254,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationNoReturnType) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationWithPort) {
+TEST_F(BuildSymbolTableTest, FunctionDeclarationWithPort) {
   TestVerilogSourceFile src("funkytown.sv",
                             "function ff(int g);\n"
                             "endfunction\n");
@@ -4271,7 +4291,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationWithPort) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationWithLocalVariable) {
+TEST_F(BuildSymbolTableTest, FunctionDeclarationWithLocalVariable) {
   TestVerilogSourceFile src("funkytown.sv",
                             "function ff();\n"
                             "  logic g;\n"
@@ -4309,7 +4329,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationWithLocalVariable) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationVoidReturnType) {
+TEST_F(BuildSymbolTableTest, FunctionDeclarationVoidReturnType) {
   TestVerilogSourceFile src("funkytown.sv",
                             "function void ff;\n"
                             "endfunction\n");
@@ -4338,7 +4358,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationVoidReturnType) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationClassReturnType) {
+TEST_F(BuildSymbolTableTest, FunctionDeclarationClassReturnType) {
   TestVerilogSourceFile src("funkytown.sv",
                             "class cc;\n"
                             "endclass\n"
@@ -4382,7 +4402,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationClassReturnType) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationInModule) {
+TEST_F(BuildSymbolTableTest, FunctionDeclarationInModule) {
   TestVerilogSourceFile src("funkytown.sv",
                             "module mm;\n"
                             "function void ff();\n"
@@ -4420,7 +4440,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationInModule) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassMethodFunctionDeclaration) {
+TEST_F(BuildSymbolTableTest, ClassMethodFunctionDeclaration) {
   TestVerilogSourceFile src("funkytown.sv",
                             "class cc;\n"
                             "function int ff;\n"
@@ -4458,8 +4478,8 @@ TEST(BuildSymbolTableTest, ClassMethodFunctionDeclaration) {
   }
 }
 
-TEST(BuildSymbolTableTest,
-     ClassMethodFunctionDeclarationPackageTypeReturnType) {
+TEST_F(BuildSymbolTableTest,
+       ClassMethodFunctionDeclarationPackageTypeReturnType) {
   TestVerilogSourceFile src("funkytown.sv",
                             "package aa;\n"
                             "class vv;\n"
@@ -4529,7 +4549,7 @@ TEST(BuildSymbolTableTest,
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingOuterClass) {
+TEST_F(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingOuterClass) {
   TestVerilogSourceFile src("outofline_func.sv",
                             "function cc::ff;\n"  // "cc" undeclared
                             "endfunction\n");
@@ -4563,7 +4583,8 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingOuterClass) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineInvalidModuleInjection) {
+TEST_F(BuildSymbolTableTest,
+       FunctionDeclarationOutOfLineInvalidModuleInjection) {
   TestVerilogSourceFile src("outofline_func.sv",
                             "module mm;\n"
                             "endmodule\n"
@@ -4611,7 +4632,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineInvalidModuleInjection) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingPrototype) {
+TEST_F(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingPrototype) {
   TestVerilogSourceFile src("outofline_func.sv",
                             "class cc;\n"
                             // no "ff" prototype
@@ -4662,7 +4683,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineMissingPrototype) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationMethodPrototypeOnly) {
+TEST_F(BuildSymbolTableTest, FunctionDeclarationMethodPrototypeOnly) {
   TestVerilogSourceFile src("outofline_func.sv",
                             "class cc;\n"
                             "  extern function int ff(logic ll);\n"
@@ -4702,7 +4723,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationMethodPrototypeOnly) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineWithMethodPrototype) {
+TEST_F(BuildSymbolTableTest, FunctionDeclarationOutOfLineWithMethodPrototype) {
   TestVerilogSourceFile src(
       "outofline_func.sv",
       "class cc;\n"
@@ -4768,7 +4789,7 @@ TEST(BuildSymbolTableTest, FunctionDeclarationOutOfLineWithMethodPrototype) {
   }
 }
 
-TEST(BuildSymbolTableTest, TaskDeclaration) {
+TEST_F(BuildSymbolTableTest, TaskDeclaration) {
   TestVerilogSourceFile src("taskrabbit.sv",
                             "task tt;\n"
                             "endtask\n");
@@ -4795,7 +4816,7 @@ TEST(BuildSymbolTableTest, TaskDeclaration) {
   }
 }
 
-TEST(BuildSymbolTableTest, TaskDeclarationInPackage) {
+TEST_F(BuildSymbolTableTest, TaskDeclarationInPackage) {
   TestVerilogSourceFile src("taskrabbit.sv",
                             "package pp;\n"
                             "task tt();\n"
@@ -4825,7 +4846,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInPackage) {
   }
 }
 
-TEST(BuildSymbolTableTest, TaskDeclarationInModule) {
+TEST_F(BuildSymbolTableTest, TaskDeclarationInModule) {
   TestVerilogSourceFile src("taskrabbit.sv",
                             "module mm;\n"
                             "task tt();\n"
@@ -4855,7 +4876,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInModule) {
   }
 }
 
-TEST(BuildSymbolTableTest, TaskDeclarationInClass) {
+TEST_F(BuildSymbolTableTest, TaskDeclarationInClass) {
   TestVerilogSourceFile src("taskrabbit.sv",
                             "class cc;\n"
                             "task tt();\n"
@@ -4885,7 +4906,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationInClass) {
   }
 }
 
-TEST(BuildSymbolTableTest, TaskDeclarationWithPorts) {
+TEST_F(BuildSymbolTableTest, TaskDeclarationWithPorts) {
   TestVerilogSourceFile src("taskrabbit.sv",
                             "task tt(logic ll);\n"
                             "endtask\n");
@@ -4921,7 +4942,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationWithPorts) {
   }
 }
 
-TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingOuterClass) {
+TEST_F(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingOuterClass) {
   TestVerilogSourceFile src("outofline_task.sv",
                             "task cc::tt;\n"  // "cc" undeclared
                             "endtask\n");
@@ -4955,7 +4976,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingOuterClass) {
   }
 }
 
-TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingPrototype) {
+TEST_F(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingPrototype) {
   TestVerilogSourceFile src("outofline_task.sv",
                             "class cc;\n"
                             // no "tt" prototype
@@ -5006,7 +5027,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingPrototype) {
   }
 }
 
-TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineInvalidPackageInjection) {
+TEST_F(BuildSymbolTableTest, TaskDeclarationOutOfLineInvalidPackageInjection) {
   TestVerilogSourceFile src("outofline_task.sv",
                             "package pp;\n"
                             "endpackage\n"
@@ -5054,7 +5075,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineInvalidPackageInjection) {
   }
 }
 
-TEST(BuildSymbolTableTest, TaskDeclarationMethodPrototypeOnly) {
+TEST_F(BuildSymbolTableTest, TaskDeclarationMethodPrototypeOnly) {
   TestVerilogSourceFile src("outofline_task.sv",
                             "class cc;\n"
                             "  extern task tt(logic ll);\n"
@@ -5091,7 +5112,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationMethodPrototypeOnly) {
   }
 }
 
-TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineWithMethodPrototype) {
+TEST_F(BuildSymbolTableTest, TaskDeclarationOutOfLineWithMethodPrototype) {
   TestVerilogSourceFile src("outofline_task.sv",
                             "class cc;\n"
                             "  extern task tt(logic ll);\n"  // prototype
@@ -5153,7 +5174,7 @@ TEST(BuildSymbolTableTest, TaskDeclarationOutOfLineWithMethodPrototype) {
   }
 }
 
-TEST(BuildSymbolTableTest, OutOfLineDefinitionMismatchesPrototype) {
+TEST_F(BuildSymbolTableTest, OutOfLineDefinitionMismatchesPrototype) {
   TestVerilogSourceFile src(
       "outofline_task_or_func.sv",
       "class cc;\n"
@@ -5215,7 +5236,7 @@ TEST(BuildSymbolTableTest, OutOfLineDefinitionMismatchesPrototype) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionCallResolvedSameScope) {
+TEST_F(BuildSymbolTableTest, FunctionCallResolvedSameScope) {
   TestVerilogSourceFile src("call_me.sv",
                             "function int tt();\n"
                             "  return 1;\n"
@@ -5255,7 +5276,7 @@ TEST(BuildSymbolTableTest, FunctionCallResolvedSameScope) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionCallUnresolved) {
+TEST_F(BuildSymbolTableTest, FunctionCallUnresolved) {
   TestVerilogSourceFile src("call_me_not.sv",
                             "function int vv();\n"
                             "  return tt();\n"  // undefined
@@ -5293,7 +5314,7 @@ TEST(BuildSymbolTableTest, FunctionCallUnresolved) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionCallUnresolvedNamedParameters) {
+TEST_F(BuildSymbolTableTest, FunctionCallUnresolvedNamedParameters) {
   TestVerilogSourceFile src("call_me_not.sv",
                             "function int vv();\n"
                             "  return tt(.a(1), .b(2));\n"  // undefined
@@ -5352,7 +5373,7 @@ TEST(BuildSymbolTableTest, FunctionCallUnresolvedNamedParameters) {
   }
 }
 
-TEST(BuildSymbolTableTest, FunctionCallResolvedNamedParameters) {
+TEST_F(BuildSymbolTableTest, FunctionCallResolvedNamedParameters) {
   TestVerilogSourceFile src("call_me_not.sv",
                             "function int tt(int a, int b);\n"
                             "  return 0;\n"
@@ -5423,7 +5444,7 @@ TEST(BuildSymbolTableTest, FunctionCallResolvedNamedParameters) {
   }
 }
 
-TEST(BuildSymbolTableTest, CallNonFunction) {
+TEST_F(BuildSymbolTableTest, CallNonFunction) {
   TestVerilogSourceFile src("call_me.sv",
                             "module tt();\n"
                             "endmodule\n"
@@ -5465,7 +5486,7 @@ TEST(BuildSymbolTableTest, CallNonFunction) {
   }
 }
 
-TEST(BuildSymbolTableTest, NestedCallsArguments) {
+TEST_F(BuildSymbolTableTest, NestedCallsArguments) {
   TestVerilogSourceFile src("call_me.sv",
                             "function int tt(int aa);\n"
                             "  return aa + 1;\n"
@@ -5523,7 +5544,7 @@ TEST(BuildSymbolTableTest, NestedCallsArguments) {
   }
 }
 
-TEST(BuildSymbolTableTest, SelfRecursion) {
+TEST_F(BuildSymbolTableTest, SelfRecursion) {
   TestVerilogSourceFile src("call_me_from_me.sv",
                             "function int tt();\n"
                             "  return 1 - tt();\n"
@@ -5557,7 +5578,7 @@ TEST(BuildSymbolTableTest, SelfRecursion) {
   }
 }
 
-TEST(BuildSymbolTableTest, MutualRecursion) {
+TEST_F(BuildSymbolTableTest, MutualRecursion) {
   TestVerilogSourceFile src("call_me_back.sv",
                             "function int tt();\n"
                             "  return vv();\n"
@@ -5605,7 +5626,7 @@ TEST(BuildSymbolTableTest, MutualRecursion) {
   }
 }
 
-TEST(BuildSymbolTableTest, PackageQualifiedFunctionCall) {
+TEST_F(BuildSymbolTableTest, PackageQualifiedFunctionCall) {
   TestVerilogSourceFile src("call_me.sv",
                             "package pp;\n"
                             "  function int tt();\n"
@@ -5659,7 +5680,7 @@ TEST(BuildSymbolTableTest, PackageQualifiedFunctionCall) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassQualifiedFunctionCall) {
+TEST_F(BuildSymbolTableTest, ClassQualifiedFunctionCall) {
   TestVerilogSourceFile src("call_me.sv",
                             "class cc;\n"
                             "  function static int tt();\n"
@@ -5713,7 +5734,7 @@ TEST(BuildSymbolTableTest, ClassQualifiedFunctionCall) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassQualifiedFunctionCallUnresolved) {
+TEST_F(BuildSymbolTableTest, ClassQualifiedFunctionCallUnresolved) {
   TestVerilogSourceFile src("call_me.sv",
                             "class cc;\n"
                             "endclass\n"
@@ -5761,7 +5782,7 @@ TEST(BuildSymbolTableTest, ClassQualifiedFunctionCallUnresolved) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassMethodCall) {
+TEST_F(BuildSymbolTableTest, ClassMethodCall) {
   TestVerilogSourceFile src("call_me.sv",
                             "class cc;\n"
                             "  function int tt();\n"
@@ -5825,7 +5846,7 @@ TEST(BuildSymbolTableTest, ClassMethodCall) {
   }
 }
 
-TEST(BuildSymbolTableTest, ClassMethodCallUnresolved) {
+TEST_F(BuildSymbolTableTest, ClassMethodCallUnresolved) {
   TestVerilogSourceFile src("call_me.sv",
                             "class cc;\n"
                             "endclass\n"
@@ -5883,7 +5904,7 @@ TEST(BuildSymbolTableTest, ClassMethodCallUnresolved) {
   }
 }
 
-TEST(BuildSymbolTableTest, ChainedMethodCall) {
+TEST_F(BuildSymbolTableTest, ChainedMethodCall) {
   TestVerilogSourceFile src("call_me.sv",
                             "class cc;\n"
                             "  function dd tt();\n"
@@ -5982,7 +6003,7 @@ TEST(BuildSymbolTableTest, ChainedMethodCall) {
   }
 }
 
-TEST(BuildSymbolTableTest, ChainedMethodCallReturnTypeNotAClass) {
+TEST_F(BuildSymbolTableTest, ChainedMethodCallReturnTypeNotAClass) {
   TestVerilogSourceFile src(
       "call_me.sv",
       "class cc;\n"
@@ -6083,7 +6104,7 @@ TEST(BuildSymbolTableTest, ChainedMethodCallReturnTypeNotAClass) {
   }
 }
 
-TEST(BuildSymbolTableTest, AnonymousStructTypeData) {
+TEST_F(BuildSymbolTableTest, AnonymousStructTypeData) {
   TestVerilogSourceFile src("structy.sv",
                             "struct {\n"
                             "  int size;\n"
@@ -6146,7 +6167,7 @@ TEST(BuildSymbolTableTest, AnonymousStructTypeData) {
   }
 }
 
-TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiFields) {
+TEST_F(BuildSymbolTableTest, AnonymousStructTypeDataMultiFields) {
   TestVerilogSourceFile src("structy.sv",
                             "struct {\n"
                             "  int size;\n"
@@ -6218,7 +6239,7 @@ TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiFields) {
   }
 }
 
-TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiDeclaration) {
+TEST_F(BuildSymbolTableTest, AnonymousStructTypeDataMultiDeclaration) {
   TestVerilogSourceFile src("structy.sv",
                             "struct {\n"
                             "  int size, weight;\n"
@@ -6293,7 +6314,7 @@ TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiDeclaration) {
   }
 }
 
-TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiVariables) {
+TEST_F(BuildSymbolTableTest, AnonymousStructTypeDataMultiVariables) {
   TestVerilogSourceFile src("structy.sv",
                             "struct {\n"
                             "  int size;\n"
@@ -6374,7 +6395,8 @@ static bool IsStruct(const SymbolTableNode::key_value_type &p) {
   return p.second.Value().metatype == SymbolMetaType::kStruct;
 }
 
-TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiVariablesDistinctTypes) {
+TEST_F(BuildSymbolTableTest,
+       AnonymousStructTypeDataMultiVariablesDistinctTypes) {
   TestVerilogSourceFile src("structy.sv",
                             "struct {\n"
                             "  int size;\n"
@@ -6472,7 +6494,7 @@ TEST(BuildSymbolTableTest, AnonymousStructTypeDataMultiVariablesDistinctTypes) {
   }
 }
 
-TEST(BuildSymbolTableTest, AnonymousStructTypeFunctionParameter) {
+TEST_F(BuildSymbolTableTest, AnonymousStructTypeFunctionParameter) {
   TestVerilogSourceFile src("structy_funky.sv",
                             "function int ff(struct {\n"
                             "      int weight;\n"
@@ -6565,7 +6587,7 @@ TEST(BuildSymbolTableTest, AnonymousStructTypeFunctionParameter) {
   }
 }
 
-TEST(BuildSymbolTableTest, AnonymousStructTypeNested) {
+TEST_F(BuildSymbolTableTest, AnonymousStructTypeNested) {
   TestVerilogSourceFile src("structy.sv",
                             "struct {\n"
                             "  struct {\n"
@@ -6657,7 +6679,7 @@ TEST(BuildSymbolTableTest, AnonymousStructTypeNested) {
   }
 }
 
-TEST(BuildSymbolTableTest, AnonymousStructTypeNestedMemberReference) {
+TEST_F(BuildSymbolTableTest, AnonymousStructTypeNestedMemberReference) {
   TestVerilogSourceFile src("funky_structy.sv",
                             "function int ff();\n"
                             "  struct {\n"
@@ -6786,7 +6808,7 @@ TEST(BuildSymbolTableTest, AnonymousStructTypeNestedMemberReference) {
   }
 }
 
-TEST(BuildSymbolTableTest, AnonymousEnumTypeData) {
+TEST_F(BuildSymbolTableTest, AnonymousEnumTypeData) {
   TestVerilogSourceFile src("simple_enum.sv",
                             "enum {\n"
                             "  idle, busy\n"
@@ -6901,7 +6923,7 @@ TEST(BuildSymbolTableTest, AnonymousEnumTypeData) {
   }
 }
 
-TEST(BuildSymbolTableTest, TypedefPrimitive) {
+TEST_F(BuildSymbolTableTest, TypedefPrimitive) {
   TestVerilogSourceFile src("typedef.sv",
                             "typedef int number;\n"
                             "number one = 1;\n");
@@ -6943,7 +6965,7 @@ TEST(BuildSymbolTableTest, TypedefPrimitive) {
   }
 }
 
-TEST(BuildSymbolTableTest, TypedefTransitive) {
+TEST_F(BuildSymbolTableTest, TypedefTransitive) {
   TestVerilogSourceFile src("typedef.sv",
                             "typedef int num;\n"
                             "typedef num number;\n"
@@ -7003,7 +7025,7 @@ TEST(BuildSymbolTableTest, TypedefTransitive) {
   }
 }
 
-TEST(BuildSymbolTableTest, TypedefClass) {
+TEST_F(BuildSymbolTableTest, TypedefClass) {
   TestVerilogSourceFile src("typedef.sv",
                             "class cc;\n"
                             "endclass\n"
@@ -7061,7 +7083,7 @@ TEST(BuildSymbolTableTest, TypedefClass) {
   }
 }
 
-TEST(BuildSymbolTableTest, TypedefClassPackageQualified) {
+TEST_F(BuildSymbolTableTest, TypedefClassPackageQualified) {
   TestVerilogSourceFile src("typedef.sv",
                             "package pp;\n"
                             "  class cc;\n"
@@ -7134,7 +7156,7 @@ TEST(BuildSymbolTableTest, TypedefClassPackageQualified) {
   }
 }
 
-TEST(BuildSymbolTableTest, TypedefClassUnresolvedQualifiedReferenceBase) {
+TEST_F(BuildSymbolTableTest, TypedefClassUnresolvedQualifiedReferenceBase) {
   TestVerilogSourceFile src("typedef.sv",
                             "typedef pp::cc number;\n"  // unresolved
                             "number foo;\n");
@@ -7196,7 +7218,7 @@ TEST(BuildSymbolTableTest, TypedefClassUnresolvedQualifiedReferenceBase) {
   }
 }
 
-TEST(BuildSymbolTableTest, TypedefClassPartiallyResolvedQualifiedReference) {
+TEST_F(BuildSymbolTableTest, TypedefClassPartiallyResolvedQualifiedReference) {
   TestVerilogSourceFile src(
       "typedef.sv",
       "package pp;\n"  // empty
@@ -7272,7 +7294,7 @@ TEST(BuildSymbolTableTest, TypedefClassPartiallyResolvedQualifiedReference) {
   }
 }
 
-TEST(BuildSymbolTableTest, TypedefOfClassTypeParameter) {
+TEST_F(BuildSymbolTableTest, TypedefOfClassTypeParameter) {
   TestVerilogSourceFile src("typedef.sv",
                             "class cc #(parameter type T = int);\n"
                             "  typedef T number;\n"
@@ -7335,7 +7357,7 @@ TEST(BuildSymbolTableTest, TypedefOfClassTypeParameter) {
   }
 }
 
-TEST(BuildSymbolTableTest, TypedefOfParameterizedClassPositionalParams) {
+TEST_F(BuildSymbolTableTest, TypedefOfParameterizedClassPositionalParams) {
   TestVerilogSourceFile src("typedef.sv",
                             "package pp;\n"
                             "  class cc #(parameter type T = int);\n"
@@ -7421,7 +7443,7 @@ TEST(BuildSymbolTableTest, TypedefOfParameterizedClassPositionalParams) {
   }
 }
 
-TEST(BuildSymbolTableTest, TypedefOfParameterizedClassNamedParams) {
+TEST_F(BuildSymbolTableTest, TypedefOfParameterizedClassNamedParams) {
   TestVerilogSourceFile src("typedef.sv",
                             "package pp;\n"
                             "  class cc #(parameter type T = int);\n"
@@ -7518,7 +7540,7 @@ TEST(BuildSymbolTableTest, TypedefOfParameterizedClassNamedParams) {
   }
 }
 
-TEST(BuildSymbolTableTest, InvalidMemberLookupOfAliasedType) {
+TEST_F(BuildSymbolTableTest, InvalidMemberLookupOfAliasedType) {
   TestVerilogSourceFile src("typedef.sv",
                             "typedef int number;\n"
                             "typedef number::count bar;\n");
@@ -7578,7 +7600,7 @@ TEST(BuildSymbolTableTest, InvalidMemberLookupOfAliasedType) {
   }
 }
 
-TEST(BuildSymbolTableTest, InvalidMemberLookupOfTypedefPrimitive) {
+TEST_F(BuildSymbolTableTest, InvalidMemberLookupOfTypedefPrimitive) {
   TestVerilogSourceFile src("typedef.sv",
                             "typedef int number;\n"
                             "function int get_count(number foo);\n"
@@ -7654,7 +7676,7 @@ TEST(BuildSymbolTableTest, InvalidMemberLookupOfTypedefPrimitive) {
   }
 }
 
-TEST(BuildSymbolTableTest, AccessClassMemberThroughTypedef) {
+TEST_F(BuildSymbolTableTest, AccessClassMemberThroughTypedef) {
   TestVerilogSourceFile src("typedef.sv",
                             "class cc;\n"
                             "  int count;\n"
@@ -7750,7 +7772,7 @@ TEST(BuildSymbolTableTest, AccessClassMemberThroughTypedef) {
   }
 }
 
-TEST(BuildSymbolTableTest, AccessStructMemberThroughTypedef) {
+TEST_F(BuildSymbolTableTest, AccessStructMemberThroughTypedef) {
   TestVerilogSourceFile src("typedef.sv",
                             "typedef struct {\n"
                             "  int count;\n"
@@ -7840,7 +7862,7 @@ TEST(BuildSymbolTableTest, AccessStructMemberThroughTypedef) {
     EXPECT_EQ(number_ref_comp.resolved_symbol, &number_typedef);
   }
 }
-TEST(BuildSymbolTableTest, InheritBaseClassThroughTypedef) {
+TEST_F(BuildSymbolTableTest, InheritBaseClassThroughTypedef) {
   TestVerilogSourceFile src("typedef.sv",
                             "class base;\n"
                             "  typedef int number;\n"
@@ -7951,7 +7973,7 @@ static bool PermuteSourceFiles(
                                SourceFileLess);
 }
 
-TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
+TEST_F(BuildSymbolTableTest, MultiFileModuleInstance) {
   // Linear dependency chain between 3 files.
   TestVerilogSourceFile pp_src("pp.sv",
                                "module pp;\n"
@@ -8099,11 +8121,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstance) {
   EXPECT_EQ(count, 6);  // make sure we covered all permutations
 }
 
-TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
   VerilogProject project(sources_dir, {/* no include path */});
 
   // Linear dependency chain between 3 files.  Order arbitrarily chosen.
@@ -8239,11 +8257,8 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
       &qq);
 }
 
-TEST(BuildSymbolTableTest, ModuleInstancesFromProjectMissingFile) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
+TEST_F(BuildSymbolTableTest, ModuleInstancesFromProjectMissingFile) {
   VerilogProject project(sources_dir, {/* no include path */});
-
   SymbolTable symbol_table(&project);
   EXPECT_EQ(symbol_table.Project(), &project);
 
@@ -8255,11 +8270,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectMissingFile) {
       << build_diagnostics.front();
 }
 
-TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
   VerilogProject project(sources_dir, {/* no include path */});
 
   // Linear dependency chain between 3 files.  Order arbitrarily chosen.
@@ -8390,7 +8401,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
       &qq);
 }
 
-TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
+TEST_F(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
   // Cyclic dependencies among three modules in one file.
   // Make sure this can still build and resolve without hanging,
   // even if this is semantically illegal.
@@ -8560,7 +8571,7 @@ TEST(BuildSymbolTableTest, SingleFileModuleInstanceCyclicDependencies) {
       &qq);
 }
 
-TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
+TEST_F(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
   // Cyclic dependencies among three files.
   // Make sure this can still build and resolve without hanging,
   // even if this is semantically illegal.
@@ -8753,11 +8764,7 @@ TEST(BuildSymbolTableTest, MultiFileModuleInstanceCyclicDependencies) {
   EXPECT_EQ(count, 6);  // make sure we covered all permutations
 }
 
-TEST(BuildSymbolTableTest, IncludeModuleDefinition) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(BuildSymbolTableTest, IncludeModuleDefinition) {
   // Create files.
   ScopedTestFile IncludedFile(sources_dir,
                               "module pp;\n"
@@ -8789,11 +8796,7 @@ TEST(BuildSymbolTableTest, IncludeModuleDefinition) {
   EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
-TEST(BuildSymbolTableTest, IncludeWithoutProject) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(BuildSymbolTableTest, IncludeWithoutProject) {
   // Create files.
   ScopedTestFile IncludedFile(sources_dir,
                               "module pp;\n"
@@ -8813,11 +8816,7 @@ TEST(BuildSymbolTableTest, IncludeWithoutProject) {
   EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
-TEST(BuildSymbolTableTest, IncludeFileNotFound) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(BuildSymbolTableTest, IncludeFileNotFound) {
   // Create files.
   ScopedTestFile pp_src(sources_dir, "`include \"not-found.sv\"\n", "pp.sv");
 
@@ -8842,11 +8841,7 @@ TEST(BuildSymbolTableTest, IncludeFileNotFound) {
   EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
-TEST(BuildSymbolTableTest, IncludeFileParseError) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(BuildSymbolTableTest, IncludeFileParseError) {
   // Create files.
   ScopedTestFile IncludedFile(sources_dir,
                               "module 333;\n"  // syntax error
@@ -8873,11 +8868,7 @@ TEST(BuildSymbolTableTest, IncludeFileParseError) {
   EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
-TEST(BuildSymbolTableTest, IncludeFileEmpty) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(BuildSymbolTableTest, IncludeFileEmpty) {
   // Create files.
   ScopedTestFile IncludedFile(sources_dir,
                               "",  // empty
@@ -8901,11 +8892,7 @@ TEST(BuildSymbolTableTest, IncludeFileEmpty) {
   EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
-TEST(BuildSymbolTableTest, IncludedTwiceFromOneFile) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(BuildSymbolTableTest, IncludedTwiceFromOneFile) {
   // Create files.
   ScopedTestFile IncludedFile(sources_dir,
                               "// verilog_syntax: parse-as-module-body\n"
@@ -8952,11 +8939,7 @@ TEST(BuildSymbolTableTest, IncludedTwiceFromOneFile) {
   EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
-TEST(BuildSymbolTableTest, IncludedTwiceFromDifferentFiles) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(BuildSymbolTableTest, IncludedTwiceFromDifferentFiles) {
   // Create files.
   ScopedTestFile IncludedFile(sources_dir,
                               "// verilog_syntax: parse-as-module-body\n"
@@ -9012,7 +8995,7 @@ TEST(BuildSymbolTableTest, IncludedTwiceFromDifferentFiles) {
   EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
-TEST(BuildSymbolTableTest, ModulePortDeclarationMultiline) {
+TEST_F(BuildSymbolTableTest, ModulePortDeclarationMultiline) {
   TestVerilogSourceFile src("foobar.sv",
                             "module a; endmodule\n"
                             "module m(mport);\n"
@@ -9028,7 +9011,7 @@ TEST(BuildSymbolTableTest, ModulePortDeclarationMultiline) {
   EXPECT_EMPTY_STATUSES(build_diagnostics);
 }
 
-TEST(BuildSymbolTableTest, ModulePortDeclarationDirectionRedefinition) {
+TEST_F(BuildSymbolTableTest, ModulePortDeclarationDirectionRedefinition) {
   TestVerilogSourceFile src(
       "foobar.sv",
       "module m(mport);\n"
@@ -9060,7 +9043,7 @@ TEST(BuildSymbolTableTest, ModulePortDeclarationDirectionRedefinition) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModulePortDeclarationTypeRedefinition) {
+TEST_F(BuildSymbolTableTest, ModulePortDeclarationTypeRedefinition) {
   TestVerilogSourceFile src("foobar.sv",
                             "module a; endmodule\n"
                             "module m(mport);\n"
@@ -9093,7 +9076,7 @@ TEST(BuildSymbolTableTest, ModulePortDeclarationTypeRedefinition) {
   }
 }
 
-TEST(BuildSymbolTableTest, ModulePortDeclarationTypeMultilineWithDimensions) {
+TEST_F(BuildSymbolTableTest, ModulePortDeclarationTypeMultilineWithDimensions) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m(mport);\n"
                             "  input [10:0] mport;\n"
@@ -9108,8 +9091,8 @@ TEST(BuildSymbolTableTest, ModulePortDeclarationTypeMultilineWithDimensions) {
   EXPECT_EMPTY_STATUSES(build_diagnostics);
 }
 
-TEST(BuildSymbolTableTest,
-     ModulePortDeclarationTypeMultilineWithMismatchingDimensions) {
+TEST_F(BuildSymbolTableTest,
+       ModulePortDeclarationTypeMultilineWithMismatchingDimensions) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m(mport);\n"
                             "  input [10:0] mport;\n"
@@ -9140,8 +9123,8 @@ TEST(BuildSymbolTableTest,
   }
 }
 
-TEST(BuildSymbolTableTest,
-     ModulePortDeclarationTypeMultilineCorrectSignPlacements) {
+TEST_F(BuildSymbolTableTest,
+       ModulePortDeclarationTypeMultilineCorrectSignPlacements) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m(a, b, c, d);\n"
                             "  input signed [10:0] a;\n"
@@ -9162,8 +9145,8 @@ TEST(BuildSymbolTableTest,
   EXPECT_EMPTY_STATUSES(build_diagnostics);
 }
 
-TEST(BuildSymbolTableTest,
-     ModulePortDeclarationTypeMultilineWithMismatchingSigns) {
+TEST_F(BuildSymbolTableTest,
+       ModulePortDeclarationTypeMultilineWithMismatchingSigns) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m(mport);\n"
                             "  input unsigned [10:0] mport;\n"
@@ -9194,7 +9177,7 @@ TEST(BuildSymbolTableTest,
   }
 }
 
-TEST(BuildSymbolTableTest, ModulePortDeclarationTypeMultilineWithPortList) {
+TEST_F(BuildSymbolTableTest, ModulePortDeclarationTypeMultilineWithPortList) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m(a, b, c);\n"
                             "  input a, b;\n"
@@ -9225,7 +9208,7 @@ TEST(BuildSymbolTableTest, ModulePortDeclarationTypeMultilineWithPortList) {
   }
 }
 
-TEST(BuildSymbolTableTest, InterfaceDeclarationSingleEmpty) {
+TEST_F(BuildSymbolTableTest, InterfaceDeclarationSingleEmpty) {
   TestVerilogSourceFile src("foobar_if.sv",
                             "interface foobar_if;\n"
                             "endinterface\n");
@@ -9250,7 +9233,7 @@ TEST(BuildSymbolTableTest, InterfaceDeclarationSingleEmpty) {
   }
 }
 
-TEST(BuildSymbolTableTest, InterfaceDeclarationLocalNetsVariables) {
+TEST_F(BuildSymbolTableTest, InterfaceDeclarationLocalNetsVariables) {
   TestVerilogSourceFile src("foobar_if.sv",
                             "interface foobar_if;\n"
                             "  logic l1;\n"
@@ -9286,7 +9269,7 @@ TEST(BuildSymbolTableTest, InterfaceDeclarationLocalNetsVariables) {
   }
 }
 
-TEST(BuildSymbolTableTest, InterfaceDeclarationWithPorts) {
+TEST_F(BuildSymbolTableTest, InterfaceDeclarationWithPorts) {
   TestVerilogSourceFile src("foobar_if.sv",
                             "interface foobar_if (\n"
                             "  input wire clk,\n"
@@ -9331,7 +9314,7 @@ TEST(BuildSymbolTableTest, InterfaceDeclarationWithPorts) {
   }
 }
 
-TEST(BuildSymbolTableTest, InterfaceDeclarationMultiple) {
+TEST_F(BuildSymbolTableTest, InterfaceDeclarationMultiple) {
   TestVerilogSourceFile src("foobar_if.sv",
                             "interface foobar1_if;\nendinterface\n"
                             "interface foobar2_if;\nendinterface\n");
@@ -9359,7 +9342,7 @@ TEST(BuildSymbolTableTest, InterfaceDeclarationMultiple) {
   }
 }
 
-TEST(BuildSymbolTableTest, InterfaceDeclarationDuplicate) {
+TEST_F(BuildSymbolTableTest, InterfaceDeclarationDuplicate) {
   TestVerilogSourceFile src("foobar_if.sv",
                             "interface foobar_if;\nendinterface\n"
                             "interface foobar_if;\nendinterface\n");
@@ -9388,7 +9371,7 @@ TEST(BuildSymbolTableTest, InterfaceDeclarationDuplicate) {
   }
 }
 
-TEST(BuildSymbolTableTest, InterfaceDeclarationDuplicateSeparateFiles) {
+TEST_F(BuildSymbolTableTest, InterfaceDeclarationDuplicateSeparateFiles) {
   TestVerilogSourceFile src("foobar_if.sv",
                             "interface foobar_if;\nendinterface\n");
   TestVerilogSourceFile src2("foobar_if-2.sv",
