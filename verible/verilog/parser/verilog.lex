@@ -294,7 +294,11 @@ PragmaEndProtected {Pragma}{Space}+protect{Space}+end_protected
     yymore();
   }
   {LineTerminator} {
-    yyless(yyleng-1);  /* return \n to input stream */
+    // HACK
+    if(yytext[yyleng-2] == '\r')
+      yyless(yyleng-2);  /* return \r\n to input stream */
+    else
+      yyless(yyleng-1);  /* return \n to input stream */
     UpdateLocation();
     yy_pop_state();
     return TK_EOL_COMMENT;
