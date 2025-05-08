@@ -10,7 +10,7 @@ Verible tool suite.
 ```
 verible-verilog-syntax: usage: /tmp/verible-bin/verible-verilog-syntax [options] <file> [<file>...]
 
-  Flags from external/abseil-cpp~20240116.2/absl/flags/parse.cc:
+  Flags from external/abseil-cpp~/absl/flags/parse.cc:
     --flagfile (comma-separated list of files to load flags from); default: ;
     --fromenv (comma-separated list of flags to set from the environment [use
       'export FLAGS_flag1=value']); default: ;
@@ -51,4 +51,4 @@ path.
 
 ## Version
 
-Generated on 2025-05-07 10:10:06 +0200 from [0e58c80](https://github.com/google/verible/commit/0e58c80309cdacfdfee2ce27a4aad841bc2f396a)
+Generated on 2025-05-08 14:17:03 +0200 from [905e34c](https://github.com/google/verible/commit/905e34cd14598f64487d6c17a42abbf297f0dc38)
