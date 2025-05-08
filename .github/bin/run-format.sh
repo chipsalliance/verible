@@ -31,7 +31,20 @@ done
 
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 
-CLANG_FORMAT=${CLANG_FORMAT:-clang-format}
+# Use the provided Clang format binary, or try to fallback to clang-format-17
+# or clang-format.
+if [[ ! -v CLANG_FORMAT ]]; then
+  if command -v "clang-format-17" 2>&1 >/dev/null
+  then
+    CLANG_FORMAT="clang-format-17"
+  elif command -v "clang-format" 2>&1 >/dev/null
+  then
+    CLANG_FORMAT="clang-format"
+  else
+    (echo "-- Missing the clang-format binary! --"; exit 1)
+  fi
+fi
+
 BUILDIFIER=${BUILDIFIER:-buildifier}
 
 # Currently, we're using clang-format 17, as newer versions still have some
@@ -60,7 +73,7 @@ if [ ${SHOW_DIFF} -eq 1 ]; then
   if [ -s ${FORMAT_OUT} ]; then
     echo "Style not matching (see https://github.com/chipsalliance/verible/blob/master/CONTRIBUTING.md#style)"
     echo "Run"
-    echo "  .github/bin/run-clang-format.sh"
+    echo "  .github/bin/run-format.sh"
     echo "-------------------------------------------------"
     echo
     cat ${FORMAT_OUT}

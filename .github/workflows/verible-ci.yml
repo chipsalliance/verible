@@ -115,7 +115,7 @@ jobs:
         path: "**/plot_*.svg"
 
   Check:
-    container: ubuntu:jammy
+    container: ubuntu:noble
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     strategy:
       fail-fast: false
@@ -183,11 +183,11 @@ jobs:
         apt -qqy update
         apt -qq -y install build-essential wget git python3 python-is-python3 default-jdk cmake python3-pip ripgrep
         apt -qq -y install gcc-10 g++-10
-        apt -qq -y install gcc-12 g++-12
-        apt -qq -y install clang-12  # clang always a particular version.
+        apt -qq -y install gcc-14 g++-14
+        apt -qq -y install clang-19
         source ./.github/settings.sh
         # Use newer compiler for c++2x compilation. Also slang needs c++20
-        ./.github/bin/set-compiler.sh $([[ "$MODE" == test-c++2* || "$MODE" == "smoke-test-analyzer" ]] && echo 12 || echo 10)
+        ./.github/bin/set-compiler.sh $([[ "$MODE" == test-c++2* || "$MODE" == "smoke-test-analyzer" ]] && echo 14 || echo 10)
         ARCH="$ARCH" ./.github/bin/install-bazel.sh
 
     - name: Build Slang
@@ -276,8 +276,8 @@ jobs:
 
 
   KytheXrefs:
-    runs-on: ubuntu-24.04
-    if: false   # Currently disabled, need to investigate failure.
+    container: ubuntu:noble
+    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
 
     steps:
 
@@ -289,8 +289,13 @@ jobs:
 
     - name: Install Dependencies
       run: |
+        set -x
+        apt -qqy update
+        apt -qq -y install build-essential wget git python3 python-is-python3 default-jdk cmake python3-pip ripgrep
+        apt -qq -y install gcc-14 g++-14
+        pwd
         source ./.github/settings.sh
-        ./.github/bin/set-compiler.sh 10
+        ./.github/bin/set-compiler.sh 14
         ./.github/bin/install-bazel.sh
         ./.github/bin/install-kythe.sh
 
@@ -310,7 +315,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        echo "USE_BAZEL_VERSION=6.5.0" >> $GITHUB_ENV
+        echo "USE_BAZEL_VERSION=7.6.1" >> $GITHUB_ENV
 
     - name: Checkout code
       uses: actions/checkout@v4
@@ -391,9 +396,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        choco install bazel --force --version=6.5.0
+        choco install bazel --force --version=7.6.1
         choco install winflexbison3
-        choco install llvm --allow-downgrade --version=17.0.6
+        choco install llvm --allow-downgrade --version=20.1.4
 
     - name: Debug bazel directory settings
       # We need to explicitly call the bazel binary from choco, otherwise
