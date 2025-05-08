@@ -132,6 +132,7 @@ cc_library(
             "-Wno-implicit-fallthrough",
             "-Wno-type-limits",
             "-Wno-unreachable-code",
+            "-Wno-unused-but-set-variable",
         ],
     }),
     deps = [

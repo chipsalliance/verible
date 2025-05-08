@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -x
+
 if [ -z "${BAZEL_VERSION}" ]; then
         echo "Please set \$BAZEL_VERSION"
         exit 1

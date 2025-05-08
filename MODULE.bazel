@@ -17,7 +17,7 @@ bazel_dep(name = "rules_bison", version = "0.3")
 
 # Last versions compatible w/ bazel6 https://github.com/chipsalliance/verible/issues/2336
 bazel_dep(name = "abseil-cpp", version = "20240116.2")
-bazel_dep(name = "protobuf", version = "28.3")
+bazel_dep(name = "protobuf", version = "31.0-rc2")
 
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1", dev_dependency = True)
 

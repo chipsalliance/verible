@@ -23,10 +23,8 @@ if [[ "${MODE}" == *-clang ]]; then
   export CXX=clang++
   export CC=clang
 
-  # clang versions supported. Starting with 13, we
-  # get some warnings in absl, so let's not go beyond
-  # 12 for now.
-  for version in 12 11 10 ; do
+  # clang versions that we have tested.
+  for version in 19 12 11 10 ; do
     if command -v clang++-${version}; then
       export CXX=clang++-${version}
       export CC=clang-${version}
