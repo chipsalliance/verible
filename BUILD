@@ -55,3 +55,14 @@ genrule(
         "//verible/verilog/tools/lint:verible-verilog-lint",
     ],
 )
+
+# For building with clang-cl on Windows.
+# https://bazel.build/configure/windows#clang
+platform(
+    name = "x64_windows-clang-cl",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+        "@bazel_tools//tools/cpp:clang-cl",
+    ],
+)

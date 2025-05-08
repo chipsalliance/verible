@@ -10,23 +10,24 @@ build --enable_platform_specific_config
 build --workspace_status_command="bash bazel/build-version.sh"
 
 # Systems with gcc or clang
-common:linux   --cxxopt=-xc++ --host_cxxopt=-xc++ --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
-common:freebsd --cxxopt=-xc++ --host_cxxopt=-xc++ --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17 --linkopt=-lm --host_linkopt=-lm
-common:openbsd --cxxopt=-xc++ --host_cxxopt=-xc++ --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17 --linkopt=-lm --host_linkopt=-lm
-common:macos   --cxxopt=-xc++ --host_cxxopt=-xc++ --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
+common:unix    --cxxopt=-xc++ --host_cxxopt=-xc++ --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
+common:linux   --config=unix
+common:freebsd --config=unix --linkopt=-lm --host_linkopt=-lm
+common:openbsd --config=unix --linkopt=-lm --host_linkopt=-lm
+common:macos   --config=unix
 
 # https://github.com/abseil/abseil-cpp/issues/848
 # https://github.com/bazelbuild/bazel/issues/4341#issuecomment-758361769
 common:macos --features=-supports_dynamic_linker --linkopt=-framework --linkopt=CoreFoundation --host_linkopt=-framework --host_linkopt=CoreFoundation
 
-# Force the use clang-cl on Windows instead of MSVC. MSVC has some issues with
-# the codebase, so we focus the effort for now is to have a Windows Verible
-# compiled with clang-cl before fixing the issues unique to MSVC.
-# Since we use designated initializers (C99 ... but >= c++20), compiler really wants the c++20 mode
-common:windows --compiler=clang-cl --cxxopt=/std:c++20 --host_cxxopt=/std:c++20 --client_env=BAZEL_CXXOPTS=/std:c++20
+# Use clang-cl by default on Windows. MSVC has some issues with the codebase,
+# so we focus the effort for now is to have a Windows Verible compiled with
+# clang-cl before fixing the issues unique to MSVC.
+common:windows --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl --extra_execution_platforms=//:x64_windows-clang-cl
+common:windows --compiler=clang-cl --cxxopt=/std:c++17 --host_cxxopt=/std:c++17 --client_env=BAZEL_CXXOPTS=/std:c++17
 
 build --cxxopt="-Wno-unknown-warning-option" --host_cxxopt="-Wno-unknown-warning-option"
-# TODO: this looks like benign where it happens but to be explored further
+# TODO: this looks like benign where it happens but to be explored further.
 build --cxxopt="-Wno-dangling-reference" --host_cxxopt="-Wno-dangling-reference"
 # Newer bisons create an unused label.
 build --cxxopt="-Wno-unused-label" --host_cxxopt="-Wno-unused-label"
