@@ -611,6 +611,13 @@ TEST_F(VerilogLanguageServerTest, RangeFormattingTest) {
               params.new_text_end_character)
         << "Invalid range for id:  " << params.id;
   }
+
+  const FormattingRequestParams invalid_formatting_params{
+      34, 2, 0, 1, 1, "  assign a=1;\n", 1, 0, 2, 0};
+  const std::string invalid_request = FormattingRequest("file://fmt.sv", invalid_formatting_params);
+  ASSERT_OK(SendRequest(invalid_request));
+  const json empty_response = json::parse(GetResponse());
+  ASSERT_TRUE(empty_response["result"].empty());
 }
 
 // Runs test of entire document formatting with textDocument/formatting request
