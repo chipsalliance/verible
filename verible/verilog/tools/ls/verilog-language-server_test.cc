@@ -613,7 +613,7 @@ TEST_F(VerilogLanguageServerTest, RangeFormattingTest) {
   }
 
   const FormattingRequestParams invalid_formatting_params{
-      34, 2, 0, 1, 1, "  assign a=1;\n", 1, 0, 2, 0};
+      34, 6, 0, 1, 1, "  assign a=1;\n", 1, 0, 2, 0};
   const std::string invalid_request =
       FormattingRequest("file://fmt.sv", invalid_formatting_params);
   ASSERT_OK(SendRequest(invalid_request));
