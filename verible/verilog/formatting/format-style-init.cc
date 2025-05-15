@@ -21,6 +21,7 @@
 #include "verible/verilog/formatting/format-style.h"
 
 using verible::AlignmentPolicy;
+using verible::NamedAlignmentPolicy;
 using verible::IndentationStyle;
 
 ABSL_FLAG(bool, try_wrap_long_lines, false,
@@ -55,12 +56,12 @@ ABSL_FLAG(AlignmentPolicy, port_declarations_alignment,
 ABSL_FLAG(AlignmentPolicy, struct_union_members_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format struct/union members: {align,flush-left,preserve,infer}");
-ABSL_FLAG(AlignmentPolicy, named_parameter_alignment,
-          AlignmentPolicy::kInferUserIntent,
-          "Format named actual parameters: {align,flush-left,preserve,infer}");
-ABSL_FLAG(AlignmentPolicy, named_port_alignment,
-          AlignmentPolicy::kInferUserIntent,
-          "Format named port connections: {align,flush-left,preserve,infer}");
+ABSL_FLAG(NamedAlignmentPolicy, named_parameter_alignment,
+          NamedAlignmentPolicy::kAlignBothSpaced,
+          "Format named port connections: {align,flush-left,preserve,infer,align-both,align-both-separated,align-both-spaced}");
+ABSL_FLAG(NamedAlignmentPolicy, named_port_alignment,
+          NamedAlignmentPolicy::kAlignBothSpaced,
+          "Format named port connections: {align,flush-left,preserve,infer,align-both,align-both-separated,align-both-spaced}");
 ABSL_FLAG(
     AlignmentPolicy, module_net_variable_alignment,  //
     AlignmentPolicy::kInferUserIntent,
