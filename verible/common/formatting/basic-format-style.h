@@ -21,6 +21,21 @@
 
 namespace verible {
 
+enum class LineTerminatorStyle {
+  // Line Feed `\n` (UNIX Style)
+  kLF,
+  // Carriage return + Line Feed `\r\n` (DOS Style)
+  kCRLF,
+};
+
+void EmitLineTerminator(LineTerminatorStyle style, std::ostream &stream);
+
+std::ostream &operator<<(std::ostream &stream, LineTerminatorStyle style);
+
+bool AbslParseFlag(std::string_view, LineTerminatorStyle *, std::string *);
+
+std::string AbslUnparseFlag(const LineTerminatorStyle &);
+
 // Style configuration common to all languages.
 struct BasicFormatStyle {
   // Each indentation level adds this many spaces.
@@ -41,6 +56,9 @@ struct BasicFormatStyle {
 
   // Penalty added to solution for each introduced line break.
   int line_break_penalty = 2;
+
+  // Line terminator character sequence
+  LineTerminatorStyle line_terminator = LineTerminatorStyle::kLF;
 
   // -- Note: when adding new fields, add them in basic_format_style_init.cc
 };

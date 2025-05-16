@@ -215,6 +215,7 @@ cc_library(
     srcs = ["comment-controls.cc"],
     hdrs = ["comment-controls.h"],
     deps = [
+        "//verible/common/formatting:basic-format-style",
         "//verible/common/strings:comment-utils",
         "//verible/common/strings:display-utils",
         "//verible/common/strings:line-column-map",
@@ -223,7 +224,6 @@ cc_library(
         "//verible/common/text:token-stream-view",
         "//verible/common/util:logging",
         "//verible/common/util:range",
-        "//verible/common/util:spacer",
         "//verible/verilog/parser:verilog-parser",
         "//verible/verilog/parser:verilog-token-classifications",
         "//verible/verilog/parser:verilog-token-enum",
@@ -236,6 +236,7 @@ cc_test(
     srcs = ["comment-controls_test.cc"],
     deps = [
         ":comment-controls",
+        "//verible/common/formatting:basic-format-style",
         "//verible/common/strings:line-column-map",
         "//verible/common/strings:position",
         "//verible/common/text:token-info-test-util",
