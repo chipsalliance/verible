@@ -29,6 +29,7 @@ To pipe from stdin, use '-' as <file>.
       default: 2;
     --line_break_penalty (Penalty added to solution for each introduced line
       break.); default: 2;
+    --line_terminator (Line terminator); default: LF;
     --over_column_limit_penalty (For penalty minimization, this represents the
       baseline penalty value of exceeding the column limit. Additional penalty
       of 1 is incurred for each character over this limit); default: 100;
@@ -129,4 +130,4 @@ path.
 
 ## Version
 
-Generated on 2025-05-16 15:05:09 +0200 from [1903b80](https://github.com/google/verible/commit/1903b8099460398ac118f3897684c346e505d9d2)
+Generated on 2025-05-19 09:47:58 +0200 from [d692407](https://github.com/google/verible/commit/d692407955380083a72938b42b6ba47e134348f9)
