@@ -993,7 +993,7 @@ void Formatter::Emit(bool include_disabled, std::ostream &stream) const {
         full_text.substr(position, front_offset - position));
     FormatWhitespaceWithDisabledByteRanges(full_text, leading_whitespace,
                                            disabled_ranges_, include_disabled,
-                                           stream);
+                                           stream, style_.line_terminator);
 
     // When front of first token is format-disabled, the previous call will
     // already cover the space up to the front token, in which case,
@@ -1010,7 +1010,7 @@ void Formatter::Emit(bool include_disabled, std::ostream &stream) const {
   const std::string_view trailing_whitespace(full_text.substr(position));
   FormatWhitespaceWithDisabledByteRanges(full_text, trailing_whitespace,
                                          disabled_ranges_, include_disabled,
-                                         stream);
+                                         stream, style_.line_terminator);
 }
 
 }  // namespace formatter

@@ -22,6 +22,7 @@
 #include "absl/strings/str_join.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/strings/line-column-map.h"
 #include "verible/common/strings/position.h"
 #include "verible/common/text/token-info-test-util.h"
@@ -328,7 +329,8 @@ TEST(FormatWhitespaceWithDisabledByteRangesTest, InvalidSubstring) {
   const std::string_view foo("foo"), bar("bar");
   std::ostringstream stream;
   EXPECT_DEATH(
-      FormatWhitespaceWithDisabledByteRanges(foo, bar, {}, true, stream),
+      FormatWhitespaceWithDisabledByteRanges(foo, bar, {}, true, stream,
+                                             verible::LineTerminatorStyle::kLF),
       "IsSubRange");
 }
 
@@ -388,7 +390,8 @@ TEST(FormatWhitespaceWithDisabledByteRangesTest, EmptyStrings) {
         test.substring_range.first,
         test.substring_range.second - test.substring_range.first);
     FormatWhitespaceWithDisabledByteRanges(test.full_text, substr,
-                                           test.disabled_ranges, true, stream);
+                                           test.disabled_ranges, true, stream,
+                                           verible::LineTerminatorStyle::kLF);
     EXPECT_EQ(stream.str(), test.expected)
         << "text: \"" << test.full_text << "\", sub: \"" << substr
         << "\", disabled: " << test.disabled_ranges;

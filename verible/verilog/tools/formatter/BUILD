@@ -132,3 +132,11 @@ sh_test_with_runfiles_lib(
     args = ["$(location :verible-verilog-format)"],
     data = [":verible-verilog-format"],
 )
+
+sh_test_with_runfiles_lib(
+    name = "format-line_terminator_test",
+    size = "small",
+    srcs = ["format_line_terminator_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
