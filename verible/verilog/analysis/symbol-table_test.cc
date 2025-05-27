@@ -51,8 +51,6 @@ namespace {
 using testing::ElementsAreArray;
 using testing::HasSubstr;
 using verible::file::Basename;
-using verible::file::CreateDir;
-using verible::file::JoinPath;
 using verible::file::testing::ScopedTestFile;
 
 // An in-memory source file that doesn't require file-system access,
