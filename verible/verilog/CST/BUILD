@@ -98,6 +98,7 @@ cc_library(
         "//verible/common/text:concrete-syntax-tree",
         "//verible/common/text:symbol",
         "//verible/common/text:token-info",
+        "//verible/common/text:tree-utils",
         "//verible/common/util:logging",
         "@abseil-cpp//absl/strings",
     ],

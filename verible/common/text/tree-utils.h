@@ -30,6 +30,9 @@
 #include "verible/common/util/logging.h"
 #include "verible/common/util/type-traits.h"
 
+// TODO: the functions below that can crash while asserting a type should
+// probably return a usable error (std::optional).
+
 namespace verible {
 
 // Returns the leftmost/rightmost leaf contained in Symbol.
@@ -47,6 +50,7 @@ std::string_view StringSpanOfSymbol(const Symbol &symbol);
 std::string_view StringSpanOfSymbol(const Symbol &lsym, const Symbol &rsym);
 
 // Returns a SyntaxTreeNode down_casted from a Symbol.
+// Will panic if not of that kind.
 const SyntaxTreeNode &SymbolCastToNode(const Symbol &);
 // Mutable variant.
 SyntaxTreeNode &SymbolCastToNode(Symbol &);  // NOLINT
@@ -59,7 +63,14 @@ inline const SyntaxTreeNode &SymbolCastToNode(const SyntaxTreeNode &node) {
 inline SyntaxTreeNode &SymbolCastToNode(SyntaxTreeNode &node) { return node; }
 
 // Returns a SyntaxTreeLeaf down_casted from a Symbol.
+// Will panic if not of that kind.
 const SyntaxTreeLeaf &SymbolCastToLeaf(const Symbol &);
+
+// Return Node if symbol is of that kind, otherwise nullptr.
+const SyntaxTreeNode *MaybeNode(const Symbol *symbol);
+
+// Return Leaf if symbol is of that kind, otherwise nullptr.
+const SyntaxTreeLeaf *MaybeLeaf(const Symbol *symbol);
 
 // Unwrap layers of only-child nodes until reaching a leaf or a node with
 // multiple children.

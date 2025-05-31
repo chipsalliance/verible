@@ -29,7 +29,7 @@
 #include "verible/common/text/config-utils.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
-#include "verible/common/util/casts.h"
+#include "verible/common/text/tree-utils.h"
 #include "verible/common/util/logging.h"
 #include "verible/verilog/CST/verilog-matchers.h"
 #include "verible/verilog/CST/verilog-nonterminals.h"
@@ -108,22 +108,18 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
 
   verible::matcher::BoundSymbolManager symbol_man;
   if (asgn_blocking_matcher.Matches(symbol, &symbol_man)) {
-    if (const auto *const node =
-            verible::down_cast<const verible::SyntaxTreeNode *>(&symbol)) {
-      check_root =
-          /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
-              node->front().get());
+    if (const verible::SyntaxTreeNode *const node =
+            verible::MaybeNode(&symbol)) {
+      check_root = /* lhs */ verible::MaybeNode(node->front().get());
     }
   } else {
     // Not interested in any other blocking assignments unless flagged
     if (!catch_modifying_assignments_) return;
 
     if (asgn_modify_matcher.Matches(symbol, &symbol_man)) {
-      if (const auto *const node =
-              verible::down_cast<const verible::SyntaxTreeNode *>(&symbol)) {
-        check_root =
-            /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
-                node->front().get());
+      if (const verible::SyntaxTreeNode *const node =
+              verible::MaybeNode(&symbol)) {
+        check_root = /* lhs */ verible::MaybeNode(node->front().get());
       }
     } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
       check_root = &symbol;
@@ -144,11 +140,9 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
       if (var.context.IsInside(NodeEnum::kHierarchyExtension)) continue;
 
       bool found = false;
-      if (const auto *const varn =
-              verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
-        if (const auto *const ident =
-                verible::down_cast<const verible::SyntaxTreeLeaf *>(
-                    varn->front().get())) {
+      if (const verible::SyntaxTreeNode *const varn =
+              verible::MaybeNode(var.match)) {
+        if (const auto *const ident = verible::MaybeLeaf(varn->front().get())) {
           found = std::find(locals_.begin(), locals_.end(),
                             ident->get().text()) != locals_.end();
           VLOG(4) << "LHS='" << ident->get().text() << "' FOUND=" << found
@@ -210,11 +204,10 @@ bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
   if (decl_matcher.Matches(symbol, &symbol_man)) {
     auto &count = scopes_.top().inherited_local_count;
     for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
-      if (const auto *const node =
-              verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
-        if (const auto *const ident =
-                verible::down_cast<const verible::SyntaxTreeLeaf *>(
-                    node->front().get())) {
+      if (const verible::SyntaxTreeNode *const node =
+              verible::MaybeNode(var.match)) {
+        if (const verible::SyntaxTreeLeaf *const ident =
+                verible::MaybeLeaf(node->front().get())) {
           const std::string_view name = ident->get().text();
           VLOG(4) << "Registering '" << name << '\'' << std::endl;
           locals_.emplace_back(name);
