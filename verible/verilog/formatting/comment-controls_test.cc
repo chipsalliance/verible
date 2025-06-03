@@ -22,9 +22,9 @@
 #include "absl/strings/str_join.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/strings/line-column-map.h"
 #include "verible/common/strings/position.h"
+#include "verible/common/text/line-terminator.h"
 #include "verible/common/text/token-info-test-util.h"
 #include "verible/verilog/analysis/verilog-analyzer.h"
 

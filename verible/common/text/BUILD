@@ -52,6 +52,22 @@ cc_library(
 )
 
 cc_library(
+    name = "line-terminator",
+    srcs = ["line-terminator.cc"],
+    hdrs = ["line-terminator.h"],
+)
+
+cc_test(
+    name = "line-terminator_test",
+    srcs = ["line-terminator_test.cc"],
+    deps = [
+        ":line-terminator",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "token-stream-view",
     srcs = ["token-stream-view.cc"],
     hdrs = ["token-stream-view.h"],
