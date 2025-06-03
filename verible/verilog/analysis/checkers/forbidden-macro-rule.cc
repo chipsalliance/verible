@@ -71,7 +71,7 @@ void ForbiddenMacroRule::HandleSymbol(
     const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (MacroCallMatcher().Matches(symbol, &manager)) {
-    if (const auto *leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
+    if (const verible::SyntaxTreeLeaf *leaf = manager.GetAsLeaf("name")) {
       const auto &imm = InvalidMacrosMap();
       if (imm.find(std::string(leaf->get().text())) != imm.end()) {
         violations_.insert(

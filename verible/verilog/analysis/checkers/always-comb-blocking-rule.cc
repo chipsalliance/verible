@@ -27,7 +27,6 @@
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/tree-utils.h"
-#include "verible/common/util/casts.h"
 #include "verible/verilog/CST/verilog-matchers.h"  // IWYU pragma: keep
 #include "verible/verilog/CST/verilog-nonterminals.h"
 #include "verible/verilog/analysis/descriptions.h"
@@ -38,7 +37,6 @@ namespace verilog {
 namespace analysis {
 
 using verible::AutoFix;
-using verible::down_cast;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SearchSyntaxTree;
@@ -77,8 +75,8 @@ void AlwaysCombBlockingRule::HandleSymbol(const verible::Symbol &symbol,
          SearchSyntaxTree(symbol, NodekNonblockingAssignmentStatement())) {
       if (match.match->Kind() != verible::SymbolKind::kNode) continue;
 
-      const auto *node =
-          down_cast<const verible::SyntaxTreeNode *>(match.match);
+      const verible::SyntaxTreeNode *node = verible::MaybeNode(match.match);
+      if (!node) return;
 
       const verible::SyntaxTreeLeaf *leaf = verible::GetSubtreeAsLeaf(
           *node, NodeEnum::kNonblockingAssignmentStatement, 1);

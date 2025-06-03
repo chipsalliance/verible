@@ -32,7 +32,6 @@
 #include "verible/common/text/token-info.h"
 #include "verible/common/text/tree-context-visitor.h"
 #include "verible/common/text/tree-utils.h"
-#include "verible/common/util/casts.h"
 #include "verible/common/util/logging.h"
 #include "verible/common/util/value-saver.h"
 #include "verible/verilog/CST/context-functions.h"
@@ -52,7 +51,6 @@ using verible::AlignmentColumnProperties;
 using verible::AlignmentGroupAction;
 using verible::ByteOffsetSet;
 using verible::ColumnSchemaScanner;
-using verible::down_cast;
 using verible::ExtractAlignmentGroupsFunction;
 using verible::FormatTokenRange;
 using verible::PreFormatToken;
@@ -1551,7 +1549,7 @@ void TabularAlignTokenPartitions(const FormatStyle &style,
   const auto *origin = uwline.Origin();
   VLOG(2) << "origin is nullptr? " << (origin == nullptr);
   if (origin == nullptr) return;
-  const auto *node = down_cast<const SyntaxTreeNode *>(origin);
+  const SyntaxTreeNode *node = verible::MaybeNode(origin);
   VLOG(2) << "origin is node? " << (node != nullptr);
   if (node == nullptr) return;
   // Dispatch aligning function based on syntax tree node type.

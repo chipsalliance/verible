@@ -38,8 +38,6 @@ namespace analysis {
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
-using verible::SyntaxTreeLeaf;
-using verible::SyntaxTreeNode;
 using verible::matcher::Matcher;
 
 // Register VoidCastRule
@@ -98,8 +96,7 @@ void VoidCastRule::HandleSymbol(const verible::Symbol &symbol,
   // Check for forbidden function names
   verible::matcher::BoundSymbolManager manager;
   if (FunctionMatcher().Matches(symbol, &manager)) {
-    if (const auto *function_id =
-            manager.GetAs<verible::SyntaxTreeLeaf>("id")) {
+    if (const verible::SyntaxTreeLeaf *function_id = manager.GetAsLeaf("id")) {
       const auto &bfs = ForbiddenFunctionsSet();
       if (bfs.find(std::string(function_id->get().text())) != bfs.end()) {
         violations_.insert(LintViolation(function_id->get(),
@@ -111,8 +108,7 @@ void VoidCastRule::HandleSymbol(const verible::Symbol &symbol,
   // Check for forbidden calls to randomize
   manager.Clear();
   if (RandomizeMatcher().Matches(symbol, &manager)) {
-    if (const auto *randomize_node =
-            manager.GetAs<verible::SyntaxTreeNode>("id")) {
+    if (const auto *randomize_node = manager.GetAsNode("id")) {
       const auto *leaf_ptr = verible::GetLeftmostLeaf(*randomize_node);
       const verible::TokenInfo token = ABSL_DIE_IF_NULL(leaf_ptr)->get();
       violations_.insert(LintViolation(

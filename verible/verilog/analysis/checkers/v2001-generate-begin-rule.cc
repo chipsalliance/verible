@@ -63,7 +63,7 @@ void V2001GenerateBeginRule::HandleSymbol(
     const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (GenerateRegionMatcher().Matches(symbol, &manager)) {
-    if (const auto *block = manager.GetAs<verible::SyntaxTreeNode>("block")) {
+    if (const verible::SyntaxTreeNode *block = manager.GetAsNode("block")) {
       violations_.insert(LintViolation(verible::GetLeftmostLeaf(*block)->get(),
                                        kMessage, context));
     }

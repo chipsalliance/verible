@@ -30,7 +30,6 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/text:tree-context-visitor",
         "//verible/common/text:tree-utils",
-        "//verible/common/util:casts",
         "//verible/common/util:logging",
         "//verible/common/util:value-saver",
         "//verible/verilog/CST:context-functions",

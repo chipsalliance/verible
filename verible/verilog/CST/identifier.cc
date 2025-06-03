@@ -72,8 +72,7 @@ const verible::SyntaxTreeLeaf *GetIdentifier(const verible::Symbol &symbol) {
     return nullptr;
   }
   const auto &node = down_cast<const verible::SyntaxTreeNode &>(symbol);
-  const auto *leaf = down_cast<const verible::SyntaxTreeLeaf *>(node[0].get());
-  return leaf;
+  return verible::MaybeLeaf(node[0].get());
 }
 
 const verible::SyntaxTreeLeaf *AutoUnwrapIdentifier(
