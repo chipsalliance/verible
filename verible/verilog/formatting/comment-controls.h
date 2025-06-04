@@ -18,9 +18,9 @@
 #include <ostream>
 #include <string_view>
 
-#include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/strings/line-column-map.h"
 #include "verible/common/strings/position.h"  // for ByteOffsetSet, LineNumberSet
+#include "verible/common/text/line-terminator.h"
 #include "verible/common/text/token-stream-view.h"
 
 namespace verilog {

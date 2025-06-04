@@ -37,16 +37,27 @@ done
 # Test any combination of input line terminators and output line terminators.
 # Test both inline formatting and standard output
 for original_newline in LF CRLF; do
+  PROPER_INPUT_FILE="${MY_INPUT_FILE}$original_newline"
+
+  # For 'auto', the line terminators of the output will be the same as input.
+  cp $PROPER_INPUT_FILE ${MY_OUTPUT_FILE}
+  ${formatter} --line_terminator=auto ${PROPER_INPUT_FILE} > ${MY_OUTPUT_FILE}
+  cmp ${MY_OUTPUT_FILE} $PROPER_INPUT_FILE || exit 1
+
+  cp $PROPER_INPUT_FILE ${MY_OUTPUT_FILE}
+  ${formatter} --line_terminator=auto --inplace ${MY_OUTPUT_FILE}
+  cmp ${MY_OUTPUT_FILE} $PROPER_INPUT_FILE || exit 2
+
+  # With an explicit target newline, we expect that particular one.
   for target_newline in LF CRLF; do
-    PROPER_INPUT_FILE="${MY_INPUT_FILE}$original_newline"
     PROPER_EXPECT_FILE="${MY_EXPECT_FILE}$target_newline"
 
     ${formatter} --line_terminator=$target_newline $PROPER_INPUT_FILE > ${MY_OUTPUT_FILE}
-    cmp ${MY_OUTPUT_FILE} $PROPER_EXPECT_FILE || exit 1
+    cmp ${MY_OUTPUT_FILE} $PROPER_EXPECT_FILE || exit 3
 
     cp $PROPER_INPUT_FILE ${MY_OUTPUT_FILE}
     ${formatter} --line_terminator=$target_newline --inplace ${MY_OUTPUT_FILE}
-    cmp ${MY_OUTPUT_FILE} $PROPER_EXPECT_FILE || exit 2
+    cmp ${MY_OUTPUT_FILE} $PROPER_EXPECT_FILE || exit 4
   done
 done
 

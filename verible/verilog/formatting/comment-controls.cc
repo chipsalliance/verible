@@ -23,11 +23,11 @@
 
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
-#include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/strings/comment-utils.h"
 #include "verible/common/strings/display-utils.h"
 #include "verible/common/strings/line-column-map.h"
 #include "verible/common/strings/position.h"
+#include "verible/common/text/line-terminator.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/text/token-stream-view.h"
 #include "verible/common/util/logging.h"

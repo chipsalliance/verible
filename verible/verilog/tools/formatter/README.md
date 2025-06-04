@@ -23,6 +23,9 @@ To pipe from stdin, use '-' as <file>.
       default: 2;
     --line_break_penalty (Penalty added to solution for each introduced line
       break.); default: 2;
+    --line_terminator (Line terminator. The 'auto' option chooses the output
+      depending on the observed input. The explicit choice CR or CRLF fixes the
+      output line terminator.); default: auto;
     --over_column_limit_penalty (For penalty minimization, this represents the
       baseline penalty value of exceeding the column limit. Additional penalty
       of 1 is incurred for each character over this limit); default: 100;

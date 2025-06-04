@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
@@ -29,6 +30,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/layout-optimizer.h"
 #include "verible/common/formatting/line-wrap-searcher.h"
@@ -39,6 +41,7 @@
 #include "verible/common/strings/line-column-map.h"
 #include "verible/common/strings/position.h"
 #include "verible/common/strings/range.h"
+#include "verible/common/text/line-terminator.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/text-structure.h"
 #include "verible/common/text/token-info.h"
@@ -970,6 +973,22 @@ Status Formatter::Format(const ExecutionControl &control) {
   return absl::OkStatus();
 }
 
+// From options, extract the line terminator style. If 'auto' was chosen,
+// attempt to determine from text.
+static verible::LineTerminatorStyle DetermineOutputLineTerminator(
+    verible::LineTerminatorOptionStyle from_options, std::string_view text) {
+  static constexpr int32_t kCountAtMost = 100;  // sufficient stats
+  switch (from_options) {
+    case verible::LineTerminatorOptionStyle::kCRLF:
+      return verible::LineTerminatorStyle::kCRLF;
+    case verible::LineTerminatorOptionStyle::kLF:
+      return verible::LineTerminatorStyle::kLF;
+    case verible::LineTerminatorOptionStyle::kAuto:
+      return verible::GuessLineTerminator(text, kCountAtMost);
+  }
+  return verible::LineTerminatorStyle::kLF;
+}
+
 void Formatter::Emit(bool include_disabled, std::ostream &stream) const {
   const std::string_view full_text(text_structure_.Contents());
   std::function<bool(const verible::TokenInfo &)> include_token_p;
@@ -981,6 +1000,8 @@ void Formatter::Emit(bool include_disabled, std::ostream &stream) const {
     };
   }
 
+  const verible::LineTerminatorStyle out_terminator =
+      DetermineOutputLineTerminator(style_.line_terminator, full_text);
   int position = 0;  // tracks with the position in the original full_text
   for (const verible::FormattedExcerpt &line : formatted_lines_) {
     // TODO(fangism): The handling of preserved spaces before tokens is messy:
@@ -993,7 +1014,7 @@ void Formatter::Emit(bool include_disabled, std::ostream &stream) const {
         full_text.substr(position, front_offset - position));
     FormatWhitespaceWithDisabledByteRanges(full_text, leading_whitespace,
                                            disabled_ranges_, include_disabled,
-                                           stream, style_.line_terminator);
+                                           stream, out_terminator);
 
     // When front of first token is format-disabled, the previous call will
     // already cover the space up to the front token, in which case,
@@ -1010,7 +1031,7 @@ void Formatter::Emit(bool include_disabled, std::ostream &stream) const {
   const std::string_view trailing_whitespace(full_text.substr(position));
   FormatWhitespaceWithDisabledByteRanges(full_text, trailing_whitespace,
                                          disabled_ranges_, include_disabled,
-                                         stream, style_.line_terminator);
+                                         stream, out_terminator);
 }
 
 }  // namespace formatter
