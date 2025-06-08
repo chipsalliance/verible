@@ -40,6 +40,9 @@
 ABSL_FLAG(bool, variables_in_outline, true,
           "Variables should be included into the symbol outline");
 
+ABSL_FLAG(bool, lsp_enable_hover, false,
+          "Enable hover mode, which is experimental right now");
+
 namespace verilog {
 
 VerilogLanguageServer::VerilogLanguageServer(bool push_diagnostic_notification,
@@ -70,6 +73,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::GetCapabilities() {
   // send response with information what we do.
   verible::lsp::InitializeResult result;
   this->include_variables = absl::GetFlag(FLAGS_variables_in_outline);
+  const bool enable_hover = absl::GetFlag(FLAGS_lsp_enable_hover);
   result.serverInfo = {
       .name = "Verible Verilog language server.",
       .version = verible::GetRepositoryVersion(),
@@ -89,10 +93,10 @@ verible::lsp::InitializeResult VerilogLanguageServer::GetCapabilities() {
       {"documentHighlightProvider", true},        // Highlight same symbol
       {"definitionProvider", true},               // Provide going to definition
       {"referencesProvider", true},               // Provide going to references
-      // Hover enabled, but not yet offered to client until tested.
-      {"hoverProvider", false},  // Hover info over cursor
-      {"renameProvider", true},  // Provide symbol renaming
-      {"diagnosticProvider",     // Pull model of diagnostics.
+      // Hover available, but not yet offered to client until tested.
+      {"hoverProvider", enable_hover},  // Hover info over cursor
+      {"renameProvider", true},         // Provide symbol renaming
+      {"diagnosticProvider",            // Pull model of diagnostics.
        {
            {"interFileDependencies", false},
            {"workspaceDiagnostics", false},
