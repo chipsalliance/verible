@@ -64,8 +64,27 @@ static const verible::EnumNameMap<AlignmentPolicy> &AlignmentPolicyNameMap() {
   return kAlignmentPolicyNameMap;
 }
 
+static const verible::EnumNameMap<NamedAlignmentPolicy> &
+NamedAlignmentPolicyNameMap() {
+  static const verible::EnumNameMap<NamedAlignmentPolicy>
+      kNamedAlignmentPolicyNameMap({
+          {"align", NamedAlignmentPolicy::kAlign},
+          {"flush-left", NamedAlignmentPolicy::kFlushLeft},
+          {"preserve", NamedAlignmentPolicy::kPreserve},
+          {"infer", NamedAlignmentPolicy::kInferUserIntent},
+          {"align-both", NamedAlignmentPolicy::kAlignBoth},
+          {"align-both-separated", NamedAlignmentPolicy::kAlignBothSeparated},
+          {"align-both-spaced", NamedAlignmentPolicy::kAlignBothSpaced},
+      });
+  return kNamedAlignmentPolicyNameMap;
+}
+
 std::ostream &operator<<(std::ostream &stream, AlignmentPolicy policy) {
   return AlignmentPolicyNameMap().Unparse(policy, stream);
+}
+
+std::ostream &operator<<(std::ostream &stream, NamedAlignmentPolicy policy) {
+  return NamedAlignmentPolicyNameMap().Unparse(policy, stream);
 }
 
 bool AbslParseFlag(std::string_view text, AlignmentPolicy *policy,
@@ -73,7 +92,19 @@ bool AbslParseFlag(std::string_view text, AlignmentPolicy *policy,
   return AlignmentPolicyNameMap().Parse(text, policy, error, "AlignmentPolicy");
 }
 
+bool AbslParseFlag(std::string_view text, NamedAlignmentPolicy *policy,
+                   std::string *error) {
+  return NamedAlignmentPolicyNameMap().Parse(text, policy, error,
+                                             "NamedAlignmentPolicy");
+}
+
 std::string AbslUnparseFlag(const AlignmentPolicy &policy) {
+  std::ostringstream stream;
+  stream << policy;
+  return stream.str();
+}
+
+std::string AbslUnparseFlag(const NamedAlignmentPolicy &policy) {
   std::ostringstream stream;
   stream << policy;
   return stream.str();
