@@ -19,8 +19,9 @@ progress
   - [x] Provide formatting.
   - [x] Highlight all the symbols that are the same as current under cursor.
     - [ ] Take scope and type into account to only highlight _same_ symbols.
-  - [ ] Provide useful information on hover
+  - [o] Provide useful information on hover
         ([#1187](https://github.com/chipsalliance/verible/issues/1187))
+        Experimental right now, enable with `--lsp_enable_hover`
   - [x] Find definition of a symbol even if in another file (check [Configuring the Language Server for a project](#configuring-the-language-server-for-a-project)).
   - [x] Find references of a symbol even if in another file (check [Configuring the Language Server for a project](#configuring-the-language-server-for-a-project)).
   - [ ] Find declaration of a symbol even if in another file.
