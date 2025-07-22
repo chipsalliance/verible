@@ -31,9 +31,9 @@
 #define read(fd, buf, size) _read(fd, buf, size)
 #endif
 
-// These days, editors mostly request the diagnostic and don't want them
-// as notification (in fact, they might show it multiple times)
-ABSL_FLAG(bool, push_diagnostic_notifications, false,
+// If an editor shows the diagnostics multiple times, then this might be
+// because it merges the push notifications with the pull requests it does.
+ABSL_FLAG(bool, push_diagnostic_notifications, true,
           "Send diagnostic as notifications.");
 
 // Since it is hard to see what exactly the editor passes to the language
