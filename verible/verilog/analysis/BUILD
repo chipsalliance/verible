@@ -1,6 +1,8 @@
 # This package contains functions and classes related to analysis of
 # structural representations of Verilog/SystemVerilog source code.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 default_visibility = [
     "//verible/verilog:__subpackages__",
 ]

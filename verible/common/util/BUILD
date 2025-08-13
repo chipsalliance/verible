@@ -1,6 +1,7 @@
 # 'util' contains generic containers, adapters, algorithms
 # Any verible package may directly depend on this.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load(":module-version.bzl", "get_version_define_from_module")
 
 package(

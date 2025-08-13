@@ -3,6 +3,8 @@
 # editscript - is a template-generic sequence diff algorithm based on
 #     diff-match-patch.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = [

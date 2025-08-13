@@ -1,5 +1,7 @@
 # A set of linter rules to be used in analysis of verilog code.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 default_visibility = [
     "//verible/verilog/analysis:__subpackages__",
     "//verible/verilog/tools:__subpackages__",
