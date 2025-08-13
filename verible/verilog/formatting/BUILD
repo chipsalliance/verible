@@ -1,5 +1,7 @@
 # This package SystemVerilog-specific code formatting functions.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 default_visibility = [
     "//verible/verilog/tools/formatter:__pkg__",
     "//verible/verilog/tools/ls:__pkg__",

@@ -9,6 +9,7 @@
 # [1]: https://microsoft.github.io/language-server-protocol/specification
 # [2]: https://www.jsonrpc.org/specification
 
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 
 package(

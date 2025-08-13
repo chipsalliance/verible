@@ -1,5 +1,6 @@
 # This package implements a SystemVerilog lexer and parser.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//bazel:bison.bzl", "genyacc")
 load("//bazel:flex.bzl", "genlex")
 load(
