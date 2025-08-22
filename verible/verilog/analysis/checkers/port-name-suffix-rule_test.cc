@@ -127,6 +127,10 @@ TEST(PortNameSuffixRuleTest, RejectTests) {
       {"module t (output logic ", {kToken, "name_pi"}, "); endmodule;"},
       {"module t (output logic ", {kToken, "name_pio"}, "); endmodule;"},
 
+      {"module t (", {kToken, "name"}, "); input logic name; endmodule;"},
+      {"module t (", {kToken, "abc"}, "); output logic abc; endmodule;"},
+      {"module t (", {kToken, "xyz"}, "); inout logic [3:0] xyz; endmodule;"},
+
       {"module t (input logic ",
        {kToken, "name"},
        ",\n"
