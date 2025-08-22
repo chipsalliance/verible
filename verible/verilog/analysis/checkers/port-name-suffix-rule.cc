@@ -104,19 +104,37 @@ void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
     const auto *identifier_leaf = GetIdentifierFromPortDeclaration(symbol);
     const auto *direction_leaf = GetDirectionFromPortDeclaration(symbol);
     const auto token = identifier_leaf->get();
-    const auto direction =
-        direction_leaf ? direction_leaf->get().text() : implicit_direction;
+    std::string direction;
+    if (direction_leaf) {
+      direction = std::string(direction_leaf->get().text());
+    } else {
+      // Non-ANSI style: try to find direction inside module body
+      // Search parent for matching port declaration with direction
+      const SyntaxTreeContext *parent_ctx = &context;
+      while (parent_ctx && !direction_leaf) {
+        // Iterate symbols in parent context to find matching identifier
+        for (const auto &sym : *parent_ctx) {
+          if (sym->Kind() == SymbolKind::kNode) {
+            const auto *decl_dir = GetDirectionFromPortDeclaration(*sym);
+            const auto *decl_id = GetIdentifierFromPortDeclaration(*sym);
+            if (decl_id && decl_id->get().text() == identifier_leaf->get().text()) {
+              if (decl_dir) {
+                direction = std::string(decl_dir->get().text());
+                break;
+              }
+            }
+          }
+        }
+        parent_ctx = parent_ctx->parent();
+      }
+      if (direction.empty()) direction = std::string(implicit_direction);
+    }
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
-
-    // Check if there is any suffix
     std::vector<std::string> name_parts =
-        absl::StrSplit(name, '_', absl::SkipEmpty());
-
+            absl::StrSplit(name, '_', absl::SkipEmpty());
     if (name_parts.size() < 2) {
-      // No suffix at all
       Violation(direction, token, context);
     }
-
     if (!IsSuffixCorrect(name_parts.back(), direction)) {
       Violation(direction, token, context);
     }
