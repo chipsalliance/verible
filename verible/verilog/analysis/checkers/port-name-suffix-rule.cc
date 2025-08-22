@@ -117,7 +117,8 @@ void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
           if (sym->Kind() == SymbolKind::kNode) {
             const auto *decl_dir = GetDirectionFromPortDeclaration(*sym);
             const auto *decl_id = GetIdentifierFromPortDeclaration(*sym);
-            if (decl_id && decl_id->get().text() == identifier_leaf->get().text()) {
+            if (decl_id &&
+                decl_id->get().text() == identifier_leaf->get().text()) {
               if (decl_dir) {
                 direction = std::string(decl_dir->get().text());
                 break;
