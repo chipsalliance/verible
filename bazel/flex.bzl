@@ -20,21 +20,49 @@
 def genlex(name, src, out):
     """Generate C/C++ language source from lex file using Flex
     """
+
+    # Note: some attributes such as (toolchains and name) cannot use select. So, although verbose, we create a
+    # genrule for each condition here and copy the resulting file to the expected location.
+
+    # For rules_flex default case
+    native.genrule(
+        name = name + "_default",
+        srcs = [src],
+        outs = [out + ".default"],
+        cmd = "M4=$(M4) $(FLEX) --outfile=$(location " + out + ".default) $<",
+        toolchains = [
+            "@rules_flex//flex:current_flex_toolchain",
+            "@rules_m4//m4:current_m4_toolchain",
+        ],
+        tags = ["manual"],
+    )
+
+    # For local flex case
+    native.genrule(
+        name = name + "_local",
+        srcs = [src],
+        outs = [out + ".local"],
+        cmd = "flex --outfile=$(location " + out + ".local) $<",
+        tags = ["manual"],
+    )
+
+    # For Windows case
+    native.genrule(
+        name = name + "_windows",
+        srcs = [src],
+        outs = [out + ".windows"],
+        cmd = "win_flex.exe --outfile=$(location " + out + ".windows) $<",
+        tags = ["manual"],
+    )
+
+    # Create a copy rule to get the final output
     native.genrule(
         name = name,
-        srcs = [src],
+        srcs = select({
+            "//bazel:use_local_flex_bison_enabled": [out + ".local"],
+            "@platforms//os:windows": [out + ".windows"],
+            "//conditions:default": [out + ".default"],
+        }),
         outs = [out],
-        cmd = select({
-            "//bazel:use_local_flex_bison_enabled": "flex --outfile=$@ $<",
-            "@platforms//os:windows": "win_flex.exe --outfile=$@ $<",
-            "//conditions:default": "M4=$(M4) $(FLEX) --outfile=$@ $<",
-        }),
-        toolchains = select({
-            "//bazel:use_local_flex_bison_enabled": [],
-            "@platforms//os:windows": [],
-            "//conditions:default": [
-                "@rules_flex//flex:current_flex_toolchain",
-                "@rules_m4//m4:current_m4_toolchain",
-            ],
-        }),
+        cmd = "cp $< $@",
     )
