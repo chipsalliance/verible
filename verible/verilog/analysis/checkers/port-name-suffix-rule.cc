@@ -129,12 +129,18 @@ void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
       }
       if (direction.empty()) direction = std::string(implicit_direction);
     }
+
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
+
+    // Check if there is any suffix
     std::vector<std::string> name_parts =
-            absl::StrSplit(name, '_', absl::SkipEmpty());
+        absl::StrSplit(name, '_', absl::SkipEmpty());
+
     if (name_parts.size() < 2) {
+      // No suffix at all
       Violation(direction, token, context);
     }
+
     if (!IsSuffixCorrect(name_parts.back(), direction)) {
       Violation(direction, token, context);
     }
