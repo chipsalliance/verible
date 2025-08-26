@@ -26,10 +26,6 @@ verible_used_stdenv.mkDerivation {
       # To manually run export_json_examples
       python3Packages.anytree
 
-      # For using --//bazel:use_local_flex_bison if desired
-      flex
-      bison
-
       # To build vscode vsix package
       nodejs
 
