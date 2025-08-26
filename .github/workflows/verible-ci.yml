@@ -397,7 +397,6 @@ jobs:
     - name: Install dependencies
       run: |
         choco install bazel --force --version=7.6.1
-        choco install winflexbison3
         choco install llvm --allow-downgrade --version=20.1.4
 
     - name: Debug bazel directory settings
