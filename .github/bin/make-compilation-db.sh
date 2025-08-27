@@ -14,7 +14,6 @@
 # limitations under the License.
 
 set -u
-set -e
 
 # Which bazel and bant to use can be chosen by environment variables
 BAZEL=${BAZEL:-bazel}
@@ -23,13 +22,13 @@ BANT=$($(dirname $0)/get-bant-path.sh)
 BAZEL_OPTS="-c opt --noshow_progress"
 # Bazel-build all targets that generate files, so that they can be
 # seen in dependency analysis.
-${BAZEL} build ${BAZEL_OPTS} $(${BANT} list-targets \
+${BAZEL} build -k ${BAZEL_OPTS} $(${BANT} list-targets \
   | awk '/genrule|cc_proto_library|genlex|genyacc/ {print $3}')
 
 # Some selected targets to trigger all dependency fetches from MODULE.bazel
 # verilog-y-final to create a header, kzip creator to trigger build of any.pb.h
 # and some test that triggers fetching nlohmann_json and gtest
-${BAZEL} build ${BAZEL_OPTS} //verible/verilog/parser:verilog-y-final \
+${BAZEL} build -k ${BAZEL_OPTS} //verible/verilog/parser:verilog-y-final \
   //verible/verilog/tools/kythe:verible-verilog-kythe-kzip-writer \
   //verible/common/lsp:json-rpc-dispatcher_test
 
