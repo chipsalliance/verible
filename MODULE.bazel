@@ -10,7 +10,6 @@ bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "protobuf", version = "31.0-rc2")
 bazel_dep(name = "re2", version = "2024-07-02.bcr.1")
 bazel_dep(name = "rules_bison", version = "0.3")
-bazel_dep(name = "rules_cc", version = "0.1.2")
 bazel_dep(name = "rules_flex", version = "0.3")
 bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "rules_m4", version = "0.2.3")
@@ -20,3 +19,11 @@ bazel_dep(name = "googletest", version = "1.15.2", dev_dependency = True)
 
 # To build compilation DB and run build-cleaning
 bazel_dep(name = "bant", version = "0.2.0", dev_dependency = True)
+
+# Make rules_cc more compatible to compile on Posix systems: use /bin/sh
+bazel_dep(name = "rules_cc", version = "0.2.1")
+single_version_override(
+    module_name = "rules_cc",
+    patch_strip = 1,
+    patches = ["//bazel:rules_cc_466.patch"],
+)
