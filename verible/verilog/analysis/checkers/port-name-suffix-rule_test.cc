@@ -67,6 +67,25 @@ TEST(PortNameSuffixRuleTest, AcceptTests) {
        "output bit abcb_o,\n"
        "inout bit xyzb_io);\n"
        "endmodule;"},
+      {"module t (name_i,\n"
+       "abc_o,\n"
+       "xyz_io,\n"
+       "namea_i,\n"
+       "abca_o,\n"
+       "xyza_io,\n"
+       "nameb_i,\n"
+       "abcb_o,\n"
+       "xyzb_io);\n"
+       "input logic name_i;\n"
+       "output logic abc_o;\n"
+       "inout logic xyz_io;\n"
+       "input logic [7:0] namea_i;\n"
+       "output logic [2:0] abca_o;\n"
+       "inout logic [3:0] xyza_io;\n"
+       "input bit nameb_i;\n"
+       "output bit abcb_o;\n"
+       "inout bit xyzb_io;\n"
+       "endmodule;"},
   };
   RunLintTestCases<VerilogAnalyzer, PortNameSuffixRule>(kTestCases);
 }
@@ -107,6 +126,10 @@ TEST(PortNameSuffixRuleTest, RejectTests) {
       {"module t (output logic ", {kToken, "name_nio"}, "); endmodule;"},
       {"module t (output logic ", {kToken, "name_pi"}, "); endmodule;"},
       {"module t (output logic ", {kToken, "name_pio"}, "); endmodule;"},
+
+      {"module t (", {kToken, "name"}, "); input logic name; endmodule;"},
+      {"module t (", {kToken, "abc"}, "); output logic abc; endmodule;"},
+      {"module t (", {kToken, "xyz"}, "); inout logic [3:0] xyz; endmodule;"},
 
       {"module t (input logic ",
        {kToken, "name"},
