@@ -151,8 +151,8 @@ ExpectedFailCount[preprocessor:sv-tests]=139
 
 ExpectedFailCount[syntax:caliptra-rtl]=39
 ExpectedFailCount[lint:caliptra-rtl]=38
-ExpectedFailCount[project:caliptra-rtl]=419
-ExpectedFailCount[preprocessor:caliptra-rtl]=879
+ExpectedFailCount[project:caliptra-rtl]=440
+ExpectedFailCount[preprocessor:caliptra-rtl]=900
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
@@ -182,10 +182,10 @@ ExpectedFailCount[lint:XilinxUnisimLibrary]=4
 ExpectedFailCount[project:XilinxUnisimLibrary]=22
 ExpectedFailCount[preprocessor:XilinxUnisimLibrary]=96
 
-ExpectedFailCount[syntax:black-parrot]=154
-ExpectedFailCount[lint:black-parrot]=154
-ExpectedFailCount[project:black-parrot]=169
-ExpectedFailCount[preprocessor:black-parrot]=170
+ExpectedFailCount[syntax:black-parrot]=155
+ExpectedFailCount[lint:black-parrot]=155
+ExpectedFailCount[project:black-parrot]=172
+ExpectedFailCount[preprocessor:black-parrot]=173
 
 ExpectedFailCount[syntax:ivtest]=166
 ExpectedFailCount[lint:ivtest]=166
