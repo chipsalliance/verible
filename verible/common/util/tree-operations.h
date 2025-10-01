@@ -95,11 +95,11 @@ using TreeNodeSubnodesType = Type_;
 // a STL-like container with nodes.
 // TODO(mglb): Add support for children containers storing Node pointers.
 template <typename Node,  //
-          typename ChildrenType_ = decltype(std::declval<Node>().Children()),
           typename =
               std::void_t<decltype(*std::declval<Node>().Children().begin()),
                           decltype(std::declval<Node>().Children().end())>>
 struct TreeNodeChildrenTraits : FeatureTraits {
+  using ChildrenType_ = decltype(std::declval<Node>().Children());
   // Container type which should be used for storing arrays of detached
   // child nodes. It must be move-assignable to, and move-constructible from,
   // a value returned by `Children()` method.
