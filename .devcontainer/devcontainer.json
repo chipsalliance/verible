@@ -1,15 +1,4 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node
-
-// If you are behind a proxy, set the http_proxy and https_proxy environment variables
-// in the container environment. For example:
-///
-// "containerEnv": {
-// 	"HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
-// 	"HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
-// 	"http_proxy": "http://proxy-dmz.intel.com:912/",
-// 	"https_proxy": "http://proxy-dmz.intel.com:912/"
-// },
+// For format details, see https://aka.ms/devcontainer.json.
 
 {
 	"name": "Verible Dev",
