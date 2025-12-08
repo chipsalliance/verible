@@ -44,5 +44,6 @@ if [ ! -r "${COVERAGE_DATA}" ]; then
   exit
 fi
 
-genhtml -o ${OUTPUT_DIR} ${COVERAGE_DATA}
-echo "Output in $(realpath ${OUTPUT_DIR}/index.html)"
+genhtml --ignore-errors inconsistent -o ${OUTPUT_DIR} ${COVERAGE_DATA}
+echo
+echo "Output in file://$(realpath ${OUTPUT_DIR}/index.html)"

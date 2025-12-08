@@ -53,7 +53,9 @@ readonly TERM_RED=$'\033[1;31m'
 readonly TERM_BOLD=$'\033[1m'
 readonly TERM_RESET=$'\033[0m'
 
-readonly BINARY_BASE_DIR=bazel-bin/verilog/tools
+readonly BINARY_BASE_DIR=bazel-bin/verible/verilog/tools
+
+readonly ISSUE_PREFIX="https://github.com/chipsalliance/verible/issues"
 
 # In case the binaries are run with ASAN:
 # By default, failing asan binaries exit with exit code 1.
@@ -79,6 +81,9 @@ readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
 #
 # There are some known issues which are all recorded in the associative
 # array below, mapping them to Verible issue tracker numbers.
+# TODO(hzeller): there should be a configuration file that contains two
+# columns: URL + hash, so that we can fetch a particular known version not
+# a moving target.
 readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
          https://github.com/lowRISC/opentitan \
          https://github.com/chipsalliance/sv-tests \
@@ -97,7 +102,8 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
          https://github.com/rsd-devel/rsd \
          https://github.com/syntacore/scr1 \
          https://github.com/olofk/serv \
-         https://github.com/bespoke-silicon-group/basejump_stl"
+         https://github.com/bespoke-silicon-group/basejump_stl \
+         https://github.com/gtaylormb/opl3_fpga"
 
 ##
 # Some of the files in the projects will have issues.
@@ -110,14 +116,13 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
 # Goal: The following list shall be empty :)
 # Format: <tool-name>:<basename of file-name in project>
 declare -A KnownIssue
-KnownIssue[project:soc_ifc_status_driver.svh]=https://github.com/chipsalliance/verible/issues/1946
 
 # At the moment, the list is empty
 
 #--- Too many to mention manually, so here we do the 'waive all' approach
 # Format: <tool-name>:<project>
 declare -A KnownProjectToolIssue
-KnownProjectToolIssue[project:caliptra-rtl]=https://github.com/chipsalliance/verible/issues/1946
+KnownProjectToolIssue[project:caliptra-rtl]=1946
 
 ##
 # Some tools still not fully process all files and return a non-zero exit
@@ -128,35 +133,36 @@ KnownProjectToolIssue[project:caliptra-rtl]=https://github.com/chipsalliance/ver
 # removed.
 declare -A ExpectedFailCount
 
-ExpectedFailCount[syntax:ibex]=14
-ExpectedFailCount[lint:ibex]=14
-ExpectedFailCount[project:ibex]=194
-ExpectedFailCount[preprocessor:ibex]=368
+ExpectedFailCount[syntax:ibex]=17
+ExpectedFailCount[lint:ibex]=17
+ExpectedFailCount[project:ibex]=222
+ExpectedFailCount[preprocessor:ibex]=394
 
-ExpectedFailCount[syntax:opentitan]=35
-ExpectedFailCount[lint:opentitan]=35
-ExpectedFailCount[project:opentitan]=752
-ExpectedFailCount[preprocessor:opentitan]=2030
+ExpectedFailCount[syntax:opentitan]=101
+ExpectedFailCount[lint:opentitan]=101
+ExpectedFailCount[project:opentitan]=1133
+ExpectedFailCount[formatter:opentitan]=0
+ExpectedFailCount[preprocessor:opentitan]=3061
 
 ExpectedFailCount[syntax:sv-tests]=77
 ExpectedFailCount[lint:sv-tests]=76
 ExpectedFailCount[project:sv-tests]=187
 ExpectedFailCount[preprocessor:sv-tests]=139
 
-ExpectedFailCount[syntax:caliptra-rtl]=24
-ExpectedFailCount[lint:caliptra-rtl]=24
-ExpectedFailCount[project:caliptra-rtl]=333
-ExpectedFailCount[preprocessor:caliptra-rtl]=766
+ExpectedFailCount[syntax:caliptra-rtl]=39
+ExpectedFailCount[lint:caliptra-rtl]=38
+ExpectedFailCount[project:caliptra-rtl]=440
+ExpectedFailCount[preprocessor:caliptra-rtl]=900
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
 ExpectedFailCount[project:Cores-VeeR-EH2]=42
 ExpectedFailCount[preprocessor:Cores-VeeR-EH2]=43
 
-ExpectedFailCount[syntax:cva6]=6
-ExpectedFailCount[lint:cva6]=6
-ExpectedFailCount[project:cva6]=79
-ExpectedFailCount[preprocessor:cva6]=117
+ExpectedFailCount[syntax:cva6]=7
+ExpectedFailCount[lint:cva6]=7
+ExpectedFailCount[project:cva6]=91
+ExpectedFailCount[preprocessor:cva6]=141
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -176,10 +182,10 @@ ExpectedFailCount[lint:XilinxUnisimLibrary]=4
 ExpectedFailCount[project:XilinxUnisimLibrary]=22
 ExpectedFailCount[preprocessor:XilinxUnisimLibrary]=96
 
-ExpectedFailCount[syntax:black-parrot]=154
-ExpectedFailCount[lint:black-parrot]=154
-ExpectedFailCount[project:black-parrot]=169
-ExpectedFailCount[preprocessor:black-parrot]=170
+ExpectedFailCount[syntax:black-parrot]=155
+ExpectedFailCount[lint:black-parrot]=155
+ExpectedFailCount[project:black-parrot]=172
+ExpectedFailCount[preprocessor:black-parrot]=173
 
 ExpectedFailCount[syntax:ivtest]=166
 ExpectedFailCount[lint:ivtest]=166
@@ -191,13 +197,13 @@ ExpectedFailCount[lint:nontrivial-mips]=2
 ExpectedFailCount[project:nontrivial-mips]=81
 ExpectedFailCount[preprocessor:nontrivial-mips]=78
 
-ExpectedFailCount[project:axi]=74
-ExpectedFailCount[preprocessor:axi]=71
+ExpectedFailCount[project:axi]=80
+ExpectedFailCount[preprocessor:axi]=77
 
 ExpectedFailCount[syntax:rsd]=5
 ExpectedFailCount[lint:rsd]=5
-ExpectedFailCount[project:rsd]=51
-ExpectedFailCount[preprocessor:rsd]=48
+ExpectedFailCount[project:rsd]=52
+ExpectedFailCount[preprocessor:rsd]=49
 
 ExpectedFailCount[project:scr1]=45
 ExpectedFailCount[preprocessor:scr1]=46
@@ -205,11 +211,16 @@ ExpectedFailCount[preprocessor:scr1]=46
 ExpectedFailCount[project:serv]=1
 ExpectedFailCount[preprocessor:serv]=1
 
-ExpectedFailCount[syntax:basejump_stl]=469
-ExpectedFailCount[lint:basejump_stl]=469
-ExpectedFailCount[project:basejump_stl]=581
+ExpectedFailCount[syntax:basejump_stl]=490
+ExpectedFailCount[lint:basejump_stl]=490
+ExpectedFailCount[project:basejump_stl]=609
 ExpectedFailCount[formatter:basejump_stl]=1
-ExpectedFailCount[preprocessor:basejump_stl]=615
+ExpectedFailCount[preprocessor:basejump_stl]=648
+
+ExpectedFailCount[syntax:opl3_fpga]=3
+ExpectedFailCount[lint:opl3_fpga]=3
+ExpectedFailCount[project:opl3_fpga]=5
+ExpectedFailCount[preprocessor:opl3_fpga]=4
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current
@@ -337,10 +348,10 @@ function run_smoke_test() {
         waive_project_key="${short_tool_name}:${PROJECT_NAME}"
         if [[ -v KnownIssue[${waive_file_key}] ]]; then
           bug_number=${KnownIssue[${waive_file_key}]}
-          echo "  --> Known issue: 🐞 https://github.com/chipsalliance/verible/issues/$bug_number"
+          echo "  --> Known issue: 🐞 ${ISSUE_PREFIX}/${bug_number}"
           unset KnownIssue[${waive_file_key}]
         elif [[ -v KnownProjectToolIssue[${waive_project_key}] ]]; then
-          echo "  --> Known issue 🐞🐞 possibly one of ${KnownProjectToolIssue[${waive_project_key}]}"
+          echo "  --> Known issue 🐞🐞 possibly one of ${ISSUE_PREFIX}/${KnownProjectToolIssue[${waive_project_key}]}"
         else
           # This is an so far unknown issue
           echo "::error:: 😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
@@ -421,7 +432,7 @@ if [ "${#KnownIssue[@]}" -ne 0 ]; then
   echo
   echo "::notice ::These were referencing the following issues. Maybe they are fixed now ?"
   for issue_id in "${!DistinctIssues[@]}"; do
-    echo " 🐞 https://github.com/chipsalliance/verible/issues/$issue_id"
+    echo " 🐞 ${ISSUE_PREFIX}/${issue_id}"
   done
   echo
 fi

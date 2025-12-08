@@ -41,10 +41,10 @@ KYTHE_OUT="./kythe-out"
 # make sure to pass the correct public_resources directory to http_server.
 rm -f -- ${KYTHE_OUT}/graphstore/* ${KYTHE_OUT}/tables/*
 mkdir -p ${KYTHE_OUT}/graphstore ${KYTHE_OUT}/tables
-bazel build -c opt //verilog/tools/kythe:all
+bazel build -c opt //verible/verilog/tools/kythe:all
 
 # Read JSON entries from standard in to a graphstore.
-bazel-bin/verilog/tools/kythe/verible-verilog-kythe-extractor --file_list_path "$1" --file_list_root "$2" --print_kythe_facts json --include_dir_paths "$3" > "${KYTHE_OUT}"/entries
+bazel-bin/verible/verilog/tools/kythe/verible-verilog-kythe-extractor --file_list_path "$1" --file_list_root "$2" --print_kythe_facts json --include_dir_paths "$3" > "${KYTHE_OUT}"/entries
 # Write entry stream into a GraphStore
 "${KYTHE_BINDIR}"/entrystream --read_format=json < "${KYTHE_OUT}"/entries \
 | "${KYTHE_BINDIR}"/write_entries -graphstore "${KYTHE_OUT}"/graphstore

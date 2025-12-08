@@ -1,28 +1,43 @@
+# bazel < 7 needs explicit enabling of bzlmod dependencies.
+build --enable_bzlmod
+
 # Enable support for absl types like string_view in gtest.
 build --define="absl=1"
 
 build --enable_platform_specific_config
 
 # Gather build version information
-build:linux --workspace_status_command="bazel/build-version.py"
-build:freebsd --workspace_status_command="bazel/build-version.py"
-build:openbsd --workspace_status_command="bazel/build-version.py"
-build:macos --workspace_status_command="bazel/build-version.py"
-build:windows --workspace_status_command="python bazel/build-version.py"
+build --workspace_status_command="bash bazel/build-version.sh"
 
-common:linux --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
-common:freebsd --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17 --linkopt=-lm --host_linkopt=-lm
-common:openbsd --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17 --linkopt=-lm --host_linkopt=-lm
+# Systems with gcc or clang
+common:unix    --cxxopt=-xc++ --host_cxxopt=-xc++ --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
+common:linux   --config=unix
+common:freebsd --config=unix --linkopt=-lm --host_linkopt=-lm
+common:openbsd --config=unix --linkopt=-lm --host_linkopt=-lm
+common:macos   --config=unix
 
 # https://github.com/abseil/abseil-cpp/issues/848
 # https://github.com/bazelbuild/bazel/issues/4341#issuecomment-758361769
-common:macos --features=-supports_dynamic_linker --linkopt=-framework --linkopt=CoreFoundation --host_linkopt=-framework --host_linkopt=CoreFoundation --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
+common:macos --features=-supports_dynamic_linker --linkopt=-framework --linkopt=CoreFoundation --host_linkopt=-framework --host_linkopt=CoreFoundation
 
-# Force the use clang-cl on Windows instead of MSVC. MSVC has some issues with
-# the codebase, so we focus the effort for now is to have a Windows Verible
-# compiled with clang-cl before fixing the issues unique to MSVC.
-# Since we use designated initializers (C99 ... but >= c++20), compiler really wants the c++20 mode
-common:windows --compiler=clang-cl --cxxopt=/std:c++20 --host_cxxopt=/std:c++20 --client_env=BAZEL_CXXOPTS=/std:c++20
+# Use clang-cl by default on Windows. MSVC has some issues with the codebase,
+# so we focus the effort for now is to have a Windows Verible compiled with
+# clang-cl before fixing the issues unique to MSVC.
+common:windows --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl --extra_execution_platforms=//:x64_windows-clang-cl
+common:windows --compiler=clang-cl --cxxopt=/std:c++17 --host_cxxopt=/std:c++17 --client_env=BAZEL_CXXOPTS=/std:c++17
+
+build --cxxopt="-Wno-unknown-warning-option" --host_cxxopt="-Wno-unknown-warning-option"
+# TODO: this looks like benign where it happens but to be explored further.
+build --cxxopt="-Wno-dangling-reference" --host_cxxopt="-Wno-dangling-reference"
+# Newer bisons create an unused label.
+build --cxxopt="-Wno-unused-label" --host_cxxopt="-Wno-unused-label"
+# c++20 warning on protobuf 28.1
+build --cxxopt="-Wno-missing-requires" --host_cxxopt="-Wno-missing-requires"
+
+# For 3rd party code: Disable warnings entirely.
+# They are not actionable and just create noise.
+build --per_file_copt=external/.*@-w
+build --host_per_file_copt=external/.*@-w
 
 # Address sanitizer settings.
 build:asan --strip=never
@@ -34,3 +49,5 @@ build:asan --copt -fno-omit-frame-pointer
 build:asan --linkopt -fsanitize=address
 
 build:create_static_linked_executables --linkopt=-fuse-ld=bfd --features=-supports_start_end_lib --//bazel:create_static_linked_executables
+
+try-import %workspace%/user.bazelrc

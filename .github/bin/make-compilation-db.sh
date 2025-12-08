@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2021 The Verible Authors.
+# Copyright 2021-2025 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,15 +14,35 @@
 # limitations under the License.
 
 set -u
-set -e
 
-readonly OUTPUT_BASE="$(bazel info output_base)"
+# Which bazel and bant to use can be chosen by environment variables
+BAZEL=${BAZEL:-bazel}
+BANT=$($(dirname $0)/get-bant-path.sh)
 
-readonly COMPDB_SCRIPT="${OUTPUT_BASE}/external/com_grail_bazel_compdb/generate.py"
-[ -r "${COMPDB_SCRIPT}" ] || bazel fetch ...
+BAZEL_OPTS="-c opt --noshow_progress"
+# Bazel-build all targets that generate files, so that they can be
+# seen in dependency analysis.
+${BAZEL} build -k ${BAZEL_OPTS} $(${BANT} list-targets \
+  | awk '/genrule|cc_proto_library|genlex|genyacc/ {print $3}')
 
-python3 "${COMPDB_SCRIPT}"
+# Some selected targets to trigger all dependency fetches from MODULE.bazel
+# verilog-y-final to create a header, kzip creator to trigger build of any.pb.h
+# and some test that triggers fetching nlohmann_json and gtest
+${BAZEL} build -k ${BAZEL_OPTS} //verible/verilog/parser:verilog-y-final \
+  //verible/verilog/tools/kythe:verible-verilog-kythe-kzip-writer \
+  //verible/common/lsp:json-rpc-dispatcher_test
 
-# Remove a flags observed in the wild that clang-tidy doesn't understand.
-sed -i -e 's/-fno-canonical-system-headers//g; s/DEBUG_PREFIX_MAP_PWD=.//g' \
-       compile_commands.json
+# bant does not distinguish the compile flags per file yet, so instead of
+# a compile_commands.json, we can just as well create a simpler
+# compile_flags.txt which is easier to digest for all kinds of tools anyway.
+${BANT} compile-flags 2>/dev/null > compile_flags.txt
+
+# Bant does not see the flex dependency inside the toolchain yet.
+for d in bazel-out/../../../external/*flex*/src/FlexLexer.h ; do
+  echo "-I$(dirname $d)" >> compile_flags.txt
+done
+
+# clang-tidy sometimes has issues figuring out if a file is c++,
+# so let's tell it. Bant can't always exctract that yet from --config redirects
+# in .bazelrc
+echo "-xc++" >> compile_flags.txt

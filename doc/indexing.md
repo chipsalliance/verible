@@ -10,6 +10,9 @@ indexing Bazel-based projects.
 More information about indexing Bazel-based projects using Kythe
 [here](https://github.com/kythe/kythe/tree/master/kythe/cxx/extractor#bazel-c-extractor).
 
+Note, if you just want to locally edit the code, no need to index, just use
+the compilation DB by calling `.github/bin/make-compilation-db.sh`
+
 ### Initializing Kythe
 
 Download the latest Kythe release from https://github.com/kythe/kythe/releases
@@ -52,7 +55,7 @@ renaming isn’t needed here but you can add the renaming you find suitable.
 bazel test --experimental_action_listener=:extract_cxx  //...
 
 # run on specific target (e.g. some cc_binary or cc_library)
-bazel test --experimental_action_listener=:extract_cxx //verilog/analysis:default_rules
+bazel test --experimental_action_listener=:extract_cxx //verible/verilog/analysis:default_rules
 ```
 
 Extracted kzip files will be in

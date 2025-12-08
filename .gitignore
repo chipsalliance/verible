@@ -1,13 +1,16 @@
 *~
 /bazel-*
+MODULE.bazel.lock
 tags
 releasing/out
 coverage-html/
+__pycache__/
 
-compile_commands.json
+compile_flags.txt
 run-clang-tidy-cached
-verible_clang-tidy.out
+verible_clang-tidy.*
 
 # Local user config
 .envrc
 .direnv
+user.bazelrc

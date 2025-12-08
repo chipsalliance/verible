@@ -3,12 +3,14 @@ Rules for adding './configure && make' style dependencies.
 """
 
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//:__subpackages__",
     ],
+    features = ["layering_check"],
 )
 
 cc_library(

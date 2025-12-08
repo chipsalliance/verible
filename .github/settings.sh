@@ -17,6 +17,9 @@
 # pass through things like Docker files which don't support bash arrays and
 # similar functionality.
 
+set -e
+set -x
+
 [[ "${BASH_SOURCE[0]}" != "${0}" ]] && SOURCED=1 || SOURCED=0
 
 if [ $SOURCED -ne 1 ]; then
@@ -24,7 +27,7 @@ if [ $SOURCED -ne 1 ]; then
         exit 1
 fi
 
-export GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
+export GIT_VERSION=${GIT_VERSION:-$(git describe --match='v*')}
 
 export BAZEL_CXXOPTS="-std=c++17"
 
@@ -32,9 +35,9 @@ export BAZEL_CXXOPTS="-std=c++17"
 export BAZEL_OPTS="-c opt --noshow_progress"
 
 # Used to fetch the BAZEL version where needed.
-export BAZEL_VERSION=5.4.1
+export BAZEL_VERSION=7.6.1
 
 # Kythe version for extracting xRefs
-export KYTHE_VERSION=v0.0.52
+export KYTHE_VERSION=v0.0.68
 # Kythe version for fetching tools (verification tools, etc.)
 export KYTHE_TOOLS_VERSION=${KYTHE_VERSION}

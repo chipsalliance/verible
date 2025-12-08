@@ -25,7 +25,7 @@ The main functions that determine inter-token attributes are written as
 _priority-ordered rules_, i.e. series of `if (condition) return ...;`. There may
 be an _O(N^2)_ number of inter-token pair combinations, however, we aim to cover
 as much of that space as possible with few rules.
-[Test cases](https://cs.opensource.google/verible/verible/+/master:verilog/formatting/token_annotator_test.cc),
+[Test cases](https://cs.opensource.google/verible/verible/+/master:verible/verilog/formatting/token-annotator_test.cc),
 however, should cover as much as possible explicitly, to prevent accidental
 regression.
 
@@ -70,15 +70,15 @@ of work that is currently handled by the line-wrapping optimization phase.
 ### Tree unwrapping
 
 The implemention of [TreeUnwrapper] is split into
-[language-agnostic library functions](https://cs.opensource.google/verible/verible/+/master:common/formatting/tree_unwrapper.cc)
-and [Verilog-specific](https://cs.opensource.google/verible/verible/+/master:verilog/formatting/formatter.cc) code.
+[language-agnostic library functions](https://cs.opensource.google/verible/verible/+/master:verible/common/formatting/tree-unwrapper.cc)
+and [Verilog-specific](https://cs.opensource.google/verible/verible/+/master:verible/verilog/formatting/formatter.cc) code.
 
 Simplified class inheritance diagram is shown below:
 ![Inheritance diagram](./formatter_simplified_class_diagram.png)
 <!-- class diagram can be regenerated with yEd tool https://www.yworks.com/products/yed -->
 
 [TreeUnwrapper] class exploits
-the [Visitor](https://cs.opensource.google/verible/verible/+/master:common/text/visitors.h?q=class:SymbolVisitor&ss=verible%2Fverible)
+the [Visitor](https://cs.opensource.google/verible/verible/+/master:verible/common/text/visitors.h?q=class:SymbolVisitor&ss=verible%2Fverible)
 pattern to recursively process the input CST tree:
 ```cpp
 // SymbolVisitor is an abstract visitor class from which visitors can be derived
@@ -98,16 +98,16 @@ class SymbolVisitor {
 ```
 
 It builds the [TokenPartitionTree] (i.e. `VectorTree<UnwrappedLine>`) with a set of helper methods to simplify the process:
-* [`TraverseChildren()`](https://cs.opensource.google/verible/verible/+/master:common/formatting/tree_unwrapper.cc?q=function:TraverseChildren&ss=verible%2Fverible) - only traverses the CST
-* [`VisitIndentedSection()`](https://cs.opensource.google/verible/verible/+/master:common/formatting/tree_unwrapper.cc?q=function:VisitIndentedSection&ss=verible%2Fverible) - creates indented section and traverses the CST
-* [`VisitNewUnwrappedLine()`](https://cs.opensource.google/verible/verible/+/master:verilog/formatting/tree_unwrapper.cc?q=function:VisitNewUnwrappedLine&ss=verible%2Fverible) - begins a new partition of tokens and traverses the CST
+* [`TraverseChildren()`](https://cs.opensource.google/verible/verible/+/master:verible/common/formatting/tree-unwrapper.cc?q=function:TraverseChildren&ss=verible%2Fverible) - only traverses the CST
+* [`VisitIndentedSection()`](https://cs.opensource.google/verible/verible/+/master:verible/common/formatting/tree-unwrapper.cc?q=function:VisitIndentedSection&ss=verible%2Fverible) - creates indented section and traverses the CST
+* [`VisitNewUnwrappedLine()`](https://cs.opensource.google/verible/verible/+/master:verible/verilog/formatting/tree-unwrapper.cc?q=function:VisitNewUnwrappedLine&ss=verible%2Fverible) - begins a new partition of tokens and traverses the CST
 
 ### Custom policies application
 
 The next stage of code formatting is to apply custom functions that would
 reshape the partition tree according to the selected policy.
 An example of that are the [kTabularAlignment](#alignment) and the
-[kAppendFittingSubPartitions](https://cs.opensource.google/verible/verible/+/master:common/formatting/unwrapped_line.h?q=kAppendFittingSubpartitions&ss=verible)
+[kAppendFittingSubPartitions](https://cs.opensource.google/verible/verible/+/master:verible/common/formatting/unwrapped-line.h?q=kAppendFittingSubpartitions&ss=verible)
 policies.
 
 ### Wrapping
@@ -147,7 +147,7 @@ Real world [TreeUnwrapper] example:
 echo 'module m; initial a = b + c; endmodule' | \
   VERIBLE_LOGTHRESHOLD=0 \
   VERIBLE_VLOG_DETAIL=8 \
-  bazel run //verilog/tools/formatter:verible-verilog-format -- -show_token_partition_tree -
+  bazel run //verible/verilog/tools/formatter:verible-verilog-format -- -show_token_partition_tree -
 ```
 
 ### Alignment
@@ -157,14 +157,14 @@ syntax-structure similarity, insert spacing needed to achieve vertical alignment
 among the same substructure elements._
 
 The implementation of tabular alignment for code is split into
-[language-agnostic library functions](https://cs.opensource.google/verible/verible/+/master:common/formatting/align.h)
+[language-agnostic library functions](https://cs.opensource.google/verible/verible/+/master:verible/common/formatting/align.h)
 and
-[Verilog-specific](https://cs.opensource.google/verible/verible/+/master:verilog/formatting/align.cc)
+[Verilog-specific](https://cs.opensource.google/verible/verible/+/master:verible/verilog/formatting/align.cc)
 uses of alignment functions.
 
 To trigger alignment for a block of code, the [TreeUnwrapper] marks a
 [TokenPartitionTree] node with
-[`kTabularAlignment`](https://cs.opensource.google/verible/verible/+/master:common/formatting/unwrapped_line.h?q=file:unwrapped_line.h%20usage:kTabularAlignment&ss=verible%2Fverible):
+[`kTabularAlignment`](https://cs.opensource.google/verible/verible/+/master:verible/common/formatting/unwrapped-line.h?q=file:unwrapped-line.h%20usage:kTabularAlignment&ss=verible%2Fverible):
 this says that a particular node has some children partitions that _could_ be
 aligned.
 
@@ -173,7 +173,7 @@ done in the following phases:
 
 1.  **Language-specific:** Depending on the syntax tree node type that
     corresponds to each partition, a
-    [function](https://cs.opensource.google/verible/verible/+/master:verilog/formatting/align.cc?q=file:align.cc%20usage:kAlignHandlers&ss=verible%2Fverible)
+    [function](https://cs.opensource.google/verible/verible/+/master:verible/verilog/formatting/align.cc?q=file:align.cc%20usage:kAlignHandlers&ss=verible%2Fverible)
     is chosen that is responsible for finding [AlignablePartitionGroup]s, blocks
     of children partitions that are candidates for aligned formatting. Think of
     these as groups of _rows_ that constitute a table.
@@ -219,9 +219,9 @@ non-aligned formatting.
 <!-- TODO: align vs. flush left behavior inferral -->
 <!-- reference links -->
 
-[UnwrappedLine]: https://cs.opensource.google/verible/verible/+/master:common/formatting/unwrapped_line.h
-[token annotator]: https://cs.opensource.google/verible/verible/+/master:verilog/formatting/token_annotator.h
-[InterTokenInfo]: https://cs.opensource.google/verible/verible/+/master:common/formatting/format_token.h;l=59?q=InterTokenInfo
-[TreeUnwrapper]: https://cs.opensource.google/verible/verible/+/master:verilog/formatting/tree_unwrapper.h
-[TokenPartitionTree]: https://cs.opensource.google/verible/verible/+/master:common/formatting/token_partition_tree.h
-[AlignablePartitionGroup]: https://cs.opensource.google/verible/verible/+/master:common/formatting/align.h?q=file:align.h%20class:AlignablePartitionGroup&ss=verible%2Fverible
+[UnwrappedLine]: https://cs.opensource.google/verible/verible/+/master:verible/common/formatting/unwrapped-line.h
+[token annotator]: https://cs.opensource.google/verible/verible/+/master:verible/verilog/formatting/token-annotator.h
+[InterTokenInfo]: https://cs.opensource.google/verible/verible/+/master:verible/common/formatting/format-token.h;l=59?q=InterTokenInfo
+[TreeUnwrapper]: https://cs.opensource.google/verible/verible/+/master:verible/verilog/formatting/tree-unwrapper.h
+[TokenPartitionTree]: https://cs.opensource.google/verible/verible/+/master:verible/common/formatting/token-partition-tree.h
+[AlignablePartitionGroup]: https://cs.opensource.google/verible/verible/+/master:verible/common/formatting/align.h?q=file:align.h%20class:AlignablePartitionGroup&ss=verible%2Fverible

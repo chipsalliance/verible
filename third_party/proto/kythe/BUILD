@@ -1,7 +1,9 @@
-load("@rules_cc//cc:defs.bzl", "cc_proto_library")
-load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_visibility = ["//visibility:public"],
+    features = ["layering_check"],
+)
 
 proto_library(
     name = "storage_proto",
@@ -18,8 +20,8 @@ proto_library(
     srcs = ["analysis.proto"],
     deps = [
         ":storage_proto",
-        "@com_google_protobuf//:any_proto",
-        "@com_google_protobuf//:timestamp_proto",
+        "@protobuf//:any_proto",
+        "@protobuf//:timestamp_proto",
     ],
 )
 

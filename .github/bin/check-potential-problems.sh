@@ -19,16 +19,19 @@
 
 EXIT_CODE=0
 
-# std::string_view has different semantics on Windows compared to gcc or clang
-# c++ libraries: the iterators don't return const char*, but a wrapping object.
-#
-# There are a few assumptions in the code that assumes const char*, however.
-#
-# So, we need to use absl::string_view that comes with the same implementation
-# everywhere.
-find . -name "*.h" -o -name "*.cc" | xargs grep -n "std::string_view"
+# absl has a string_view but there is also std::string_view.
+# Use the std::string_view throughout.
+find verible -name "*.h" -o -name "*.cc" | xargs grep -n "absl::string_view"
 if [ $? -eq 0 ]; then
-  echo "::error:: use absl::string_view instead of std::string_view"
+  echo "::error:: use std::string_view instead of absl::string_view"
+  echo
+  EXIT_CODE=1
+fi
+
+# ... same for absl string_view dependency.
+find verible -name BUILD | xargs grep -n absl/strings:string_view
+if [ $? -eq 0 ]; then
+  echo "::error:: use std::string_view instead of absl::string_view"
   echo
   EXIT_CODE=1
 fi
@@ -43,7 +46,7 @@ fi
 #  is a good idea to move an implementation to a *.cc file anyway)
 #
 # TODO(hzeller): Arguably this might be good for common/util/logging.h as well.
-find . -name "*.h" | xargs grep -n '#include "common/util/status_macros.h"'
+find . -name "*.h" | xargs grep -n '#include "verible/common/util/status_macros.h"'
 if [ $? -eq 0 ]; then
   echo "::error:: using status_macros.h in a header pollutes global namespace."
   echo
@@ -53,7 +56,7 @@ fi
 # Don't accidentally use anything from the verilog namespace in the common
 # verible namespace to make sure common stays independent.
 # Use of that namespace in a comment is ok, or if waived with // NOLINT
-find common -name "*.h" -o -name "*.cc" | xargs grep "verilog::" \
+find verible/common -name "*.h" -o -name "*.cc" | xargs grep "verilog::" \
   | egrep -v "(//.*verilog::|// NOLINT)"
 if [ $? -eq 0 ]; then
   echo "::error:: use of the verilog::-namespace inside common/"
@@ -62,13 +65,54 @@ if [ $? -eq 0 ]; then
 fi
 
 # Always use fully qualified include paths.
-# Exclude zlib.h, which is the only allowed header.
-find common verilog -name "*.h" -o -name "*.cc" | \
-  xargs egrep -n '#include "[^/]*"' | grep -v zlib.h
+find verible -name "*.h" -o -name "*.cc" | \
+  xargs egrep -n '#include "[^/]*"'
 if [ $? -eq 0 ]; then
   echo "::error:: always use a fully qualified name for #includes"
   echo
   EXIT_CODE=1
 fi
+
+find verible -name "*.h" -o -name "*.cc" | grep _ | grep -v _test
+if [ $? -eq 0 ]; then
+  echo "::error:: File naming-convention for c++ files is to use dashes as separator with underscore only in test files; e.g. foo-bar_test.cc"
+  echo
+  EXIT_CODE=1
+fi
+
+find verible -name "*-test.cc" -o -name "*-test.sh" | grep test
+if [ $? -eq 0 ]; then
+  echo "::error:: File naming-convention for tests is to end with _test; e.g. foo-bar.cc has test foo-bar_test.cc; similar with shell-script tests"
+  echo
+  EXIT_CODE=1
+fi
+
+# bazelbuild/rules_python is broken as it downloads a dynamically
+# linked pre-built binary - This makes it _very_ platform specific.
+# This should either compile Python from scratch or use the local system Python.
+# So before rules_python() is added here, this needs to be fixed first upstream.
+# https://github.com/bazelbuild/rules_python/issues/1211
+grep rules_python MODULE.bazel
+if [ $? -eq 0 ]; then
+  echo "::error:: rules_python() breaks platform independence with shared libs."
+  echo
+  EXIT_CODE=1
+fi
+
+# Never use std::regex.
+find verible -name "*.h" -o -name "*.cc" | \
+  xargs grep -n '#include <regex>'
+if [ $? -eq 0 ]; then
+  echo "::error:: Don't use stdlib regex, it is slow and requires exceptions. Use RE2 instead (https://github.com/google/re2; header #include \"re2/re2.h\")."
+  echo
+  EXIT_CODE=1
+fi
+
+# Need to skip this until https://github.com/chipsalliance/verible/issues/2435
+# resolved.
+#if [ -e .bazelversion ]; then
+#  echo "Don't use .bazelversion. It is a poorly implemented bazel feature that does not support semantic versioning. Instead, make the repo work with all currently active bazel versions."
+#  EXIT_CODE=1
+#fi
 
 exit "${EXIT_CODE}"

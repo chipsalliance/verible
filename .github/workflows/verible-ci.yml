@@ -11,6 +11,10 @@ on:
     - main
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   BOT_USER: "Deployment Bot"
   BOT_EMAIL: "verible-dev@googlegroups.com"
@@ -21,39 +25,28 @@ env:
 jobs:
 
 
-  VerifyFormatting:
-    container: ubuntu:jammy
-    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
-
+  CheckFormatAndBuildClean:
+    runs-on: ubuntu-24.04
     steps:
 
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Install Dependencies
       run: |
-        apt -qqy update
-        apt -qq -y install clang-format git
-        clang-format --version
+        go install github.com/bazelbuild/buildtools/buildifier@latest
+        echo "PATH=$PATH:$(go env GOPATH)/bin/" >> $GITHUB_ENV
 
     - name: Run formatting style check
       run: |
-        ./.github/bin/run-clang-format.sh
+        echo "--- check formatting ---"
+        CLANG_FORMAT=clang-format-17 ./.github/bin/run-format.sh --show-diff
+        echo "--- check build dependencies ---"
+        ./.github/bin/run-build-cleaner.sh
+        echo "--- check potential problems ---"
         ./.github/bin/check-potential-problems.sh
-
-    - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v3
-      if: success() || failure()
-      with:
-        name: "diag"
-        path: "**/plot_*.svg"
 
   ClangTidy:
     container: ubuntu:jammy
@@ -64,20 +57,23 @@ jobs:
 
     steps:
 
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Install Dependencies
+    - name: Get latest clang-tidy
       run: |
-        apt -qqy update
-        apt -qq -y install clang-tidy-11 clang-tidy-14 build-essential git wget
+        apt -qq -y update
+        apt -qq -y install wget software-properties-common gpg lsb-release
+        apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x ./llvm.sh
+        ./llvm.sh 18
+
+    - name: Install other Dependencies
+      run: |
+        apt -qq -y install clang-tidy-11 clang-tidy-18 build-essential git wget
         source ./.github/settings.sh
         ./.github/bin/install-bazel.sh
 
@@ -93,38 +89,40 @@ jobs:
         path: |
           /root/.cache/clang-tidy
           /root/.cache/bazel
-        key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: clang-tidy-
+        key: clang-tidy2-${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: clang-tidy2-
 
     - name: Run clang tidy
       run: |
         echo "::group::Make Compilation DB"
         .github/bin/make-compilation-db.sh
-        wc -l compile_commands.json
+        cat compile_flags.txt
         echo "::endgroup::"
-        # For runtime references, use clang-tidy 11, everything else: latest.
+
+        # For runtime references, use clang-tidy 11 that still has it,
+        # everything else: latest.
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references" \
            || ( cat verible_clang-tidy.out ; exit 1)
 
-        CLANG_TIDY=clang-tidy-14 ./.github/bin/run-clang-tidy-cached.cc \
+        CLANG_TIDY=clang-tidy-18 ./.github/bin/run-clang-tidy-cached.cc \
             || ( cat verible_clang-tidy.out ; exit 1)
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: success() || failure()
       with:
-        name: "diag"
+        name: "diag-clang-tidy"
         path: "**/plot_*.svg"
 
-
   Check:
-    container: ubuntu:jammy
+    container: ubuntu:noble
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     strategy:
       fail-fast: false
       matrix:
         mode:
         - test
+        - test-clang
         - test-nortti
         - test-c++20
         - test-c++23
@@ -136,7 +134,6 @@ jobs:
         - compile-clang
         - compile-static
         - compile-static-clang
-        - coverage
         - clean
         arch:
         - x86_64
@@ -152,8 +149,6 @@ jobs:
             arch: arm64
           - mode: asan-clang
             arch: arm64
-          - mode: coverage
-            arch: arm64
     env:
       MODE: ${{ matrix.mode }}
       ARCH: ${{ matrix.arch }}
@@ -162,13 +157,8 @@ jobs:
 
     steps:
 
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -184,8 +174,8 @@ jobs:
       if: matrix.mode != 'clean' && matrix.mode != 'coverage'
       with:
         path: "/root/.cache/bazel"
-        key: bazelcache3_${{ matrix.arch }}_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache3_${{ matrix.arch }}_${{ matrix.mode }}_
+        key: bazelcache_${{ matrix.arch }}_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_${{ matrix.arch }}_${{ matrix.mode }}_
 
     - name: Install Dependencies
       run: |
@@ -193,11 +183,11 @@ jobs:
         apt -qqy update
         apt -qq -y install build-essential wget git python3 python-is-python3 default-jdk cmake python3-pip ripgrep
         apt -qq -y install gcc-10 g++-10
-        apt -qq -y install gcc-12 g++-12
-        apt -qq -y install clang-12  # clang always a particular version.
+        apt -qq -y install gcc-14 g++-14
+        apt -qq -y install clang-19
         source ./.github/settings.sh
         # Use newer compiler for c++2x compilation. Also slang needs c++20
-        ./.github/bin/set-compiler.sh $([[ "$MODE" == test-c++2* || "$MODE" == "smoke-test-analyzer" ]] && echo 12 || echo 10)
+        ./.github/bin/set-compiler.sh $([[ "$MODE" == test-c++2* || "$MODE" == "smoke-test-analyzer" ]] && echo 14 || echo 10)
         ARCH="$ARCH" ./.github/bin/install-bazel.sh
 
     - name: Build Slang
@@ -220,22 +210,19 @@ jobs:
     - name: ${{ matrix.mode }} Verible
       run: ./.github/bin/build-and-test.sh
 
-    - name: Upload coverage
-      # will show up under https://app.codecov.io/gh/chipsalliance/verible
-      if: matrix.mode == 'coverage'
-      uses: codecov/codecov-action@v2
-      with:
-        files: bazel-out/_coverage/_coverage_report.dat
-        verbose: true
-      continue-on-error: true
-
     - name: Gather and pack binaries
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
-      run: bazel run :install -c fastbuild -- $VERIBLE_BINDIR && tar cfv verible-bin.tar -C $VERIBLE_BINDIR .
+      # these are used for building the gh-pages.
+      run: |
+        bazel build -c opt :install-binaries
+        # Litmus test
+        bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax --version
+        .github/bin/simple-install.sh $VERIBLE_BINDIR
+        tar cfv verible-bin.tar -C $VERIBLE_BINDIR .
 
     - name: Upload bazel-bin
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: verible-bin
         path: verible-bin.tar
@@ -250,26 +237,27 @@ jobs:
         tar cvzf verible-${VERSION}-linux-static-${{matrix.arch}}.tar.gz verible-${VERSION}
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: verible-install-${{ matrix.arch }}
         path: verible-*.tar.gz
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: success() || failure()
       with:
-        name: "diag"
+        name: "diag-${{ matrix.arch }}-${{ matrix.mode }}"
         path: "**/plot_*.svg"
 
 
   KytheVerification:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: false   # Currently disabled, need to investigate further
 
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -288,21 +276,26 @@ jobs:
 
 
   KytheXrefs:
-    runs-on: ubuntu-20.04
-    if: false   # Currently disabled, need to investigate failure.
+    container: ubuntu:noble
+    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
 
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
 
     - name: Install Dependencies
       run: |
+        set -x
+        apt -qqy update
+        apt -qq -y install build-essential wget git python3 python-is-python3 default-jdk cmake python3-pip ripgrep
+        apt -qq -y install gcc-14 g++-14
+        pwd
         source ./.github/settings.sh
-        ./.github/bin/set-compiler.sh 10
+        ./.github/bin/set-compiler.sh 14
         ./.github/bin/install-bazel.sh
         ./.github/bin/install-kythe.sh
 
@@ -312,70 +305,20 @@ jobs:
         ./.github/bin/run-kythe.sh
 
     - name: 📤 Upload Kythe xRefs to the action artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: kythe_output/*.kzip
-
-  MacOsBuildDevTools:
-    runs-on: macos-latest
-    steps:
-
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
-      with:
-        access_token: ${{ github.token }}
-
-    - name: Install Dependencies
-      run: |
-        brew unlink bazelisk
-        brew install llvm bazel@6
-        echo "CLANG_TIDY=$(brew --prefix llvm)/bin/clang-tidy" >> $GITHUB_ENV
-
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-
-    - name: Create Cache Timestamp
-      id: cache_timestamp
-      uses: nanzm/get-time-action@v2.0
-      with:
-        format: 'YYYY-MM-DD-HH-mm-ss'
-
-    - name: Mount bazel cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          /private/var/tmp/_bazel_runner
-          /Users/runner/.cache/clang-tidy
-        key: clangtidy_macos_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: clangtidy_macos_
-
-    - name: Test Developer tooling scripts
-      run: |
-        # Just a smoke test to make sure developer scripts run on Mac
-        echo "::group::Make Compilation DB"
-        .github/bin/make-compilation-db.sh
-        echo "::endgroup::"
-        # Quick with no checks to be fast (full tidy run in ClangTidy action)
-        .github/bin/run-clang-tidy-cached.cc --checks="-*"
 
   MacOsBuild:
     runs-on: macos-latest
     steps:
 
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: Install Dependencies
       run: |
-        brew unlink bazelisk
-        brew install bazel@6
+        echo "USE_BAZEL_VERSION=7.6.1" >> $GITHUB_ENV
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -394,10 +337,15 @@ jobs:
         restore-keys: bazelcache_macos_
 
     - name: Tests
-      run: bazel test -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
+      # MacOS has a broken patch utility:
+      # //verible/verilog/tools/lint:lint-tool_test trips over a no-newline-at-end-of-file
+      run: bazel test -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis -- //... -//verible/verilog/tools/lint:lint-tool_test
 
     - name: Build
-      run: bazel build -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis :install-binaries
+      run: |
+        bazel build -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis :install-binaries
+        # Litmus test
+        bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax --version
 
     - name: Pack up
       run: |
@@ -406,8 +354,9 @@ jobs:
         tar cvzf verible-${VERSION}-macOS.tar.gz verible-${VERSION}-macOS
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: verible-install-macos
         path: verible-*.tar.gz
 
   PrepareVSPlugin:
@@ -415,7 +364,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -425,10 +374,10 @@ jobs:
         apt -qq -y install npm nodejs
 
   WindowsBuild:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -442,13 +391,14 @@ jobs:
       uses: actions/cache@v3
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
-        key: bazelcache_windows2_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_windows2_
+        key: bazelcache_windows_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_windows_
 
     - name: Install dependencies
       run: |
-        choco install bazel --force --version=6.4.0
-        choco install llvm --force
+        choco install bazel --force --version=7.6.1
+        choco install winflexbison3
+        choco install llvm --allow-downgrade --version=20.1.4
 
     - name: Debug bazel directory settings
       # We need to explicitly call the bazel binary from choco, otherwise
@@ -460,17 +410,21 @@ jobs:
       run: C:/ProgramData/chocolatey/lib/bazel/bazel.exe test --keep_going --noshow_progress --test_output=errors //...
 
     - name: Build Verible Binaries
-      run: C:/ProgramData/chocolatey/lib/bazel/bazel.exe build --keep_going --noshow_progress -c opt :install-binaries
+      run: |
+        C:/ProgramData/chocolatey/lib/bazel/bazel.exe build --keep_going --noshow_progress -c opt :install-binaries
+        # Litmus test
+        bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax --version
 
     - name: Prepare release
       run: |
         $VERSION = git describe --match=v*
-        C:/ProgramData/chocolatey/lib/bazel/bazel.exe run -c opt :install -- "c:/verible-${VERSION}-win64"
+        bash .github/bin/simple-install.sh "c:/verible-${VERSION}-win64"
         7z a "verible-${VERSION}-win64.zip" "c:/verible-${VERSION}-win64"
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: verible-install-win
         path: verible-*.zip
 
     # We need to shut down bazel to let go of the filedescriptors in the
@@ -484,21 +438,59 @@ jobs:
         rm c:/users/runneradmin/_bazel_runneradmin/*/java.log
 
 
+  PackReleaseSource:
+    name: 📦 Pack Sources
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Pack Sources
+      run: |
+        TAG_VERSION=$(git describe --match=v*)
+        MODULE_VERSION=$(git describe --match=v* 2>/dev/null \
+                         | sed 's/v\([^-]*\)-\([0-9]*\)-.*/\1.\2/')
+
+        OUT_SRC=verible-${TAG_VERSION}
+
+        mkdir ../${OUT_SRC}
+        cp -r . ../${OUT_SRC}
+
+        # Bake in current version into MODULE.bazel
+        sed "s/\(.*version.*\"\)\(head\)\(\".*\)/\1${MODULE_VERSION}\3/" \
+           -i ../${OUT_SRC}/MODULE.bazel
+
+        tar --exclude=.git -cvzf ${OUT_SRC}.tar.gz ../${OUT_SRC}
+
+    - name: 📤 Upload Source tar
+      uses: actions/upload-artifact@v4
+      with:
+        name: src
+        path: verible-*.tar.gz
+
   Release:
-    needs: [ Check, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
-    runs-on: ubuntu-20.04
     name: 📦 Release
+    needs: [ Check, PackReleaseSource, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
     if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
 
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
 
     - name: 📥 Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
 
     - name: Generate and apply TAG
       run: |
@@ -511,13 +503,13 @@ jobs:
         git tag "$TAG" || true
         echo "TAG=$TAG" >> $GITHUB_ENV
 
-        ls -lah artifact
+        ls -l verible-v*
 
     - name: Deploy release and assets
-      uses: svenstaro/upload-release-action@v2
+      uses: svenstaro/upload-release-action@2.9.0
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: artifact/verible*.{tar.gz,zip}
+        file: verible-v*.{tar.gz,zip}
         tag: ${{ env.TAG }}
         overwrite: true
         file_glob: true
@@ -526,7 +518,7 @@ jobs:
       env:
         VSC_MARKETPLACE_TOKEN: ${{ secrets.VSC_MARKETPLACE_TOKEN }}
       run: |
-        cd verilog/tools/ls/vscode
+        cd verible/verilog/tools/ls/vscode
         npm install
         # install vsce globally
         npm install -g @vscode/vsce
@@ -540,11 +532,14 @@ jobs:
   GhPages:
     name: Build and deploy GitHub pages
     needs: [Check]
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
 
-      - uses: actions/download-artifact@v3
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
         with:
           name: verible-bin
 
@@ -556,9 +551,9 @@ jobs:
 
       - name: Deployment
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        uses: JamesIves/github-pages-deploy-action@3.7.1
+        uses: JamesIves/github-pages-deploy-action@v4.6.3
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
           FOLDER: /tmp/pages
           CLEAN: true

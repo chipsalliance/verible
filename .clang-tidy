@@ -18,6 +18,14 @@
 #
 # modernize-make-unique: mostly correct, but wants to also replace .reset()
 #                         which is a more readable way than assign.
+#
+# misc-include-cleaner: we do not exclude it here, as it is useful in itself
+#                       locally running clang tidy checks (and potentially language
+#                       server support); but since code is not 'clean' yet, we
+#                       exclude it in the CI run.
+#       Config: don't flag *_linter_test_utils.h as they define a test
+#       template spezialization that clang-tidy fails to see is necessary.
+#
 # NOTE: Below, there must be no comments, otherwise clang tidy silently ignores
 #       rules... (ask me how I know).
 ###
@@ -25,11 +33,14 @@ Checks: >
   clang-diagnostic-*,
   clang-analyzer-*,
   -clang-analyzer-core.NonNullParamChecker,
-  -clang-analyzer-cplusplus.NewDeleteLeaks,
+  -clang-analyzer-cplusplus.InnerPointer,
+  -clang-analyzer-optin.core.EnumCastOutOfRange,
   -clang-analyzer-optin.performance.Padding,
   abseil-*,
   -abseil-no-namespace,
   readability-*,
+  -readability-avoid-nested-conditional-operator,
+  -readability-avoid-unconditional-preprocessor-if,
   -readability-braces-around-statements,
   -readability-convert-member-functions-to-static,
   -readability-function-cognitive-complexity,
@@ -38,6 +49,7 @@ Checks: >
   -readability-isolate-declaration,
   -readability-magic-numbers,
   -readability-make-member-function-const,
+  -readability-math-missing-parentheses,
   -readability-named-parameter,
   -readability-qualified-auto,
   -readability-redundant-access-specifiers,
@@ -50,10 +62,13 @@ Checks: >
   -google-readability-casting,
   -google-readability-todo,
   performance-*,
+  -performance-avoid-endl,
+  -performance-enum-size,
   bugprone-*,
   -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape,
+  -bugprone-inc-dec-in-conditions,
   -bugprone-macro-parentheses,
   -bugprone-move-forwarding-reference,
   -bugprone-narrowing-conversions,
@@ -62,10 +77,12 @@ Checks: >
   -modernize-avoid-bind,
   -modernize-avoid-c-arrays,
   -modernize-concat-nested-namespaces,
+  -modernize-make-shared,
   -modernize-make-unique,
   -modernize-pass-by-value,
   -modernize-raw-string-literal,
   -modernize-return-braced-init-list,
+  -modernize-type-traits,
   -modernize-use-auto,
   -modernize-use-emplace,
   -modernize-use-nodiscard,
@@ -78,3 +95,7 @@ Checks: >
   -misc-redundant-expression,
   -misc-unused-parameters,
   -misc-use-anonymous-namespace,
+
+CheckOptions:
+  - key:    misc-include-cleaner.IgnoreHeaders
+    value:  .*-linter-test-utils\.h

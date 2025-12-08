@@ -1,0 +1,240 @@
+# Copyright 2021 The Verible Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Language Server Protocol [1] types used in this project.
+# There is a huge number of them, so let's just add the ones needed
+# as we go.
+#
+# The types defined here are generated into structs with the jcxxgen
+# code generator, that generates structs with the necessary boilerplate to
+# be seamlessly converted to and from json with the nlohmann/json library.
+#
+# [1]: https://microsoft.github.io/language-server-protocol/specification
+
+ServerInfo:
+  name: string
+  version: string
+
+InitializeParams:
+  # processId
+  # clientInfo
+  # locale
+  rootPath?: string
+  rootUri?: string
+  # initializationOptions
+  # capabilities
+  # trace
+  # workspaceFolders
+
+InitializeResult:
+  capabilities: object          # Lots. We output that directly as plain json.
+  serverInfo: ServerInfo
+
+Position:
+  line: integer       # Zero based line
+  character: integer  # Zero based column
+
+Range:
+  start: Position     # inclusive.
+  end: Position       # exclusive.
+
+TextDocumentIdentifier:
+  uri: string
+
+Location:
+  <: TextDocumentIdentifier
+  range: Range
+
+TextDocumentItem:
+  <:TextDocumentIdentifier
+  text: string
+
+TextDocumentContentChangeEvent:
+  range?: Range     # Range optional; if no range given, full document replace
+  text: string
+
+# For hover or highlight
+TextDocumentPositionParams:
+  textDocument: TextDocumentIdentifier
+  position: Position
+
+# -- Text document notifiations. These allow us to keep track of the content.
+DidOpenTextDocumentParams:      # textDocument/didOpen
+  textDocument: TextDocumentItem
+
+DidChangeTextDocumentParams:    # textDocument/didChange
+  textDocument: TextDocumentIdentifier
+  contentChanges+: TextDocumentContentChangeEvent
+
+DidSaveTextDocumentParams:      # textDocument/didSave
+  textDocument: TextDocumentIdentifier
+
+DidCloseTextDocumentParams:     # textDocument/didClose
+  textDocument: TextDocumentIdentifier
+
+# -- textDocument/publishDiagnostics
+Diagnostic:
+  range: Range
+  severity?: integer   # DiagnosticSeverity enum
+  source: string = "verible"
+  message: string
+
+# This is a notification we send when we found something.
+PublishDiagnosticsParams:
+  uri: string
+  diagnostics+: Diagnostic
+
+# -- textDocument/diagnostic
+DocumentDiagnosticParams:
+  textDocument: TextDocumentIdentifier
+
+# Response is a DocumentDiagnosticReport that, according to current proposal
+# in 3.17.0, is a FullDocumentDiagnosticReport that also
+# can include related documents (RelatedFullDocumentDiagnosticReport). We only
+# worry about current document for now.
+# There is also 'unchanged' kind, but not implementing that right now.
+FullDocumentDiagnosticReport:
+  kind: string = "full"
+  items+: Diagnostic
+
+# -- textDocument/codeAction
+CodeActionParams:
+  textDocument: TextDocumentIdentifier
+  range: Range
+
+TextEdit:
+  range: Range
+  newText: string
+
+WorkspaceEdit:
+  #changes?: string->TextEdit+   # Map of file URI to associated edits...
+  # ...not yet supported by jcxxgen. Let's use object and directly add JSON
+  changes: object
+
+# textDocument/codeAction will return an array of these.
+CodeAction:
+  title: string
+  kind: string                 # Kind of change e.g quickfix, refactor, ...
+  diagnostics+: Diagnostic     # What diagnostic is this referring to ?
+  isPreferred: boolean = false
+  edit: WorkspaceEdit
+
+# -- textDocument/documentSymbol
+DocumentSymbolParams:
+  textDocument: TextDocumentIdentifier
+
+DocumentSymbol:
+  name: string
+  kind: integer   # SymbolKind enum
+  range: Range    # The whole range this symbol (e.g. function/class) covers
+  selectionRange: Range  # Part to be highlighted (e.g. name of class)
+  # children: DocumentSymbol[]. Since we can't to that recursively in jcxxgen,
+  # these are directly emitted as json
+  children?: object = nullptr
+
+# -- textDocument/documentHighlight
+DocumentHighlightParams:
+  <: TextDocumentPositionParams
+
+DocumentHighlight:         # response documentHighlight is [] of this.
+  range: Range
+  # there is also a highlight kind to distinguish read/write
+
+# -- textDocument/formatting, textDocument/rangeFormatting
+DocumentFormattingParams:
+  textDocument: TextDocumentIdentifier
+  range?: Range               # only used for textDocument/rangeFormatting
+
+# -- textDocument/hover
+# https://github.com/chipsalliance/verible/issues/1187
+HoverParams:
+  <: TextDocumentPositionParams
+
+MarkupContent:
+  kind: string = "markdown"
+  value: string
+
+Hover:
+  contents: MarkupContent
+  range?: Range
+
+# == The following are not yet implemented. Steps needed ==
+#  o need to be able to set up a project (knowing which files are relevant,
+#    which might require some sort of run through the build system.
+#    And convey that to the language server
+#    https://github.com/chipsalliance/verible/issues/1188
+#  o Use the symbol table with the above project (and fix all known bugs there)
+
+# -- textDocument/definition    (requires project + active symbol table #1189)
+DefinitionParams:
+  <: TextDocumentPositionParams
+
+# Response Location[]
+
+# -- textDocument/declaration   (requires project + active symbol table #1189)
+DeclarationParams:
+  <: TextDocumentPositionParams
+
+# Response: Location[]
+
+# -- textDocument/references   (requires project + active symbol table #1189)
+ReferenceParams:
+  <: TextDocumentPositionParams
+
+# Response: Location[]
+
+# -- textDocument/documentLink  (e.g. include files; requires project #1190)
+DocumentLinkParams:
+  textDocument: TextDocumentIdentifier
+
+# Response is a DocumentLink[]
+DocumentLink:
+  range: Range
+  target?: string  # DocumentUri
+
+# -- textDocument/prepareRename
+PrepareRenameParams:
+  <: TextDocumentPositionParams
+
+# Response: Range
+
+# -- textDocument/rename
+RenameParams:
+  <: TextDocumentPositionParams
+  newName: string
+
+# Response: Range[]
+
+# -- textDocument/inlayHint
+InlayHintParams:
+  textDocument: TextDocumentIdentifier
+  range: Range
+
+InlayHint:
+  position: Position
+  label: string
+  kind?: integer  # InlayHintKind enum
+  tooltip?: string
+  paddingLeft?: boolean
+  paddingRight?: boolean
+
+# -- textDcoument/rename
+
+OptionalVersionedTextDocumentIdentifier:
+  <: TextDocumentIdentifier
+  version?: integer
+
+TextDocumentEdit:
+  textDocument: OptionalVersionedTextDocumentIdentifier
+  edits+: TextEdit

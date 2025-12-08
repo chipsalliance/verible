@@ -529,7 +529,7 @@ if args.verible_path:
     # Give version string for verible
     proc = subprocess.run(
             [args.verible_path +
-                "/bazel-bin/verilog/tools/syntax/verible-verilog-syntax",
+                "/bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax",
                 '--version'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE

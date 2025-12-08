@@ -15,11 +15,16 @@ fi
 TARGET_DIR=$1
 mkdir -p "${TARGET_DIR}"
 
-BASE_DIR=bazel-bin/verilog/tools
+# Requires to have built before with
+#  bazel build :install-binaries
 
+# Could we get the list of source from bazel query somehow ?
+
+TOOLS_DIR=bazel-bin/verible/verilog/tools
 for f in diff/verible-verilog-diff \
            formatter/verible-verilog-format \
            kythe/verible-verilog-kythe-extractor \
+           kythe/verible-verilog-kythe-kzip-writer \
            lint/verible-verilog-lint \
            ls/verible-verilog-ls \
            obfuscator/verible-verilog-obfuscate \
@@ -27,5 +32,11 @@ for f in diff/verible-verilog-diff \
            project/verible-verilog-project \
            syntax/verible-verilog-syntax
 do
-  install "${BASE_DIR}/$f" "${TARGET_DIR}"
+  install "${TOOLS_DIR}/$f" "${TARGET_DIR}"
+done
+
+COMMON_TOOLS_DIR=bazel-bin/verible/common/tools
+for f in verible-patch-tool
+do
+  install "${COMMON_TOOLS_DIR}/$f" "${TARGET_DIR}"
 done
