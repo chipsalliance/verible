@@ -601,6 +601,52 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"`timescale  1ns/1ps\n",  //
      "`timescale 1ns / 1ps\n"},
 
+    // Multiple compiler directives should remain on separate lines
+    // (regression test for bug where they were merged onto one line)
+    {"`timescale 1 ps / 1 ps\n"
+     "`default_nettype none\n",
+     "`timescale 1 ps / 1 ps\n"
+     "`default_nettype none\n"},
+    {"`resetall\n"
+     "`timescale 1ns/1ps\n"
+     "`default_nettype wire\n",
+     "`resetall\n"
+     "`timescale 1ns / 1ps\n"
+     "`default_nettype wire\n"},
+    // Test with multiple different compiler directives
+    {"`resetall\n"
+     "`celldefine\n"
+     "`timescale 1ns/1ps\n"
+     "`default_nettype none\n",
+     "`resetall\n"
+     "`celldefine\n"
+     "`timescale 1ns / 1ps\n"
+     "`default_nettype none\n"},
+    // Test with compiler directives before module
+    {"`timescale 1ps/1ps\n"
+     "`default_nettype none\n"
+     "module foo;endmodule\n",
+     "`timescale 1ps / 1ps\n"
+     "`default_nettype none\n"
+     "module foo;\nendmodule\n"},
+    // Test with various compiler directives
+    {"`suppress_faults\n"
+     "`enable_portfaults\n"
+     "`delay_mode_distributed\n",
+     "`suppress_faults\n"
+     "`enable_portfaults\n"
+     "`delay_mode_distributed\n"},
+    {"`default_decay_time 10\n"
+     "`default_trireg_strength 50\n",
+     "`default_decay_time 10\n"
+     "`default_trireg_strength 50\n"},
+    {"`begin_keywords \"1800-2017\"\n"
+     "module test;endmodule\n"
+     "`end_keywords\n",
+     "`begin_keywords \"1800-2017\"\n"
+     "module test;\nendmodule\n"
+     "`end_keywords\n"},
+
     // parameter test cases
     {
         "  parameter  int   foo=0 ;",
