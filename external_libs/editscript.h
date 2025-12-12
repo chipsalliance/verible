@@ -179,7 +179,7 @@ inline int64_t CommonAffix(TokenIter span1_begin, TokenIter span1_end,
 template <typename TokenIter>
 class Diff {
  private:
-  friend Edits GetTokenDiffs<>(TokenIter tokens1_begin, TokenIter tokens1_end,
+  friend Edits diff::GetTokenDiffs<>(TokenIter tokens1_begin, TokenIter tokens1_end,
                                TokenIter tokens2_begin, TokenIter tokens2_end);
 
   /**
