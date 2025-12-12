@@ -3206,7 +3206,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf &leaf) {
     // Compiler directives (DR_* tokens) that don't have parent nodes
     VLOG(4) << "handling compiler directive leaf token";
     StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &leaf);
-    // Only unindent if at top level (context is empty) or inside preprocessor clauses
+    // Only unindent if at top level (context is empty) or inside preprocessor
+    // clauses
     if (Context().empty() ||
         IsPreprocessorClause(NodeEnum(Context().top().Tag().tag))) {
       CurrentUnwrappedLine().SetIndentationSpaces(0);
