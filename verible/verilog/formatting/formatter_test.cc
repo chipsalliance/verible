@@ -640,6 +640,26 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "`default_trireg_strength 50\n",
      "`default_decay_time 10\n"
      "`default_trireg_strength 50\n"},
+    // Alignment should ignore compiler directives; declarations align normally.
+    // Place directives at top-level between modules (valid SystemVerilog).
+    {"`timescale 1ns/1ps\n"
+     "module m;\n"
+     "  logic a;\n"
+     "  logic very_long_name;\n"
+     "endmodule\n"
+     "`default_nettype none\n"
+     "module n;\n"
+     "  logic b;\n"
+     "endmodule\n",
+     "`timescale 1ns / 1ps\n"
+     "module m;\n"
+     "  logic a;\n"
+     "  logic very_long_name;\n"
+     "endmodule\n"
+     "`default_nettype none\n"
+     "module n;\n"
+     "  logic b;\n"
+     "endmodule\n"},
     {"`begin_keywords \"1800-2017\"\n"
      "module test;endmodule\n"
      "`end_keywords\n",
