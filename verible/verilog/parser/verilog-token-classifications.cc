@@ -92,17 +92,8 @@ bool IsPreprocessorControlFlow(verilog_tokentype token_type) {
   }
 }
 
-bool IsPreprocessorKeyword(verilog_tokentype token_type) {
+bool IsCompilerDirective(verilog_tokentype token_type) {
   switch (token_type) {
-    case verilog_tokentype::PP_include:
-    case verilog_tokentype::PP_define:
-    case verilog_tokentype::PP_ifdef:
-    case verilog_tokentype::PP_ifndef:
-    case verilog_tokentype::PP_else:
-    case verilog_tokentype::PP_elsif:
-    case verilog_tokentype::PP_endif:
-    case verilog_tokentype::PP_undef:
-    // Compiler directives (DR_*)
     case verilog_tokentype::DR_timescale:
     case verilog_tokentype::DR_resetall:
     case verilog_tokentype::DR_celldefine:
@@ -129,6 +120,22 @@ bool IsPreprocessorKeyword(verilog_tokentype token_type) {
       return true;
     default:
       return false;
+  }
+}
+
+bool IsPreprocessorKeyword(verilog_tokentype token_type) {
+  switch (token_type) {
+    case verilog_tokentype::PP_include:
+    case verilog_tokentype::PP_define:
+    case verilog_tokentype::PP_ifdef:
+    case verilog_tokentype::PP_ifndef:
+    case verilog_tokentype::PP_else:
+    case verilog_tokentype::PP_elsif:
+    case verilog_tokentype::PP_endif:
+    case verilog_tokentype::PP_undef:
+      return true;
+    default:
+      return IsCompilerDirective(token_type);
   }
 }
 
