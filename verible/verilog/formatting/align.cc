@@ -259,7 +259,7 @@ class ActualNamedParameterColumnSchemaScanner
   explicit ActualNamedParameterColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode &node) final {
+  void Visit(const SyntaxTreeNode &node) override {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -283,6 +283,119 @@ class ActualNamedParameterColumnSchemaScanner
   }
 };
 
+// This class marks up token-subranges in named parameter assignments for
+// alignment including both opening and closing parentheses.
+// e.g. ".param_name(param_value)"
+class ActualNamedParameterWithParenthesesColumnSchemaScanner
+    : public ActualNamedParameterColumnSchemaScanner {
+ public:
+  explicit ActualNamedParameterWithParenthesesColumnSchemaScanner(const FormatStyle &style)
+      : ActualNamedParameterColumnSchemaScanner(style),
+        named_param_policy_(style.named_parameter_alignment),
+        add_spaces_inside_parentheses_(
+            style.named_parameter_alignment == 
+            verible::NamedAlignmentPolicy::kAlignBothSeparated),
+        add_space_before_opening_paren_(
+            style.named_parameter_alignment == 
+            verible::NamedAlignmentPolicy::kAlignBothSeparated ||
+            style.named_parameter_alignment == 
+            verible::NamedAlignmentPolicy::kAlignBothSpaced) {}
+
+  void Visit(const SyntaxTreeNode &node) final {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+    
+    // Handle basic column alignment with default implementation
+    if (named_param_policy_ != verible::NamedAlignmentPolicy::kAlignBoth &&
+        named_param_policy_ != verible::NamedAlignmentPolicy::kAlignBothSeparated &&
+        named_param_policy_ != verible::NamedAlignmentPolicy::kAlignBothSpaced) {
+      ActualNamedParameterColumnSchemaScanner::Visit(node);
+      return;
+    }
+    
+    // For alignment with parentheses, we'll handle it ourselves
+    switch (tag) {
+      case NodeEnum::kParamByName: {
+        // Parameter name column
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      case NodeEnum::kParenGroup:
+        if (Context().DirectParentIs(NodeEnum::kParamByName)) {
+          const SyntaxTreeNode& paren_group = node;
+          if (!paren_group.empty()) {
+            // Handle opening parenthesis
+            const Symbol& opening_paren = *paren_group.front();
+            
+            // Add space before opening paren for align-both-separated
+            // or align-both-spaced mode
+            const verible::AlignmentColumnProperties opening_prop(
+                true, add_space_before_opening_paren_ ? 1 : 0);
+            ReserveNewColumn(opening_paren, opening_prop);
+            
+            // Handle expression inside parentheses
+            if (paren_group.size() >= 2) {
+              const Symbol& expr = *paren_group[1];
+              
+              if (add_spaces_inside_parentheses_) {
+                // For align-both-separated mode:
+                // Add space after opening paren (before expression)
+                SyntaxTreePath expr_path = Path();
+                expr_path.push_back(1);  // Distinct path for expression
+                
+                const verible::AlignmentColumnProperties expr_prop(true, 1);
+                ReserveNewColumn(expr, expr_prop, expr_path);
+              } else {
+                // For align-both and align-both-spaced modes:
+                // No spaces inside parentheses
+                const verible::AlignmentColumnProperties expr_prop(true, 0);
+                ReserveNewColumn(expr, expr_prop);
+              }
+            }
+            
+            // Handle closing parenthesis
+            if (paren_group.size() >= 3) {
+              const Symbol& closing_paren = *paren_group.back();
+              
+              // Need a unique path for the closing paren
+              SyntaxTreePath close_path = Path();
+              close_path.push_back(999);  // High number to ensure it's last
+              
+              if (add_spaces_inside_parentheses_) {
+                // For align-both-separated mode:
+                // Add space before closing paren
+                const verible::AlignmentColumnProperties close_prop(false, 1);
+                ReserveNewColumn(closing_paren, close_prop, close_path);
+              } else {
+                // For align-both and align-both-spaced modes:
+                // No space before closing paren
+                const verible::AlignmentColumnProperties close_prop(false, 0);
+                ReserveNewColumn(closing_paren, close_prop, close_path);
+              }
+            }
+          }
+        }
+        break;
+      default:
+        break;
+    }
+    
+    TreeContextPathVisitor::Visit(node);
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+
+ private:
+  // The named parameter alignment policy to use
+  verible::NamedAlignmentPolicy named_param_policy_;
+  
+  // Whether to add spaces inside the parentheses
+  bool add_spaces_inside_parentheses_;
+  
+  // Whether to add space before opening parenthesis
+  bool add_space_before_opening_paren_;
+};
+
 // This class marks up token-subranges in named port connections for alignment.
 // e.g. ".port_name(net_name)"
 class ActualNamedPortColumnSchemaScanner : public VerilogColumnSchemaScanner {
@@ -290,7 +403,7 @@ class ActualNamedPortColumnSchemaScanner : public VerilogColumnSchemaScanner {
   explicit ActualNamedPortColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
-  void Visit(const SyntaxTreeNode &node) final {
+  void Visit(const SyntaxTreeNode &node) override {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -312,6 +425,122 @@ class ActualNamedPortColumnSchemaScanner : public VerilogColumnSchemaScanner {
     TreeContextPathVisitor::Visit(node);
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
+};
+
+// This class marks up token-subranges in named port connections for alignment
+// including both opening and closing parentheses.
+// e.g. ".port_name(net_name)"
+class ActualNamedPortWithParenthesesColumnSchemaScanner
+    : public ActualNamedPortColumnSchemaScanner {
+ public:
+  explicit ActualNamedPortWithParenthesesColumnSchemaScanner(
+      const FormatStyle &style)
+      : ActualNamedPortColumnSchemaScanner(style),
+        named_port_policy_(style.named_port_alignment),
+        add_spaces_inside_parentheses_(
+            style.named_port_alignment ==
+            verible::NamedAlignmentPolicy::kAlignBothSeparated),
+        add_space_before_opening_paren_(
+            style.named_port_alignment ==
+                verible::NamedAlignmentPolicy::kAlignBothSeparated ||
+            style.named_port_alignment ==
+                verible::NamedAlignmentPolicy::kAlignBothSpaced) {}
+
+  void Visit(const SyntaxTreeNode &node) final {
+    auto tag = NodeEnum(node.Tag().tag);
+    VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
+            << TreePathFormatter(Path());
+
+    // Handle basic column alignment with default implementation
+    if (named_port_policy_ != verible::NamedAlignmentPolicy::kAlignBoth &&
+        named_port_policy_ !=
+            verible::NamedAlignmentPolicy::kAlignBothSeparated &&
+        named_port_policy_ != verible::NamedAlignmentPolicy::kAlignBothSpaced) {
+      ActualNamedPortColumnSchemaScanner::Visit(node);
+      return;
+    }
+
+    // For alignment with parentheses, we'll handle it ourselves
+    switch (tag) {
+      case NodeEnum::kActualNamedPort: {
+        // Port name column
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
+      case NodeEnum::kParenGroup:
+        if (Context().DirectParentIs(NodeEnum::kActualNamedPort)) {
+          const SyntaxTreeNode &paren_group = node;
+          if (!paren_group.empty()) {
+            // Handle opening parenthesis
+            const Symbol &opening_paren = *paren_group.front();
+
+            // Only add space before opening paren for align-both-separated or
+            // align-both-spaced mode
+            const verible::AlignmentColumnProperties opening_prop(
+                true, add_space_before_opening_paren_ ? 1 : 0);
+            ReserveNewColumn(opening_paren, opening_prop);
+
+            // Handle expression inside parentheses
+            if (paren_group.size() >= 2) {
+              const Symbol &expr = *paren_group[1];
+
+              if (add_spaces_inside_parentheses_) {
+                // For align-both-separated mode:
+                // Add space after opening paren (before expression)
+                SyntaxTreePath expr_path = Path();
+                expr_path.push_back(1);  // Distinct path for expression
+
+                const verible::AlignmentColumnProperties expr_prop(true, 1);
+                ReserveNewColumn(expr, expr_prop, expr_path);
+              } else {
+                // For align-both mode:
+                // No spaces inside parentheses
+                const verible::AlignmentColumnProperties expr_prop(true, 0);
+                ReserveNewColumn(expr, expr_prop);
+              }
+            }
+
+            // Handle closing parenthesis
+            if (paren_group.size() >= 3) {
+              const Symbol &closing_paren = *paren_group.back();
+
+              // Need a unique path for the closing paren
+              SyntaxTreePath close_path = Path();
+              // FIXME: We need a proper way to implement such behaviour
+              close_path.push_back(999);  // High number to ensure it's last
+
+              if (add_spaces_inside_parentheses_) {
+                // For align-both-separated mode:
+                // Add space before closing paren
+                const verible::AlignmentColumnProperties close_prop(false, 1);
+                ReserveNewColumn(closing_paren, close_prop, close_path);
+              } else {
+                // For align-both mode:
+                // No space before closing paren
+                const verible::AlignmentColumnProperties close_prop(false, 0);
+                ReserveNewColumn(closing_paren, close_prop, close_path);
+              }
+            }
+          }
+        }
+        break;
+      default:
+        break;
+    }
+
+    verilog::formatter::ActualNamedPortColumnSchemaScanner::Visit(node);
+    VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
+  }
+
+ private:
+  // The named port alignment policy to use
+  verible::NamedAlignmentPolicy named_port_policy_;
+
+  // Whether to add spaces inside the parentheses
+  bool add_spaces_inside_parentheses_;
+
+  // Whether to add space before opening parenthesis
+  bool add_space_before_opening_paren_;
 };
 
 // This class marks up token-subranges in port declarations for alignment.
@@ -1348,72 +1577,169 @@ static void non_tree_column_scanner(
   }
 }
 
+// Function that adapts NamedPortAlignmentPolicy to AlignmentPolicy
+static verible::AlignmentPolicy NamedAlignmentToAlignmentPolicy(
+    const verible::NamedAlignmentPolicy policy) {
+  switch (policy) {
+    case verible::NamedAlignmentPolicy::kPreserve:
+      return verible::AlignmentPolicy::kPreserve;
+    case verible::NamedAlignmentPolicy::kFlushLeft:
+      return verible::AlignmentPolicy::kFlushLeft;
+    case verible::NamedAlignmentPolicy::kAlign:
+    case verible::NamedAlignmentPolicy::kAlignBoth:
+    case verible::NamedAlignmentPolicy::kAlignBothSeparated:
+    case verible::NamedAlignmentPolicy::kAlignBothSpaced:
+      return verible::AlignmentPolicy::kAlign;
+    case verible::NamedAlignmentPolicy::kInferUserIntent:
+      return verible::AlignmentPolicy::kInferUserIntent;
+    default:
+      return verible::AlignmentPolicy::kAlign;
+  }
+}
+
+// Adapter function to get alignment policy from NamedParameterAlignmentPolicy member
+static verible::AlignmentPolicy NamedParameterAlignmentPolicyAdapter(
+    const FormatStyle &style) {
+  return NamedAlignmentToAlignmentPolicy(style.named_parameter_alignment);
+}
+
+// Adapter function to get alignment policy from NamedPortAlignmentPolicy member
+static verible::AlignmentPolicy NamedPortAlignmentPolicyAdapter(
+    const FormatStyle &style) {
+  return NamedAlignmentToAlignmentPolicy(style.named_port_alignment);
+}
+
 // Global registry of all known alignment handlers for Verilog.
 // This organization lets the same handlers be re-used in multiple
 // syntactic contexts, e.g. data declarations can be module items and
 // generate items and block statement items.
 static const AlignmentHandlerMapType &AlignmentHandlerLibrary() {
-  static const auto *handler_map = new AlignmentHandlerMapType{
-      {AlignableSyntaxSubtype::kDataDeclaration,
-       {UnstyledAlignmentCellScannerGenerator<
-            DataDeclarationColumnSchemaScanner>(),
-        function_from_pointer_to_member(
-            &FormatStyle::module_net_variable_alignment)}},
-      {AlignableSyntaxSubtype::kNamedActualParameters,
-       {UnstyledAlignmentCellScannerGenerator<
-            ActualNamedParameterColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
-            &FormatStyle::named_parameter_alignment)}},
-      {AlignableSyntaxSubtype::kNamedActualPorts,
-       {UnstyledAlignmentCellScannerGenerator<
-            ActualNamedPortColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(&FormatStyle::named_port_alignment)}},
-      {AlignableSyntaxSubtype::kParameterDeclaration,
-       {UnstyledAlignmentCellScannerGenerator<
-            ParameterDeclarationColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
-            &FormatStyle::formal_parameters_alignment)}},
-      {AlignableSyntaxSubtype::kPortDeclaration,
-       {UnstyledAlignmentCellScannerGenerator<
-            PortDeclarationColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
-            &FormatStyle::port_declarations_alignment)}},
-      {AlignableSyntaxSubtype::kStructUnionMember,
-       {UnstyledAlignmentCellScannerGenerator<
-            StructUnionMemberColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
-            &FormatStyle::struct_union_members_alignment)}},
-      {AlignableSyntaxSubtype::kClassMemberVariables,
-       {UnstyledAlignmentCellScannerGenerator<
-            ClassPropertyColumnSchemaScanner>(),
-        function_from_pointer_to_member(
-            &FormatStyle::class_member_variable_alignment)}},
-      {AlignableSyntaxSubtype::kCaseLikeItems,
-       {UnstyledAlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
-        function_from_pointer_to_member(&FormatStyle::case_items_alignment)}},
-      {AlignableSyntaxSubtype::kContinuousAssignment,
-       {UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
-        function_from_pointer_to_member(
-            &FormatStyle::assignment_statement_alignment)}},
-      {AlignableSyntaxSubtype::kBlockingAssignment,
-       {UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
-        function_from_pointer_to_member(
-            &FormatStyle::assignment_statement_alignment)}},
-      {AlignableSyntaxSubtype::kNonBlockingAssignment,
-       {UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
-        function_from_pointer_to_member(
-            &FormatStyle::assignment_statement_alignment)}},
-      {AlignableSyntaxSubtype::kEnumListAssignment,
-       {UnstyledAlignmentCellScannerGenerator<
-            EnumWithAssignmentsColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
-            &FormatStyle::enum_assignment_statement_alignment)}},
-      {AlignableSyntaxSubtype::kDistItem,
-       {UnstyledAlignmentCellScannerGenerator<DistItemColumnSchemaScanner>(),
-        function_from_pointer_to_member(
-            &FormatStyle::distribution_items_alignment)}},
-  };
-  return *handler_map;
+  static AlignmentHandlerMapType handler_map;
+
+  // Initialize only once
+  if (handler_map.empty()) {
+    // Data Declaration
+    AlignmentGroupHandlers data_decl_handlers;
+    data_decl_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<
+            DataDeclarationColumnSchemaScanner>();
+    data_decl_handlers.policy_func = function_from_pointer_to_member(
+        &FormatStyle::module_net_variable_alignment);
+    handler_map[AlignableSyntaxSubtype::kDataDeclaration] = data_decl_handlers;
+
+    // Named Actual Parameters
+    AlignmentGroupHandlers named_param_handlers;
+    named_param_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<
+            ActualNamedParameterWithParenthesesColumnSchemaScanner>(non_tree_column_scanner);
+    named_param_handlers.policy_func = NamedParameterAlignmentPolicyAdapter;
+    handler_map[AlignableSyntaxSubtype::kNamedActualParameters] =
+        named_param_handlers;
+
+    // Named Actual Ports
+    AlignmentGroupHandlers named_port_handlers;
+    named_port_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<
+            ActualNamedPortWithParenthesesColumnSchemaScanner>(
+            non_tree_column_scanner);
+    named_port_handlers.policy_func = NamedPortAlignmentPolicyAdapter;
+    handler_map[AlignableSyntaxSubtype::kNamedActualPorts] =
+        named_port_handlers;
+
+    // Parameter Declaration
+    AlignmentGroupHandlers param_decl_handlers;
+    param_decl_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<
+            ParameterDeclarationColumnSchemaScanner>(non_tree_column_scanner);
+    param_decl_handlers.policy_func = function_from_pointer_to_member(
+        &FormatStyle::formal_parameters_alignment);
+    handler_map[AlignableSyntaxSubtype::kParameterDeclaration] =
+        param_decl_handlers;
+
+    // Port Declaration
+    AlignmentGroupHandlers port_decl_handlers;
+    port_decl_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<
+            PortDeclarationColumnSchemaScanner>(non_tree_column_scanner);
+    port_decl_handlers.policy_func = function_from_pointer_to_member(
+        &FormatStyle::port_declarations_alignment);
+    handler_map[AlignableSyntaxSubtype::kPortDeclaration] = port_decl_handlers;
+
+    // Struct Union Member
+    AlignmentGroupHandlers struct_member_handlers;
+    struct_member_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<
+            StructUnionMemberColumnSchemaScanner>(non_tree_column_scanner);
+    struct_member_handlers.policy_func = function_from_pointer_to_member(
+        &FormatStyle::struct_union_members_alignment);
+    handler_map[AlignableSyntaxSubtype::kStructUnionMember] =
+        struct_member_handlers;
+
+    // Class Member Variables
+    AlignmentGroupHandlers class_var_handlers;
+    class_var_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<
+            ClassPropertyColumnSchemaScanner>();
+    class_var_handlers.policy_func = function_from_pointer_to_member(
+        &FormatStyle::class_member_variable_alignment);
+    handler_map[AlignableSyntaxSubtype::kClassMemberVariables] =
+        class_var_handlers;
+
+    // Case Items
+    AlignmentGroupHandlers case_item_handlers;
+    case_item_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>();
+    case_item_handlers.policy_func =
+        function_from_pointer_to_member(&FormatStyle::case_items_alignment);
+    handler_map[AlignableSyntaxSubtype::kCaseLikeItems] = case_item_handlers;
+
+    // Continuous Assignment
+    AlignmentGroupHandlers cont_assign_handlers;
+    cont_assign_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>();
+    cont_assign_handlers.policy_func = function_from_pointer_to_member(
+        &FormatStyle::assignment_statement_alignment);
+    handler_map[AlignableSyntaxSubtype::kContinuousAssignment] =
+        cont_assign_handlers;
+
+    // Blocking Assignment
+    AlignmentGroupHandlers block_assign_handlers;
+    block_assign_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>();
+    block_assign_handlers.policy_func = function_from_pointer_to_member(
+        &FormatStyle::assignment_statement_alignment);
+    handler_map[AlignableSyntaxSubtype::kBlockingAssignment] =
+        block_assign_handlers;
+
+    // Non-Blocking Assignment
+    AlignmentGroupHandlers nonblock_assign_handlers;
+    nonblock_assign_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>();
+    nonblock_assign_handlers.policy_func = function_from_pointer_to_member(
+        &FormatStyle::assignment_statement_alignment);
+    handler_map[AlignableSyntaxSubtype::kNonBlockingAssignment] =
+        nonblock_assign_handlers;
+
+    // Enum List Assignment
+    AlignmentGroupHandlers enum_assign_handlers;
+    enum_assign_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<
+            EnumWithAssignmentsColumnSchemaScanner>(non_tree_column_scanner);
+    enum_assign_handlers.policy_func = function_from_pointer_to_member(
+        &FormatStyle::enum_assignment_statement_alignment);
+    handler_map[AlignableSyntaxSubtype::kEnumListAssignment] =
+        enum_assign_handlers;
+
+    // Distribution Item
+    AlignmentGroupHandlers dist_item_handlers;
+    dist_item_handlers.column_scanner_func =
+        UnstyledAlignmentCellScannerGenerator<DistItemColumnSchemaScanner>();
+    dist_item_handlers.policy_func = function_from_pointer_to_member(
+        &FormatStyle::distribution_items_alignment);
+    handler_map[AlignableSyntaxSubtype::kDistItem] = dist_item_handlers;
+  }
+
+  return handler_map;
 }
 
 static verible::AlignmentCellScannerFunction AlignmentColumnScannerSelector(
