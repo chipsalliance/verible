@@ -40,6 +40,10 @@ bool IsPreprocessorControlFlow(verilog_tokentype);
 // Returns true for `ifdef, `define, `include, `undef, etc.
 bool IsPreprocessorKeyword(verilog_tokentype);
 
+// Returns true for SystemVerilog compiler directives (DR_*), e.g. `timescale,
+// `default_nettype, `resetall, etc.
+bool IsCompilerDirective(verilog_tokentype);
+
 // Returns true for any preprocessing token, not just control flow.
 bool IsPreprocessorControlToken(verilog_tokentype token_type);
 

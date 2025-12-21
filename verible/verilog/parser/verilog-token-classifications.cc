@@ -92,6 +92,37 @@ bool IsPreprocessorControlFlow(verilog_tokentype token_type) {
   }
 }
 
+bool IsCompilerDirective(verilog_tokentype token_type) {
+  switch (token_type) {
+    case verilog_tokentype::DR_timescale:
+    case verilog_tokentype::DR_resetall:
+    case verilog_tokentype::DR_celldefine:
+    case verilog_tokentype::DR_endcelldefine:
+    case verilog_tokentype::DR_unconnected_drive:
+    case verilog_tokentype::DR_nounconnected_drive:
+    case verilog_tokentype::DR_default_nettype:
+    case verilog_tokentype::DR_suppress_faults:
+    case verilog_tokentype::DR_nosuppress_faults:
+    case verilog_tokentype::DR_enable_portfaults:
+    case verilog_tokentype::DR_disable_portfaults:
+    case verilog_tokentype::DR_delay_mode_distributed:
+    case verilog_tokentype::DR_delay_mode_path:
+    case verilog_tokentype::DR_delay_mode_unit:
+    case verilog_tokentype::DR_delay_mode_zero:
+    case verilog_tokentype::DR_default_decay_time:
+    case verilog_tokentype::DR_default_trireg_strength:
+    case verilog_tokentype::DR_pragma:
+    case verilog_tokentype::DR_uselib:
+    case verilog_tokentype::DR_begin_keywords:
+    case verilog_tokentype::DR_end_keywords:
+    case verilog_tokentype::DR_protect:
+    case verilog_tokentype::DR_endprotect:
+      return true;
+    default:
+      return false;
+  }
+}
+
 bool IsPreprocessorKeyword(verilog_tokentype token_type) {
   switch (token_type) {
     case verilog_tokentype::PP_include:
@@ -104,7 +135,7 @@ bool IsPreprocessorKeyword(verilog_tokentype token_type) {
     case verilog_tokentype::PP_undef:
       return true;
     default:
-      return false;
+      return IsCompilerDirective(token_type);
   }
 }
 

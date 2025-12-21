@@ -1867,6 +1867,31 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {},  // any context
           {1, SpacingOptions::kMustWrap},
       },
+      // Compiler directives (DR_*) should also force a wrap when on the right.
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "id"},
+          {verilog_tokentype::DR_timescale, "`timescale"},
+          {},  // any context
+          {},  // any context
+          {1, SpacingOptions::kMustWrap},
+      },
+      {
+          DefaultStyle,
+          {';', ";"},
+          {verilog_tokentype::DR_default_nettype, "`default_nettype"},
+          {},  // any context
+          {},  // any context
+          {1, SpacingOptions::kMustWrap},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
+          {verilog_tokentype::DR_resetall, "`resetall"},
+          {},  // any context
+          {},  // any context
+          {1, SpacingOptions::kMustWrap},
+      },
       {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
