@@ -102,7 +102,7 @@ TEST(LintRuleRegistryTest, CreateTreeLintRuleInvalid) {
 TEST(LintRuleRegistryTest, CreateTreeLintRuleValid) {
   auto any_rule = CreateSyntaxTreeLintRule("test-rule-1");
   EXPECT_NE(any_rule, nullptr);
-#if defined(__GXX_RTTI)
+#ifdef __GXX_RTTI
   auto rule_1 = dynamic_cast<TreeRule1 *>(any_rule.get());
   EXPECT_NE(rule_1, nullptr);
 #endif
@@ -155,7 +155,7 @@ TEST(LintRuleRegistryTest, CreateTokenLintRuleInvalid) {
 TEST(LintRuleRegistryTest, CreateTokenLintRuleValid) {
   auto any_rule = CreateTokenStreamLintRule("token-rule-1");
   EXPECT_NE(any_rule, nullptr);
-#if defined(__GXX_RTTI)
+#ifdef __GXX_RTTI
   auto rule_1 = dynamic_cast<TokenRule1 *>(any_rule.get());
   EXPECT_NE(rule_1, nullptr);
 #endif
@@ -204,7 +204,7 @@ TEST(LintRuleRegistryTest, CreateLineLintRuleInvalid) {
 TEST(LintRuleRegistryTest, CreateLineLintRuleValid) {
   auto any_rule = CreateLineLintRule("line-rule-1");
   EXPECT_NE(any_rule, nullptr);
-#if defined(__GXX_RTTI)
+#ifdef __GXX_RTTI
   auto rule_1 = dynamic_cast<LineRule1 *>(any_rule.get());
   EXPECT_NE(rule_1, nullptr);
 #endif
@@ -253,7 +253,7 @@ TEST(LintRuleRegistryTest, CreateTextLintRuleInvalid) {
 TEST(LintRuleRegistryTest, CreateTextLintRuleValid) {
   auto any_rule = CreateTextStructureLintRule("text-rule-1");
   EXPECT_NE(any_rule, nullptr);
-#if defined(__GXX_RTTI)
+#ifdef __GXX_RTTI
   auto rule_1 = dynamic_cast<TextRule1 *>(any_rule.get());
   EXPECT_NE(rule_1, nullptr);
 #endif

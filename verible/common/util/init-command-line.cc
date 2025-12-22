@@ -104,7 +104,7 @@ std::vector<std::string_view> InitCommandLine(
 
   // Print stacktrace on issue, but not if --config=asan
   // which comes with its own stacktrace handling.
-#if !defined(__SANITIZE_ADDRESS__)
+#ifndef __SANITIZE_ADDRESS__
   absl::FailureSignalHandlerOptions options;
   absl::InstallFailureSignalHandler(options);
 #endif
