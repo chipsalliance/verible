@@ -166,6 +166,28 @@ cc_library(
 )
 
 cc_library(
+    name = "inlay-hint",
+    srcs = ["inlay-hint.cc"],
+    hdrs = ["inlay-hint.h"],
+    deps = [
+        ":lsp-parse-buffer",
+        ":symbol-table-handler",
+        "//verible/common/lsp:lsp-protocol",
+        "//verible/common/text:concrete-syntax-leaf",
+        "//verible/common/text:concrete-syntax-tree",
+        "//verible/common/text:symbol",
+        "//verible/common/text:text-structure",
+        "//verible/common/text:token-info",
+        "//verible/common/text:tree-utils",
+        "//verible/verilog/CST:declaration",
+        "//verible/verilog/CST:port",
+        "//verible/verilog/CST:verilog-nonterminals",
+        "//verible/verilog/analysis:symbol-table",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_library(
     name = "symbol-table-handler",
     srcs = ["symbol-table-handler.cc"],
     hdrs = ["symbol-table-handler.h"],
@@ -222,6 +244,7 @@ cc_library(
     hdrs = ["verilog-language-server.h"],
     deps = [
         ":hover",
+        ":inlay-hint",
         ":lsp-parse-buffer",
         ":symbol-table-handler",
         ":verible-lsp-adapter",
