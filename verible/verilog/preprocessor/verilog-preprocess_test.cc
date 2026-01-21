@@ -1033,5 +1033,365 @@ TEST(VerilogPreprocessTest,
       << error.error_message;
 }
 
+// Token concatenation (`` operator) tests.
+TEST(VerilogPreprocessTest, TokenConcatenationBasic) {
+  // Basic token concatenation: a``b -> ab
+  const RawAndFiltered test_cases[] = {
+      {"[** Basic identifier concatenation **]",
+       R"(
+`define CONCAT(a, b) a``b
+module m;
+  wire `CONCAT(sig, nal);
+endmodule)",
+       R"(
+`define CONCAT(a, b) a``b
+module m;
+  wire signal;
+endmodule)"},
+
+      {"[** Concatenation to build wire name **]",
+       R"(
+`define MAKE_WIRE(prefix, suffix) wire prefix``suffix
+module m;
+  `MAKE_WIRE(data, _in);
+  `MAKE_WIRE(data, _out);
+endmodule)",
+       R"(
+`define MAKE_WIRE(prefix, suffix) wire prefix``suffix
+module m;
+  wire data_in;
+  wire data_out;
+endmodule)"},
+
+      {"[** Concatenation with underscore **]",
+       R"(
+`define JOIN(a, b) a``_``b
+module m;
+  wire `JOIN(foo, bar);
+endmodule)",
+       R"(
+`define JOIN(a, b) a``_``b
+module m;
+  wire foo_bar;
+endmodule)"},
+  };
+
+  for (const RawAndFiltered &test : test_cases) {
+    PreprocessorTester expanded(
+        test.pp_input, VerilogPreprocess::Config({.expand_macros = true}));
+    EXPECT_TRUE(expanded.Status().ok())
+        << expanded.Status() << " " << test.description;
+    PreprocessorTester equivalent(
+        test.equivalent,
+        VerilogPreprocess::Config({.expand_macros = false}));
+    EXPECT_TRUE(equivalent.Status().ok())
+        << equivalent.Status() << " " << test.description;
+    const auto &expanded_stream = expanded.Data().GetTokenStreamView();
+    const auto &equivalent_stream = equivalent.Data().GetTokenStreamView();
+    EXPECT_GT(expanded_stream.size(), 0) << test.description;
+    EXPECT_EQ(expanded_stream.size(), equivalent_stream.size())
+        << test.description;
+    auto expanded_it = expanded_stream.begin();
+    auto equivalent_it = equivalent_stream.begin();
+    while (expanded_it != expanded_stream.end() &&
+           equivalent_it != equivalent_stream.end()) {
+      EXPECT_EQ((*expanded_it)->text(), (*equivalent_it)->text())
+          << test.description;
+      ++expanded_it;
+      ++equivalent_it;
+    }
+  }
+}
+
+TEST(VerilogPreprocessTest, TokenConcatenationChained) {
+  // Chained concatenation: a``b``c -> abc
+  const RawAndFiltered test_cases[] = {
+      {"[** Triple chained concatenation **]",
+       R"(
+`define TRIPLE(a, b, c) a``b``c
+module m;
+  wire `TRIPLE(x, y, z);
+endmodule)",
+       R"(
+`define TRIPLE(a, b, c) a``b``c
+module m;
+  wire xyz;
+endmodule)"},
+
+      {"[** Four-way chained concatenation **]",
+       R"(
+`define QUAD(a, b, c, d) a``b``c``d
+module m;
+  wire `QUAD(a, b, c, d);
+endmodule)",
+       R"(
+`define QUAD(a, b, c, d) a``b``c``d
+module m;
+  wire abcd;
+endmodule)"},
+
+      {"[** Chained with underscores **]",
+       R"(
+`define PATH(a, b, c) a``_``b``_``c
+module m;
+  wire `PATH(mod, sub, sig);
+endmodule)",
+       R"(
+`define PATH(a, b, c) a``_``b``_``c
+module m;
+  wire mod_sub_sig;
+endmodule)"},
+  };
+
+  for (const RawAndFiltered &test : test_cases) {
+    PreprocessorTester expanded(
+        test.pp_input, VerilogPreprocess::Config({.expand_macros = true}));
+    EXPECT_TRUE(expanded.Status().ok())
+        << expanded.Status() << " " << test.description;
+    PreprocessorTester equivalent(
+        test.equivalent,
+        VerilogPreprocess::Config({.expand_macros = false}));
+    EXPECT_TRUE(equivalent.Status().ok())
+        << equivalent.Status() << " " << test.description;
+    const auto &expanded_stream = expanded.Data().GetTokenStreamView();
+    const auto &equivalent_stream = equivalent.Data().GetTokenStreamView();
+    EXPECT_GT(expanded_stream.size(), 0) << test.description;
+    EXPECT_EQ(expanded_stream.size(), equivalent_stream.size())
+        << test.description;
+  }
+}
+
+TEST(VerilogPreprocessTest, TokenConcatenationWithWhitespace) {
+  // Whitespace around `` should be removed per SystemVerilog standard.
+  const RawAndFiltered test_cases[] = {
+      {"[** Spaces around concatenation operator **]",
+       R"(
+`define SPACED(a, b) a `` b
+module m;
+  wire `SPACED(foo, bar);
+endmodule)",
+       R"(
+`define SPACED(a, b) a `` b
+module m;
+  wire foobar;
+endmodule)"},
+
+      {"[** Mixed spacing **]",
+       R"(
+`define MIXED(a, b) a`` b
+module m;
+  wire `MIXED(left, right);
+endmodule)",
+       R"(
+`define MIXED(a, b) a`` b
+module m;
+  wire leftright;
+endmodule)"},
+  };
+
+  for (const RawAndFiltered &test : test_cases) {
+    PreprocessorTester expanded(
+        test.pp_input, VerilogPreprocess::Config({.expand_macros = true}));
+    EXPECT_TRUE(expanded.Status().ok())
+        << expanded.Status() << " " << test.description;
+    PreprocessorTester equivalent(
+        test.equivalent,
+        VerilogPreprocess::Config({.expand_macros = false}));
+    EXPECT_TRUE(equivalent.Status().ok())
+        << equivalent.Status() << " " << test.description;
+    const auto &expanded_stream = expanded.Data().GetTokenStreamView();
+    const auto &equivalent_stream = equivalent.Data().GetTokenStreamView();
+    EXPECT_GT(expanded_stream.size(), 0) << test.description;
+    EXPECT_EQ(expanded_stream.size(), equivalent_stream.size())
+        << test.description;
+  }
+}
+
+TEST(VerilogPreprocessTest, TokenConcatenationModuleName) {
+  // Test concatenation to build module names.
+  const RawAndFiltered test_cases[] = {
+      {"[** Module name generation **]",
+       R"(
+`define MOD(prefix) module prefix``_module; endmodule
+`MOD(test))",
+       R"(
+`define MOD(prefix) module prefix``_module; endmodule
+module test_module; endmodule)"},
+
+      {"[** Instance name generation **]",
+       R"(
+`define INST(type, suffix) type u_``suffix()
+module m;
+  `INST(submod, inst);
+endmodule)",
+       R"(
+`define INST(type, suffix) type u_``suffix()
+module m;
+  submod u_inst();
+endmodule)"},
+  };
+
+  for (const RawAndFiltered &test : test_cases) {
+    PreprocessorTester expanded(
+        test.pp_input, VerilogPreprocess::Config({.expand_macros = true}));
+    EXPECT_TRUE(expanded.Status().ok())
+        << expanded.Status() << " " << test.description;
+    PreprocessorTester equivalent(
+        test.equivalent,
+        VerilogPreprocess::Config({.expand_macros = false}));
+    EXPECT_TRUE(equivalent.Status().ok())
+        << equivalent.Status() << " " << test.description;
+    const auto &expanded_stream = expanded.Data().GetTokenStreamView();
+    const auto &equivalent_stream = equivalent.Data().GetTokenStreamView();
+    EXPECT_GT(expanded_stream.size(), 0) << test.description;
+    EXPECT_EQ(expanded_stream.size(), equivalent_stream.size())
+        << test.description;
+  }
+}
+
+TEST(VerilogPreprocessTest, TokenConcatenationNestedMacros) {
+  // Test concatenation with nested macro calls.
+  const RawAndFiltered test_cases[] = {
+      {"[** Nested macro with concatenation **]",
+       R"(
+`define SUFFIX _out
+`define MAKE(name) wire name```SUFFIX
+module m;
+  `MAKE(data);
+endmodule)",
+       R"(
+`define SUFFIX _out
+`define MAKE(name) wire name```SUFFIX
+module m;
+  wire data_out;
+endmodule)"},
+  };
+
+  for (const RawAndFiltered &test : test_cases) {
+    PreprocessorTester expanded(
+        test.pp_input, VerilogPreprocess::Config({.expand_macros = true}));
+    EXPECT_TRUE(expanded.Status().ok())
+        << expanded.Status() << " " << test.description;
+    PreprocessorTester equivalent(
+        test.equivalent,
+        VerilogPreprocess::Config({.expand_macros = false}));
+    EXPECT_TRUE(equivalent.Status().ok())
+        << equivalent.Status() << " " << test.description;
+    const auto &expanded_stream = expanded.Data().GetTokenStreamView();
+    const auto &equivalent_stream = equivalent.Data().GetTokenStreamView();
+    EXPECT_GT(expanded_stream.size(), 0) << test.description;
+    EXPECT_EQ(expanded_stream.size(), equivalent_stream.size())
+        << test.description;
+  }
+}
+
+TEST(VerilogPreprocessTest, TokenConcatenationWithNumbers) {
+  // Test concatenation that produces numeric literals.
+  PreprocessorTester tester(
+      R"(
+`define WIDTH 8
+`define SIZED(w, val) w``'d``val
+module m;
+  parameter P1 = `SIZED(32, 10);
+  parameter P2 = `SIZED(`WIDTH, 255);
+endmodule)",
+      VerilogPreprocess::Config({.expand_macros = true}));
+
+  EXPECT_TRUE(tester.Status().ok()) << tester.Status();
+
+  // Verify the preprocessed output contains the concatenated literals.
+  std::string combined;
+  for (const auto &tok : tester.PreprocessorData().preprocessed_token_stream) {
+    combined += std::string(tok->text()) + " ";
+  }
+  // Should contain "32'd10" as a single token (or components).
+  EXPECT_TRUE(absl::StrContains(combined, "32") &&
+              absl::StrContains(combined, "10"))
+      << "Expected number concatenation, got: " << combined;
+}
+
+TEST(VerilogPreprocessTest, TokenConcatenationPreservesTokenType) {
+  // Verify that concatenated tokens get properly re-lexed for correct type.
+  PreprocessorTester tester(
+      R"(
+`define IDENT(a, b) a``b
+module m;
+  wire `IDENT(my, wire);
+endmodule)",
+      VerilogPreprocess::Config({.expand_macros = true}));
+
+  EXPECT_TRUE(tester.Status().ok()) << tester.Status();
+
+  // Find the concatenated token and verify it's an identifier.
+  bool found_mywire = false;
+  for (const auto &tok : tester.PreprocessorData().preprocessed_token_stream) {
+    if (tok->text() == "mywire") {
+      found_mywire = true;
+      // Token should be SymbolIdentifier after re-lexing.
+      EXPECT_EQ(tok->token_enum(), SymbolIdentifier)
+          << "Expected SymbolIdentifier for 'mywire'";
+      break;
+    }
+  }
+  EXPECT_TRUE(found_mywire) << "Expected to find concatenated token 'mywire'";
+}
+
+TEST(VerilogPreprocessTest, TokenConcatenationMultipleInOneMacro) {
+  // Test multiple concatenations in a single macro.
+  const RawAndFiltered test_cases[] = {
+      {"[** Two concatenations in one macro **]",
+       R"(
+`define PAIR(a, b, c, d) a``b, c``d
+module m;
+  wire `PAIR(foo, 1, bar, 2);
+endmodule)",
+       R"(
+`define PAIR(a, b, c, d) a``b, c``d
+module m;
+  wire foo1, bar2;
+endmodule)"},
+  };
+
+  for (const RawAndFiltered &test : test_cases) {
+    PreprocessorTester expanded(
+        test.pp_input, VerilogPreprocess::Config({.expand_macros = true}));
+    EXPECT_TRUE(expanded.Status().ok())
+        << expanded.Status() << " " << test.description;
+    PreprocessorTester equivalent(
+        test.equivalent,
+        VerilogPreprocess::Config({.expand_macros = false}));
+    EXPECT_TRUE(equivalent.Status().ok())
+        << equivalent.Status() << " " << test.description;
+    const auto &expanded_stream = expanded.Data().GetTokenStreamView();
+    const auto &equivalent_stream = equivalent.Data().GetTokenStreamView();
+    EXPECT_GT(expanded_stream.size(), 0) << test.description;
+    EXPECT_EQ(expanded_stream.size(), equivalent_stream.size())
+        << test.description;
+  }
+}
+
+TEST(VerilogPreprocessTest, TokenConcatenationEmptyParameter) {
+  // Test concatenation with empty parameter (edge case).
+  PreprocessorTester tester(
+      R"(
+`define OPT(prefix, suffix=) prefix``suffix
+module m;
+  wire `OPT(signal);
+  wire `OPT(data, _bus);
+endmodule)",
+      VerilogPreprocess::Config({.expand_macros = true}));
+
+  EXPECT_TRUE(tester.Status().ok()) << tester.Status();
+
+  std::string combined;
+  for (const auto &tok : tester.PreprocessorData().preprocessed_token_stream) {
+    combined += std::string(tok->text()) + " ";
+  }
+  EXPECT_TRUE(absl::StrContains(combined, "signal"))
+      << "Expected 'signal', got: " << combined;
+  EXPECT_TRUE(absl::StrContains(combined, "data_bus"))
+      << "Expected 'data_bus', got: " << combined;
+}
+
 }  // namespace
 }  // namespace verilog
