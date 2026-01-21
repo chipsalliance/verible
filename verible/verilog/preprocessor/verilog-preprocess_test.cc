@@ -1082,8 +1082,7 @@ endmodule)"},
     EXPECT_TRUE(expanded.Status().ok())
         << expanded.Status() << " " << test.description;
     PreprocessorTester equivalent(
-        test.equivalent,
-        VerilogPreprocess::Config({.expand_macros = false}));
+        test.equivalent, VerilogPreprocess::Config({.expand_macros = false}));
     EXPECT_TRUE(equivalent.Status().ok())
         << equivalent.Status() << " " << test.description;
     const auto &expanded_stream = expanded.Data().GetTokenStreamView();
@@ -1149,8 +1148,7 @@ endmodule)"},
     EXPECT_TRUE(expanded.Status().ok())
         << expanded.Status() << " " << test.description;
     PreprocessorTester equivalent(
-        test.equivalent,
-        VerilogPreprocess::Config({.expand_macros = false}));
+        test.equivalent, VerilogPreprocess::Config({.expand_macros = false}));
     EXPECT_TRUE(equivalent.Status().ok())
         << equivalent.Status() << " " << test.description;
     const auto &expanded_stream = expanded.Data().GetTokenStreamView();
@@ -1195,8 +1193,7 @@ endmodule)"},
     EXPECT_TRUE(expanded.Status().ok())
         << expanded.Status() << " " << test.description;
     PreprocessorTester equivalent(
-        test.equivalent,
-        VerilogPreprocess::Config({.expand_macros = false}));
+        test.equivalent, VerilogPreprocess::Config({.expand_macros = false}));
     EXPECT_TRUE(equivalent.Status().ok())
         << equivalent.Status() << " " << test.description;
     const auto &expanded_stream = expanded.Data().GetTokenStreamView();
@@ -1237,8 +1234,7 @@ endmodule)"},
     EXPECT_TRUE(expanded.Status().ok())
         << expanded.Status() << " " << test.description;
     PreprocessorTester equivalent(
-        test.equivalent,
-        VerilogPreprocess::Config({.expand_macros = false}));
+        test.equivalent, VerilogPreprocess::Config({.expand_macros = false}));
     EXPECT_TRUE(equivalent.Status().ok())
         << equivalent.Status() << " " << test.description;
     const auto &expanded_stream = expanded.Data().GetTokenStreamView();
@@ -1273,8 +1269,7 @@ endmodule)"},
     EXPECT_TRUE(expanded.Status().ok())
         << expanded.Status() << " " << test.description;
     PreprocessorTester equivalent(
-        test.equivalent,
-        VerilogPreprocess::Config({.expand_macros = false}));
+        test.equivalent, VerilogPreprocess::Config({.expand_macros = false}));
     EXPECT_TRUE(equivalent.Status().ok())
         << equivalent.Status() << " " << test.description;
     const auto &expanded_stream = expanded.Data().GetTokenStreamView();
@@ -1358,8 +1353,7 @@ endmodule)"},
     EXPECT_TRUE(expanded.Status().ok())
         << expanded.Status() << " " << test.description;
     PreprocessorTester equivalent(
-        test.equivalent,
-        VerilogPreprocess::Config({.expand_macros = false}));
+        test.equivalent, VerilogPreprocess::Config({.expand_macros = false}));
     EXPECT_TRUE(equivalent.Status().ok())
         << equivalent.Status() << " " << test.description;
     const auto &expanded_stream = expanded.Data().GetTokenStreamView();

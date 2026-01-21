@@ -14,6 +14,7 @@
 
 #include "verible/verilog/preprocessor/verilog-preprocess.h"
 
+#include <cstddef>
 #include <filesystem>
 #include <functional>
 #include <map>
@@ -395,14 +396,16 @@ static void ProcessTokenConcatenation(verible::TokenSequence *tokens,
       concat_lexer.DoNextToken();
       const verible::TokenInfo &lexed_token = concat_lexer.GetLastToken();
 
-      // Create a token with the correct type and pointing to persistent storage.
+      // Create a token with the correct type and pointing to persistent
+      // storage.
       verible::TokenInfo new_token(lexed_token.token_enum(), concatenated);
 
       result.push_back(new_token);
       continue;
     }
 
-    // Not part of concatenation - keep token unless it's PP_TOKEN_CONCAT itself.
+    // Not part of concatenation - keep token unless it's PP_TOKEN_CONCAT
+    // itself.
     if (curr_token.token_enum() != PP_TOKEN_CONCAT) {
       result.push_back(curr_token);
     }
