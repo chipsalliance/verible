@@ -18,9 +18,10 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
-#include "absl/strings/str_cat.h"
+#include "verible/common/analysis/syntax-tree-search.h"
 #include "verible/common/lsp/lsp-protocol.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/concrete-syntax-tree.h"
@@ -28,9 +29,9 @@
 #include "verible/common/text/text-structure.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/text/tree-utils.h"
+#include "verible/common/strings/line-column-map.h"
 #include "verible/verilog/CST/declaration.h"
 #include "verible/verilog/CST/port.h"
-#include "verible/verilog/CST/verilog-nonterminals.h"
 #include "verible/verilog/analysis/symbol-table.h"
 #include "verible/verilog/tools/ls/lsp-parse-buffer.h"
 #include "verible/verilog/tools/ls/symbol-table-handler.h"
