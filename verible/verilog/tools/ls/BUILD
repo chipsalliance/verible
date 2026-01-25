@@ -172,7 +172,9 @@ cc_library(
     deps = [
         ":lsp-parse-buffer",
         ":symbol-table-handler",
+        "//verible/common/analysis:syntax-tree-search",
         "//verible/common/lsp:lsp-protocol",
+        "//verible/common/strings:line-column-map",
         "//verible/common/text:concrete-syntax-leaf",
         "//verible/common/text:concrete-syntax-tree",
         "//verible/common/text:symbol",
@@ -181,9 +183,7 @@ cc_library(
         "//verible/common/text:tree-utils",
         "//verible/verilog/CST:declaration",
         "//verible/verilog/CST:port",
-        "//verible/verilog/CST:verilog-nonterminals",
         "//verible/verilog/analysis:symbol-table",
-        "@abseil-cpp//absl/strings",
     ],
 )
 
