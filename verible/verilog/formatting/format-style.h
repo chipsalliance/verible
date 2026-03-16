@@ -24,6 +24,7 @@ namespace formatter {
 // Style parameters that are specific to Verilog formatter
 struct FormatStyle : public verible::BasicFormatStyle {
   using AlignmentPolicy = verible::AlignmentPolicy;
+  using NamedAlignmentPolicy = verible::NamedAlignmentPolicy;
   using IndentationStyle = verible::IndentationStyle;
 
   FormatStyle() { over_column_limit_penalty = 10000; }
@@ -54,14 +55,16 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   // Control how named parameters (e.g. in module instances) are formatted.
   // For internal testing purposes, this is default to kAlign.
-  AlignmentPolicy named_parameter_alignment = AlignmentPolicy::kAlign;
+  NamedAlignmentPolicy named_parameter_alignment =
+      NamedAlignmentPolicy::kAlignBothSpaced;
 
   // Control indentation amount for named port connections.
   IndentationStyle named_port_indentation = IndentationStyle::kWrap;
 
   // Control how named ports (e.g. in module instances) are formatted.
   // Internal tests assume these are forced to kAlign.
-  AlignmentPolicy named_port_alignment = AlignmentPolicy::kAlign;
+  NamedAlignmentPolicy named_port_alignment =
+      NamedAlignmentPolicy::kAlignBothSpaced;
 
   // Control how module-local net/variable declarations are formatted.
   // Internal tests assume these are forced to kAlign.
@@ -149,8 +152,31 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   void ApplyToAllAlignmentPolicies(AlignmentPolicy policy) {
     port_declarations_alignment = policy;
-    named_parameter_alignment = policy;
-    named_port_alignment = policy;
+
+    // For backward compatibility:
+    // Convert AlignmentPolicy to NamedPortAlignmentPolicy
+    switch (policy) {
+      case AlignmentPolicy::kPreserve:
+        named_parameter_alignment = NamedAlignmentPolicy::kPreserve;
+        named_port_alignment = NamedAlignmentPolicy::kPreserve;
+        break;
+      case AlignmentPolicy::kFlushLeft:
+        named_parameter_alignment = NamedAlignmentPolicy::kFlushLeft;
+        named_port_alignment = NamedAlignmentPolicy::kFlushLeft;
+        break;
+      case AlignmentPolicy::kAlign:
+        named_parameter_alignment = NamedAlignmentPolicy::kAlign;
+        named_port_alignment = NamedAlignmentPolicy::kAlign;
+        break;
+      case AlignmentPolicy::kInferUserIntent:
+        named_parameter_alignment = NamedAlignmentPolicy::kInferUserIntent;
+        named_port_alignment = NamedAlignmentPolicy::kInferUserIntent;
+        break;
+      default:
+        named_parameter_alignment = NamedAlignmentPolicy::kAlign;
+        named_port_alignment = NamedAlignmentPolicy::kAlign;
+        break;
+    }
     module_net_variable_alignment = policy;
     formal_parameters_alignment = policy;
     class_member_variable_alignment = policy;
