@@ -7,12 +7,13 @@ let
   verible_used_stdenv = pkgs.stdenv;
   #verible_used_stdenv = pkgs.gcc15Stdenv;
   #verible_used_stdenv = pkgs.clang19Stdenv;
+  bazel = pkgs.bazel_7;
 in
 verible_used_stdenv.mkDerivation {
   name = "verible-build-environment";
   buildInputs = with pkgs;
     [
-      bazel_7
+      bazel
       git
 
       # For scripts used inside bzl rules and tests
@@ -25,10 +26,6 @@ verible_used_stdenv.mkDerivation {
 
       # To manually run export_json_examples
       python3Packages.anytree
-
-      # For using --//bazel:use_local_flex_bison if desired
-      flex
-      bison
 
       # To build vscode vsix package
       nodejs
@@ -46,5 +43,7 @@ verible_used_stdenv.mkDerivation {
 
       # Last version that current github CI supports.
       export CLANG_FORMAT=${pkgs.llvmPackages_18.clang-tools}/bin/clang-format
+
+      export USE_BAZEL_VERSION=${bazel.version}
   '';
 }
