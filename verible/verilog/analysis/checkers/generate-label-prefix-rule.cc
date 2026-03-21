@@ -14,12 +14,16 @@
 
 #include "verible/verilog/analysis/checkers/generate-label-prefix-rule.h"
 
+#include <string>
 #include <string_view>
 
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
+#include "verible/common/text/config-utils.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/token-info.h"
@@ -38,18 +42,17 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(GenerateLabelPrefixRule);
 
-static constexpr std::string_view kMessage =
-    "All generate block labels must start with g_ or gen_";
+static constexpr std::string_view kDefaultPrefix = "g_";
 
-// TODO(fangism): and be lower_snake_case?
-// TODO(fangism): generalize to a configurable pattern and
-// rename this class/rule to GenerateLabelNamingStyle?
+GenerateLabelPrefixRule::GenerateLabelPrefixRule() : prefix_(kDefaultPrefix) {}
 
 const LintRuleDescriptor &GenerateLabelPrefixRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "generate-label-prefix",
       .topic = "generate-constructs",
-      .desc = "Checks that every generate block label starts with g_ or gen_.",
+      .desc = "Checks that every generate block label starts with the specified prefix.",
+      .param = {{"prefix", std::string(kDefaultPrefix),
+                 "The required prefix for generate block labels."}},
   };
   return d;
 }
@@ -84,13 +87,22 @@ void GenerateLabelPrefixRule::HandleSymbol(
       }
 
       if (label != nullptr) {
-        if (!(absl::StartsWith(label->text(), "g_") ||
-              absl::StartsWith(label->text(), "gen_"))) {
-          violations_.insert(verible::LintViolation(*label, kMessage, context));
+        // Check if label starts with the configured prefix (case-insensitive)
+        if (!absl::StartsWithIgnoreCase(label->text(), prefix_)) {
+          std::string message = absl::StrCat(
+              "Generate block label must start with \"", prefix_, "\"");
+          violations_.insert(verible::LintViolation(*label, message, context));
         }
       }
     }
   }
+}
+
+absl::Status GenerateLabelPrefixRule::Configure(std::string_view configuration) {
+  using verible::config::SetString;
+  absl::Status s = verible::ParseNameValues(
+      configuration, {{"prefix", SetString(&prefix_)}});
+  return s;
 }
 
 verible::LintRuleStatus GenerateLabelPrefixRule::Report() const {
