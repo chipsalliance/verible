@@ -1487,12 +1487,27 @@ static std::vector<AlignablePartitionGroup> AlignActualNamedPorts(
       &IgnoreWithinActualNamedPortPartitionGroup, full_range, vstyle);
 }
 
+// First partition by blank lines, then within each blank-line-separated
+// group, identify consecutive alignable items (declarations and continuous
+// assignments).  This ensures that blank lines break alignment groups
+// while non-alignable constructs (e.g. module instantiations) within a
+// blank-line group do not prevent subsequent items from being aligned.
+static std::vector<TaggedTokenPartitionRange>
+GetModuleItemGroupsBetweenBlankLines(const TokenPartitionRange &partitions) {
+  const std::vector<TokenPartitionRange> blank_line_groups(
+      verible::GetSubpartitionsBetweenBlankLines(partitions));
+  std::vector<TaggedTokenPartitionRange> result;
+  for (const auto &group : blank_line_groups) {
+    auto subgroups = GetConsecutiveModuleItemGroups(group);
+    result.insert(result.end(), subgroups.begin(), subgroups.end());
+  }
+  return result;
+}
+
 static std::vector<AlignablePartitionGroup> AlignModuleItems(
     const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
-  // Currently, this only handles data/net/variable declarations.
-  // TODO(b/161814377): align continuous assignments
   return ExtractAlignablePartitionGroups(
-      &GetConsecutiveModuleItemGroups,
+      &GetModuleItemGroupsBetweenBlankLines,
       &IgnoreCommentsAndPreprocessingDirectives, full_range, vstyle);
 }
 
