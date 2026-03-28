@@ -79,6 +79,9 @@ To pipe from stdin, use '-' as <file>.
       This is a short-term measure to reduce risk-of-harm.); default: false;
     --wrap_end_else_clauses (Split end and else keywords into separate lines);
       default: false;
+    --alignment_group_boundary (Control what breaks alignment groups for module
+      items, statements, and class items: {none,blank-lines,separator-comments,
+      blank-lines-and-separator-comments}); default: none;
 
   Flags from verilog/tools/formatter/verilog_format.cc:
     --failsafe_success (If true, always exit with 0 status, even if there were
@@ -329,6 +332,63 @@ This also implies that previously aligned code will most likely remain aligned.
 
 Finally, if none of the above conditions hold, the formatter will leave the
 original code as-is, preserving all pre-existing spaces.
+
+### Alignment Group Boundaries
+
+By default, an aligned section (e.g. a block of module items, statements, or
+class items) is treated as a single alignment group, even when the code is
+visually divided into logically separate sub-sections. This means the formatter
+aligns across blank lines and separator comments, which is not always desired.
+
+For example, given:
+
+```systemverilog
+logic a;
+logic [31:0] data;
+
+// ----
+logic en;
+logic [7:0] count;
+```
+
+the default behavior treats all four declarations as one group and aligns the
+second sub-section to the width of the first:
+
+```systemverilog
+logic        a;
+logic [31:0] data;
+
+// ----
+logic        en;
+logic [7:0]  count;
+```
+
+The `--alignment_group_boundary` flag lets you break alignment groups at
+section boundaries so each sub-section is aligned independently:
+
+*   `none` (default): no additional splitting; the whole section is one group.
+*   `blank-lines`: a blank line starts a new alignment group.
+*   `separator-comments`: a separator comment starts a new alignment group. A
+    separator comment is a `//` comment on its own line whose text (after the
+    `//`) is four or more consecutive identical characters, e.g. `// ----`,
+    `// ====`, or `/////`. A trailing comment after code on the same line does
+    not count.
+*   `blank-lines-and-separator-comments`: both blank lines and separator
+    comments start a new alignment group.
+
+With `--alignment_group_boundary=separator-comments`, the separator comment
+ends the first group so each sub-section is aligned to its own width:
+
+```systemverilog
+logic        a;
+logic [31:0] data;
+
+// ----
+logic       en;
+logic [7:0] count;
+```
+
+This applies to module items, statements, and class items.
 
 ## Failsafe Behavior
 

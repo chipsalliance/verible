@@ -93,6 +93,53 @@ static bool TokensHaveParenthesis(const T &tokens) {
                      });
 }
 
+// Returns true if the partition contains a separator comment line.
+// A separator comment is an EOL comment whose body (after stripping "//"
+// and optional leading whitespace) consists of 4 or more consecutive
+// identical characters. Examples: "// ----", "// ====",
+// "/////////////////////".
+static bool IsSeparatorComment(const TokenPartitionTree &partition) {
+  const auto &uwline = partition.Value();
+  const auto token_range = uwline.TokensRange();
+  if (token_range.empty()) return false;
+
+  for (const auto &ftoken : token_range) {
+    if (ftoken.TokenEnum() !=
+        static_cast<int>(verilog_tokentype::TK_EOL_COMMENT)) {
+      continue;
+    }
+
+    std::string_view text = ftoken.Text();
+    // Strip leading "//"
+    if (text.size() < 2 || text[0] != '/' || text[1] != '/') continue;
+    std::string_view body = text.substr(2);
+
+    // Strip optional leading whitespace
+    const auto start = body.find_first_not_of(" \t");
+    if (start == std::string_view::npos) continue;
+    body = body.substr(start);
+
+    // Check for 4+ consecutive identical characters
+    if (body.size() < 4) continue;
+    const char first = body[0];
+    if (std::all_of(body.begin(), body.end(),
+                    [first](char ch) { return ch == first; })) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool BlankLinesBreakGroups(AlignmentGroupBoundary b) {
+  return b == AlignmentGroupBoundary::kBlankLines ||
+         b == AlignmentGroupBoundary::kBlankLinesAndSeparatorComments;
+}
+
+static bool SeparatorCommentsBreakGroups(AlignmentGroupBoundary b) {
+  return b == AlignmentGroupBoundary::kSeparatorComments ||
+         b == AlignmentGroupBoundary::kBlankLinesAndSeparatorComments;
+}
+
 static bool IgnoreCommentsAndPreprocessingDirectives(
     const TokenPartitionTree &partition) {
   const auto &uwline = partition.Value();
@@ -597,14 +644,20 @@ static AlignedPartitionClassification AlignClassify(
 }
 
 static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
-    const TokenPartitionRange &partitions) {
+    const TokenPartitionRange &partitions, AlignmentGroupBoundary boundary) {
   VLOG(2) << __FUNCTION__;
   return GetPartitionAlignmentSubranges(
       partitions,  //
-      [](const TokenPartitionTree &partition)
+      [boundary](const TokenPartitionTree &partition)
           -> AlignedPartitionClassification {
         const Symbol *origin = partition.Value().Origin();
-        if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
+        if (origin == nullptr) {
+          if (SeparatorCommentsBreakGroups(boundary) &&
+              IsSeparatorComment(partition)) {
+            return {AlignmentGroupAction::kNoMatch};
+          }
+          return {AlignmentGroupAction::kIgnore};
+        }
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return AlignClassify(AlignmentGroupAction::kIgnore);
@@ -625,14 +678,20 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
 }
 
 static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
-    const TokenPartitionRange &partitions) {
+    const TokenPartitionRange &partitions, AlignmentGroupBoundary boundary) {
   VLOG(2) << __FUNCTION__;
   return GetPartitionAlignmentSubranges(
       partitions,  //
-      [](const TokenPartitionTree &partition)
+      [boundary](const TokenPartitionTree &partition)
           -> AlignedPartitionClassification {
         const Symbol *origin = partition.Value().Origin();
-        if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
+        if (origin == nullptr) {
+          if (SeparatorCommentsBreakGroups(boundary) &&
+              IsSeparatorComment(partition)) {
+            return {AlignmentGroupAction::kNoMatch};
+          }
+          return {AlignmentGroupAction::kIgnore};
+        }
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return {AlignmentGroupAction::kIgnore};
@@ -647,14 +706,20 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
 }
 
 static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
-    const TokenPartitionRange &partitions) {
+    const TokenPartitionRange &partitions, AlignmentGroupBoundary boundary) {
   VLOG(2) << __FUNCTION__;
   return GetPartitionAlignmentSubranges(
       partitions,  //
-      [](const TokenPartitionTree &partition)
+      [boundary](const TokenPartitionTree &partition)
           -> AlignedPartitionClassification {
         const Symbol *origin = partition.Value().Origin();
-        if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
+        if (origin == nullptr) {
+          if (SeparatorCommentsBreakGroups(boundary) &&
+              IsSeparatorComment(partition)) {
+            return {AlignmentGroupAction::kNoMatch};
+          }
+          return {AlignmentGroupAction::kIgnore};
+        }
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return AlignClassify(AlignmentGroupAction::kIgnore);
@@ -1487,21 +1552,55 @@ static std::vector<AlignablePartitionGroup> AlignActualNamedPorts(
       &IgnoreWithinActualNamedPortPartitionGroup, full_range, vstyle);
 }
 
+// Extracts alignable partition groups, optionally pre-splitting the range at
+// blank lines when the alignment_group_boundary style setting requires it.
+static std::vector<AlignablePartitionGroup>
+ExtractAlignablePartitionGroupsWithBoundary(
+    const std::function<std::vector<TaggedTokenPartitionRange>(
+        const TokenPartitionRange &)> &group_extractor,
+    const verible::IgnoreAlignmentRowPredicate &ignore_group_predicate,
+    const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
+  if (!BlankLinesBreakGroups(vstyle.alignment_group_boundary)) {
+    return ExtractAlignablePartitionGroups(
+        group_extractor, ignore_group_predicate, full_range, vstyle);
+  }
+  // Pre-split at blank lines, then apply grouping to each sub-range.
+  std::vector<AlignablePartitionGroup> all_groups;
+  const auto sub_ranges =
+      verible::GetSubpartitionsBetweenBlankLines(full_range);
+  for (const auto &sub_range : sub_ranges) {
+    auto groups = ExtractAlignablePartitionGroups(
+        group_extractor, ignore_group_predicate, sub_range, vstyle);
+    for (const auto &group : groups) {
+      all_groups.push_back(group);
+    }
+  }
+  return all_groups;
+}
+
 static std::vector<AlignablePartitionGroup> AlignModuleItems(
     const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   // Currently, this only handles data/net/variable declarations.
   // TODO(b/161814377): align continuous assignments
-  return ExtractAlignablePartitionGroups(
-      &GetConsecutiveModuleItemGroups,
-      &IgnoreCommentsAndPreprocessingDirectives, full_range, vstyle);
+  auto group_extractor = [&vstyle](const TokenPartitionRange &range) {
+    return GetConsecutiveModuleItemGroups(range,
+                                          vstyle.alignment_group_boundary);
+  };
+  return ExtractAlignablePartitionGroupsWithBoundary(
+      group_extractor, &IgnoreCommentsAndPreprocessingDirectives, full_range,
+      vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignClassItems(
     const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   // TODO(fangism): align other class items besides member variables.
-  return ExtractAlignablePartitionGroups(
-      &GetConsecutiveClassItemGroups, &IgnoreCommentsAndPreprocessingDirectives,
-      full_range, vstyle);
+  auto group_extractor = [&vstyle](const TokenPartitionRange &range) {
+    return GetConsecutiveClassItemGroups(range,
+                                         vstyle.alignment_group_boundary);
+  };
+  return ExtractAlignablePartitionGroupsWithBoundary(
+      group_extractor, &IgnoreCommentsAndPreprocessingDirectives, full_range,
+      vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignCaseItems(
@@ -1527,9 +1626,12 @@ static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
 
 static std::vector<AlignablePartitionGroup> AlignStatements(
     const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
-  return ExtractAlignablePartitionGroups(
-      &GetAlignableStatementGroups, &IgnoreCommentsAndPreprocessingDirectives,
-      full_range, vstyle);
+  auto group_extractor = [&vstyle](const TokenPartitionRange &range) {
+    return GetAlignableStatementGroups(range, vstyle.alignment_group_boundary);
+  };
+  return ExtractAlignablePartitionGroupsWithBoundary(
+      group_extractor, &IgnoreCommentsAndPreprocessingDirectives, full_range,
+      vstyle);
 }
 
 static std::vector<AlignablePartitionGroup> AlignDistItems(

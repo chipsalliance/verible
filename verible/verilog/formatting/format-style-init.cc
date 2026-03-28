@@ -14,14 +14,58 @@
 
 #include "verible/verilog/formatting/format-style-init.h"
 
+#include <ostream>
+#include <sstream>
+#include <string>
+#include <string_view>
+
 #include "absl/flags/flag.h"
 #include "verible/common/formatting/align.h"
 #include "verible/common/formatting/basic-format-style-init.h"
 #include "verible/common/formatting/basic-format-style.h"
+#include "verible/common/util/enum-flags.h"
 #include "verible/verilog/formatting/format-style.h"
 
 using verible::AlignmentPolicy;
 using verible::IndentationStyle;
+using verilog::formatter::AlignmentGroupBoundary;
+
+// AlignmentGroupBoundary flag support.
+namespace verilog {
+namespace formatter {
+
+static const verible::EnumNameMap<AlignmentGroupBoundary> &
+AlignmentGroupBoundaryNameMap() {
+  static const verible::EnumNameMap<AlignmentGroupBoundary>
+      kAlignmentGroupBoundaryNameMap({
+          {"none", AlignmentGroupBoundary::kNone},
+          {"blank-lines", AlignmentGroupBoundary::kBlankLines},
+          {"separator-comments", AlignmentGroupBoundary::kSeparatorComments},
+          {"blank-lines-and-separator-comments",
+           AlignmentGroupBoundary::kBlankLinesAndSeparatorComments},
+      });
+  return kAlignmentGroupBoundaryNameMap;
+}
+
+std::ostream &operator<<(std::ostream &stream,
+                         AlignmentGroupBoundary boundary) {
+  return AlignmentGroupBoundaryNameMap().Unparse(boundary, stream);
+}
+
+bool AbslParseFlag(std::string_view text, AlignmentGroupBoundary *boundary,
+                   std::string *error) {
+  return AlignmentGroupBoundaryNameMap().Parse(text, boundary, error,
+                                               "AlignmentGroupBoundary");
+}
+
+std::string AbslUnparseFlag(const AlignmentGroupBoundary &boundary) {
+  std::ostringstream stream;
+  stream << boundary;
+  return stream.str();
+}
+
+}  // namespace formatter
+}  // namespace verilog
 
 ABSL_FLAG(bool, try_wrap_long_lines, false,
           "If true, let the formatter attempt to optimize line wrapping "
@@ -91,6 +135,12 @@ ABSL_FLAG(bool, compact_indexing_and_selections, true,
 ABSL_FLAG(bool, wrap_end_else_clauses, false,
           "Split end and else keywords into separate lines");
 
+ABSL_FLAG(AlignmentGroupBoundary, alignment_group_boundary,
+          AlignmentGroupBoundary::kNone,
+          "Control what breaks alignment groups for module items, statements, "
+          "and class items: {none,blank-lines,separator-comments,"
+          "blank-lines-and-separator-comments}");
+
 ABSL_FLAG(bool, port_declarations_right_align_packed_dimensions, false,
           "If true, packed dimensions in contexts with enabled alignment are "
           "aligned to the right.");
@@ -139,6 +189,7 @@ void InitializeFromFlags(FormatStyle *style) {
   STYLE_FROM_FLAG(expand_coverpoints);
   STYLE_FROM_FLAG(compact_indexing_and_selections);
   STYLE_FROM_FLAG(wrap_end_else_clauses);
+  STYLE_FROM_FLAG(alignment_group_boundary);
 
 #undef STYLE_FROM_FLAG
 }
