@@ -48,12 +48,12 @@ int MessageStreamSplitter::ParseHeaderGetBodyOffset(std::string_view data,
   static constexpr std::string_view kEndHeaderMarker = "\r\n\r\n";
   static constexpr std::string_view kContentLengthHeader = "Content-Length: ";
 
-  int header_marker_len = kEndHeaderMarker.length();
-  auto end_of_header = data.find(kEndHeaderMarker);
+  const size_t header_marker_len = kEndHeaderMarker.length();
+  const size_t end_of_header = data.find(kEndHeaderMarker);
   if (end_of_header == std::string_view::npos) return kIncompleteHeader;
 
   // Very dirty search for header - we don't check if starts with line.
-  const std::string_view header_content(data.data(), end_of_header);
+  const std::string_view header_content = data.substr(0, end_of_header);
   auto found_ContentLength_header = header_content.find(kContentLengthHeader);
   if (found_ContentLength_header == std::string_view::npos) {
     return kGarbledHeader;
@@ -80,8 +80,8 @@ absl::Status MessageStreamSplitter::ProcessContainedMessages(
     int body_size = 0;
     const int body_offset = ParseHeaderGetBodyOffset(*data, &body_size);
     if (body_offset == kGarbledHeader) {
-      std::string_view limited_view(
-          data->data(), std::min(data->size(), static_cast<size_t>(256)));
+      const std::string_view limited_view =
+          data->substr(0, std::min(data->size(), static_cast<size_t>(256)));
       return absl::InvalidArgumentError(
           absl::StrCat("No `Content-Length:` header. '",
                        absl::CEscape(limited_view), "...'"));
@@ -93,8 +93,8 @@ absl::Status MessageStreamSplitter::ProcessContainedMessages(
       return absl::OkStatus();  // Only insufficient partial buffer available.
     }
 
-    std::string_view header(data->data(), body_offset);
-    std::string_view body(data->data() + body_offset, body_size);
+    const std::string_view header = data->substr(0, body_offset);
+    const std::string_view body = data->substr(body_offset, body_size);
     message_processor_(header, body);
 
     stats_largest_body_ = std::max(stats_largest_body_, body.size());

@@ -229,7 +229,7 @@ bool SymbolTableHandler::LoadProjectFileList(std::string_view current_dir) {
   return true;
 }
 
-const SymbolTableNode *ScanSymbolTreeForDefinitionReferenceComponents(
+static const SymbolTableNode *ScanSymbolTreeForDefinitionReferenceComponents(
     const ReferenceComponentNode *ref, std::string_view symbol) {
   if (verible::IsSubRange(symbol, ref->Value().identifier)) {
     return ref->Value().resolved_symbol;

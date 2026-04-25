@@ -51,7 +51,7 @@ const LintRuleDescriptor &ConstraintNameStyleRule::GetDescriptor() {
       .desc =
           "Check that constraint names follow the required name style "
           "specified by a regular expression.",
-      .param = {{"pattern", kSuffix.data()}},
+      .param = {{"pattern", std::string(kSuffix)}},
   };
   return d;
 }

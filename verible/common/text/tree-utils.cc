@@ -126,6 +126,15 @@ const SyntaxTreeLeaf &SymbolCastToLeaf(const Symbol &symbol) {
   return down_cast<const SyntaxTreeLeaf &>(symbol);
 }
 
+const SyntaxTreeNode *MaybeNode(const Symbol *symbol) {
+  if (!symbol || symbol->Kind() != SymbolKind::kNode) return nullptr;
+  return static_cast<const SyntaxTreeNode *>(symbol);
+}
+const SyntaxTreeLeaf *MaybeLeaf(const Symbol *symbol) {
+  if (!symbol || symbol->Kind() != SymbolKind::kLeaf) return nullptr;
+  return static_cast<const SyntaxTreeLeaf *>(symbol);
+}
+
 namespace {
 // FirstSubtreeFinderMutable is a visitor class that supports the implementation
 // of FindFirstSubtreeMutable().  It is derived from

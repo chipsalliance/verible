@@ -3,6 +3,8 @@
 # Any code that relies on the internal tree structure should be isolated in
 # here.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = [
@@ -98,6 +100,7 @@ cc_library(
         "//verible/common/text:concrete-syntax-tree",
         "//verible/common/text:symbol",
         "//verible/common/text:token-info",
+        "//verible/common/text:tree-utils",
         "//verible/common/util:logging",
         "@abseil-cpp//absl/strings",
     ],

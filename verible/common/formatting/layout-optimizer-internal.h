@@ -617,7 +617,7 @@ class LayoutFunctionFactory {
   //
   // Iterator: iterator type that dereferences to LayoutFunction.
   template <class Iterator>
-  LayoutFunction Choice(const Iterator begin, const Iterator end) const {
+  LayoutFunction Choice(const Iterator &begin, const Iterator &end) const {
     static_assert(IsIteratorDereferencingTo<Iterator, LayoutFunction>,
                   "Iterator's value type must be LayoutFunction.");
     const auto lfs = make_container_range(begin, end);

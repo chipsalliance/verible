@@ -124,7 +124,9 @@ class VerilogLanguageServerTest : public ::testing::Test {
   // sends textDocument/initialize request.
   // It stores the response in initialize_response field for further processing
   void SetUp() override {  // not yet final
+    const bool push_notifications = true;
     server_ = std::make_unique<VerilogLanguageServer>(
+        push_notifications,
         [this](std::string_view response) { response_stream_ << response; });
 
     absl::Status status = InitializeCommunication();
@@ -609,6 +611,14 @@ TEST_F(VerilogLanguageServerTest, RangeFormattingTest) {
               params.new_text_end_character)
         << "Invalid range for id:  " << params.id;
   }
+
+  const FormattingRequestParams invalid_formatting_params{
+      34, 6, 0, 1, 1, "  assign a=1;\n", 1, 0, 2, 0};
+  const std::string invalid_request =
+      FormattingRequest("file://fmt.sv", invalid_formatting_params);
+  ASSERT_OK(SendRequest(invalid_request));
+  const json empty_response = json::parse(GetResponse());
+  ASSERT_TRUE(empty_response["result"].empty());
 }
 
 // Runs test of entire document formatting with textDocument/formatting request

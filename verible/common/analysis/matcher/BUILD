@@ -1,5 +1,7 @@
 # 'matcher' is a library of syntax tree matching utilities.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = [
@@ -17,7 +19,7 @@ cc_library(
     hdrs = ["bound-symbol-manager.h"],
     deps = [
         "//verible/common/text:symbol",
-        "//verible/common/util:casts",
+        "//verible/common/text:tree-utils",
         "//verible/common/util:container-util",
         "//verible/common/util:logging",
     ],

@@ -16,17 +16,7 @@
 set -u
 set -e
 
-# Which bazel and bant to use can be chosen by environment variables
-BAZEL=${BAZEL:-bazel}
-BANT=${BANT:-needs-to-be-compiled-locally}
-
-if [ "${BANT}" = "needs-to-be-compiled-locally" ]; then
-  # Bant not given, compile from bzlmod dep.
-  ${BAZEL} build -c opt --cxxopt=-std=c++20 @bant//bant:bant >/dev/null 2>&1
-  BANT=$(realpath bazel-bin/external/bant*/bant/bant | head -1)
-fi
-
-DWYU_OUT="${TMPDIR:-/tmp}/dwyu.out"
+BANT=$($(dirname $0)/get-bant-path.sh)
 
 if "${BANT}" -q dwyu ... ; then
   echo "Dependencies ok." >&2

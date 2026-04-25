@@ -48,4 +48,30 @@ std::string AbslUnparseFlag(const IndentationStyle &mode) {
   return stream.str();
 }
 
+static const verible::EnumNameMap<LineTerminatorOptionStyle> &
+LineTerminatorOptionStyleStrings() {
+  static const verible::EnumNameMap<LineTerminatorOptionStyle>
+      kLineTerminatorOptionStyleStringMap({
+          {"CRLF", LineTerminatorOptionStyle::kCRLF},
+          {"LF", LineTerminatorOptionStyle::kLF},
+          {"auto", LineTerminatorOptionStyle::kAuto},
+      });
+  return kLineTerminatorOptionStyleStringMap;
+}
+
+std::ostream &operator<<(std::ostream &stream,
+                         LineTerminatorOptionStyle style) {
+  return LineTerminatorOptionStyleStrings().Unparse(style, stream);
+}
+
+bool AbslParseFlag(std::string_view text, LineTerminatorOptionStyle *mode,
+                   std::string *error) {
+  return LineTerminatorOptionStyleStrings().Parse(text, mode, error,
+                                                  "LineTerminatorOptionStyle");
+}
+
+std::string AbslUnparseFlag(const LineTerminatorOptionStyle &mode) {
+  return std::string{LineTerminatorOptionStyleStrings().EnumName(mode)};
+}
+
 }  // namespace verible

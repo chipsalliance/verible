@@ -18,7 +18,6 @@
 #include <initializer_list>
 #include <ostream>
 #include <sstream>
-#include <string>
 #include <string_view>
 #include <vector>
 
@@ -29,7 +28,7 @@
 
 namespace diff {
 // Print functions copied from external_libs/editscript_test.cc
-std::ostream &operator<<(std::ostream &out, Operation operation) {
+static std::ostream &operator<<(std::ostream &out, Operation operation) {
   switch (operation) {
     case Operation::EQUALS:
       return (out << "EQUALS");
@@ -41,19 +40,8 @@ std::ostream &operator<<(std::ostream &out, Operation operation) {
   return out;
 }
 
-std::ostream &operator<<(std::ostream &out, const diff::Edit &edit) {
+static std::ostream &operator<<(std::ostream &out, const diff::Edit &edit) {
   out << "{" << edit.operation << ",[" << edit.start << "," << edit.end << ")}";
-  return out;
-}
-
-std::ostream &operator<<(std::ostream &out, const Edits &edits) {
-  out << "Edits{";
-  std::string outer_delim;
-  for (auto &edit : edits) {
-    out << outer_delim << edit;
-    outer_delim = ",";
-  }
-  out << "};";
   return out;
 }
 

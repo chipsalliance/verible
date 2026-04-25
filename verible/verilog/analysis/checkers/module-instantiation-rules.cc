@@ -92,16 +92,14 @@ static const Matcher &ParamsMatcher() {
 }
 
 static bool IsComma(const verible::Symbol &symbol) {
-  if (symbol.Kind() == verible::SymbolKind::kLeaf) {
-    const auto *leaf = down_cast<const verible::SyntaxTreeLeaf *>(&symbol);
-    if (leaf) return leaf->get().token_enum() == ',';
-  }
+  const verible::SyntaxTreeLeaf *leaf = verible::MaybeLeaf(&symbol);
+  if (leaf) return leaf->get().token_enum() == ',';
   return false;
 }
 
 static bool IsAnyPort(const verible::Symbol *symbol) {
-  if (symbol->Kind() == verible::SymbolKind::kNode) {
-    const auto *node = down_cast<const verible::SyntaxTreeNode *>(symbol);
+  const verible::SyntaxTreeNode *node = verible::MaybeNode(symbol);
+  if (node) {
     return node->MatchesTag(NodeEnum::kActualNamedPort) ||
            node->MatchesTag(NodeEnum::kActualPositionalPort);
   }
@@ -125,7 +123,7 @@ void ModuleParameterRule::HandleSymbol(
 
   verible::matcher::BoundSymbolManager manager;
   if (ParamsMatcher().Matches(symbol, &manager)) {
-    if (const auto *list = manager.GetAs<verible::SyntaxTreeNode>("list")) {
+    if (const verible::SyntaxTreeNode *list = manager.GetAsNode("list")) {
       const auto &children = list->children();
       auto parameter_count = std::count_if(
           children.begin(), children.end(),
@@ -159,8 +157,7 @@ void ModulePortRule::HandleSymbol(const verible::Symbol &symbol,
   verible::matcher::BoundSymbolManager manager;
 
   if (InstanceMatcher().Matches(symbol, &manager)) {
-    if (const auto *port_list_node =
-            manager.GetAs<verible::SyntaxTreeNode>("list")) {
+    if (const auto *port_list_node = manager.GetAsNode("list")) {
       // Don't know how to handle unexpected non-portlist, so proceed
       if (!port_list_node->MatchesTag(NodeEnum::kPortActualList)) return;
 

@@ -1,5 +1,6 @@
 # This package contains functions and classes for analyzing text structures.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//bazel:flex.bzl", "genlex")
 
 package(

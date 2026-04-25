@@ -19,9 +19,11 @@
 #include <string>
 
 #include "verible/common/text/symbol.h"
-#include "verible/common/util/casts.h"
+#include "verible/common/text/tree-utils.h"
 
 namespace verible {
+class SyntaxTreeNode;
+class SyntaxTreeLeaf;
 namespace matcher {
 
 // Manages sets of Bound Symbols created when matching against a syntax tree.
@@ -52,9 +54,14 @@ class BoundSymbolManager {
     return bound_symbols_;
   }
 
-  template <typename T>
-  const T *GetAs(const std::string &key) const {
-    return down_cast<const T *>(FindSymbol(key));
+  // Return named node as Node if available of of that type.
+  const SyntaxTreeNode *GetAsNode(const std::string &key) const {
+    return verible::MaybeNode(FindSymbol(key));
+  }
+
+  // Return named node as Node if available of of that type.
+  const SyntaxTreeLeaf *GetAsLeaf(const std::string &key) const {
+    return verible::MaybeLeaf(FindSymbol(key));
   }
 
  private:

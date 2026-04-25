@@ -55,8 +55,6 @@ constexpr SymbolTag NodeTag(EnumType tag) {
 }
 constexpr SymbolTag LeafTag(int tag) { return {SymbolKind::kLeaf, tag}; }
 
-// forward declare Visitor classes to allow references in Symbol
-
 class Symbol {
  public:
   virtual ~Symbol() = default;

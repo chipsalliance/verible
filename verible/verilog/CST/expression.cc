@@ -104,8 +104,9 @@ const verible::TokenInfo *GetUnaryPrefixOperator(
     return nullptr;
   }
   const verible::Symbol *leaf_symbol = node->front().get();
-  return &verible::down_cast<const verible::SyntaxTreeLeaf *>(leaf_symbol)
-              ->get();
+  const verible::SyntaxTreeLeaf *leaf = verible::MaybeLeaf(leaf_symbol);
+  if (!leaf) return nullptr;
+  return &leaf->get();
 }
 
 const verible::Symbol *GetUnaryPrefixOperand(const verible::Symbol &symbol) {

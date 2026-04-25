@@ -45,6 +45,7 @@
 #include "verible/common/text/text-structure.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/text/tree-utils.h"
+#include "verible/common/util/interval.h"
 #include "verible/common/util/logging.h"
 #include "verible/verilog/CST/declaration.h"
 #include "verible/verilog/CST/dimensions.h"
@@ -548,10 +549,8 @@ Dimension MaxDimension(const size_t first, const size_t second) {
 template <>
 Dimension MaxDimension(const DimensionRange first,
                        const DimensionRange second) {
-  int64_t max = std::max(std::max(first.msb, first.lsb),
-                         std::max(second.msb, second.lsb));
-  int64_t min = std::min(std::min(first.msb, first.lsb),
-                         std::min(second.msb, second.lsb));
+  int64_t max = std::max({first.msb, first.lsb, second.msb, second.lsb});
+  int64_t min = std::min({first.msb, first.lsb, second.msb, second.lsb});
   if (first.msb >= first.lsb) {
     return DimensionRange{.msb = max, .lsb = min};
   }
@@ -1690,6 +1689,7 @@ std::vector<CodeAction> GenerateAutoExpandCodeActions(
     const BufferTracker *const tracker, const CodeActionParams &p) {
   Interval<size_t> line_range{static_cast<size_t>(p.range.start.line),
                               static_cast<size_t>(p.range.end.line)};
+  if (!line_range.valid()) return {};
   if (!tracker) return {};
   const auto current = tracker->current();
   if (!current) return {};  // Can only expand if we have latest version

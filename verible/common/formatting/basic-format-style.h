@@ -21,6 +21,24 @@
 
 namespace verible {
 
+// The option style allows for 'auto' which then is converted to the observed
+// style from the input (into a LineTerminatorStyle).
+enum class LineTerminatorOptionStyle {
+  // Line Feed `\n` (UNIX Style)
+  kLF,
+  // Carriage return + Line Feed `\r\n` (DOS Style)
+  kCRLF,
+  // Determine output automatically by observing input.
+  kAuto,
+};
+
+std::ostream &operator<<(std::ostream &stream, LineTerminatorOptionStyle style);
+
+bool AbslParseFlag(std::string_view, LineTerminatorOptionStyle *,
+                   std::string *);
+
+std::string AbslUnparseFlag(const LineTerminatorOptionStyle &);
+
 // Style configuration common to all languages.
 struct BasicFormatStyle {
   // Each indentation level adds this many spaces.
@@ -41,6 +59,10 @@ struct BasicFormatStyle {
 
   // Penalty added to solution for each introduced line break.
   int line_break_penalty = 2;
+
+  // Line terminator character sequence. Consistent LF for unit tests, but
+  // note, the command line flag sets this to 'auto'.
+  LineTerminatorOptionStyle line_terminator = LineTerminatorOptionStyle::kLF;
 
   // -- Note: when adding new fields, add them in basic_format_style_init.cc
 };

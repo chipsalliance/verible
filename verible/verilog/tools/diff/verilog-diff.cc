@@ -52,15 +52,16 @@ static const verible::EnumNameMap<DiffMode> &DiffModeStringMap() {
   return kDiffModeStringMap;
 }
 
-std::ostream &operator<<(std::ostream &stream, DiffMode p) {
+static std::ostream &operator<<(std::ostream &stream, DiffMode p) {
   return DiffModeStringMap().Unparse(p, stream);
 }
 
-bool AbslParseFlag(std::string_view text, DiffMode *mode, std::string *error) {
+static bool AbslParseFlag(std::string_view text, DiffMode *mode,
+                          std::string *error) {
   return DiffModeStringMap().Parse(text, mode, error, "--mode value");
 }
 
-std::string AbslUnparseFlag(const DiffMode &mode) {
+static std::string AbslUnparseFlag(const DiffMode &mode) {
   std::ostringstream stream;
   stream << mode;
   return stream.str();

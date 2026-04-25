@@ -1,5 +1,7 @@
 # 'formatting' contains functionality for language-agnostic formatting
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = [
@@ -133,9 +135,6 @@ cc_library(
         "layout-optimizer-internal.h",
     ],
     hdrs = ["layout-optimizer.h"],
-    # Can only add @abseil-cpp//absl/log:vlog_is_on after > absl 20240116
-    # https://github.com/chipsalliance/verible/issues/2336
-    features = ["-layering_check"],
     deps = [
         ":basic-format-style",
         ":format-token",
@@ -150,6 +149,7 @@ cc_library(
         "@abseil-cpp//absl/base:config",
         "@abseil-cpp//absl/container:fixed_array",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:vlog_is_on",
         "@abseil-cpp//absl/strings",
     ],
 )

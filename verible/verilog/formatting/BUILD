@@ -1,5 +1,7 @@
 # This package SystemVerilog-specific code formatting functions.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 default_visibility = [
     "//verible/verilog/tools/formatter:__pkg__",
     "//verible/verilog/tools/ls:__pkg__",
@@ -30,7 +32,6 @@ cc_library(
         "//verible/common/text:token-info",
         "//verible/common/text:tree-context-visitor",
         "//verible/common/text:tree-utils",
-        "//verible/common/util:casts",
         "//verible/common/util:logging",
         "//verible/common/util:value-saver",
         "//verible/verilog/CST:context-functions",
@@ -139,6 +140,7 @@ cc_library(
         ":format-style",
         ":token-annotator",
         ":tree-unwrapper",
+        "//verible/common/formatting:basic-format-style",
         "//verible/common/formatting:format-token",
         "//verible/common/formatting:layout-optimizer",
         "//verible/common/formatting:line-wrap-searcher",
@@ -149,6 +151,7 @@ cc_library(
         "//verible/common/strings:line-column-map",
         "//verible/common/strings:position",
         "//verible/common/strings:range",
+        "//verible/common/text:line-terminator",
         "//verible/common/text:symbol",
         "//verible/common/text:text-structure",
         "//verible/common/text:token-info",
@@ -219,11 +222,11 @@ cc_library(
         "//verible/common/strings:display-utils",
         "//verible/common/strings:line-column-map",
         "//verible/common/strings:position",
+        "//verible/common/text:line-terminator",
         "//verible/common/text:token-info",
         "//verible/common/text:token-stream-view",
         "//verible/common/util:logging",
         "//verible/common/util:range",
-        "//verible/common/util:spacer",
         "//verible/verilog/parser:verilog-parser",
         "//verible/verilog/parser:verilog-token-classifications",
         "//verible/verilog/parser:verilog-token-enum",
@@ -238,6 +241,7 @@ cc_test(
         ":comment-controls",
         "//verible/common/strings:line-column-map",
         "//verible/common/strings:position",
+        "//verible/common/text:line-terminator",
         "//verible/common/text:token-info-test-util",
         "//verible/verilog/analysis:verilog-analyzer",
         "@abseil-cpp//absl/strings",

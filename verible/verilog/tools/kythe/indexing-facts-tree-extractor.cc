@@ -1039,8 +1039,8 @@ void IndexingFactsTreeExtractor::ExtractMacroDefinition(
   facts_tree_context_.top().Children().push_back(std::move(macro_node));
 }
 
-Anchor GetMacroAnchorFromTokenInfo(const TokenInfo &macro_token_info,
-                                   std::string_view file_content) {
+static Anchor GetMacroAnchorFromTokenInfo(const TokenInfo &macro_token_info,
+                                          std::string_view file_content) {
   // Strip the prefix "`".
   // e.g.
   // `define TEN 0
@@ -1788,7 +1788,7 @@ void IndexingFactsTreeExtractor::ExtractForInitialization(
 
 // Returns string_view of `text` with outermost double-quotes removed.
 // If `text` is not wrapped in quotes, return it as-is.
-std::string_view StripOuterQuotes(std::string_view text) {
+static std::string_view StripOuterQuotes(std::string_view text) {
   return absl::StripSuffix(absl::StripPrefix(text, "\""), "\"");
 }
 

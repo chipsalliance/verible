@@ -79,7 +79,7 @@ void ForbiddenSystemTaskFunctionRule::HandleSymbol(
     const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (IdMatcher().Matches(symbol, &manager)) {
-    if (const auto *leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
+    if (const verible::SyntaxTreeLeaf *leaf = manager.GetAsLeaf("name")) {
       const auto &ism = InvalidSymbolsMap();
       if (ism.find(std::string(leaf->get().text())) != ism.end()) {
         violations_.insert(

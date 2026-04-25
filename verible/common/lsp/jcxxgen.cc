@@ -37,6 +37,7 @@ ABSL_FLAG(std::string, json_header, "\"nlohmann/json.hpp\"",
           "Include path to json.hpp including brackets <> or quotes \"\" "
           "around.");
 
+namespace {
 // Interface. Currently private, but could be moved to a header if needed.
 struct Location {
   const char *filename;
@@ -89,13 +90,11 @@ struct ObjectType {
 
 using ObjectTypeVector = std::vector<ObjectType *>;
 
-static bool contains(const std::string &s, char c) {
-  return absl::StrContains(s, c);
-}
+bool contains(const std::string &s, char c) { return absl::StrContains(s, c); }
 
 // Returns if successful.
-static bool ParseObjectTypesFromFile(const std::string &filename,
-                                     ObjectTypeVector *parsed_out) {
+bool ParseObjectTypesFromFile(const std::string &filename,
+                              ObjectTypeVector *parsed_out) {
   static const RE2 emptyline_or_comment_re("^[ \t]*(#.*)?");
   static const RE2 toplevel_object_re("^([a-zA-Z0-9_]+):");
 
@@ -150,7 +149,7 @@ static bool ParseObjectTypesFromFile(const std::string &filename,
 }
 
 // Validate types and return if successful.
-static bool ValidateTypes(ObjectTypeVector *object_types) {
+bool ValidateTypes(ObjectTypeVector *object_types) {
   absl::flat_hash_map<std::string, ObjectType *> typeByName;
 
   for (auto &obj : *object_types) {
@@ -357,6 +356,7 @@ void GenerateCode(const std::string &filename,
     fprintf(out, "}  // %s\n", gen_namespace.c_str());
   }
 }
+}  // namespace
 
 int main(int argc, char *argv[]) {
   const auto usage =
@@ -386,4 +386,5 @@ int main(int argc, char *argv[]) {
 
   GenerateCode(schema_filename, absl::GetFlag(FLAGS_json_header),
                absl::GetFlag(FLAGS_class_namespace), *objects, out);
+  fclose(out);
 }

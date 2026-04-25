@@ -1,5 +1,6 @@
 # This package implements a SystemVerilog lexer and parser.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//bazel:bison.bzl", "genyacc")
 load("//bazel:flex.bzl", "genlex")
 load(
@@ -132,6 +133,7 @@ cc_library(
             "-Wno-implicit-fallthrough",
             "-Wno-type-limits",
             "-Wno-unreachable-code",
+            "-Wno-unused-but-set-variable",
         ],
     }),
     deps = [

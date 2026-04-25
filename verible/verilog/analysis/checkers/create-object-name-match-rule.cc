@@ -29,7 +29,7 @@
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/token-info.h"
-#include "verible/common/util/casts.h"
+#include "verible/common/text/tree-utils.h"
 #include "verible/verilog/CST/expression.h"
 #include "verible/verilog/CST/verilog-matchers.h"
 #include "verible/verilog/CST/verilog-nonterminals.h"
@@ -40,7 +40,6 @@
 namespace verilog {
 namespace analysis {
 
-using verible::down_cast;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
@@ -89,8 +88,7 @@ static bool UnqualifiedIdEquals(const SyntaxTreeNode &node,
   if (node.MatchesTag(NodeEnum::kUnqualifiedId)) {
     if (!node.empty()) {
       // The one-and-only child is the SymbolIdentifier token
-      const auto &leaf_ptr =
-          down_cast<const SyntaxTreeLeaf *>(node.front().get());
+      const SyntaxTreeLeaf *leaf_ptr = verible::MaybeLeaf(node.front().get());
       if (leaf_ptr != nullptr) {
         const TokenInfo &token = leaf_ptr->get();
         return token.token_enum() == SymbolIdentifier && token.text() == name;
@@ -109,10 +107,11 @@ static bool QualifiedCallIsTypeIdCreate(
   // my_pkg::class_type::type_id::create.
   // 5: 3 segments + 2 separators (in alternation), e.g. A::B::C
   if (qualified_id_node.size() >= 5) {
-    const auto *create_leaf_ptr =
-        down_cast<const SyntaxTreeNode *>(qualified_id_node.back().get());
-    const auto *type_id_leaf_ptr = down_cast<const SyntaxTreeNode *>(
-        qualified_id_node[num_children - 3].get());
+    // TODO: naming is off. These are not leafs
+    const SyntaxTreeNode *create_leaf_ptr =
+        verible::MaybeNode(qualified_id_node.back().get());
+    const SyntaxTreeNode *type_id_leaf_ptr =
+        verible::MaybeNode(qualified_id_node[num_children - 3].get());
     if (create_leaf_ptr != nullptr && type_id_leaf_ptr != nullptr) {
       return UnqualifiedIdEquals(*create_leaf_ptr, "create") &&
              UnqualifiedIdEquals(*type_id_leaf_ptr, "type_id");
@@ -138,12 +137,7 @@ static const TokenInfo *ExtractStringLiteralToken(
   if (!expr_node.MatchesTag(NodeEnum::kExpression)) return nullptr;
 
   // this check is limited to only checking string literal leaf tokens
-  if (expr_node.front().get()->Kind() != verible::SymbolKind::kLeaf) {
-    return nullptr;
-  }
-
-  const auto *leaf_ptr =
-      down_cast<const SyntaxTreeLeaf *>(expr_node.front().get());
+  const SyntaxTreeLeaf *leaf_ptr = verible::MaybeLeaf(expr_node.front().get());
   if (leaf_ptr != nullptr) {
     const TokenInfo &token = leaf_ptr->get();
     if (token.token_enum() == TK_StringLiteral) {
@@ -158,8 +152,8 @@ static const SyntaxTreeNode *GetFirstExpressionFromArgs(
     const SyntaxTreeNode &args_node) {
   if (!args_node.empty()) {
     const auto &first_arg = args_node.front();
-    if (const auto *first_expr =
-            down_cast<const SyntaxTreeNode *>(first_arg.get())) {
+    if (const SyntaxTreeNode *first_expr =
+            verible::MaybeNode(first_arg.get())) {
       return first_expr;
     }
   }
@@ -183,15 +177,15 @@ void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol &symbol,
 
   // Extract named bindings for matched nodes within this match.
 
-  const auto *lval_ref = manager.GetAs<SyntaxTreeNode>("lval_ref");
+  const SyntaxTreeNode *lval_ref = manager.GetAsNode("lval_ref");
   if (lval_ref == nullptr) return;
 
   const TokenInfo *lval_id = ReferenceIsSimpleIdentifier(*lval_ref);
   if (lval_id == nullptr) return;
   if (lval_id->token_enum() != SymbolIdentifier) return;
 
-  const auto *call = manager.GetAs<SyntaxTreeNode>("func");
-  const auto *args = manager.GetAs<SyntaxTreeNode>("args");
+  const SyntaxTreeNode *call = manager.GetAsNode("func");
+  const SyntaxTreeNode *args = manager.GetAsNode("args");
   if (call == nullptr) return;
   if (args == nullptr) return;
   if (!QualifiedCallIsTypeIdCreate(*call)) return;

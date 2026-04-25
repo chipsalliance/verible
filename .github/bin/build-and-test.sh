@@ -23,10 +23,8 @@ if [[ "${MODE}" == *-clang ]]; then
   export CXX=clang++
   export CC=clang
 
-  # clang versions supported. Starting with 13, we
-  # get some warnings in absl, so let's not go beyond
-  # 12 for now.
-  for version in 12 11 10 ; do
+  # clang versions that we have tested.
+  for version in 19 12 11 10 ; do
     if command -v clang++-${version}; then
       export CXX=clang++-${version}
       export CC=clang-${version}
@@ -118,11 +116,11 @@ case "$MODE" in
     ;;
 
   compile|compile-clang|clean)
-    bazel build --keep_going ${BAZEL_OPTS} :install-binaries
+    bazel build -c opt --keep_going ${BAZEL_OPTS} :install-binaries
     ;;
 
   compile-static|compile-static-clang)
-    bazel build --keep_going --config=create_static_linked_executables ${BAZEL_OPTS} :install-binaries
+    bazel build -c opt --keep_going --config=create_static_linked_executables ${BAZEL_OPTS} :install-binaries
     ;;
 
   test-c++20|test-c++20-clang)

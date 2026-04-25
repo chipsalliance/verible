@@ -23,6 +23,7 @@
 
 #include "verible/common/text/token-info.h"
 #include "verible/common/util/logging.h"
+#include "verible/common/util/with-reason.h"
 #include "verible/verilog/parser/verilog-token-enum.h"
 
 namespace verilog {

@@ -20,6 +20,7 @@
 
 #include "verible/common/strings/line-column-map.h"
 #include "verible/common/strings/position.h"  // for ByteOffsetSet, LineNumberSet
+#include "verible/common/text/line-terminator.h"
 #include "verible/common/text/token-stream-view.h"
 
 namespace verilog {
@@ -48,7 +49,7 @@ verible::ByteOffsetSet EnabledLinesToDisabledByteRanges(
 void FormatWhitespaceWithDisabledByteRanges(
     std::string_view text_base, std::string_view space_text,
     const verible::ByteOffsetSet &disabled_ranges, bool include_disabled_ranges,
-    std::ostream &stream);
+    std::ostream &stream, verible::LineTerminatorStyle line_terminator_style);
 
 }  // namespace formatter
 }  // namespace verilog

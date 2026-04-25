@@ -1,6 +1,7 @@
 """This package contains multi-tool for working with SystemVerilog projects.
 """
 
+load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 

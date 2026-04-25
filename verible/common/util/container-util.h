@@ -43,7 +43,8 @@ struct ValueTypeFromKeyType<KeyType, std::pair<const KeyType, MappedType>> {
 template <class KeyType>
 struct ValueTypeFromKeyType<KeyType, KeyType> {
   const KeyType &operator()(const KeyType &k) const {
-    return k;  // just forward the key
+    // Just forward the key
+    return k;  // NOLINT(bugprone-return-const-ref-from-parameter)
   }
 };
 }  // namespace internal
@@ -70,7 +71,9 @@ template <class M>
 const typename M::mapped_type &FindWithDefault(
     M &map, const typename M::key_type &key, const typename M::mapped_type &d) {
   auto found = map.find(key);
-  return (found == map.end()) ? d : found->second;
+  return (found == map.end())
+             ? d  // NOLINT(bugprone-return-const-ref-from-parameter)
+             : found->second;
 }
 
 template <class M>

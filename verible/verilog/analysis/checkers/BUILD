@@ -1,5 +1,7 @@
 # A set of linter rules to be used in analysis of verilog code.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 default_visibility = [
     "//verible/verilog/analysis:__subpackages__",
     "//verible/verilog/tools:__subpackages__",
@@ -931,6 +933,7 @@ cc_library(
         "//verible/common/text:symbol",
         "//verible/common/text:syntax-tree-context",
         "//verible/common/text:token-info",
+        "//verible/common/text:tree-utils",
         "//verible/common/util:logging",
         "//verible/verilog/CST:numbers",
         "//verible/verilog/CST:verilog-matchers",
@@ -971,6 +974,7 @@ cc_library(
         "//verible/common/text:symbol",
         "//verible/common/text:syntax-tree-context",
         "//verible/common/text:token-info",
+        "//verible/common/text:tree-utils",
         "//verible/verilog/CST:numbers",
         "//verible/verilog/CST:verilog-matchers",
         "//verible/verilog/analysis:descriptions",
@@ -1010,7 +1014,7 @@ cc_library(
         "//verible/common/text:symbol",
         "//verible/common/text:syntax-tree-context",
         "//verible/common/text:token-info",
-        "//verible/common/util:casts",
+        "//verible/common/text:tree-utils",
         "//verible/verilog/CST:expression",
         "//verible/verilog/CST:verilog-matchers",
         "//verible/verilog/CST:verilog-nonterminals",
@@ -1156,7 +1160,6 @@ cc_library(
         "//verible/common/text:symbol",
         "//verible/common/text:syntax-tree-context",
         "//verible/common/text:tree-utils",
-        "//verible/common/util:casts",
         "//verible/verilog/CST:verilog-matchers",
         "//verible/verilog/CST:verilog-nonterminals",
         "//verible/verilog/analysis:descriptions",
@@ -1195,7 +1198,7 @@ cc_library(
         "//verible/common/text:config-utils",
         "//verible/common/text:symbol",
         "//verible/common/text:syntax-tree-context",
-        "//verible/common/util:casts",
+        "//verible/common/text:tree-utils",
         "//verible/common/util:logging",
         "//verible/verilog/CST:verilog-matchers",
         "//verible/verilog/CST:verilog-nonterminals",

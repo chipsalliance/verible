@@ -1,5 +1,7 @@
 # This library contains tools for transforming Verilog code.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 default_visibility = [
     "//verible/verilog/tools/obfuscator:__subpackages__",
     "//verible/verilog/tools/preprocessor:__subpackages__",

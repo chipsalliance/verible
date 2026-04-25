@@ -1,6 +1,7 @@
 # 'verilog_format' is a SystemVerilog source code formatter.
 #
 
+load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
@@ -129,6 +130,14 @@ sh_test_with_runfiles_lib(
     name = "format-stdin-inplace_test",
     size = "small",
     srcs = ["format_stdin_inplace_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
+
+sh_test_with_runfiles_lib(
+    name = "format-line_terminator_test",
+    size = "small",
+    srcs = ["format_line_terminator_test.sh"],
     args = ["$(location :verible-verilog-format)"],
     data = [":verible-verilog-format"],
 )

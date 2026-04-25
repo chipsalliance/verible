@@ -1,6 +1,8 @@
 # 'text' contains classes for structural representations of text/code,
 # such as token streams, syntax trees.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(
     default_applicable_licenses = ["//:license"],
     # library layering: common/ packages that may NOT depend on this one:
@@ -48,6 +50,22 @@ cc_library(
     deps = [
         ":token-info",
         "//verible/common/util:logging",
+    ],
+)
+
+cc_library(
+    name = "line-terminator",
+    srcs = ["line-terminator.cc"],
+    hdrs = ["line-terminator.h"],
+)
+
+cc_test(
+    name = "line-terminator_test",
+    srcs = ["line-terminator_test.cc"],
+    deps = [
+        ":line-terminator",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -335,7 +353,6 @@ cc_library(
         "//verible/common/formatting:__pkg__",
         "//verible/common/lexer:__pkg__",
         "//verible/verilog/CST:__pkg__",
-        "//verible/verilog/analysis:__pkg__",
         "//verible/verilog/analysis/checkers:__pkg__",
         "//verible/verilog/formatting:__pkg__",
         "//verible/verilog/parser:__pkg__",

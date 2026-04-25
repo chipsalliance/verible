@@ -44,6 +44,11 @@
 #include "verible/verilog/formatting/format-style.h"
 #include "verible/verilog/formatting/formatter.h"
 
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 using absl::StatusCode;
 using verible::LineNumberSet;
 using verilog::formatter::ExecutionControl;
@@ -60,8 +65,8 @@ struct LineRanges {
 
 LineRanges::storage_type LineRanges::values;  // global initializer
 
-bool AbslParseFlag(std::string_view flag_arg, LineRanges * /* unused */,
-                   std::string *error) {
+static bool AbslParseFlag(std::string_view flag_arg, LineRanges * /* unused */,
+                          std::string *error) {
   auto &values = LineRanges::values;
   // Pre-split strings, so that "--flag v1,v2" and "--flag v1 --flag v2" are
   // equivalent.
@@ -75,7 +80,7 @@ bool AbslParseFlag(std::string_view flag_arg, LineRanges * /* unused */,
   return true;
 }
 
-std::string AbslUnparseFlag(LineRanges /* unused */) {
+static std::string AbslUnparseFlag(LineRanges /* unused */) {
   const auto &values = LineRanges::values;
   return absl::StrJoin(values.begin(), values.end(), ",",
                        absl::StreamFormatter());
@@ -135,7 +140,7 @@ static bool formatOneFile(std::string_view filename,
                           bool *any_changes) {
   const bool inplace = absl::GetFlag(FLAGS_inplace);
   const bool check_changes_only = absl::GetFlag(FLAGS_verify);
-  const bool is_stdin = filename == "-";
+  const bool is_stdin = verible::file::IsStdin(filename);
   const auto &stdin_name = absl::GetFlag(FLAGS_stdin_name);
 
   if (inplace && is_stdin) {
@@ -245,6 +250,11 @@ static bool formatOneFile(std::string_view filename,
 }
 
 int main(int argc, char **argv) {
+#ifdef _WIN32
+  // Windows messes with newlines by default. Fix this here.
+  _setmode(_fileno(stdout), _O_BINARY);
+#endif
+
   const auto usage = absl::StrCat("usage: ", argv[0],
                                   " [options] <file> [<file...>]\n"
                                   "To pipe from stdin, use '-' as <file>.");

@@ -37,10 +37,21 @@ then
     //...
 else
   # Use kythe's released tools.
+  cat >WORKSPACE.bzlmod <<EOL
+local_repository(
+    name = "kythe_release",
+    path = "${KYTHE_DIR_ABS}",
+)
+EOL
   # --override_repository kythe_release expects an absolute dir
   bazel \
-    --bazelrc="${KYTHE_DIR_ABS}/extractors.bazelrc" \
     build \
+    --keep_going \
+    --experimental_extra_action_top_level_only \
+    --cc_proto_library_header_suffixes=.pb.h,.pb.h.meta \
+    --proto_toolchain_for_cc=@kythe_release//:cc_native_proto_toolchain \
+    --experimental_action_listener=@kythe_release//:extract_kzip_cxx \
+    --experimental_action_listener=@kythe_release//:extract_kzip_protobuf \
     --override_repository kythe_release="${KYTHE_DIR_ABS}" \
     --define="kythe_corpus=github.com/chipsalliance/verible" \
     -- \

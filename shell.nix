@@ -5,15 +5,14 @@
 { pkgs ? import <nixpkgs> {} }:
 let
   verible_used_stdenv = pkgs.stdenv;
-  #verible_used_stdenv = pkgs.gcc13Stdenv;
-  #verible_used_stdenv = pkgs.clang17Stdenv;
+  #verible_used_stdenv = pkgs.gcc15Stdenv;
+  #verible_used_stdenv = pkgs.clang19Stdenv;
 in
 verible_used_stdenv.mkDerivation {
   name = "verible-build-environment";
   buildInputs = with pkgs;
     [
-      bazel_6
-      jdk11
+      bazel_7
       git
 
       # For scripts used inside bzl rules and tests
@@ -38,15 +37,14 @@ verible_used_stdenv.mkDerivation {
       lcov              # coverage html generation.
       bazel-buildtools  # buildifier
 
-      clang-tools_18    # for clang-tidy
-      clang-tools_17    # for clang-format
+      llvmPackages_19.clang-tools    # for clang-tidy
+      llvmPackages_18.clang-tools    # for clang-format
     ];
   shellHook = ''
       # clang tidy: use latest.
-      export CLANG_TIDY=${pkgs.clang-tools_18}/bin/clang-tidy
+      export CLANG_TIDY=${pkgs.llvmPackages_19.clang-tools}/bin/clang-tidy
 
-      # There is too much volatility between even micro-versions of
-      # clang-format 18. Let's use 17 for now.
-      export CLANG_FORMAT=${pkgs.clang-tools_17}/bin/clang-format
+      # Last version that current github CI supports.
+      export CLANG_FORMAT=${pkgs.llvmPackages_18.clang-tools}/bin/clang-format
   '';
 }

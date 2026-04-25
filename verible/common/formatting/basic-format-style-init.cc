@@ -37,6 +37,13 @@ ABSL_FLAG(int, over_column_limit_penalty, 100,
 ABSL_FLAG(int, line_break_penalty, 2,
           "Penalty added to solution for each introduced line break.");
 
+ABSL_FLAG(verible::LineTerminatorOptionStyle, line_terminator,
+          verible::LineTerminatorOptionStyle::kAuto,
+          "Line terminator. "
+          "The 'auto' option chooses the output depending on the observed "
+          "input. The explicit choice CR or CRLF fixes the output line "
+          "terminator.");
+
 namespace verible {
 void InitializeFromFlags(BasicFormatStyle *style) {
 #define STYLE_FROM_FLAG(name) style->name = absl::GetFlag(FLAGS_##name)
@@ -47,6 +54,7 @@ void InitializeFromFlags(BasicFormatStyle *style) {
   STYLE_FROM_FLAG(column_limit);
   STYLE_FROM_FLAG(over_column_limit_penalty);
   STYLE_FROM_FLAG(line_break_penalty);
+  STYLE_FROM_FLAG(line_terminator);
 
 #undef STYLE_FROM_FLAG
 }

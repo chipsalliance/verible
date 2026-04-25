@@ -30,7 +30,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -42,7 +42,7 @@ jobs:
     - name: Run formatting style check
       run: |
         echo "--- check formatting ---"
-        CLANG_FORMAT=clang-format-17 ./.github/bin/run-format.sh
+        CLANG_FORMAT=clang-format-17 ./.github/bin/run-format.sh --show-diff
         echo "--- check build dependencies ---"
         ./.github/bin/run-build-cleaner.sh
         echo "--- check potential problems ---"
@@ -58,7 +58,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -108,14 +108,14 @@ jobs:
             || ( cat verible_clang-tidy.out ; exit 1)
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: success() || failure()
       with:
-        name: "diag"
+        name: "diag-clang-tidy"
         path: "**/plot_*.svg"
 
   Check:
-    container: ubuntu:jammy
+    container: ubuntu:noble
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     strategy:
       fail-fast: false
@@ -158,7 +158,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -183,11 +183,11 @@ jobs:
         apt -qqy update
         apt -qq -y install build-essential wget git python3 python-is-python3 default-jdk cmake python3-pip ripgrep
         apt -qq -y install gcc-10 g++-10
-        apt -qq -y install gcc-12 g++-12
-        apt -qq -y install clang-12  # clang always a particular version.
+        apt -qq -y install gcc-14 g++-14
+        apt -qq -y install clang-19
         source ./.github/settings.sh
         # Use newer compiler for c++2x compilation. Also slang needs c++20
-        ./.github/bin/set-compiler.sh $([[ "$MODE" == test-c++2* || "$MODE" == "smoke-test-analyzer" ]] && echo 12 || echo 10)
+        ./.github/bin/set-compiler.sh $([[ "$MODE" == test-c++2* || "$MODE" == "smoke-test-analyzer" ]] && echo 14 || echo 10)
         ARCH="$ARCH" ./.github/bin/install-bazel.sh
 
     - name: Build Slang
@@ -212,8 +212,9 @@ jobs:
 
     - name: Gather and pack binaries
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
+      # these are used for building the gh-pages.
       run: |
-        bazel build -c fastbuild :install-binaries
+        bazel build -c opt :install-binaries
         # Litmus test
         bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax --version
         .github/bin/simple-install.sh $VERIBLE_BINDIR
@@ -221,7 +222,7 @@ jobs:
 
     - name: Upload bazel-bin
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: verible-bin
         path: verible-bin.tar
@@ -236,26 +237,27 @@ jobs:
         tar cvzf verible-${VERSION}-linux-static-${{matrix.arch}}.tar.gz verible-${VERSION}
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: verible-install-${{ matrix.arch }}
         path: verible-*.tar.gz
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: success() || failure()
       with:
-        name: "diag"
+        name: "diag-${{ matrix.arch }}-${{ matrix.mode }}"
         path: "**/plot_*.svg"
 
 
   KytheVerification:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: false   # Currently disabled, need to investigate further
 
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -274,21 +276,26 @@ jobs:
 
 
   KytheXrefs:
-    runs-on: ubuntu-20.04
-    if: false   # Currently disabled, need to investigate failure.
+    container: ubuntu:noble
+    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
 
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
 
     - name: Install Dependencies
       run: |
+        set -x
+        apt -qqy update
+        apt -qq -y install build-essential wget git python3 python-is-python3 default-jdk cmake python3-pip ripgrep
+        apt -qq -y install gcc-14 g++-14
+        pwd
         source ./.github/settings.sh
-        ./.github/bin/set-compiler.sh 10
+        ./.github/bin/set-compiler.sh 14
         ./.github/bin/install-bazel.sh
         ./.github/bin/install-kythe.sh
 
@@ -298,7 +305,7 @@ jobs:
         ./.github/bin/run-kythe.sh
 
     - name: 📤 Upload Kythe xRefs to the action artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: kythe_output/*.kzip
 
@@ -308,10 +315,10 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        echo "USE_BAZEL_VERSION=6.5.0" >> $GITHUB_ENV
+        echo "USE_BAZEL_VERSION=7.6.1" >> $GITHUB_ENV
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -347,8 +354,9 @@ jobs:
         tar cvzf verible-${VERSION}-macOS.tar.gz verible-${VERSION}-macOS
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: verible-install-macos
         path: verible-*.tar.gz
 
   PrepareVSPlugin:
@@ -356,7 +364,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -366,10 +374,10 @@ jobs:
         apt -qq -y install npm nodejs
 
   WindowsBuild:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -388,9 +396,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        choco install bazel --force --version=6.5.0
+        choco install bazel --force --version=7.6.1
         choco install winflexbison3
-        choco install llvm --allow-downgrade --version=17.0.6
+        choco install llvm --allow-downgrade --version=20.1.4
 
     - name: Debug bazel directory settings
       # We need to explicitly call the bazel binary from choco, otherwise
@@ -414,8 +422,9 @@ jobs:
         7z a "verible-${VERSION}-win64.zip" "c:/verible-${VERSION}-win64"
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: verible-install-win
         path: verible-*.zip
 
     # We need to shut down bazel to let go of the filedescriptors in the
@@ -457,14 +466,15 @@ jobs:
         tar --exclude=.git -cvzf ${OUT_SRC}.tar.gz ../${OUT_SRC}
 
     - name: 📤 Upload Source tar
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
+        name: src
         path: verible-*.tar.gz
 
   Release:
     name: 📦 Release
     needs: [ Check, PackReleaseSource, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
 
@@ -472,13 +482,15 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
 
     - name: 📥 Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
 
     - name: Generate and apply TAG
       run: |
@@ -491,13 +503,13 @@ jobs:
         git tag "$TAG" || true
         echo "TAG=$TAG" >> $GITHUB_ENV
 
-        ls -lah artifact
+        ls -l verible-v*
 
     - name: Deploy release and assets
       uses: svenstaro/upload-release-action@2.9.0
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: artifact/verible*.{tar.gz,zip}
+        file: verible-v*.{tar.gz,zip}
         tag: ${{ env.TAG }}
         overwrite: true
         file_glob: true
@@ -520,14 +532,14 @@ jobs:
   GhPages:
     name: Build and deploy GitHub pages
     needs: [Check]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: verible-bin
 

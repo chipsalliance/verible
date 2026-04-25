@@ -33,6 +33,7 @@
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/token-info.h"
+#include "verible/common/text/tree-utils.h"
 #include "verible/common/util/logging.h"
 #include "verible/verilog/CST/numbers.h"
 #include "verible/verilog/CST/verilog-matchers.h"
@@ -43,12 +44,10 @@ namespace verilog {
 namespace analysis {
 
 using verible::AutoFix;
-using verible::down_cast;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::SyntaxTreeLeaf;
-using verible::SyntaxTreeNode;
 using verible::matcher::Matcher;
 
 // Register UndersizedBinaryLiteralRule
@@ -90,18 +89,19 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
     const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (!NumberMatcher().Matches(symbol, &manager)) return;
-  const auto *width_leaf = manager.GetAs<SyntaxTreeLeaf>("width");
-  const auto *literal_node = manager.GetAs<SyntaxTreeNode>("literal");
+  const verible::SyntaxTreeLeaf *width_leaf = manager.GetAsLeaf("width");
+  const verible::SyntaxTreeNode *literal_node = manager.GetAsNode("literal");
   if (!width_leaf || !literal_node) return;
 
   const auto width_text = width_leaf->get().text();
   size_t width;
   if (!absl::SimpleAtoi(width_text, &width)) return;
 
-  const auto *base_leaf =
-      down_cast<const SyntaxTreeLeaf *>((*literal_node)[0].get());
-  const auto *digits_leaf =
-      down_cast<const SyntaxTreeLeaf *>((*literal_node)[1].get());
+  const SyntaxTreeLeaf *base_leaf =
+      verible::MaybeLeaf((*literal_node)[0].get());
+  const SyntaxTreeLeaf *digits_leaf =
+      verible::MaybeLeaf((*literal_node)[1].get());
+  if (!base_leaf || !digits_leaf) return;
 
   const auto base_text = base_leaf->get().text();
   const auto digits_text = digits_leaf->get().text();

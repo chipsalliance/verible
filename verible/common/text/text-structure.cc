@@ -78,7 +78,7 @@ static bool TokenLocationLess(const TokenInfo &token,
 
 // Makes an iterator-writable copy of items_view without using const_cast.
 template <class V>
-std::vector<typename V::iterator> CopyWriteableIterators(
+static std::vector<typename V::iterator> CopyWriteableIterators(
     V &items, const std::vector<typename V::const_iterator> &items_view) {
   // precondition: items_view's iterators all point into items array.
   // postcondition: results's iterators point to the same items as items_view.

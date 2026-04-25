@@ -16,12 +16,42 @@
 set -u  # only use variables once assigned
 set -e  # error out on error.
 
+SHOW_DIFF=0
+
+while [ $# -ne 0 ]; do
+  case $1 in
+    --show-diff) SHOW_DIFF=1;;
+    *)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+  esac
+  shift 1
+done
+
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 
-CLANG_FORMAT=${CLANG_FORMAT:-clang-format}
+# Use the provided Clang format binary, or try to fallback to clang-format-17
+# or clang-format.
+if [[ ! -v CLANG_FORMAT ]]; then
+  if command -v "clang-format-17" 2>&1 >/dev/null
+  then
+    CLANG_FORMAT="clang-format-17"
+  elif command -v "clang-format" 2>&1 >/dev/null
+  then
+    CLANG_FORMAT="clang-format"
+  else
+    (echo "-- Missing the clang-format binary! --"; exit 1)
+  fi
+fi
+
 BUILDIFIER=${BUILDIFIER:-buildifier}
 
-${CLANG_FORMAT} --version
+# Currently, we're using clang-format 17, as newer versions still have some
+# volatility in minor version.
+${CLANG_FORMAT} --version | grep "17\." ||
+  ( echo "-- Need clang-format 17. Currently CLANG_FORMAT=$CLANG_FORMAT --";
+    exit 1)
 
 # Run on all files.
 
@@ -36,17 +66,19 @@ if command -v ${BUILDIFIER} >/dev/null; then
   ${BUILDIFIER} MODULE.bazel $(find . -name BUILD -o -name "*.bzl")
 fi
 
-# Check if we got any diff
-git diff > ${FORMAT_OUT}
+if [ ${SHOW_DIFF} -eq 1 ]; then
+  # Check if we got any diff
+  git diff > ${FORMAT_OUT}
 
-if [ -s ${FORMAT_OUT} ]; then
-   echo "Style not matching (see https://github.com/chipsalliance/verible/blob/master/CONTRIBUTING.md#style)"
-   echo "Run"
-   echo "  .github/bin/run-clang-format.sh"
-   echo "-------------------------------------------------"
-   echo
-   cat ${FORMAT_OUT}
-   exit 1
+  if [ -s ${FORMAT_OUT} ]; then
+    echo "Style not matching (see https://github.com/chipsalliance/verible/blob/master/CONTRIBUTING.md#style)"
+    echo "Run"
+    echo "  .github/bin/run-format.sh"
+    echo "-------------------------------------------------"
+    echo
+    cat ${FORMAT_OUT}
+    exit 1
+  fi
 fi
 
 exit 0

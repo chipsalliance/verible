@@ -1,0 +1,19 @@
+// For format details, see https://aka.ms/devcontainer.json.
+
+{
+	"name": "Verible Dev",
+	"build": {
+		"dockerfile": "Dockerfile",
+	},
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"ms-vscode.cpptools-extension-pack"
+			]
+		}
+	}
+}

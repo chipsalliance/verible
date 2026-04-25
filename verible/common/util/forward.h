@@ -31,7 +31,9 @@ struct ForwardReferenceElseConstruct {
   // Intentionally restricted to const reference to avoid the surprise
   // of modifying a temporary reference.
   // See also the two-parameter overload.
-  const T &operator()(const T &t) const { return t; }
+  const T &operator()(const T &t) const {
+    return t;  // NOLINT(bugprone-return-const-ref-from-parameter)
+  }
 
   // (overload) Constructs a temporary rvalue, when types are different.
   // This works with explicit-only constructors and implicit constructors.

@@ -240,9 +240,7 @@ static WithReason<int> SpacesRequiredBetween(
       }
 
       int spaces = right.OriginalLeadingSpaces().length();
-      if (spaces > 1) {
-        spaces = 1;
-      }
+      spaces = std::min(spaces, 1);
       return {spaces, "Limit <= 1 space before binary operator inside []."};
     }
     if (left.format_token_enum == FormatTokenType::binary_operator &&
@@ -922,11 +920,11 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
 // Extern linkage for sake of direct testing, though not exposed in public
 // headers.
 // TODO(fangism): could move this to a -internal.h header.
-void AnnotateFormatToken(const FormatStyle &style,
-                         const PreFormatToken &prev_token,
-                         PreFormatToken *curr_token,
-                         const SyntaxTreeContext &prev_context,
-                         const SyntaxTreeContext &curr_context) {
+extern void AnnotateFormatToken(const FormatStyle &style,
+                                const PreFormatToken &prev_token,
+                                PreFormatToken *curr_token,
+                                const SyntaxTreeContext &prev_context,
+                                const SyntaxTreeContext &curr_context) {
   const auto p = SpacesRequiredBetween(style, prev_token, *curr_token,
                                        prev_context, curr_context);
   curr_token->before.spaces_required = p.spaces_required;

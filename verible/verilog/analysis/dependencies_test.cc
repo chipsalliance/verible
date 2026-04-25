@@ -14,6 +14,7 @@
 
 #include "verible/verilog/analysis/dependencies.h"
 
+#include <filesystem>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -32,14 +33,24 @@ namespace {
 
 using testing::ElementsAre;
 using verible::file::Basename;
-using verible::file::CreateDir;
-using verible::file::JoinPath;
 using verible::file::testing::ScopedTestFile;
 
-TEST(FileDependenciesTest, EmptyData) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
+class FileDependenciesTest : public ::testing::Test {
+ protected:
+  void SetUp() final {
+    sources_dir = verible::file::JoinPath(
+        ::testing::TempDir(),
+        ::testing::UnitTest::GetInstance()->current_test_info()->name());
+    const absl::Status status = verible::file::CreateDir(sources_dir);
+    ASSERT_TRUE(status.ok()) << status;
+  }
+
+  void TearDown() final { std::filesystem::remove(sources_dir); }
+
+  std::string sources_dir;
+};
+
+TEST_F(FileDependenciesTest, EmptyData) {
   VerilogProject project(sources_dir, {/* no include paths */});
 
   // no files
@@ -60,11 +71,7 @@ TEST(FileDependenciesTest, EmptyData) {
   }
 }
 
-TEST(FileDependenciesTest, OneFileNoDeps) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(FileDependenciesTest, OneFileNoDeps) {
   // None of these test cases will yield any inter-file deps.
   constexpr std::string_view kTestCases[] = {
       "",
@@ -104,11 +111,7 @@ TEST(FileDependenciesTest, OneFileNoDeps) {
   }
 }
 
-TEST(FileDependenciesTest, TwoFilesNoDeps) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(FileDependenciesTest, TwoFilesNoDeps) {
   VerilogProject project(sources_dir, {/* no include paths */});
 
   ScopedTestFile tf1(sources_dir, "localparam int foo = 0;");
@@ -141,11 +144,7 @@ static std::ostream &operator<<(std::ostream &stream,
   return p.symbol_table.PrintSymbolReferences(stream) << std::endl;
 }
 
-TEST(FileDependenciesTest, TwoFilesWithParamDepAtRootScope) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(FileDependenciesTest, TwoFilesWithParamDepAtRootScope) {
   VerilogProject project(sources_dir, {/* no include paths */});
 
   ScopedTestFile tf1(sources_dir, "localparam int zzz = 0;\n");
@@ -178,11 +177,7 @@ TEST(FileDependenciesTest, TwoFilesWithParamDepAtRootScope) {
   EXPECT_THAT(found_def->second, ElementsAre("zzz"));
 }
 
-TEST(FileDependenciesTest, TwoFilesWithParamDep) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(FileDependenciesTest, TwoFilesWithParamDep) {
   VerilogProject project(sources_dir, {/* no include paths */});
 
   ScopedTestFile tf1(sources_dir,
@@ -219,11 +214,7 @@ TEST(FileDependenciesTest, TwoFilesWithParamDep) {
   EXPECT_THAT(found_def->second, ElementsAre("foo", "p_pkg"));
 }
 
-TEST(FileDependenciesTest, TwoFilesWithCyclicDep) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(FileDependenciesTest, TwoFilesWithCyclicDep) {
   VerilogProject project(sources_dir, {/* no include paths */});
 
   ScopedTestFile tf1(sources_dir,
@@ -270,11 +261,7 @@ TEST(FileDependenciesTest, TwoFilesWithCyclicDep) {
   }
 }
 
-TEST(FileDependenciesTest, ModuleDiamondDependencies) {
-  const auto tempdir = ::testing::TempDir();
-  const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  ASSERT_TRUE(CreateDir(sources_dir).ok());
-
+TEST_F(FileDependenciesTest, ModuleDiamondDependencies) {
   VerilogProject project(sources_dir, {/* no include paths */});
 
   // 4 files: with a diamond dependency relationship

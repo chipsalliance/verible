@@ -1,0 +1,275 @@
+From 5f655475e956af645508076e3906385dfd414a11 Mon Sep 17 00:00:00 2001
+From: UebelAndre <github@uebelandre.com>
+Date: Tue, 19 Aug 2025 07:29:30 -0700
+Subject: [PATCH] Update cc_wrapper templates to posix shell.
+
+---
+ cc/private/toolchain/linux_cc_wrapper.sh.tpl |  41 +++---
+ cc/private/toolchain/osx_cc_wrapper.sh.tpl   | 145 +++++++++++--------
+ 2 files changed, 109 insertions(+), 77 deletions(-)
+
+diff --git a/cc/private/toolchain/linux_cc_wrapper.sh.tpl b/cc/private/toolchain/linux_cc_wrapper.sh.tpl
+index 1d030d4a..29fb3794 100644
+--- a/cc/private/toolchain/linux_cc_wrapper.sh.tpl
++++ b/cc/private/toolchain/linux_cc_wrapper.sh.tpl
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env bash
++#!/bin/sh
+ #
+ # Copyright 2015 The Bazel Authors. All rights reserved.
+ #
+@@ -20,26 +20,31 @@ set -eu
+ 
+ OUTPUT=
+ 
+-function parse_option() {
+-    local -r opt="$1"
+-    if [[ "${OUTPUT}" = "1" ]]; then
++parse_option() {
++    opt=$1
++    if [ "$OUTPUT" = "1" ]; then
+         OUTPUT=$opt
+-    elif [[ "$opt" = "-o" ]]; then
++    elif [ "$opt" = "-o" ]; then
+         # output is coming
+         OUTPUT=1
+     fi
+ }
+ 
+-# let parse the option list
++# parse the option list
+ for i in "$@"; do
+-    if [[ "$i" = @* && -r "${i:1}" ]]; then
+-        while IFS= read -r opt
+-        do
+-            parse_option "$opt"
+-        done < "${i:1}" || exit 1
+-    else
+-        parse_option "$i"
+-    fi
++    case $i in
++        @*)
++            file=${i#@}
++            if [ -r "$file" ]; then
++                while IFS= read -r opt; do
++                    parse_option "$opt"
++                done < "$file" || exit 1
++            fi
++            ;;
++        *)
++            parse_option "$i"
++            ;;
++    esac
+ done
+ 
+ # Set-up the environment
+@@ -49,6 +54,8 @@ done
+ %{cc} "$@"
+ 
+ # Generate an empty file if header processing succeeded.
+-if [[ "${OUTPUT}" == *.h.processed ]]; then
+-  echo -n > "${OUTPUT}"
+-fi
++case $OUTPUT in
++    *.h.processed)
++        : > "$OUTPUT"
++        ;;
++esac
+diff --git a/cc/private/toolchain/osx_cc_wrapper.sh.tpl b/cc/private/toolchain/osx_cc_wrapper.sh.tpl
+index 0a2d5689..62f5ff68 100644
+--- a/cc/private/toolchain/osx_cc_wrapper.sh.tpl
++++ b/cc/private/toolchain/osx_cc_wrapper.sh.tpl
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env bash
++#!/bin/sh
+ #
+ # Copyright 2015 The Bazel Authors. All rights reserved.
+ #
+@@ -33,21 +33,36 @@ LIB_DIRS=
+ RPATHS=
+ OUTPUT=
+ 
+-function parse_option() {
+-    local -r opt="$1"
+-    if [[ "${OUTPUT}" = "1" ]]; then
++XCRUN=/usr/bin/xcrun
++[ -x "$XCRUN" ] || XCRUN="xcrun"
++
++DIRNAME=/usr/bin/dirname
++[ -x "$DIRNAME" ] || DIRNAME="dirname"
++
++BASENAME=/usr/bin/basename
++[ -x "$BASENAME" ] || BASENAME="basename"
++
++READLINK=/usr/bin/readlink
++[ -x "$READLINK" ] || READLINK="readlink"
++
++SED=/usr/bin/sed
++[ -x "$SED" ] || SED="sed"
++
++parse_option() {
++    opt=$1
++    if [ "$OUTPUT" = "1" ]; then
+         OUTPUT=$opt
+-    elif [[ "$opt" =~ ^-l(.*)$ ]]; then
+-        LIBS="${BASH_REMATCH[1]} $LIBS"
+-    elif [[ "$opt" =~ ^(.*)\.so$ ]]; then
+-        LIB_PATHS="${opt} $LIB_PATHS"
+-    elif [[ "$opt" =~ ^(.*)\.dylib$ ]]; then
+-        LIB_PATHS="${opt} $LIB_PATHS"
+-    elif [[ "$opt" =~ ^-L(.*)$ ]]; then
+-        LIB_DIRS="${BASH_REMATCH[1]} $LIB_DIRS"
+-    elif [[ "$opt" =~ ^\@loader_path/(.*)$ ]]; then
+-        RPATHS="${BASH_REMATCH[1]} ${RPATHS}"
+-    elif [[ "$opt" = "-o" ]]; then
++    elif [ "${opt#-l}" != "$opt" ]; then
++        LIBS="${opt#-l} $LIBS"
++    elif [ "${opt%.so}" != "$opt" ]; then
++        LIB_PATHS="$opt $LIB_PATHS"
++    elif [ "${opt%.dylib}" != "$opt" ]; then
++        LIB_PATHS="$opt $LIB_PATHS"
++    elif [ "${opt#-L}" != "$opt" ]; then
++        LIB_DIRS="${opt#-L} $LIB_DIRS"
++    elif [ "${opt#@loader_path/}" != "$opt" ]; then
++        RPATHS="${opt#@loader_path/} $RPATHS"
++    elif [ "$opt" = "-o" ]; then
+         # output is coming
+         OUTPUT=1
+     fi
+@@ -55,14 +70,19 @@ function parse_option() {
+ 
+ # let parse the option list
+ for i in "$@"; do
+-    if [[ "$i" = @* && -r "${i:1}" ]]; then
+-        while IFS= read -r opt
+-        do
+-            parse_option "$opt"
+-        done < "${i:1}" || exit 1
+-    else
+-        parse_option "$i"
+-    fi
++    case $i in
++        @*)
++            file=${i#@}
++            if [ -r "$file" ]; then
++                while IFS= read -r opt; do
++                    parse_option "$opt"
++                done < "$file" || exit 1
++            fi
++            ;;
++        *)
++            parse_option "$i"
++            ;;
++    esac
+ done
+ 
+ # Set-up the environment
+@@ -72,66 +92,71 @@ done
+ %{cc} "$@"
+ 
+ # Generate an empty file if header processing succeeded.
+-if [[ "${OUTPUT}" == *.h.processed ]]; then
+-  echo -n > "${OUTPUT}"
+-fi
+-
+-function get_library_path() {
+-    for libdir in ${LIB_DIRS}; do
+-        if [ -f ${libdir}/lib$1.so ]; then
+-            echo "${libdir}/lib$1.so"
+-        elif [ -f ${libdir}/lib$1.dylib ]; then
+-            echo "${libdir}/lib$1.dylib"
++case $OUTPUT in
++    *.h.processed)
++        : > "$OUTPUT"
++        ;;
++esac
++
++get_library_path() {
++    lib=$1
++    for libdir in $LIB_DIRS; do
++        if [ -f "$libdir/lib$lib.so" ]; then
++            echo "$libdir/lib$lib.so"
++            return
++        elif [ -f "$libdir/lib$lib.dylib" ]; then
++            echo "$libdir/lib$lib.dylib"
++            return
+         fi
+     done
+ }
+ 
+ # A convenient method to return the actual path even for non symlinks
+ # and multi-level symlinks.
+-function get_realpath() {
+-    local previous="$1"
+-    local next=$(readlink "${previous}")
+-    while [ -n "${next}" ]; do
+-        previous="${next}"
+-        next=$(readlink "${previous}")
++get_realpath() {
++    previous=$1
++    next=$($READLINK "$previous" 2>/dev/null || true)
++    while [ -n "$next" ]; do
++        previous=$next
++        next=$($READLINK "$previous" 2>/dev/null || true)
+     done
+-    echo "${previous}"
++    echo "$previous"
+ }
+ 
+ # Get the path of a lib inside a tool
+-function get_otool_path() {
++get_otool_path() {
+     # the lib path is the path of the original lib relative to the workspace
+-    get_realpath $1 | sed 's|^.*/bazel-out/|bazel-out/|'
++    get_realpath "$1" | $SED 's|^.*/bazel-out/|bazel-out/|'
+ }
+ 
+-function call_install_name() {
+-    /usr/bin/xcrun install_name_tool -change $(get_otool_path "$1") \
+-        "@loader_path/$2/$3" "${OUTPUT}"
++call_install_name() {
++    $XCRUN install_name_tool -change "$(get_otool_path "$1")" \
++        "@loader_path/$2/$3" "$OUTPUT"
+ }
+ 
+ # Do replacements in the output
+-for rpath in ${RPATHS}; do
+-    for lib in ${LIBS}; do
+-        unset libname
+-        if [ -f "$(/usr/bin/dirname ${OUTPUT})/${rpath}/lib${lib}.so" ]; then
+-            libname="lib${lib}.so"
+-        elif [ -f "$(/usr/bin/dirname ${OUTPUT})/${rpath}/lib${lib}.dylib" ]; then
+-            libname="lib${lib}.dylib"
++for rpath in $RPATHS; do
++    for lib in $LIBS; do
++        libname=
++        if [ -f "$($DIRNAME "$OUTPUT")/$rpath/lib$lib.so" ]; then
++            libname="lib$lib.so"
++        elif [ -f "$($DIRNAME "$OUTPUT")/$rpath/lib$lib.dylib" ]; then
++            libname="lib$lib.dylib"
+         fi
+         # ${libname-} --> return $libname if defined, or undefined otherwise. This is to make
+         # this set -e friendly
+-        if [[ -n "${libname-}" ]]; then
+-            libpath=$(get_library_path ${lib})
+-            if [ -n "${libpath}" ]; then
+-                call_install_name "${libpath}" "${rpath}" "${libname}"
++        if [ -n "$libname" ]; then
++            libpath=$(get_library_path "$lib")
++            if [ -n "$libpath" ]; then
++                call_install_name "$libpath" "$rpath" "$libname"
+             fi
+         fi
+     done
+-    for libpath in ${LIB_PATHS}; do
++    for libpath in $LIB_PATHS; do
+         if [ -f "$libpath" ]; then
+-            libname=$(/usr/bin/basename "$libpath")
+-            if [ -f "$(/usr/bin/dirname ${OUTPUT})/${rpath}/${libname}" ]; then
+-                call_install_name "${libpath}" "${rpath}" "${libname}"
++            libname=$($BASENAME "$libpath")
++            if [ -f "$($DIRNAME "$OUTPUT")/$rpath/$libname" ]; then
++                call_install_name "$libpath" "$rpath" "$libname"
+             fi
+         fi
+     done

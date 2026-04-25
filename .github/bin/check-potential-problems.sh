@@ -108,9 +108,11 @@ if [ $? -eq 0 ]; then
   EXIT_CODE=1
 fi
 
-if [ -e .bazelversion ]; then
-  echo "Don't use .bazelversion. It is a poorly implemented bazel feature that does not support semantic versioning. Instead, make the repo work with all currently active bazel versions."
-  EXIT_CODE=1
-fi
+# Need to skip this until https://github.com/chipsalliance/verible/issues/2435
+# resolved.
+#if [ -e .bazelversion ]; then
+#  echo "Don't use .bazelversion. It is a poorly implemented bazel feature that does not support semantic versioning. Instead, make the repo work with all currently active bazel versions."
+#  EXIT_CODE=1
+#fi
 
 exit "${EXIT_CODE}"

@@ -174,7 +174,7 @@ TokenScannerStateStrings() {
 }
 
 // Conventional stream printer (declared in header providing enum).
-std::ostream &operator<<(std::ostream &stream, TokenScannerState p) {
+static std::ostream &operator<<(std::ostream &stream, TokenScannerState p) {
   return TokenScannerStateStrings().Unparse(p, stream);
 }
 
@@ -638,12 +638,12 @@ static const verible::EnumNameMap<ContextHint> &ContextHintStrings() {
   return kContextHintStringMap;
 }
 
-std::ostream &operator<<(std::ostream &stream, ContextHint p) {
+static std::ostream &operator<<(std::ostream &stream, ContextHint p) {
   return ContextHintStrings().Unparse(p, stream);
 }
 
-std::ostream &operator<<(std::ostream &stream,
-                         const std::vector<ContextHint> &f) {
+static std::ostream &operator<<(std::ostream &stream,
+                                const std::vector<ContextHint> &f) {
   return stream << verible::SequenceFormatter(f);
 }
 
@@ -782,7 +782,9 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kPreprocessorIfdefClause:
     case NodeEnum::kPreprocessorIfndefClause:
     case NodeEnum::kPreprocessorElseClause:
-    case NodeEnum::kPreprocessorElsifClause: {
+    case NodeEnum::kPreprocessorElsifClause:
+    case NodeEnum::kTimescaleDirective:
+    case NodeEnum::kTopLevelDirective: {
       VisitNewUnindentedUnwrappedLine(node);
       break;
     }
@@ -1625,7 +1627,8 @@ static void AttachSeparatorToPreviousOrNextPartition(
   partition->Value().SetOrigin(nullptr);
 }
 
-void AttachSeparatorsToListElementPartitions(TokenPartitionTree *partition) {
+static void AttachSeparatorsToListElementPartitions(
+    TokenPartitionTree *partition) {
   CHECK_NOTNULL(partition);
   // Skip the first partition, it can't contain just a separator.
   for (int i = 1; i < static_cast<int>(partition->Children().size()); ++i) {
@@ -3201,6 +3204,16 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf &leaf) {
     VLOG(4) << "handling preprocessor control flow token";
     StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &leaf);
     CurrentUnwrappedLine().SetIndentationSpaces(0);
+  } else if (IsPreprocessorKeyword(tag)) {
+    // Compiler directives (DR_* tokens) that don't have parent nodes
+    VLOG(4) << "handling compiler directive leaf token";
+    StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &leaf);
+    // Only unindent if at top level (context is empty) or inside preprocessor
+    // clauses
+    if (Context().empty() ||
+        IsPreprocessorClause(NodeEnum(Context().top().Tag().tag))) {
+      CurrentUnwrappedLine().SetIndentationSpaces(0);
+    }
   } else if (IsEndKeyword(tag)) {
     VLOG(4) << "handling end* keyword";
     StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand, &leaf);

@@ -22,11 +22,10 @@
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/token-info.h"
+#include "verible/common/text/tree-utils.h"
 #include "verible/common/util/logging.h"
 
 namespace verilog {
-
-using verible::down_cast;
 
 // Set of utility functions for embedded a statement into a certain context.
 std::string EmbedInClass(std::string_view text) {
@@ -47,7 +46,7 @@ std::string EmbedInClassMethod(std::string_view text) {
 }
 
 void ExpectString(const verible::SymbolPtr &symbol, std::string_view expected) {
-  const auto *leaf = down_cast<const verible::SyntaxTreeLeaf *>(symbol.get());
+  const verible::SyntaxTreeLeaf *leaf = verible::MaybeLeaf(symbol.get());
   CHECK(leaf != nullptr) << "expected: " << expected;
   CHECK_EQ(leaf->get().text(), expected);
 }
