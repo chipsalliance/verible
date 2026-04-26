@@ -55,6 +55,14 @@ e.g --include_dir_paths directory1,directory2
 if "A.sv" exists in both "directory1" and "directory2" the one in "directory1" is the one we will use.
 )");
 
+ABSL_FLAG(std::string, output_format, "human",
+          R"(Output format for file-deps.
+Available options:
+'human' - human readable format
+'tsort' - tsort consumable two-column list
+'dot' - graphviz format
+)");
+
 using verible::SubcommandArgsRange;
 using verible::SubcommandEntry;
 
@@ -65,6 +73,7 @@ struct VerilogProjectConfig {
   verilog::FileList file_list;
   // See --file_list_root above.
   std::string file_list_root;
+  std::string output_format;
 
   absl::Status LoadFromCommandline(const SubcommandArgsRange &args) {
     const std::vector<std::string_view> cmdline{args.begin(), args.end()};
@@ -77,6 +86,8 @@ struct VerilogProjectConfig {
     file_list.preprocessing.include_dirs.insert(
         file_list.preprocessing.include_dirs.end(), include_paths.begin(),
         include_paths.end());
+
+    output_format = absl::GetFlag(FLAGS_output_format);
 
     file_list_root = absl::GetFlag(FLAGS_file_list_root);
     if (auto fl_path = absl::GetFlag(FLAGS_file_list_path); !fl_path.empty()) {
@@ -243,10 +254,16 @@ static absl::Status ShowFileDependencies(const SubcommandArgsRange &args,
   const verilog::FileDependencies deps(*project_symbols.symbol_table);
 
   // Print.
-  // TODO(hzeller): support various output options {human-readable,
-  // machine-readable, etc.} using subcommand flags (b/164300992).
-  // One variant should include tsort-consumable 2-column text.
-  deps.PrintGraph(outs);
+  if (config.output_format == "human") {
+    deps.PrintGraph(outs);
+  } else if (config.output_format == "tsort") {
+    deps.PrintTsortGraph(outs);
+  } else if (config.output_format == "dot") {
+    deps.PrintDotGraph(outs);
+  } else {
+    return absl::InvalidArgumentError("Unknown output format given: " +
+                                      config.output_format);
+  }
   return absl::OkStatus();
 }
 
