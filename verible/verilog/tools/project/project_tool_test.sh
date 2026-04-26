@@ -349,4 +349,88 @@ EOF
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
 
 ################################################################################
+echo "=== Show dependencies between two files (modules), graphviz format"
+
+cat > "$MY_INPUT_FILE".A <<EOF
+module mm;
+endmodule
+
+module mm_test;
+  mm dut();
+endmodule
+EOF
+
+cat > "$MY_INPUT_FILE".B <<EOF
+module qq;
+  mm mm_inst();
+endmodule
+EOF
+
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt.A" > "$FILE_LIST_INPUT"
+echo "myinput.txt.B" >> "$FILE_LIST_INPUT"
+"$project_tool" \
+  file-deps \
+  --file_list_path "$FILE_LIST_INPUT" \
+  --file_list_root "$(dirname "$MY_INPUT_FILE".A)" \
+  --output_format dot \
+  > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 0 ]] || {
+  echo "$LINENO: Expected exit code 0, but got $status"
+  exit 1
+}
+
+cat > "$MY_EXPECT_FILE" <<EOF
+digraph {
+  "myinput.txt.B" -> "myinput.txt.A" [label="mm"]
+}
+EOF
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
+
+################################################################################
+echo "=== Show dependencies between two files (modules), tsort format"
+
+cat > "$MY_INPUT_FILE".A <<EOF
+module mm;
+endmodule
+
+module mm_test;
+  mm dut();
+endmodule
+EOF
+
+cat > "$MY_INPUT_FILE".B <<EOF
+module qq;
+  mm mm_inst();
+endmodule
+EOF
+
+# Construct a file-list on-the-fly as a file-descriptor
+FILE_LIST_INPUT="${TEST_TMPDIR}/myinputlist.txt"
+echo "myinput.txt.A" > "$FILE_LIST_INPUT"
+echo "myinput.txt.B" >> "$FILE_LIST_INPUT"
+"$project_tool" \
+  file-deps \
+  --file_list_path "$FILE_LIST_INPUT" \
+  --file_list_root "$(dirname "$MY_INPUT_FILE".A)" \
+  --output_format tsort \
+  > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 0 ]] || {
+  echo "$LINENO: Expected exit code 0, but got $status"
+  exit 1
+}
+
+cat > "$MY_EXPECT_FILE" <<EOF
+myinput.txt.B myinput.txt.A
+EOF
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { exit 1; }
+
+################################################################################
 echo "PASS"
