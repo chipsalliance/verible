@@ -86,36 +86,29 @@ struct DepEdge {
   const FileDependencies::SymbolNameSet &symbols;
 };
 
-static std::ostream &operator<<(std::ostream &stream, const DepEdge &dep) {
+static std::ostream &print_depedge_human(std::ostream &stream,
+                                         const DepEdge &dep) {
   return stream << '"' << dep.ref->ReferencedPath() << "\" depends on \""
                 << dep.def->ReferencedPath() << "\" for symbols "
                 << verible::SequenceFormatter(dep.symbols, ", ", "{ ", " }");
 }
 
-// Struct for printing graphviz dependency edge.
-struct DepEdgeDot {
-  const VerilogSourceFile *const ref;
-  const VerilogSourceFile *const def;
-  const FileDependencies::SymbolNameSet &symbols;
-};
-
-static std::ostream &operator<<(std::ostream &stream, const DepEdgeDot &dep) {
+static std::ostream &print_depedge_dot(std::ostream &stream,
+                                       const DepEdge &dep) {
   return stream << "\"" << dep.ref->ReferencedPath() << "\""
                 << " -> "
                 << "\"" << dep.def->ReferencedPath() << "\" [label=\""
                 << verible::SequenceFormatter(dep.symbols, ", ") << "\"]";
 }
 
-// Struct for printing tsort dependency edge.
-struct DepEdgeTsort {
-  const VerilogSourceFile *const ref;
-  const VerilogSourceFile *const def;
-  const FileDependencies::SymbolNameSet &symbols;
-};
-
-static std::ostream &operator<<(std::ostream &stream, const DepEdgeTsort &dep) {
+static std::ostream &print_depedge_tsort(std::ostream &stream,
+                                         const DepEdge &dep) {
   return stream << dep.ref->ReferencedPath() << " "
                 << dep.def->ReferencedPath();
+}
+
+static std::ostream &operator<<(std::ostream &stream, const DepEdge &dep) {
+  return print_depedge_human(stream, dep);
 }
 
 static FileDependencies::file_deps_graph_type
@@ -167,10 +160,12 @@ void FileDependencies::TraverseDependencyEdges(
   }
 }
 
-std::ostream &FileDependencies::PrintGraph(std::ostream &stream) const {
+std::ostream &FileDependencies::PrintHumanGraph(std::ostream &stream) const {
   TraverseDependencyEdges([&stream](const node_type &ref, const node_type &def,
                                     const SymbolNameSet &symbols) {
-    stream << DepEdge{.ref = ref, .def = def, .symbols = symbols} << std::endl;
+    print_depedge_human(stream,
+                        DepEdge{.ref = ref, .def = def, .symbols = symbols})
+        << std::endl;
   });
   return stream;
 }
@@ -179,8 +174,10 @@ std::ostream &FileDependencies::PrintDotGraph(std::ostream &stream) const {
   stream << "digraph {\n";
   TraverseDependencyEdges([&stream](const node_type &ref, const node_type &def,
                                     const SymbolNameSet &symbols) {
-    stream << "  " << DepEdgeDot{.ref = ref, .def = def, .symbols = symbols}
-           << std::endl;
+    stream << "  ";
+    print_depedge_dot(stream,
+                      DepEdge{.ref = ref, .def = def, .symbols = symbols})
+        << std::endl;
   });
   stream << "}\n";
   return stream;
@@ -189,14 +186,15 @@ std::ostream &FileDependencies::PrintDotGraph(std::ostream &stream) const {
 std::ostream &FileDependencies::PrintTsortGraph(std::ostream &stream) const {
   TraverseDependencyEdges([&stream](const node_type &ref, const node_type &def,
                                     const SymbolNameSet &symbols) {
-    stream << DepEdgeTsort{.ref = ref, .def = def, .symbols = symbols}
-           << std::endl;
+    print_depedge_tsort(stream,
+                        DepEdge{.ref = ref, .def = def, .symbols = symbols})
+        << std::endl;
   });
   return stream;
 }
 
 std::ostream &operator<<(std::ostream &stream, const FileDependencies &deps) {
-  return deps.PrintGraph(stream);
+  return deps.PrintHumanGraph(stream);
 }
 
 }  // namespace verilog

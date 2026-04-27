@@ -255,7 +255,7 @@ static absl::Status ShowFileDependencies(const SubcommandArgsRange &args,
 
   // Print.
   if (config.output_format == "human") {
-    deps.PrintGraph(outs);
+    deps.PrintHumanGraph(outs);
   } else if (config.output_format == "tsort") {
     deps.PrintTsortGraph(outs);
   } else if (config.output_format == "dot") {
