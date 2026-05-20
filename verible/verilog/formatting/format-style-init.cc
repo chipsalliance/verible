@@ -76,7 +76,7 @@ ABSL_FLAG(AlignmentPolicy, case_items_alignment,
           "Format case items: {align,flush-left,preserve,infer}");
 ABSL_FLAG(AlignmentPolicy, distribution_items_alignment,
           AlignmentPolicy::kInferUserIntent,
-          "Aligh distribution items: {align,flush-left,preserve,infer}");
+          "Align distribution items: {align,flush-left,preserve,infer}");
 ABSL_FLAG(AlignmentPolicy, assignment_statement_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format various assignments: {align,flush-left,preserve,infer}");
