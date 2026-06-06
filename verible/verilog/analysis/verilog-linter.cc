@@ -26,9 +26,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/config.h"  // NOLINT for ABSL_LTS_RELEASE_VERSION
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
+#include "absl/log/vlog_is_on.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -55,11 +55,6 @@
 #include "verible/verilog/analysis/verilog-linter-constants.h"
 #include "verible/verilog/parser/verilog-token-classifications.h"
 #include "verible/verilog/parser/verilog-token-enum.h"
-
-#if ABSL_LTS_RELEASE_VERSION > 20240200
-// https://github.com/chipsalliance/verible/issues/2336
-#include "absl/log/vlog_is_on.h"
-#endif
 
 // TODO(hzeller): make --rules repeatable and cumulative
 

@@ -22,8 +22,8 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/base/config.h"
 #include "absl/log/log.h"
+#include "absl/log/vlog_is_on.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
@@ -48,10 +48,6 @@
 #include "verible/verilog/parser/verilog-token-classifications.h"
 #include "verible/verilog/parser/verilog-token-enum.h"
 #include "verible/verilog/preprocessor/verilog-preprocess.h"
-
-#if ABSL_LTS_RELEASE_VERSION > 20240200
-#include "absl/log/vlog_is_on.h"
-#endif
 
 namespace verilog {
 
