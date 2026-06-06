@@ -14,6 +14,7 @@
 
 #include "verible/common/formatting/line-wrap-searcher.h"
 
+#include <cstddef>
 #include <memory>
 #include <ostream>
 #include <queue>
@@ -36,11 +37,21 @@ namespace {
 // use some sort of pool-allocator.
 struct SearchState {
   std::shared_ptr<const StateNode> state;
+  // Monotonically increasing insertion order for deterministic FIFO ties.
+  std::size_t sequence;
 
-  explicit SearchState(const std::shared_ptr<const StateNode> &s) : state(s) {}
+  SearchState(const std::shared_ptr<const StateNode> &s, std::size_t sequence)
+      : state(s), sequence(sequence) {}
 
   // Inverted to min-heap: *lowest* penalty has the highest search priority.
-  bool operator<(const SearchState &r) const { return *r.state < *state; }
+  bool operator<(const SearchState &r) const {
+    if (*r.state < *state) return true;
+    if (*state < *r.state) return false;
+    // std::priority_queue does not otherwise preserve insertion order for
+    // equivalent states, which can make the selected wrapping
+    // platform-specific.
+    return sequence > r.sequence;
+  }
 };
 }  // namespace
 
@@ -57,13 +68,11 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine &uwline,
   }
 
   // Worklist for decision searching, ordered by cumulative penalty.
-  // Note: a heap-based priority-queue will not guarantee stable ordering
-  // among equal-valued keys.  If first-come-first-serve tie-breaking is
-  // important, consider switching to a std::map.
   std::priority_queue<SearchState> worklist;
 
   // Seed worklist with a NodeState that should have 0 penalty.
-  SearchState seed(std::make_shared<StateNode>(uwline, style));
+  std::size_t next_sequence = 0;
+  SearchState seed(std::make_shared<StateNode>(uwline, style), next_sequence++);
   worklist.push(seed);
 
   bool aborted_search = false;
@@ -116,7 +125,8 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine &uwline,
     if (token.before.break_decision == SpacingOptions::kPreserve) {
       VLOG(4) << "preserving spaces before \'" << token.token->text() << '\'';
       SearchState preserved(std::make_shared<StateNode>(
-          next.state, style, SpacingDecision::kPreserve));
+                                next.state, style, SpacingDecision::kPreserve),
+                            next_sequence++);
       worklist.push(preserved);
     } else {
       // Remaining options are: Undecided, MustWrap, MustAppend
@@ -125,7 +135,8 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine &uwline,
         VLOG(4) << "considering appending \'" << token.token->text() << '\'';
         // Consider cost of appending token to current line.
         SearchState appended(std::make_shared<StateNode>(
-            next.state, style, SpacingDecision::kAppend));
+                                 next.state, style, SpacingDecision::kAppend),
+                             next_sequence++);
         worklist.push(appended);
         VLOG(4) << "  cost: " << appended.state->cumulative_cost;
         VLOG(4) << "  column: " << appended.state->current_column;
@@ -133,8 +144,9 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine &uwline,
       if (token.before.break_decision != SpacingOptions::kMustAppend) {
         VLOG(4) << "considering wrapping \'" << token.token->text() << '\'';
         // Consider cost of line wrapping here.
-        SearchState wrapped(std::make_shared<StateNode>(
-            next.state, style, SpacingDecision::kWrap));
+        SearchState wrapped(std::make_shared<StateNode>(next.state, style,
+                                                        SpacingDecision::kWrap),
+                            next_sequence++);
         worklist.push(wrapped);
         VLOG(4) << "  cost: " << wrapped.state->cumulative_cost;
         VLOG(4) << "  column: " << wrapped.state->current_column;

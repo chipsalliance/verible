@@ -144,6 +144,23 @@ module m;
   end
 endmodule
 )sv"},
+    {// Equivalent search states must be visited in deterministic order.
+     R"sv(
+module m;
+  function f();
+    return first_call_with_a_long_name_to_force_platform_dependent_wrapping_xxxxxxxxxxxxxx(a, b, c, d) && second_call_with_a_long_name_to_keep_the_rhs_wrapped_xxxxxxxxxxxxxxxxxxxxxx();
+  endfunction
+endmodule
+)sv",
+     R"sv(
+module m;
+  function f();
+    return first_call_with_a_long_name_to_force_platform_dependent_wrapping_xxxxxxxxxxxxxx(a, b, c,
+                                                                                           d) &&
+        second_call_with_a_long_name_to_keep_the_rhs_wrapped_xxxxxxxxxxxxxxxxxxxxxx();
+  endfunction
+endmodule
+)sv"},
 };
 
 TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping100Col) {
