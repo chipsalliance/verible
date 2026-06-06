@@ -97,7 +97,9 @@ struct FileDependencies {
       const std::function<void(const node_type &, const node_type &,
                                const SymbolNameSet &)> &edge_func) const;
 
-  std::ostream &PrintGraph(std::ostream &) const;
+  std::ostream &PrintHumanGraph(std::ostream &) const;
+  std::ostream &PrintDotGraph(std::ostream &) const;
+  std::ostream &PrintTsortGraph(std::ostream &) const;
 
   // TODO: print unresolved references (no definition found)
 };
