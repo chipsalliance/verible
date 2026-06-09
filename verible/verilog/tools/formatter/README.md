@@ -43,7 +43,7 @@ To pipe from stdin, use '-' as <file>.
       {align,flush-left,preserve,infer}); default: infer;
     --compact_indexing_and_selections (Use compact binary expressions inside
       indexing / bit selection operators); default: true;
-    --distribution_items_alignment (Aligh distribution items:
+    --distribution_items_alignment (Align distribution items:
       {align,flush-left,preserve,infer}); default: infer;
     --enum_assignment_statement_alignment (Format assignments with enums:
       {align,flush-left,preserve,infer}); default: infer;
