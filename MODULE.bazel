@@ -19,4 +19,4 @@ bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "googletest", version = "1.17.0", dev_dependency = True)
 
 # To build compilation DB and run build-cleaning
-bazel_dep(name = "bant", version = "0.2.2", dev_dependency = True)
+bazel_dep(name = "bant", version = "0.2.10", dev_dependency = True)

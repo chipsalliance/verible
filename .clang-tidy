@@ -73,6 +73,7 @@ Checks: >
   -bugprone-move-forwarding-reference,
   -bugprone-narrowing-conversions,
   -bugprone-suspicious-missing-comma,
+  -bugprone-throwing-static-initialization,
   modernize-*,
   -modernize-avoid-bind,
   -modernize-avoid-c-arrays,
@@ -95,6 +96,7 @@ Checks: >
   -misc-redundant-expression,
   -misc-unused-parameters,
   -misc-use-anonymous-namespace,
+  -misc-use-internal-linkage,
 
 CheckOptions:
   - key:    misc-include-cleaner.IgnoreHeaders
