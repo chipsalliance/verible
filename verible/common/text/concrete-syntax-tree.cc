@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/tree-compare.h"
 #include "verible/common/text/visitors.h"

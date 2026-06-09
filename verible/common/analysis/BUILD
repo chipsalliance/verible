@@ -151,6 +151,7 @@ cc_library(
         "//verible/common/text:token-stream-view",
         "//verible/common/util:logging",
         "//verible/common/util:spacer",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/status",
     ],
 )
@@ -196,6 +197,7 @@ cc_library(
         ":line-lint-rule",
         ":lint-rule-status",
         "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 
@@ -231,6 +233,7 @@ cc_library(
         "//verible/common/text:symbol",
         "//verible/common/text:tree-context-visitor",
         "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 
@@ -245,6 +248,7 @@ cc_library(
         ":syntax-tree-linter",
         "//verible/common/text:text-structure",
         "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 
@@ -284,6 +288,7 @@ cc_library(
         ":text-structure-lint-rule",
         "//verible/common/text:text-structure",
         "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 
@@ -319,6 +324,7 @@ cc_library(
         ":token-stream-lint-rule",
         "//verible/common/text:token-stream-view",
         "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 

@@ -18,6 +18,7 @@
 #include <memory>
 #include <string_view>
 
+#include "absl/log/die_if_null.h"
 #include "absl/status/status.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/linter-test-utils.h"

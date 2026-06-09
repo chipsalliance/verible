@@ -18,6 +18,7 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/line-lint-rule.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/util/logging.h"

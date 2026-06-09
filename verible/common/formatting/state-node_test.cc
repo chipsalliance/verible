@@ -22,13 +22,13 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/unwrapped-line-test-utils.h"
 #include "verible/common/formatting/unwrapped-line.h"
 #include "verible/common/text/token-info.h"
-#include "verible/common/util/logging.h"
 
 namespace verible {
 namespace {

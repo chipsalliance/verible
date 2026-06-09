@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "absl/base/attributes.h"
+#include "absl/log/die_if_null.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"

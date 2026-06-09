@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/die_if_null.h"
 #include "gtest/gtest.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/util/logging.h"

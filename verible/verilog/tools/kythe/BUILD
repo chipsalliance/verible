@@ -77,7 +77,7 @@ cc_library(
     deps = [
         ":indexing-facts-tree",
         "//verible/common/util:auto-pop-stack",
-        "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 
@@ -103,6 +103,7 @@ cc_library(
         "@abseil-cpp//absl/container:flat_hash_set",
         "@abseil-cpp//absl/container:node_hash_set",
         "@abseil-cpp//absl/hash",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/time",
     ],
@@ -180,6 +181,7 @@ cc_library(
         "//verible/verilog/CST:verilog-nonterminals",
         "//verible/verilog/analysis:verilog-project",
         "//verible/verilog/parser:verilog-token-enum",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
     ],

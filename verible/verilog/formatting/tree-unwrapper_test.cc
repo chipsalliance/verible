@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_join.h"
 #include "gtest/gtest.h"

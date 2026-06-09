@@ -16,6 +16,7 @@
 
 #include <memory>
 
+#include "absl/log/die_if_null.h"
 #include "gtest/gtest.h"
 #include "nlohmann/json.hpp"
 #include "verible/common/text/symbol.h"

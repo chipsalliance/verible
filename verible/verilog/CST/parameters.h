@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/syntax-tree-search.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/concrete-syntax-tree.h"

@@ -39,6 +39,7 @@ cc_library(
         "//verible/verilog/CST:verilog-nonterminals",
         "//verible/verilog/parser:verilog-token-classifications",
         "//verible/verilog/parser:verilog-token-enum",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 
@@ -77,6 +78,7 @@ cc_library(
         "//verible/verilog/parser:verilog-token-classifications",
         "//verible/verilog/parser:verilog-token-enum",
         "@abseil-cpp//absl/base:core_headers",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -97,6 +99,7 @@ cc_test(
         "//verible/common/util:tree-operations",
         "//verible/common/util:vector-tree",
         "//verible/verilog/analysis:verilog-analyzer",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
@@ -172,6 +175,7 @@ cc_library(
         "//verible/verilog/parser:verilog-token-enum",
         "//verible/verilog/preprocessor:verilog-preprocess",
         "@abseil-cpp//absl/base:core_headers",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
@@ -192,6 +196,7 @@ cc_test(
         "//verible/common/util:interval",
         "//verible/common/util:logging",
         "//verible/verilog/analysis:verilog-analyzer",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
@@ -317,6 +322,7 @@ cc_test(
         "//verible/common/util:logging",
         "//verible/verilog/CST:verilog-nonterminals",
         "//verible/verilog/parser:verilog-token-enum",
+        "@abseil-cpp//absl/log:die_if_null",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

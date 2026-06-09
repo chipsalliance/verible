@@ -74,6 +74,7 @@ cc_library(
         "//verible/common/text:symbol",
         "//verible/common/text:token-info-test-util",
         "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/status",
         "@googletest//:gtest",  # for library testonly
     ],

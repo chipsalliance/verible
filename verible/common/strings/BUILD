@@ -109,6 +109,7 @@ cc_test(
         ":random",
         "//verible/common/util:bijective-map",
         "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/status",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -330,8 +331,8 @@ cc_test(
     deps = [
         ":range",
         ":string-memory-map",
-        "//verible/common/util:logging",
         "//verible/common/util:range",
+        "@abseil-cpp//absl/log:die_if_null",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

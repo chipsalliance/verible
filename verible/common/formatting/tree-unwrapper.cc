@@ -20,6 +20,7 @@
 #include <ostream>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/token-partition-tree.h"
 #include "verible/common/formatting/unwrapped-line.h"

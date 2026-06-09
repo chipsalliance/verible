@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "gtest/gtest.h"
 #include "verible/common/strings/compare.h"
-#include "verible/common/util/logging.h"
 
 namespace verible {
 namespace {

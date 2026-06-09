@@ -15,8 +15,8 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_CONTEXT_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_CONTEXT_H_
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/util/auto-pop-stack.h"
-#include "verible/common/util/logging.h"
 #include "verible/verilog/tools/kythe/indexing-facts-tree.h"
 
 namespace verilog {

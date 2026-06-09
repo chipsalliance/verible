@@ -21,6 +21,7 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "absl/status/status.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/matcher/descent-path.h"

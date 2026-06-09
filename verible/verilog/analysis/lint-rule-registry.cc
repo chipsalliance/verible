@@ -19,12 +19,12 @@
 #include <vector>
 
 #include "absl/container/node_hash_map.h"
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/line-lint-rule.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
 #include "verible/common/analysis/text-structure-lint-rule.h"
 #include "verible/common/analysis/token-stream-lint-rule.h"
 #include "verible/common/util/container-util.h"
-#include "verible/common/util/logging.h"
 #include "verible/verilog/analysis/descriptions.h"
 
 namespace verilog {

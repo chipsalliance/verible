@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/linter-test-utils.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"  // IWYU pragma: export

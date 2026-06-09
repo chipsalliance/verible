@@ -21,6 +21,7 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "gtest/gtest.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/unwrapped-line-test-utils.h"
