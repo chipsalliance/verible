@@ -62,6 +62,7 @@ cc_library(
         "//verible/verilog/analysis:verilog-analyzer",
         "//verible/verilog/analysis:verilog-linter",
         "//verible/verilog/analysis:verilog-linter-configuration",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
     ],

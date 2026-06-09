@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/lsp/lsp-text-buffer.h"
 #include "verible/common/util/logging.h"

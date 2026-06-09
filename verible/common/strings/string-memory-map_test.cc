@@ -19,9 +19,9 @@
 #include <string>
 #include <string_view>
 
+#include "absl/log/die_if_null.h"
 #include "gtest/gtest.h"
 #include "verible/common/strings/range.h"
-#include "verible/common/util/logging.h"
 #include "verible/common/util/range.h"
 
 namespace verible {

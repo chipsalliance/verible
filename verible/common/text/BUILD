@@ -107,6 +107,7 @@ cc_library(
         ":visitors",
         "//verible/common/util:casts",
         "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 
@@ -135,6 +136,7 @@ cc_library(
         "//verible/common/util:iterator-range",
         "//verible/common/util:logging",
         "@abseil-cpp//absl/base:core_headers",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 
@@ -178,7 +180,7 @@ cc_library(
         ":concrete-syntax-tree",
         "//verible/common/util:auto-pop-stack",
         "//verible/common/util:iterator-adaptors",
-        "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 
@@ -249,6 +251,7 @@ cc_library(
         "//verible/common/util:type-traits",
         "//verible/common/util:value-saver",
         "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -264,6 +267,7 @@ cc_library(
         ":symbol",
         ":tree-utils",
         "//verible/common/util:logging",
+        "@abseil-cpp//absl/log:die_if_null",
     ],
 )
 
@@ -296,6 +300,7 @@ cc_library(
         "//verible/common/util:logging",
         "//verible/common/util:range",
         "//verible/common/util:status-macros",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
     ],

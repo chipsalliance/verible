@@ -20,6 +20,7 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "absl/strings/str_split.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
@@ -27,7 +28,6 @@
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/token-info.h"
-#include "verible/common/util/logging.h"
 #include "verible/verilog/CST/port.h"
 #include "verible/verilog/CST/verilog-matchers.h"
 #include "verible/verilog/analysis/descriptions.h"

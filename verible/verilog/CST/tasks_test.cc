@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/syntax-tree-search-test-utils.h"
 #include "verible/common/analysis/syntax-tree-search.h"

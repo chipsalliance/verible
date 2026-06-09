@@ -21,13 +21,13 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/syntax-tree-search.h"
 #include "verible/common/text/concrete-syntax-leaf.h"  // IWYU pragma: export
 #include "verible/common/text/concrete-syntax-tree.h"  // IWYU pragma: export
 #include "verible/common/text/symbol-ptr.h"            // IWYU pragma: export
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/tree-utils.h"
-#include "verible/common/util/logging.h"
 #include "verible/verilog/CST/verilog-nonterminals.h"
 #include "verible/verilog/parser/verilog-token-enum.h"
 

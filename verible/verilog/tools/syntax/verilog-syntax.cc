@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/die_if_null.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "nlohmann/json.hpp"

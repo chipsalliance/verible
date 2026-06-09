@@ -17,6 +17,7 @@
 #include <set>
 #include <string>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/core-matchers.h"
@@ -27,7 +28,6 @@
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/text/tree-utils.h"
-#include "verible/common/util/logging.h"
 #include "verible/verilog/CST/verilog-matchers.h"
 #include "verible/verilog/analysis/descriptions.h"
 #include "verible/verilog/analysis/lint-rule-registry.h"

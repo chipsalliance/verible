@@ -20,6 +20,7 @@
 #include <string>
 #include <string_view>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
@@ -30,7 +31,6 @@
 #include "verible/common/text/token-info.h"
 #include "verible/common/text/tree-utils.h"
 #include "verible/common/util/casts.h"
-#include "verible/common/util/logging.h"
 #include "verible/verilog/CST/context-functions.h"
 #include "verible/verilog/CST/verilog-matchers.h"
 #include "verible/verilog/CST/verilog-nonterminals.h"

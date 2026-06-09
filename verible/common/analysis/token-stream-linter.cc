@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/token-stream-lint-rule.h"
 #include "verible/common/text/token-stream-view.h"

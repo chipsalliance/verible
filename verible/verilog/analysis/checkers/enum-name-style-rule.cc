@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 
+#include "absl/log/die_if_null.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "re2/re2.h"

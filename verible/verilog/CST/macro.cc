@@ -19,11 +19,11 @@
 
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/syntax-tree-search.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/token-info.h"
 #include "verible/common/text/tree-utils.h"
-#include "verible/common/util/logging.h"
 #include "verible/verilog/CST/verilog-matchers.h"
 #include "verible/verilog/CST/verilog-nonterminals.h"
 #include "verible/verilog/parser/verilog-token-enum.h"

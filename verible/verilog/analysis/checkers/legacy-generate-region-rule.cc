@@ -17,13 +17,13 @@
 #include <set>
 #include <string_view>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/matcher-builders.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/tree-utils.h"
-#include "verible/common/util/logging.h"
 #include "verible/verilog/CST/verilog-nonterminals.h"
 #include "verible/verilog/analysis/descriptions.h"
 #include "verible/verilog/analysis/lint-rule-registry.h"

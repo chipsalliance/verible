@@ -14,6 +14,7 @@
 
 #include "verible/verilog/CST/seq-block.h"
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/symbol.h"

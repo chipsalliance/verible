@@ -17,12 +17,12 @@
 #include <set>
 #include <string_view>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
-#include "verible/common/util/logging.h"
 #include "verible/verilog/CST/port.h"
 #include "verible/verilog/CST/type.h"
 #include "verible/verilog/CST/verilog-matchers.h"

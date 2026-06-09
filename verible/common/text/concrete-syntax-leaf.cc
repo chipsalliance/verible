@@ -17,6 +17,7 @@
 #include <iostream>
 #include <memory>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/tree-compare.h"

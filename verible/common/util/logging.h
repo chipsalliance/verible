@@ -25,8 +25,8 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include "absl/log/die_if_null.h"  // IWYU pragma: export
-#include "absl/log/log.h"          // IWYU pragma: export
+#include "absl/log/die_if_null.h"
+#include "absl/log/log.h"  // IWYU pragma: export
 
 #define CHECK_NOTNULL(p) (void)ABSL_DIE_IF_NULL(p)
 

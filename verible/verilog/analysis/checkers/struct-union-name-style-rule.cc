@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 
+#include "absl/log/die_if_null.h"
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"

@@ -200,6 +200,7 @@ cc_test(
         "//verible/verilog/CST:verilog-nonterminals",
         "//verible/verilog/analysis:verilog-analyzer",
         "//verible/verilog/preprocessor:verilog-preprocess",
+        "@abseil-cpp//absl/log:die_if_null",
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
         "@googletest//:gtest",

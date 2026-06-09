@@ -17,9 +17,9 @@
 #include <map>
 #include <string>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/util/container-util.h"
-#include "verible/common/util/logging.h"
 
 using verible::container::FindOrNull;
 

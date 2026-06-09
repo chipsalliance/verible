@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "absl/log/check.h"
+#include "absl/log/die_if_null.h"
 #include "absl/strings/str_cat.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
 #include "verible/common/text/concrete-syntax-tree.h"

@@ -21,10 +21,10 @@
 #include <initializer_list>
 #include <iterator>
 
+#include "absl/log/die_if_null.h"
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/util/auto-pop-stack.h"
 #include "verible/common/util/iterator-adaptors.h"
-#include "verible/common/util/logging.h"
 
 namespace verible {
 

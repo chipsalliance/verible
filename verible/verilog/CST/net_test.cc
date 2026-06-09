@@ -23,6 +23,7 @@
 
 #include <vector>
 
+#include "absl/log/die_if_null.h"
 #include "absl/strings/str_cat.h"
 #include "gtest/gtest.h"
 #include "verible/common/analysis/syntax-tree-search-test-utils.h"

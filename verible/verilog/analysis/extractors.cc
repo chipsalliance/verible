@@ -18,6 +18,7 @@
 #include <string>
 #include <string_view>
 
+#include "absl/log/die_if_null.h"
 #include "absl/status/status.h"
 #include "verible/common/text/tree-utils.h"
 #include "verible/common/util/logging.h"
