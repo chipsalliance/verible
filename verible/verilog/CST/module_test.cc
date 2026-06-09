@@ -22,7 +22,6 @@
 
 #include "verible/verilog/CST/module.h"
 
-#include <memory>
 #include <vector>
 
 #include "absl/log/die_if_null.h"
