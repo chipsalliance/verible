@@ -15,11 +15,33 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_H_
 #define VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_H_
 
+#include <iosfwd>
+#include <string>
+#include <string_view>
+
 #include "verible/common/formatting/align.h"
 #include "verible/common/formatting/basic-format-style.h"
 
 namespace verilog {
 namespace formatter {
+
+// Controls what breaks alignment groups for module items, statements,
+// and class items.
+enum class AlignmentGroupBoundary {
+  // No additional group splitting (default, current behavior).
+  kNone,
+  // Blank lines break alignment groups.
+  kBlankLines,
+  // Separator comment lines (e.g., // ----) break alignment groups.
+  kSeparatorComments,
+  // Both blank lines and separator comments break alignment groups.
+  kBlankLinesAndSeparatorComments,
+};
+
+std::ostream &operator<<(std::ostream &, AlignmentGroupBoundary);
+bool AbslParseFlag(std::string_view text, AlignmentGroupBoundary *boundary,
+                   std::string *error);
+std::string AbslUnparseFlag(const AlignmentGroupBoundary &boundary);
 
 // Style parameters that are specific to Verilog formatter
 struct FormatStyle : public verible::BasicFormatStyle {
@@ -97,6 +119,11 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   bool port_declarations_right_align_packed_dimensions = false;
   bool port_declarations_right_align_unpacked_dimensions = false;
+
+  // Controls what breaks alignment groups for module items, statements,
+  // and class items.
+  AlignmentGroupBoundary alignment_group_boundary =
+      AlignmentGroupBoundary::kNone;
 
   // At this time line wrap optimization is problematic and risks ruining
   // otherwise reasonable code.  When set to false, this switch will make the

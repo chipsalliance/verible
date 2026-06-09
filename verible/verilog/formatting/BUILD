@@ -268,6 +268,7 @@ cc_library(
         "//verible/common/formatting:align",
         "//verible/common/formatting:basic-format-style",
         "//verible/common/formatting:basic-format-style-init",
+        "//verible/common/util:enum-flags",
         "@abseil-cpp//absl/flags:flag",
     ],
 )
