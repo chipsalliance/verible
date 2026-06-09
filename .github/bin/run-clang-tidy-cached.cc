@@ -15,7 +15,7 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Location: https://github.com/hzeller/dev-tools (2024-12-23)
+// Location: https://github.com/hzeller/dev-tools (2026-04-17)
 
 // Script to run clang-tidy on files in a bazel project while caching the
 // results as clang-tidy can be pretty slow. The clang-tidy output messages
@@ -53,6 +53,7 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 #include <map>
 #include <mutex>
 #include <regex>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -131,7 +132,8 @@ static constexpr ConfigValues kConfig = {
 
 // More clang-tidy config.
 static constexpr std::string_view kExtraArgs[] = {
-    "-Wno-unknown-pragmas", "-Wno-unknown-warning-option"};
+    "-Wno-unknown-pragmas", "-Wno-unknown-warning-option",
+    "-Wno-pragma-once-outside-header"};
 
 // All the extensions we consider
 inline bool IsOneOf(std::string_view s,
@@ -142,12 +144,12 @@ inline bool IsOneOf(std::string_view s,
 
 // Files that look like relevant include files.
 inline bool IsIncludeExtension(std::string_view extension) {
-  return IsOneOf(extension, {".h", ".hpp", ".hxx", ".inl"});
+  return IsOneOf(extension, {".h", ".hh", ".hpp", ".hxx", ".inl"});
 }
 
 // Filter for source files to be considered.
 inline bool ConsiderExtension(const std::string_view ext) {
-  return IsOneOf(ext, {".cc", ".cpp", ".cxx"}) || IsIncludeExtension(ext);
+  return IsOneOf(ext, {".c", ".cc", ".cpp", ".cxx"}) || IsIncludeExtension(ext);
 }
 
 namespace {
@@ -263,8 +265,8 @@ class ClangTidyRunner {
     }
     const char *jobs_env_str = getenv("CLANG_TIDY_JOBS");
     const int jobs_env_num = jobs_env_str ? atoi(jobs_env_str) : -1;
-    const int kJobs = (jobs_env_num > 0 ? jobs_env_num
-                                        : std::thread::hardware_concurrency());
+    const int kJobs =
+        (jobs_env_num > 0 ? jobs_env_num : std::thread::hardware_concurrency());
     std::cerr << work_queue->size() << " files to process (w/ " << kJobs
               << " jobs)...";
 
@@ -307,7 +309,8 @@ class ClangTidyRunner {
         }
         // NOLINTEND
 #endif
-        RepairFilenameOccurences(tmp_out, tmp_out);
+        const std::string filter_filename = work.first.filename().string();
+        RepairFilenameOccurences(filter_filename, tmp_out, tmp_out);
         fs::rename(tmp_out, final_out);  // atomic replacement
       }
     };
@@ -338,10 +341,8 @@ class ClangTidyRunner {
   }
 
   static std::string AssembleArgs(int argc, char **argv) {
-    std::string result = " --quiet";
-    result.append(" '--config-file=")
-      .append(GetClangTidyConfig())
-        .append("'");
+    std::string result = " --quiet --header-filter=''";
+    result.append(" '--config-file=").append(GetClangTidyConfig()).append("'");
     for (const std::string_view arg : kExtraArgs) {
       result.append(" --extra-arg='").append(arg).append("'");
     }
@@ -374,10 +375,39 @@ class ClangTidyRunner {
                                 ToHex(cache_unique_id, 8));
   }
 
+  // Filter clang-tidy output and write only lines that are reported for
+  // the 'interesting_file'. Clang-tidy tends to also report warnings for
+  // some included files, but we're not interested in them.
+  // (maybe not needed anymore with -header-filter)
+  static void FilterCheckLines(std::string_view interesting_file,
+                               const std::string &in, std::ostream &out) {
+    // Extract basename of lines that have a clang-tidy check at end.
+    static const std::regex file_with_tidy(
+        ".*(?:^|/)([^/]+):[0-9]+:[0-9]+:.*"
+        "\\[[a-zA-Z.]+-[a-zA-Z.-]+\\]$");
+
+    // Simple 'awk' - go through each line and output depending on state.
+    bool do_print_line = true;
+    // std::regex is pretty terrible as it does not operate on string-views.
+    // So no point in carefully extracting lines. Might as well use sstream.
+    std::istringstream line_reader(in);
+    std::string line;
+    std::smatch match;
+    while (std::getline(line_reader, line)) {
+      if (std::regex_match(line, match, file_with_tidy)) {
+        do_print_line = (match[1].str() == interesting_file);
+      }
+      if (do_print_line) {
+        out << line << "\n";
+      }
+    }
+  }
+
   // Fix filename paths found in logfiles that are not emitted relative to
   // project root in the log - remove that prefix.
   // (bazel has its own, so if this is bazel, also bazel-specific fix up that).
-  static void RepairFilenameOccurences(const fs::path &infile,
+  static void RepairFilenameOccurences(std::string_view interesting_file,
+                                       const fs::path &infile,
                                        const fs::path &outfile) {
     static const std::regex sFixPathsRe = []() {
       std::string canonicalize_expr = "(^|\\n)(";  // fix names at start of line
@@ -394,9 +424,10 @@ class ClangTidyRunner {
       return std::regex{canonicalize_expr};
     }();
 
-    const auto in_content = GetContent(infile);
+    const std::string in_content = GetContent(infile);
+    const std::string canon = std::regex_replace(in_content, sFixPathsRe, "$1");
     std::fstream out_stream(outfile, std::ios::out);
-    out_stream << std::regex_replace(in_content, sFixPathsRe, "$1");
+    FilterCheckLines(interesting_file, canon, out_stream);
   }
 
   const std::string clang_tidy_;
