@@ -21,20 +21,38 @@ def genlex(name, src, out):
     """Generate C/C++ language source from lex file using Flex
     """
     native.genrule(
-        name = name,
+        name = name + "_toolchain",
         srcs = [src],
-        outs = [out],
+        outs = ["toolchain/" + out],
         cmd = select({
-            "//bazel:use_local_flex_bison_enabled": "flex --outfile=$@ $<",
-            "@platforms//os:windows": "win_flex.exe --outfile=$@ $<",
-            "//conditions:default": "M4=$(M4) $(FLEX) --outfile=$@ $<",
+            "@platforms//os:windows": "mkdir -p $(@D)/toolchain && win_flex.exe --outfile=$@ $<",
+            "//conditions:default": "mkdir -p $(@D)/toolchain && M4=$(M4) $(FLEX) --outfile=$@ $<",
         }),
-        toolchains = select({
-            "//bazel:use_local_flex_bison_enabled": [],
-            "@platforms//os:windows": [],
-            "//conditions:default": [
-                "@rules_flex//flex:current_flex_toolchain",
-                "@rules_m4//m4:current_m4_toolchain",
-            ],
+        toolchains = [
+            "@rules_flex//flex:current_flex_toolchain",
+            "@rules_m4//m4:current_m4_toolchain",
+        ],
+        tags = ["manual"],
+    )
+
+    native.genrule(
+        name = name + "_local",
+        srcs = [src],
+        outs = ["local/" + out],
+        cmd = select({
+            "@platforms//os:windows": "mkdir -p $(@D)/local && win_flex.exe --outfile=$@ $<",
+            "//conditions:default": "mkdir -p $(@D)/local && flex --outfile=$@ $<",
         }),
+        tags = ["manual"],
+    )
+
+    native.genrule(
+        name = name,
+        srcs = select({
+            "//bazel:use_local_flex_bison_enabled": ["local/" + out],
+            "@platforms//os:windows": ["local/" + out],
+            "//conditions:default": ["toolchain/" + out],
+        }),
+        outs = [out],
+        cmd = "cp $< $@",
     )
