@@ -16,6 +16,8 @@
 """Bazel rule to wrap sh_test with a wrapper loading runfiles library prior to execution
 """
 
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
 def sh_test_with_runfiles_lib(name, srcs, size, args, data, deps = []):
     """sh_test wrapper that loads bazel's runfiles library before calling the test.
 
@@ -47,7 +49,7 @@ def sh_test_with_runfiles_lib(name, srcs, size, args, data, deps = []):
     args = ["$(location " + srcs[0] + ")"] + args
     data += srcs
 
-    native.sh_test(
+    sh_test(
         name = name,
         srcs = ["//bazel:sh_test_with_runfiles_lib.sh"],
         size = size,
