@@ -70,6 +70,12 @@ class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
   void CollectLeadingFilteredTokens() final {}
   void CollectTrailingFilteredTokens() final {}
 
+  using TreeUnwrapper::StartNewUnwrappedLine;
+
+ protected:
+  void InterChildNodeHook(const SyntaxTreeNode &node) final {}
+
+ protected:
   // Leaf visit that adds a PreFormatToken from the leaf's TokenInfo
   // to the current_unwrapped_line_
   void Visit(const verible::SyntaxTreeLeaf &leaf) final {
@@ -83,11 +89,6 @@ class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
     TraverseChildren(node);
   }
 
-  void InterChildNodeHook(const SyntaxTreeNode &node) final {}
-
-  using TreeUnwrapper::StartNewUnwrappedLine;
-
- protected:
   void CatchUpFilteredTokens() {
     const auto iter = CurrentFormatTokenIterator();
     SkipUnfilteredTokens(

@@ -94,6 +94,7 @@ class TokenColumnizer : public ColumnSchemaScanner {
  public:
   TokenColumnizer() = default;
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     ColumnSchemaScanner::Visit(node);
   }
@@ -107,6 +108,7 @@ class TokenColumnizerRightFlushed : public ColumnSchemaScanner {
  public:
   TokenColumnizerRightFlushed() = default;
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     ColumnSchemaScanner::Visit(node);
   }
@@ -1011,6 +1013,7 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
  public:
   SyntaxTreeColumnizer() = default;
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     ColumnPositionTree *column;
     if (!current_column_) {

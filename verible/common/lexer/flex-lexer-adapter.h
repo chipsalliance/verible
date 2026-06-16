@@ -90,23 +90,6 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
     return last_token_;
   }
 
- protected:
-  // Must be called by subclasses to update location of the current token.
-  void UpdateLocation() { last_token_.AdvanceText(this->YYLeng()); }
-
-  // EOF needs special handling because yyleng is set to include a terminating
-  // \0 (NUL) character.  Once EOF is encountered it is also not possible to
-  // yyless-rewind the window -- doing so messes up the internal state machine,
-  // and causes (flex) errors like:
-  // "fatal flex scanner internal error--end of buffer missed"
-  // We advance the token text without spanning the NUL character.
-  // This should only be needed in lexer states that need to explicitly
-  // handle <<EOF>>.
-  void UpdateLocationEOF() {
-    last_token_.AdvanceText(this->YYLeng() - 1);
-    at_eof_ = true;
-  }
-
   // Restart lexer by pointing to new input stream, and reset all state.
   void Restart(std::string_view code) override {  // not yet final
     at_eof_ = false;
@@ -126,6 +109,23 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
     while (L::yy_start_stack_ptr > 1) {  // Keep INITIAL state.
       L::yy_pop_state();
     }
+  }
+
+ protected:
+  // Must be called by subclasses to update location of the current token.
+  void UpdateLocation() { last_token_.AdvanceText(this->YYLeng()); }
+
+  // EOF needs special handling because yyleng is set to include a terminating
+  // \0 (NUL) character.  Once EOF is encountered it is also not possible to
+  // yyless-rewind the window -- doing so messes up the internal state machine,
+  // and causes (flex) errors like:
+  // "fatal flex scanner internal error--end of buffer missed"
+  // We advance the token text without spanning the NUL character.
+  // This should only be needed in lexer states that need to explicitly
+  // handle <<EOF>>.
+  void UpdateLocationEOF() {
+    last_token_.AdvanceText(this->YYLeng() - 1);
+    at_eof_ = true;
   }
 
   // Overrides yyFlexLexer's implementation to handle unrecognized chars.

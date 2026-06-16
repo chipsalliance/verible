@@ -46,6 +46,7 @@ Checks: >
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -readability-implicit-bool-conversion,
+  -readability-inconsistent-ifelse-braces,
   -readability-isolate-declaration,
   -readability-magic-numbers,
   -readability-make-member-function-const,
@@ -101,3 +102,6 @@ Checks: >
 CheckOptions:
   - key:    misc-include-cleaner.IgnoreHeaders
     value:  .*-linter-test-utils\.h
+  - key:    misc-override-with-different-visibility.DisallowedVisibilityChange
+    value:  widening
+
