@@ -541,10 +541,9 @@ TEST(FunctionPort, GetDirection) {
 
           std::vector<TreeSearchMatch> directions;
           for (const auto &port : ports) {
-            const auto *direction =
+            const verible::SyntaxTreeLeaf *direction =
                 GetDirectionFromPortDeclaration(*port.match);
-            directions.emplace_back(
-                TreeSearchMatch{(const verible::Symbol *)direction, {}});
+            directions.emplace_back(TreeSearchMatch{direction, {}});
           }
           return directions;
         });

@@ -149,6 +149,7 @@ bool TokenRangeEqual(const UnwrappedLine &left, const UnwrappedLine &right) {
   return left.TokensRange() == right.TokensRange();
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class LayoutTest : public ::testing::Test, public UnwrappedLineMemoryHandler {
  public:
   LayoutTest()
@@ -659,6 +660,7 @@ TEST_F(LayoutFunctionIteratorTest, ContainerRelatedMethods) {
   }
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class LayoutFunctionFactoryTest : public ::testing::Test,
                                   public UnwrappedLineMemoryHandler {
  public:
@@ -1967,6 +1969,7 @@ TEST_F(LayoutFunctionFactoryTest, DifferentLayoutsInDifferentSegments) {
   }
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class TreeReconstructorTest : public ::testing::Test,
                               public UnwrappedLineMemoryHandler {
  public:
@@ -2321,6 +2324,7 @@ TEST_F(TreeReconstructorTest, InlineSpacingReconstruction) {
                       tree_expected);
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class OptimizeTokenPartitionTreeTest : public ::testing::Test,
                                        public UnwrappedLineMemoryHandler {
  public:
@@ -2383,6 +2387,7 @@ TEST_F(OptimizeTokenPartitionTreeTest, AppendToLineWithInlinePartitions) {
   EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, tree, expected_tree);
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
                                            public UnwrappedLineMemoryHandler {
  public:

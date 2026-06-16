@@ -30,6 +30,7 @@ namespace verible {
 namespace {
 
 // This test class just binds a set of style parameters.
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class SearchLineWrapsTestFixture : public UnwrappedLineMemoryHandler,
                                    public ::testing::Test {
  public:

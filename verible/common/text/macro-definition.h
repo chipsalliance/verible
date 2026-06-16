@@ -38,6 +38,7 @@ struct DefaultTokenInfo : public TokenInfo {
   explicit DefaultTokenInfo(const TokenInfo &t) : TokenInfo(t) {}
 
   // Accept a plain TokenInfo for assignment purposes.
+  // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method)
   DefaultTokenInfo &operator=(const TokenInfo &t) {
     TokenInfo::operator=(t);
     return *this;

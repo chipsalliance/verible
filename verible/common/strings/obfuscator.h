@@ -93,6 +93,7 @@ class IdentifierObfuscator : public Obfuscator {
   explicit IdentifierObfuscator(const generator_type &g) : Obfuscator(g) {}
 
   // Same as inherited method, but verifies that key and value are equal length.
+  // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method)
   bool encode(std::string_view key, std::string_view value);
 };
 

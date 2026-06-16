@@ -60,6 +60,7 @@ class TreeUnwrapperData {
   std::vector<verible::PreFormatToken> preformatted_tokens_;
 };
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
  public:
   explicit FakeTreeUnwrapper(const TextStructureView &view)

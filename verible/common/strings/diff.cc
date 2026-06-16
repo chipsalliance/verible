@@ -207,10 +207,10 @@ void LineDiffsToUnifiedDiff(std::ostream &stream, const LineDiffs &linediffs,
 
       // Last line from either original or new text, and final '\n' is missing?
       if ((edit.operation != Operation::INSERT &&
-           size_t(edit.end) == linediffs.before_lines.size() &&
+           static_cast<size_t>(edit.end) == linediffs.before_lines.size() &&
            linediffs.before_text.back() != '\n') ||
           (edit.operation == Operation::INSERT &&
-           size_t(edit.end) == linediffs.after_lines.size() &&
+           static_cast<size_t>(edit.end) == linediffs.after_lines.size() &&
            linediffs.after_text.back() != '\n')) {
         stream << "\\ No newline at end of file" << std::endl;
       }

@@ -54,6 +54,8 @@ Checks: >
   -readability-named-parameter,
   -readability-qualified-auto,
   -readability-redundant-access-specifiers,
+  -readability-redundant-parentheses,
+  -readability-redundant-typename,
   -readability-simplify-boolean-expr,
   -readability-static-definition-in-anonymous-namespace,
   -readability-uppercase-literal-suffix,
@@ -104,4 +106,3 @@ CheckOptions:
     value:  .*-linter-test-utils\.h
   - key:    misc-override-with-different-visibility.DisallowedVisibilityChange
     value:  widening
-

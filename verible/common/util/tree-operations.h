@@ -164,7 +164,7 @@ auto /* void */ ReserveIfSupported(Container &container,
 
 // No-op candidate used when Container doesn't provide `reserve()` method.
 template <class Container>
-void ReserveIfSupported(Container &, ...) {}
+void ReserveIfSupported(Container &, ...) {}  // NOLINT
 
 }  // namespace tree_operations_internal
 

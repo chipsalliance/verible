@@ -125,7 +125,7 @@ std::ostream &operator<<(std::ostream &stream, LayoutType type) {
     case LayoutType::kStack:
       return stream << "stack";
   }
-  LOG(WARNING) << "Unknown layout type: " << int(type);
+  LOG(WARNING) << "Unknown layout type: " << static_cast<int>(type);
   return stream << "???";
 }
 
@@ -227,7 +227,8 @@ LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine &uwline) const {
   }
   return LayoutFunction{
       {0, std::move(layout), span,
-       float((span - style_.column_limit) * style_.over_column_limit_penalty),
+       static_cast<float>((span - style_.column_limit) *
+                          style_.over_column_limit_penalty),
        style_.over_column_limit_penalty},
   };
 }

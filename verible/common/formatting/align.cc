@@ -258,7 +258,7 @@ static void ColumnsTreeFormatter(
       if (padding_len > 0) {
         if (lines[level].empty()) {
           lines[level].append(std::string(padding_len, ' '));
-        } else if (padding_len > int(kCellSeparator.size())) {
+        } else if (padding_len > static_cast<int>(kCellSeparator.size())) {
           lines[level].append(absl::StrCat(
               kCellSeparator,
               std::string(padding_len - kCellSeparator.size(), ' ')));

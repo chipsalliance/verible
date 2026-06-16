@@ -61,7 +61,7 @@ std::ostream &operator<<(std::ostream &stream, PartitionPolicyEnum p) {
     case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
       return stream << "juxtaposition-or-indented-stack";
   }
-  LOG(FATAL) << "Unknown partition policy " << int(p);
+  LOG(FATAL) << "Unknown partition policy " << static_cast<int>(p);
 }
 
 static void TokenFormatter(std::string *out, const PreFormatToken &token,

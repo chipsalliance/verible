@@ -48,6 +48,7 @@ class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode *> {
 
  public:
   // returns the top SyntaxTreeNode of the stack
+  // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method)
   const SyntaxTreeNode &top() const {
     return *ABSL_DIE_IF_NULL(base_type::top());
   }
