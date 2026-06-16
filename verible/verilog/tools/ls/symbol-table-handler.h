@@ -24,7 +24,6 @@
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/types/optional.h"
 #include "verible/common/lsp/lsp-protocol.h"
 #include "verible/common/strings/line-column-map.h"
 #include "verible/common/text/symbol.h"
@@ -158,7 +157,7 @@ class SymbolTableHandler {
 
   // Last timestamp of filelist file - used to check whether SymbolTable
   // should be updated
-  absl::optional<std::filesystem::file_time_type> last_filelist_update_;
+  std::optional<std::filesystem::file_time_type> last_filelist_update_;
 
   // tells that symbol table should be rebuilt due to changes in files
   bool files_dirty_ = true;

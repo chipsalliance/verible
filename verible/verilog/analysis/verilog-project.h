@@ -27,7 +27,6 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/types/optional.h"
 #include "verible/common/strings/mem-block.h"
 #include "verible/common/strings/string-memory-map.h"
 #include "verible/common/text/text-structure.h"
@@ -355,7 +354,7 @@ class VerilogProject {
 
   // Returns the opened file or parse/not found error. If the file is not
   // opened, returns nullopt.
-  absl::optional<absl::StatusOr<VerilogSourceFile *>> FindOpenedFile(
+  std::optional<absl::StatusOr<VerilogSourceFile *>> FindOpenedFile(
       std::string_view filename) const;
 
   // Attempt to remove file and metadata if it exists. Return 'true' on success.
