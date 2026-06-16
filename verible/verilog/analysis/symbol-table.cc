@@ -88,6 +88,9 @@ static const verible::EnumNameMap<SymbolMetaType> &SymbolMetaTypeNames() {
       {"class", SymbolMetaType::kClass},
       {"module", SymbolMetaType::kModule},
       {"package", SymbolMetaType::kPackage},
+      {"generate", SymbolMetaType::kGenerate},
+      {"procedural block", SymbolMetaType::kProceduralBlock},
+      {"loop scope", SymbolMetaType::kLoopScope},
       {"parameter", SymbolMetaType::kParameter},
       {"typedef", SymbolMetaType::kTypeAlias},
       {"data/net/var/instance", SymbolMetaType::kDataNetVariableInstance},
@@ -304,6 +307,18 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kBindDirective:
         // TODO(#1241) Not handled right now.
         // TODO(#1255) Not handled right now.
+        break;
+      // separate case for blocks
+      case NodeEnum::kSeqBlock:
+        DeclareSequentialBlock(node);
+        break;
+      // separate case for for loops
+      case NodeEnum::kForLoopStatement:
+        DeclareForLoop(node);
+        break;
+      // separate case for for loop initialization
+      case NodeEnum::kForInitialization:
+        DeclareForInitVariable(node);
         break;
       default:
         Descend(node);
@@ -1282,6 +1297,27 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
   }
 
+  void DeclareSequentialBlock(const SyntaxTreeNode &node) {
+    // Procedural begin...end blocks introduce a new lexical scope.
+    // Extract optional label from the kBegin child for scope naming.
+    const verible::TokenInfo *label = nullptr;
+    if (!node.empty() && node.front() != nullptr) {
+      label = GetBeginLabelTokenInfo(*node.front());
+    }
+    const std::string_view scope_name =
+        label ? label->text()
+              : current_scope_->Value().CreateAnonymousScope("block");
+    DeclareScopedElementAndDescend(node, scope_name, SymbolMetaType::kProceduralBlock);
+  }
+
+  void DeclareForLoop(const SyntaxTreeNode &node) {
+    // for-loop statements introduce a scope that encompasses both the
+    // initialization variables and the loop body.
+    const std::string_view scope_name =
+        current_scope_->Value().CreateAnonymousScope("for");
+    DeclareScopedElementAndDescend(node, scope_name, SymbolMetaType::kLoopScope);
+  }
+
   void DeclarePackage(const SyntaxTreeNode &package) {
     const auto *token = GetPackageNameToken(package);
     if (!token) return;
@@ -1429,6 +1465,31 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // reset port direction
     Descend(data_decl_node);
     VLOG(2) << "end of " << __FUNCTION__;
+  }
+
+  // Declares a variable from a for-loop initialization (e.g. `int i = 0`).
+  // Only handles typed declarations
+  void DeclareForInitVariable(const SyntaxTreeNode &for_init) {
+    const verible::SyntaxTreeNode *data_type =
+        GetDataTypeFromForInitialization(for_init);
+    if (data_type == nullptr) {
+      // not a variable declaration. Descend normally for references.
+      Descend(for_init);
+      return;
+    }
+    const verible::SyntaxTreeLeaf *var_name =
+        GetVariableNameFromForInitialization(for_init);
+    if (var_name == nullptr) {
+      Descend(for_init);
+      return;
+    }
+    DeclarationTypeInfo decl_type_info;
+    const ValueSaver<DeclarationTypeInfo *> save_type(&declaration_type_info_,
+                                                      &decl_type_info);
+    Descend(for_init);
+    EmplaceTypedElementInCurrentScope(
+        for_init, var_name->get().text(),
+        SymbolMetaType::kDataNetVariableInstance);
   }
 
   // Declare one (of potentially multiple) instances in a single declaration

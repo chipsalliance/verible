@@ -54,6 +54,8 @@ enum class SymbolMetaType {
   kClass,
   kModule,
   kGenerate,  // loop or conditional generate block
+  kProceduralBlock, // begin...end block
+  kLoopScope, // for loop body and init
   kPackage,
   kParameter,
   kTypeAlias,  // typedef
