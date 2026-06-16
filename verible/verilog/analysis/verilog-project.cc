@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -27,7 +28,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
-#include "absl/types/optional.h"
 #include "verible/common/strings/mem-block.h"
 #include "verible/common/text/text-structure.h"
 #include "verible/common/util/file-util.h"
@@ -266,7 +266,7 @@ VerilogSourceFile *VerilogProject::LookupRegisteredFileInternal(
   return nullptr;
 }
 
-absl::optional<absl::StatusOr<VerilogSourceFile *>>
+std::optional<absl::StatusOr<VerilogSourceFile *>>
 VerilogProject::FindOpenedFile(std::string_view filename) const {
   const auto found = files_.find(filename);
   if (found != files_.end()) {
@@ -275,7 +275,7 @@ VerilogProject::FindOpenedFile(std::string_view filename) const {
     }
     return found->second.get();
   }
-  return absl::nullopt;
+  return std::nullopt;
 }
 
 absl::StatusOr<VerilogSourceFile *> VerilogProject::OpenTranslationUnit(

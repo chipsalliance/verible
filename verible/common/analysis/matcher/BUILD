@@ -32,7 +32,6 @@ cc_library(
     deps = [
         ":bound-symbol-manager",
         "//verible/common/text:symbol",
-        "@abseil-cpp//absl/types:optional",
     ],
 )
 

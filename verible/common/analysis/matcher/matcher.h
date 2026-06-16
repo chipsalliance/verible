@@ -16,11 +16,11 @@
 #define VERIBLE_COMMON_ANALYSIS_MATCHER_MATCHER_H_
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "absl/types/optional.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/text/symbol.h"
 
@@ -99,7 +99,7 @@ class Matcher {
 
   // If present when Matches is called, symbol will be bound to its value
   // If null_opt, then symbol will not be
-  absl::optional<std::string> bind_id_ = absl::nullopt;
+  std::optional<std::string> bind_id_ = std::nullopt;
 };
 
 // BindableMatcher is a subclass of matcher that enables setting
