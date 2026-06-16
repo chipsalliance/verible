@@ -45,6 +45,7 @@ class TestMapType : public EnumNameMap<MyFakeEnum> {
         }) {}
 };
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class EnumNameMapTest : public ::testing::Test, public TestMapType {
  public:
   EnumNameMapTest() = default;

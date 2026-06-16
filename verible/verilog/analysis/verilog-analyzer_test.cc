@@ -850,6 +850,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, MultipleMacroCalls) {
 }
 
 // Helper class for testing internals.
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class VerilogAnalyzerInternalsTest : public testing::Test,
                                      public VerilogAnalyzer {
  public:

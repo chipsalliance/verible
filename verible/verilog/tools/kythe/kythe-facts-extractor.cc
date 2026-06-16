@@ -88,6 +88,7 @@ class KytheFactsExtractor {
     using AutoPop = base_type::AutoPop;
 
     // returns the top VName of the stack
+    // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method)
     const VName &top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
   };
 

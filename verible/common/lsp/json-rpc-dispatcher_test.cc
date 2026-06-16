@@ -32,7 +32,7 @@ TEST(JsonRpcDispatcherTest, Call_GarbledInputRequest) {
   // If the input can't even be parsed, it is reported back to the client
   JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
-    EXPECT_TRUE(j.find("error") != j.end());
+    EXPECT_TRUE(j.contains("error"));
     EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kParseError) << s;
     ++write_fun_called;
   });
@@ -50,7 +50,7 @@ TEST(JsonRpcDispatcherTest, Call_MissingMethodInRequest) {
 
   JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
-    EXPECT_TRUE(j.find("error") != j.end());
+    EXPECT_TRUE(j.contains("error"));
     EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kMethodNotFound) << s;
     ++write_fun_called;
   });
@@ -152,7 +152,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler) {
   JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
     EXPECT_EQ(std::string(j["result"]["some"]), "response");
-    EXPECT_TRUE(j.find("error") == j.end());
+    EXPECT_FALSE(j.contains("error"));
     ++write_fun_called;
   });
   const bool registered =
@@ -182,7 +182,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler_WithoutParamsShouldBeBenign) {
   JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
     EXPECT_EQ(std::string(j["result"]["some"]), "response");
-    EXPECT_TRUE(j.find("error") == j.end());
+    EXPECT_FALSE(j.contains("error"));
     ++write_fun_called;
   });
   const bool registered =
@@ -207,7 +207,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler_ReportInternalError) {
 
   JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
-    EXPECT_TRUE(j.find("error") != j.end());
+    EXPECT_TRUE(j.contains("error"));
     EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kInternalError) << s;
     ++write_fun_called;
   });
@@ -231,7 +231,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler_MissingMethodImplemented) {
 
   JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
-    EXPECT_TRUE(j.find("error") != j.end());
+    EXPECT_TRUE(j.contains("error"));
     EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kMethodNotFound) << s;
     ++write_fun_called;
   });

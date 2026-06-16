@@ -1030,6 +1030,7 @@ TEST(FilePatchAddedLinesTest, Various) {
   }
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class FilePatchPickApplyTest : public FilePatch, public ::testing::Test {
  protected:
   absl::Status ParseLines(const std::vector<std::string_view> &lines) {
@@ -2200,6 +2201,7 @@ TEST(PatchSetAddedLinesMapTest, NewAndExistingFile) {
   // Neither case should include deleted files like file3.txt
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class PatchSetPickApplyTest : public PatchSet, public ::testing::Test {};
 
 TEST_F(PatchSetPickApplyTest, EmptyFilePatchHunks) {

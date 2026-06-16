@@ -65,6 +65,7 @@ TEST(AlignmentPolicyTest, InvalidEnum) {
 
 // Helper class that initializes an array of tokens to be partitioned
 // into TokenPartitionTree.
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class AlignmentTestFixture : public ::testing::Test,
                              public UnwrappedLineMemoryHandler {
  public:
@@ -94,6 +95,7 @@ class TokenColumnizer : public ColumnSchemaScanner {
  public:
   TokenColumnizer() = default;
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     ColumnSchemaScanner::Visit(node);
   }
@@ -107,6 +109,7 @@ class TokenColumnizerRightFlushed : public ColumnSchemaScanner {
  public:
   TokenColumnizerRightFlushed() = default;
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     ColumnSchemaScanner::Visit(node);
   }
@@ -1011,6 +1014,7 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
  public:
   SyntaxTreeColumnizer() = default;
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     ColumnPositionTree *column;
     if (!current_column_) {
@@ -1281,6 +1285,7 @@ class MultiSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
           "( eleven nineteen-ninety-nine 2k )\n")
       : SubcolumnsTreeAlignmentTest(text) {}
 
+  // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method)
   std::string Render() {
     std::ostringstream stream;
     int position = 0;
@@ -1487,6 +1492,7 @@ class OutsideCharPairs {
   const char stop_;
 };
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class FormatUsingOriginalSpacingTest : public ::testing::Test,
                                        public UnwrappedLineMemoryHandler {
  public:

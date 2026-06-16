@@ -141,21 +141,22 @@ const verible::SyntaxTreeNode *GetIdentifiersFromFunctionCall(
   const verible::Symbol *identifier = nullptr;
   reference_call_base =
       GetSubtreeAsSymbol(function_call, NodeEnum::kFunctionCall, 0);
-  if (reference_call_base->Tag().tag != (int)NodeEnum::kReferenceCallBase) {
+  if (reference_call_base->Tag().tag !=
+      static_cast<int>(NodeEnum::kReferenceCallBase)) {
     return nullptr;
   }
   reference =
       GetSubtreeAsSymbol(*reference_call_base, NodeEnum::kReferenceCallBase, 0);
   if (!reference) return nullptr;
-  if (reference->Tag().tag == (int)NodeEnum::kReference) {
+  if (reference->Tag().tag == static_cast<int>(NodeEnum::kReference)) {
     const verible::SyntaxTreeNode *local_root = GetSubtreeAsNode(
         *reference, NodeEnum::kReference, 0, NodeEnum::kLocalRoot);
     if (!local_root) return nullptr;
-    if (local_root->Tag().tag != (int)NodeEnum::kLocalRoot) {
+    if (local_root->Tag().tag != static_cast<int>(NodeEnum::kLocalRoot)) {
       return nullptr;
     }
     identifier = GetIdentifiersFromLocalRoot(*local_root);
-  } else if (reference->Tag().tag == (int)NodeEnum::kMacroCall) {
+  } else if (reference->Tag().tag == static_cast<int>(NodeEnum::kMacroCall)) {
     return &verible::SymbolCastToNode(*reference);
   }
   if (!identifier) return nullptr;
@@ -191,10 +192,11 @@ const verible::SyntaxTreeNode *GetFunctionBlockStatementList(
 
 const verible::SyntaxTreeNode *GetParenGroupFromCall(
     const verible::Symbol &function_call) {
-  if (function_call.Tag().tag == (int)NodeEnum::kFunctionCall) {
+  if (function_call.Tag().tag == static_cast<int>(NodeEnum::kFunctionCall)) {
     const verible::Symbol *reference_or_call =
         verible::GetSubtreeAsSymbol(function_call, NodeEnum::kFunctionCall, 0);
-    if (reference_or_call->Tag().tag != (int)NodeEnum::kReferenceCallBase) {
+    if (reference_or_call->Tag().tag !=
+        static_cast<int>(NodeEnum::kReferenceCallBase)) {
       return nullptr;
     }
     return verible::GetSubtreeAsNode(*reference_or_call,

@@ -42,6 +42,7 @@ std::string RenderFormattedText(const StateNode &path,
   return formatted_line.Render();
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 struct StateNodeTestFixture : public UnwrappedLineMemoryHandler,
                               public ::testing::Test {
   StateNodeTestFixture() {

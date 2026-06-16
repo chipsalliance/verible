@@ -213,6 +213,7 @@ TEST(PreFormatTokenTest, LeadingSpacesLength) {
   }
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class ConnectPreFormatTokensPreservedSpaceStartsTest
     : public ::testing::Test,
       public UnwrappedLineMemoryHandler {};
@@ -260,6 +261,7 @@ TEST_F(ConnectPreFormatTokensPreservedSpaceStartsTest, MultipleTokens) {
                           text.substr(5, 3)));  // "\t\t\n"
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class PreserveSpacesOnDisabledTokenRangesTest
     : public ::testing::Test,
       public UnwrappedLineMemoryHandler {};

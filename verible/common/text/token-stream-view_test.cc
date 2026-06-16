@@ -69,6 +69,7 @@ TEST_F(TokenStreamViewTest, FilterInPlace) {
 }
 
 // Helper class for testing Token range methods.
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class TokenViewRangeTest : public ::testing::Test,
                            public TextStructureTokenized {
  public:

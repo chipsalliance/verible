@@ -90,6 +90,7 @@ TEST(PartitionPolicyTest, Printing) {
 
 // This test fixture inherits from UnwrappedLineMemoryHandler so that
 // UnwrappedLine's internal references can safely point to backed storage.
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class UnwrappedLineTest : public UnwrappedLineMemoryHandler,
                           public testing::Test {
  protected:

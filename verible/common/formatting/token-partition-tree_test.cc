@@ -41,6 +41,7 @@ using ::testing::ElementsAre;
 
 // Helper class that initializes an array of tokens to be partitioned
 // into TokenPartitionTree.
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class TokenPartitionTreeTestFixture : public ::testing::Test,
                                       public UnwrappedLineMemoryHandler {
  public:
@@ -1231,6 +1232,7 @@ TEST_F(AnyPartitionSubRangeIsDisabledTest, Various) {
   }
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class GetSubpartitionsBetweenBlankLinesTest
     : public ::testing::Test,
       public UnwrappedLineMemoryHandler {
@@ -2691,6 +2693,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, AvoidExceedingColumnLimit) {
 }
 
 // Tests with real-world example
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class ReshapeFittingSubpartitionsTestFixture
     : public ::testing::Test,
       public UnwrappedLineMemoryHandler {

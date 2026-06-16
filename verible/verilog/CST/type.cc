@@ -171,8 +171,9 @@ const verible::Symbol *GetBaseTypeFromDataType(
   const auto *local_root =
       verible::GetSubtreeAsNode(data_type, NodeEnum::kDataType, 1);
   if (!local_root) return nullptr;
-  if (local_root->Tag().tag != (int)NodeEnum::kLocalRoot) return local_root;
-
+  if (local_root->Tag().tag != static_cast<int>(NodeEnum::kLocalRoot)) {
+    return local_root;
+  }
   CHECK(!local_root->empty());
   const auto &children = local_root->children();
   verible::Symbol *last_child = nullptr;

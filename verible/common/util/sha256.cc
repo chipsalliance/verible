@@ -43,6 +43,7 @@
 
 #include "absl/strings/escaping.h"
 
+// NOLINTBEGIN(modernize-avoid-c-style-cast)
 namespace verible {
 namespace {
 
@@ -268,5 +269,5 @@ std::string Sha256Hex(std::string_view content) {
   return absl::BytesToHexString(std::string_view(
       reinterpret_cast<const char *>(sha256bytes.data()), sha256bytes.size()));
 }
-
+// NOLINTEND(modernize-avoid-c-style-cast)
 }  // namespace verible

@@ -35,7 +35,7 @@ void JsonRpcDispatcher::DispatchMessage(std::string_view data) {
     return;
   }
 
-  if (request.find("method") == request.end()) {
+  if (!request.contains("method")) {
     SendReply(
         CreateError(request, kMethodNotFound, "Method required in request"));
     ++statistic_counters_["Request without method"];
@@ -44,7 +44,7 @@ void JsonRpcDispatcher::DispatchMessage(std::string_view data) {
   const std::string &method = request["method"];
 
   // Direct dispatch, later maybe send to an executor that returns futures ?
-  const bool is_notification = (request.find("id") == request.end());
+  const bool is_notification = !request.contains("id");
   VLOG(1) << "Got " << (is_notification ? "notification" : "method call")
           << " '" << method << "'; req-size: " << data.size();
   bool handled = false;
@@ -124,8 +124,8 @@ void JsonRpcDispatcher::SendNotification(const std::string &method,
     result["error"]["message"] = message;
   }
 
-  if (request.find("id") != request.end()) {
-    result["id"] = request["id"];
+  if (auto found = request.find("id"); found != request.end()) {
+    result["id"] = found.value();
   }
 
   return result;

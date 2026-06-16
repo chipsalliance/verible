@@ -43,14 +43,14 @@ class VerilogLexer : public verible::FlexLexerAdapter<verilogFlexLexer> {
  public:
   explicit VerilogLexer(std::string_view code);
 
+  // Filter predicate that can be used for testing and parsing.
+  static bool KeepSyntaxTreeTokens(const verible::TokenInfo &);
+
   // Restart lexer with new input stream.
   void Restart(std::string_view) final;
 
   // Returns true if token is invalid.
   bool TokenIsError(const verible::TokenInfo &) const final;
-
-  // Filter predicate that can be used for testing and parsing.
-  static bool KeepSyntaxTreeTokens(const verible::TokenInfo &);
 
  private:
   // Main lexing function. Will be defined by Flex.

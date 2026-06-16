@@ -44,15 +44,6 @@ static std::vector<int> ContextToTags(const SyntaxTreeContext &context) {
 template <class BaseVisitor>
 class ContextRecorder : public BaseVisitor {
  public:
-  void Visit(const SyntaxTreeLeaf &leaf) final {
-    context_history_.push_back(BaseVisitor::Context());
-  }
-
-  void Visit(const SyntaxTreeNode &node) final {
-    context_history_.push_back(BaseVisitor::Context());
-    BaseVisitor::Visit(node);
-  }
-
   std::vector<std::vector<int>> ContextTagHistory() const {
     std::vector<std::vector<int>> result;
     result.reserve(context_history_.size());
@@ -60,6 +51,16 @@ class ContextRecorder : public BaseVisitor {
       result.emplace_back(ContextToTags(context));
     }
     return result;
+  }
+
+ protected:
+  void Visit(const SyntaxTreeLeaf &leaf) final {
+    context_history_.push_back(BaseVisitor::Context());
+  }
+
+  void Visit(const SyntaxTreeNode &node) final {
+    context_history_.push_back(BaseVisitor::Context());
+    BaseVisitor::Visit(node);
   }
 
  private:
@@ -148,6 +149,11 @@ TEST(TreeContextVisitorTest, FullTree) {
 // Test class demonstrating visitation and path tracking
 class PathRecorder : public TreeContextPathVisitor {
  public:
+  const std::vector<SyntaxTreePath> &PathTagHistory() const {
+    return path_history_;
+  }
+
+ protected:
   void Visit(const SyntaxTreeLeaf &leaf) final {
     path_history_.push_back(Path());
   }
@@ -155,10 +161,6 @@ class PathRecorder : public TreeContextPathVisitor {
   void Visit(const SyntaxTreeNode &node) final {
     path_history_.push_back(Path());
     TreeContextPathVisitor::Visit(node);
-  }
-
-  const std::vector<SyntaxTreePath> &PathTagHistory() const {
-    return path_history_;
   }
 
  private:

@@ -307,6 +307,7 @@ class ActualNamedParameterColumnSchemaScanner
   explicit ActualNamedParameterColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -338,6 +339,7 @@ class ActualNamedPortColumnSchemaScanner : public VerilogColumnSchemaScanner {
   explicit ActualNamedPortColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -369,6 +371,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
   explicit PortDeclarationColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -545,6 +548,7 @@ class StructUnionMemberColumnSchemaScanner : public VerilogColumnSchemaScanner {
   explicit StructUnionMemberColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -759,6 +763,7 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
   explicit DataDeclarationColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -906,6 +911,7 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
   explicit ClassPropertyColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -982,6 +988,7 @@ class ParameterDeclarationColumnSchemaScanner
   explicit ParameterDeclarationColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -1123,6 +1130,7 @@ class CaseItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
          NodeEnum::kGenerateCaseItem, NodeEnum::kDefaultItem});
   }
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -1184,6 +1192,7 @@ class AssignmentColumnSchemaScanner : public VerilogColumnSchemaScanner {
   explicit AssignmentColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -1242,6 +1251,7 @@ class EnumWithAssignmentsColumnSchemaScanner
   explicit EnumWithAssignmentsColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
@@ -1286,6 +1296,7 @@ class DistItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
   explicit DistItemColumnSchemaScanner(const FormatStyle &style)
       : VerilogColumnSchemaScanner(style) {}
 
+ protected:
   void Visit(const SyntaxTreeNode &node) final {
     const auto tag = NodeEnum(node.Tag().tag);
     switch (tag) {

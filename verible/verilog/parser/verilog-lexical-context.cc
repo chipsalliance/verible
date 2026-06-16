@@ -80,7 +80,7 @@ void KeywordLabelStateMachine::UpdateState(int token_enum) {
 std::ostream &ConstraintBlockStateMachine::Dump(std::ostream &os) const {
   os << '[' << states_.size() << ']';
   if (!states_.empty()) {
-    os << ": top:" << int(states_.top());
+    os << ": top:" << static_cast<int>(states_.top());
   }
   return os;
 }

@@ -175,6 +175,7 @@ TEST(RebaseTokensToSuperstringTest, NewOwner) {
 }
 
 // Helper class for testing Token range methods.
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class TokenRangeTest : public ::testing::Test, public TextStructureTokenized {
  public:
   static constexpr int kSpace = 2;
@@ -335,6 +336,7 @@ TEST_F(TokenRangeTest, TokenRangeOnLine) {
 }
 
 // Testing select public methods of TextStructureView.
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class TextStructureViewPublicTest : public ::testing::Test,
                                     public TextStructureView {
  public:

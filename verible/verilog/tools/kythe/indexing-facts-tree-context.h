@@ -34,6 +34,7 @@ class IndexingFactsTreeContext
 
  public:
   // returns the top IndexingFactsNode of the stack.
+  // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method)
   IndexingFactNode &top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
 };
 

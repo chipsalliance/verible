@@ -184,6 +184,7 @@ TEST(KeywordLabelStateMachineTest, ItemsInsideBlocks) {
   }
 }
 
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class LastSemicolonStateMachineTest
     : public ::testing::Test,
       public internal::LastSemicolonStateMachine {
@@ -1150,6 +1151,7 @@ TEST_F(RandomizeCallStateMachineTest,
 }
 
 // Class for testing some internal methods of LexicalContext.
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class LexicalContextTest : public ::testing::Test, public LexicalContext {
  protected:
   LexicalContextTest() = default;

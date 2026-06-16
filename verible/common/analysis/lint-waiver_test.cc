@@ -141,6 +141,7 @@ constexpr char kWaiveStartCommand[] = "waive-begin";
 constexpr char kWaiveStopCommand[] = "waive-end";
 
 // Helper class for testing an example of a waiver.
+// NOLINTNEXTLINE(misc-multiple-inheritance)
 class LintWaiverBuilderTest : public testing::Test, public LintWaiverBuilder {
  public:
   LintWaiverBuilderTest()

@@ -46,7 +46,7 @@ class DataStreamSimulator {
 
   int read(char *buf, int size) {
     if (max_chunk_ > 0 && size > max_chunk_) size = max_chunk_;
-    size = std::min(size, (int)content_.length() - read_pos_);
+    size = std::min(size, static_cast<int>(content_.length() - read_pos_));
     memcpy(buf, content_.data() + read_pos_, size);
     read_pos_ += size;
     return size;
