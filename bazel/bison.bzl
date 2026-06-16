@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Bazel rule to run bison toolchain
+"""Bazel rule to run bison
 """
+
+load("@bison//:bison.bzl", "bison")
 
 # Adapter rule around the @rules_bison toolchain.
 def genyacc(
@@ -26,21 +28,13 @@ def genyacc(
         extra_outs = []):
     """Build rule for generating C or C++ sources with Bison.
     """
-    native.genrule(
+
+    bison(
         name = name,
         srcs = [src],
         outs = [header_out, source_out] + extra_outs,
-        cmd = select({
-            "//bazel:use_local_flex_bison_enabled": "bison --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
-            "@platforms//os:windows": "win_bison.exe --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
-            "//conditions:default": "M4=$(M4) $(BISON) --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
-        }),
-        toolchains = select({
-            "//bazel:use_local_flex_bison_enabled": [],
-            "@platforms//os:windows": [],
-            "//conditions:default": [
-                "@rules_bison//bison:current_bison_toolchain",
-                "@rules_m4//m4:current_m4_toolchain",
-            ],
-        }),
+        args = [
+            "--output-file=$(location " + source_out + ")",
+            "--defines=$(location " + header_out + ")",
+        ] + extra_options + ["$(location " + src + ")"],
     )

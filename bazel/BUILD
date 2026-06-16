@@ -13,13 +13,6 @@ package(
     features = ["layering_check"],
 )
 
-cc_library(
-    name = "flex",
-    deps = [
-        "@rules_flex//flex:current_flex_toolchain",  # For FlexLexer.h
-    ],
-)
-
 exports_files([
     "bison.bzl",
     "flex.bzl",
@@ -30,11 +23,7 @@ exports_files([
 bool_flag(
     name = "use_local_flex_bison",
     build_setting_default = False,
-)
-
-config_setting(
-    name = "use_local_flex_bison_enabled",
-    flag_values = {":use_local_flex_bison": "true"},
+    deprecation = "This flag is not doing anything anymore",
 )
 
 bool_flag(

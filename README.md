@@ -201,25 +201,12 @@ instead of default `gold` linker).
 bazel build -c opt --config=create_static_linked_executables //...
 ```
 
-### Optionally using local flex/bison for build
-
-Flex and Bison, that are needed for the parser generation, are compiled as part
-of the build process. But if for any reason you want or need local tools (e.g.
-if you encounter a compile problem with them - please file a bug then)
-can choose so by adding `--//bazel:use_local_flex_bison` to your bazel
-command line:
-
-```bash
-# Also append the option '--//bazel:use_local_flex_bison' to test/install commands
-bazel build -c opt  --//bazel:use_local_flex_bison //...
-```
-
 ### Building on Windows
 
-Building on Windows requires LLVM, WinFlexBison 3 and Git-bash to be installed. Using package manager [chocolatey], this can be done with
+Building on Windows requires LLVM and Git-bash to be installed. Using package manager [chocolatey], this can be done with
 
 ```powershell
-choco install git llvm winflexbison3
+choco install git llvm
 ```
 
 Bazel may also require environment variable to use git-bash and LLVM, on powershell

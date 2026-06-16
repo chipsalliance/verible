@@ -14,8 +14,7 @@ package(
     default_visibility = [
         "//verible/verilog:__subpackages__",
     ],
-    # Not yet enabled, lexer does not find FlexLexer.h
-    #features = ["layering_check"],
+    features = ["layering_check"],
 )
 
 genlex(
@@ -39,9 +38,9 @@ cc_library(
     }),
     deps = [
         ":verilog-token-enum",
-        "//bazel:flex",
         "//verible/common/lexer:flex-lexer-adapter",
         "//verible/common/text:token-info",
+        "@flex//:headers",
     ],
 )
 

@@ -12,8 +12,7 @@ package(
         "//verible/verilog/tools/lint:__subpackages__",
         "//verible/verilog/tools/ls:__subpackages__",
     ],
-    # Not yet enabled, lexer does not find FlexLexer.h
-    #features = ["layering_check"],
+    features = ["layering_check"],
 )
 
 cc_library(
@@ -70,13 +69,13 @@ cc_library(
         "//conditions:default": ["-Wno-implicit-fallthrough"],
     }),
     deps = [
-        "//bazel:flex",
         "//verible/common/lexer:flex-lexer-adapter",
         "//verible/common/lexer:token-stream-adapter",
         "//verible/common/text:token-info",
         "//verible/common/text:token-stream-view",
         "//verible/common/util:iterator-range",
         "//verible/common/util:logging",
+        "@flex//:headers",
     ],
 )
 
