@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/log/die_if_null.h"
+#include "absl/strings/ascii.h"
 #include "verible/common/formatting/align.h"
 #include "verible/common/formatting/format-token.h"
 #include "verible/common/formatting/token-partition-tree.h"
@@ -95,15 +96,18 @@ static bool TokensHaveParenthesis(const T &tokens) {
 }
 
 // Returns true if the partition contains a separator comment line.
-// A separator comment is an EOL comment whose body (after stripping "//"
-// and optional leading whitespace) consists of 4 or more consecutive
-// identical characters. Examples: "// ----", "// ====",
-// "/////////////////////".
+// A separator comment is an EOL comment whose body contains a run of 4 or
+// more consecutive identical "divider" characters, where a divider character
+// is any non-alphanumeric, non-whitespace character (e.g. '-', '=', '*',
+// '#', '/').  The run may be surrounded by other text, so both a bare rule
+// and a captioned one are recognised.  Examples: "// ----", "// ====",
+// "/////////////////////", "// ------ section heading ------".
 static bool IsSeparatorComment(const TokenPartitionTree &partition) {
   const auto &uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
   if (token_range.empty()) return false;
 
+  constexpr int kMinRunLength = 4;
   for (const auto &ftoken : token_range) {
     if (ftoken.TokenEnum() !=
         static_cast<int>(verilog_tokentype::TK_EOL_COMMENT)) {
@@ -113,19 +117,21 @@ static bool IsSeparatorComment(const TokenPartitionTree &partition) {
     std::string_view text = ftoken.Text();
     // Strip leading "//"
     if (text.size() < 2 || text[0] != '/' || text[1] != '/') continue;
-    std::string_view body = text.substr(2);
+    const std::string_view body = text.substr(2);
 
-    // Strip optional leading whitespace
-    const auto start = body.find_first_not_of(" \t");
-    if (start == std::string_view::npos) continue;
-    body = body.substr(start);
-
-    // Check for 4+ consecutive identical characters
-    if (body.size() < 4) continue;
-    const char first = body[0];
-    if (std::all_of(body.begin(), body.end(),
-                    [first](char ch) { return ch == first; })) {
-      return true;
+    // Look for a run of kMinRunLength or more consecutive identical divider
+    // characters anywhere in the comment body.
+    int run = 0;
+    char prev = '\0';
+    for (const char ch : body) {
+      const bool is_divider =
+          !absl::ascii_isalnum(ch) && !absl::ascii_isspace(ch);
+      if (is_divider && ch == prev) {
+        if (++run >= kMinRunLength) return true;
+      } else {
+        run = is_divider ? 1 : 0;
+        prev = ch;
+      }
     }
   }
   return false;
