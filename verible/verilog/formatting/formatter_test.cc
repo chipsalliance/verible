@@ -668,6 +668,14 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module test;\nendmodule\n"
      "`end_keywords\n"},
 
+    // let test cases
+    {
+        "  let X=1   ; let Y=2;let Z     =3;",
+        "let X = 1;\n"
+        "let Y = 2;\n"
+        "let Z = 3;\n",
+    },
+
     // parameter test cases
     {
         "  parameter  int   foo=0 ;",

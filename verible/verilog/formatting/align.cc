@@ -1040,10 +1040,11 @@ class ParameterDeclarationColumnSchemaScanner
 
     const int tag = leaf.get().token_enum();
     switch (tag) {
-      // Align keywords 'parameter', 'localparam' and 'type' under the same
-      // column.
+      // Align keywords 'parameter', 'localparam', 'let' and 'type'
+      // under the same column.
       case verilog_tokentype::TK_parameter:
-      case verilog_tokentype::TK_localparam: {
+      case verilog_tokentype::TK_localparam:
+      case verilog_tokentype::TK_let: {
         ReserveNewColumn(leaf, FlushLeft);
         break;
       }
