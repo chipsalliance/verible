@@ -369,10 +369,12 @@ section boundaries so each sub-section is aligned independently:
 *   `none` (default): no additional splitting; the whole section is one group.
 *   `blank-lines`: a blank line starts a new alignment group.
 *   `separator-comments`: a separator comment starts a new alignment group. A
-    separator comment is a `//` comment on its own line whose text (after the
-    `//`) is four or more consecutive identical characters, e.g. `// ----`,
-    `// ====`, or `/////`. A trailing comment after code on the same line does
-    not count.
+    separator comment is a `//` comment on its own line whose text contains a
+    run of four or more consecutive identical "divider" characters (any
+    non-alphanumeric, non-whitespace character). The run may be surrounded by
+    caption text, so all of `// ----`, `// ====`, `/////`, and
+    `// ------ section heading ------` count. A trailing comment after code on
+    the same line does not count.
 *   `blank-lines-and-separator-comments`: both blank lines and separator
     comments start a new alignment group.
 

@@ -18938,6 +18938,36 @@ TEST(FormatterEndToEndTest, AlignmentGroupBoundarySeparatorComments) {
        "  assign baaaaz = 1'b1;\n"
        "  assign c      = 1'b0;\n"
        "endmodule\n"},
+      {// Captioned divider (text between separator runs) also breaks
+       "module m;\n"
+       "assign foo  = 1'b1;\n"
+       "assign baar = 1'b0;\n"
+       "// ------ section heading ------\n"
+       "assign baaaaz = 1'b1;\n"
+       "assign c      = 1'b0;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  assign foo  = 1'b1;\n"
+       "  assign baar = 1'b0;\n"
+       "  // ------ section heading ------\n"
+       "  assign baaaaz = 1'b1;\n"
+       "  assign c      = 1'b0;\n"
+       "endmodule\n"},
+      {// Leading-only divider run with trailing caption text
+       "module m;\n"
+       "assign foo  = 1'b1;\n"
+       "assign baar = 1'b0;\n"
+       "// ==== Registers\n"
+       "assign baaaaz = 1'b1;\n"
+       "assign c      = 1'b0;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  assign foo  = 1'b1;\n"
+       "  assign baar = 1'b0;\n"
+       "  // ==== Registers\n"
+       "  assign baaaaz = 1'b1;\n"
+       "  assign c      = 1'b0;\n"
+       "endmodule\n"},
       {// No space after // also works
        "module m;\n"
        "assign foo  = 1'b1;\n"
