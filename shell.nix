@@ -7,12 +7,13 @@ let
   verible_used_stdenv = pkgs.stdenv;
   #verible_used_stdenv = pkgs.gcc15Stdenv;
   #verible_used_stdenv = pkgs.clang19Stdenv;
+  bazel = pkgs.bazel_8;
 in
 verible_used_stdenv.mkDerivation {
   name = "verible-build-environment";
   buildInputs = with pkgs;
     [
-      bazel_7
+      bazel
       git
 
       # For scripts used inside bzl rules and tests
@@ -41,6 +42,8 @@ verible_used_stdenv.mkDerivation {
       llvmPackages_18.clang-tools    # for clang-format
     ];
   shellHook = ''
+      export USE_BAZEL_VERSION=${bazel.version}
+
       # clang tidy: use latest.
       export CLANG_TIDY=${pkgs.llvmPackages_21.clang-tools}/bin/clang-tidy
 
