@@ -827,5 +827,55 @@ TEST(VerilogMatchers, HasUniqueQualifierTests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
+
+// Tests for HasUnique0Qualifier matching.
+TEST(VerilogMatchers, HasUnique0QualifierTests) {
+  const RawMatcherTestCase tests[] = {
+      {HasUnique0Qualifier(), "", 0},
+      {HasUnique0Qualifier(),
+       R"(
+       function automatic int foo (input in);
+         case (in)
+           default: return 0;
+         endcase
+       endfunction
+       )",
+       0},
+      {HasUnique0Qualifier(),
+       R"(
+       function automatic int foo (input in);
+         unique0 case (in)
+           1: return 0;
+         endcase
+       endfunction
+       )",
+       1},
+      {HasUnique0Qualifier(),
+       R"(
+       function automatic int foo (input in);
+         unique case (in)
+           1: return 0;
+         endcase
+       endfunction
+       )",
+       0},
+      {HasUnique0Qualifier(),
+       R"(
+       function automatic int foo (input in);
+         unique0 if (in) begin
+           return 0;
+         end
+         else if(!in) begin
+           return 1;
+         end
+       endfunction
+       )",
+       1},
+  };
+  for (const auto &test : tests) {
+    verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
+  }
+}
+
 }  // namespace
 }  // namespace verilog
