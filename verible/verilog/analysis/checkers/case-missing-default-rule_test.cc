@@ -52,6 +52,14 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
        endfunction
        )"},
       {R"(
+       function automatic int foo (input [2:0] in);
+         unique0 case (in)
+           3'b001: return 1;
+         endcase
+         return 0;
+       endfunction
+      )"},
+      {R"(
        function automatic int foo (input in);
          )",
        {TK_case, "case"},
