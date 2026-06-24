@@ -100,6 +100,8 @@ static const verible::EnumNameMap<SymbolMetaType> &SymbolMetaTypeNames() {
       {"enum", SymbolMetaType::kEnumType},
       {"<enum constant>", SymbolMetaType::kEnumConstant},
       {"interface", SymbolMetaType::kInterface},
+      {"genvar", SymbolMetaType::kGenvar},
+      {"generate loop", SymbolMetaType::kGenerateLoop},
       {"<unspecified>", SymbolMetaType::kUnspecified},
       {"<callable>", SymbolMetaType::kCallable},
   });
@@ -212,6 +214,18 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kGenerateElseClause:
         DeclareGenerateElse(node);
         break;
+
+      // separate cases for handling different parts of generate construct
+      case NodeEnum::kLoopGenerateConstruct:
+        DeclareGenerateLoop(node);
+        break;
+      case NodeEnum::kGenerateBlock:
+        DeclareGenerateBlock(node);
+        break;
+      case NodeEnum::kGenvarDeclaration:
+        DeclareGenvarDeclaration(node);
+        break;
+
       case NodeEnum::kPackageDeclaration:
         DeclarePackage(node);
         break;
@@ -312,11 +326,11 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kSeqBlock:
         DeclareSequentialBlock(node);
         break;
-      // separate case for for loops
+      // separate case for for-loops
       case NodeEnum::kForLoopStatement:
         DeclareForLoop(node);
         break;
-      // separate case for for loop initialization
+      // separate case for for-loop initialization
       case NodeEnum::kForInitialization:
         DeclareForInitVariable(node);
         break;
@@ -1256,28 +1270,17 @@ class SymbolTable::Builder : public TreeContextVisitor {
                                    SymbolMetaType::kModule);
   }
 
-  std::string_view GetScopeNameFromGenerateBody(const SyntaxTreeNode &body) {
-    if (body.MatchesTag(NodeEnum::kGenerateBlock)) {
-      const SyntaxTreeNode *gen_block = GetGenerateBlockBegin(body);
-      const TokenInfo *label =
-          gen_block ? GetBeginLabelTokenInfo(*gen_block) : nullptr;
-      if (label != nullptr) {
-        // TODO: Check for a matching end-label here, and if its name matches
-        // the begin label, then immediately create a resolved reference because
-        // it only makes sense for it resolve to this begin.
-        // Otherwise, do nothing with the end label.
-        return label->text();
-      }
-    }
-    return current_scope_->Value().CreateAnonymousScope("generate");
-  }
-
   void DeclareGenerateIf(const SyntaxTreeNode &generate_if) {
     const SyntaxTreeNode *body(GetIfClauseGenerateBody(generate_if));
     if (body) {
-      DeclareScopedElementAndDescend(generate_if,
-                                     GetScopeNameFromGenerateBody(*body),
-                                     SymbolMetaType::kGenerate);
+      if (body->MatchesTag(NodeEnum::kGenerateBlock)) {
+        Descend(generate_if);
+      } else {
+        DeclareScopedElementAndDescend(
+            generate_if,
+            current_scope_->Value().CreateAnonymousScope("generate"),
+            SymbolMetaType::kGenerate);
+      }
     }
   }
 
@@ -1290,10 +1293,53 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // and let the if-clause inside create a scope directly under the current
       // scope.
       Descend(*body);
+    } else if (body->MatchesTag(NodeEnum::kGenerateBlock)) {
+      Descend(generate_else);
     } else {
-      DeclareScopedElementAndDescend(generate_else,
-                                     GetScopeNameFromGenerateBody(*body),
+      DeclareScopedElementAndDescend(
+          generate_else,
+          current_scope_->Value().CreateAnonymousScope("generate"),
+          SymbolMetaType::kGenerate);
+    }
+  }
+
+  void DeclareGenerateLoop(const SyntaxTreeNode &node) {
+    const std::string_view scope_name =
+        current_scope_->Value().CreateAnonymousScope("generate-for");
+    DeclareScopedElementAndDescend(node, scope_name,
+                                   SymbolMetaType::kGenerateLoop);
+  }
+
+  void DeclareGenerateBlock(const SyntaxTreeNode &node) {
+    const SyntaxTreeNode *gen_block = GetGenerateBlockBegin(node);
+    const TokenInfo *label =
+        gen_block ? GetBeginLabelTokenInfo(*gen_block) : nullptr;
+    if (label != nullptr) {
+      DeclareScopedElementAndDescend(node, label->text(),
                                      SymbolMetaType::kGenerate);
+    } else {
+      const std::string_view scope_name =
+          current_scope_->Value().CreateAnonymousScope("generate");
+      DeclareScopedElementAndDescend(node, scope_name,
+                                     SymbolMetaType::kGenerate);
+    }
+  }
+
+  void DeclareGenvarDeclaration(const SyntaxTreeNode &node) {
+    const auto *identifier_list =
+        GetSubtreeAsSymbol(node, NodeEnum::kGenvarDeclaration, 1);
+    if (!identifier_list) return;
+
+    const auto *list_node =
+        verible::down_cast<const SyntaxTreeNode *>(identifier_list);
+    for (const auto &child : list_node->children()) {
+      if (child && child->Kind() == verible::SymbolKind::kLeaf) {
+        const SyntaxTreeLeaf &leaf = verible::SymbolCastToLeaf(*child);
+        if (leaf.get().token_enum() == verilog_tokentype::SymbolIdentifier) {
+          EmplaceElementInCurrentScope(leaf, leaf.get().text(),
+                                       SymbolMetaType::kGenvar);
+        }
+      }
     }
   }
 
@@ -1307,7 +1353,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const std::string_view scope_name =
         label ? label->text()
               : current_scope_->Value().CreateAnonymousScope("block");
-    DeclareScopedElementAndDescend(node, scope_name, SymbolMetaType::kProceduralBlock);
+    DeclareScopedElementAndDescend(node, scope_name,
+                                   SymbolMetaType::kProceduralBlock);
   }
 
   void DeclareForLoop(const SyntaxTreeNode &node) {
@@ -1315,7 +1362,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // initialization variables and the loop body.
     const std::string_view scope_name =
         current_scope_->Value().CreateAnonymousScope("for");
-    DeclareScopedElementAndDescend(node, scope_name, SymbolMetaType::kLoopScope);
+    DeclareScopedElementAndDescend(node, scope_name,
+                                   SymbolMetaType::kLoopScope);
   }
 
   void DeclarePackage(const SyntaxTreeNode &package) {
@@ -1468,8 +1516,21 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   // Declares a variable from a for-loop initialization (e.g. `int i = 0`).
-  // Only handles typed declarations
+  // Handles both explicit `genvar` and standard typed declarations.
   void DeclareForInitVariable(const SyntaxTreeNode &for_init) {
+    const verible::SyntaxTreeLeaf *genvar_keyword =
+        GetGenvarKeywordFromForInitialization(for_init);
+    if (genvar_keyword) {
+      const verible::SyntaxTreeLeaf *var_name =
+          GetVariableNameFromForInitialization(for_init);
+      if (var_name) {
+        EmplaceElementInCurrentScope(*var_name, var_name->get().text(),
+                                     SymbolMetaType::kGenvar);
+      }
+      Descend(for_init);
+      return;
+    }
+
     const verible::SyntaxTreeNode *data_type =
         GetDataTypeFromForInitialization(for_init);
     if (data_type == nullptr) {
@@ -1487,9 +1548,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const ValueSaver<DeclarationTypeInfo *> save_type(&declaration_type_info_,
                                                       &decl_type_info);
     Descend(for_init);
-    EmplaceTypedElementInCurrentScope(
-        for_init, var_name->get().text(),
-        SymbolMetaType::kDataNetVariableInstance);
+    EmplaceTypedElementInCurrentScope(for_init, var_name->get().text(),
+                                      SymbolMetaType::kDataNetVariableInstance);
   }
 
   // Declare one (of potentially multiple) instances in a single declaration

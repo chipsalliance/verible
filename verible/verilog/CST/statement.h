@@ -179,8 +179,13 @@ const verible::SyntaxTreeNode *GetAnyConditionalElseClause(
     const verible::Symbol &conditional);
 
 // Returns the data type node from for loop initialization.
+// Returns the genvar keyword leaf from a for initialization, or nullptr if not
+// present.
+const verible::SyntaxTreeLeaf *GetGenvarKeywordFromForInitialization(
+    const verible::Symbol &for_initialization);
+
 const verible::SyntaxTreeNode *GetDataTypeFromForInitialization(
-    const verible::Symbol &);
+    const verible::Symbol &for_initialization);
 
 // Returns the variable name leaf from for loop initialization.
 const verible::SyntaxTreeLeaf *GetVariableNameFromForInitialization(
