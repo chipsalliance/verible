@@ -13,28 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Bazel rule to run flex toolchain
+"""Bazel rule to run flex
 """
+
+load("@flex//:flex.bzl", "flex")
 
 # Adapter rule around the @rules_flex toolchain.
 def genlex(name, src, out):
     """Generate C/C++ language source from lex file using Flex
     """
-    native.genrule(
+    flex(
         name = name,
         srcs = [src],
         outs = [out],
-        cmd = select({
-            "//bazel:use_local_flex_bison_enabled": "flex --outfile=$@ $<",
-            "@platforms//os:windows": "win_flex.exe --outfile=$@ $<",
-            "//conditions:default": "M4=$(M4) $(FLEX) --outfile=$@ $<",
-        }),
-        toolchains = select({
-            "//bazel:use_local_flex_bison_enabled": [],
-            "@platforms//os:windows": [],
-            "//conditions:default": [
-                "@rules_flex//flex:current_flex_toolchain",
-                "@rules_m4//m4:current_m4_toolchain",
-            ],
-        }),
+        args = [
+            "--outfile=$(location " + out + ")",
+            "$(location " + src + ")",
+        ],
     )
