@@ -713,6 +713,320 @@ TEST_F(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateLabeled) {
   }
 }
 
+TEST_F(BuildSymbolTableTest, SeqBlockCreatesAnonymousScope) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m;\n"
+                            "  initial begin\n"
+                            "    int x;\n"
+                            "  end\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode &root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
+
+  // The begin...end block should create a child scope.
+  ASSERT_EQ(module_node.Children().size(), 1);
+  const SymbolTableNode &block(module_node.Children().begin()->second);
+  const SymbolInfo &block_info(block.Value());
+  EXPECT_EQ(block_info.metatype, SymbolMetaType::kProceduralBlock);
+
+  // 'x' should be declared inside the block scope, not module scope.
+  MUST_ASSIGN_LOOKUP_SYMBOL(var_x, block, "x");
+  EXPECT_EQ(var_x_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST_F(BuildSymbolTableTest, SeqBlockLabeledScope) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m;\n"
+                            "  initial begin : my_block\n"
+                            "    int y;\n"
+                            "  end\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode &root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
+
+  // Labeled block should use the label as scope name.
+  MUST_ASSIGN_LOOKUP_SYMBOL(block_node, module_node, "my_block");
+  EXPECT_EQ(block_node_info.metatype, SymbolMetaType::kProceduralBlock);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(var_y, block_node, "y");
+  EXPECT_EQ(var_y_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST_F(BuildSymbolTableTest, SeqBlockVariableShadowing) {
+  // Inner begin...end block declares 'x' which shadows the outer module-level
+  // 'x'.  Both declarations should succeed (no "already defined" error).
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m;\n"
+                            "  int x;\n"
+                            "  initial begin\n"
+                            "    int x;\n"
+                            "  end\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode &root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
+
+  // Outer 'x' in module scope.
+  MUST_ASSIGN_LOOKUP_SYMBOL(outer_x, module_node, "x");
+  EXPECT_EQ(outer_x_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+
+  // Block scope exists as a second child of module.
+  EXPECT_EQ(module_node.Children().size(), 2);  // x + anonymous block
+  auto iter = module_node.Children().begin();
+  // Find the block child (skip past 'x').
+  while (iter != module_node.Children().end() &&
+         iter->second.Value().metatype != SymbolMetaType::kProceduralBlock) {
+    ++iter;
+  }
+  ASSERT_NE(iter, module_node.Children().end());
+  const SymbolTableNode &block(iter->second);
+
+  // Inner 'x' lives inside the block scope.
+  MUST_ASSIGN_LOOKUP_SYMBOL(inner_x, block, "x");
+  EXPECT_EQ(inner_x_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST_F(BuildSymbolTableTest, GenerateForVariableScope) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m;\n"
+                            "  for (genvar i = 0; i < 5; i++) begin : gen_blk\n"
+                            "    int j;\n"
+                            "  end\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode &root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+
+  // Module has one child: the generate for loop scope (anonymous).
+  ASSERT_EQ(module_node.Children().size(), 1);
+  const SymbolTableNode &for_scope(module_node.Children().begin()->second);
+  EXPECT_EQ(for_scope.Value().metatype, SymbolMetaType::kGenerateLoop);
+
+  // 'i' is declared in the for-loop scope.
+  MUST_ASSIGN_LOOKUP_SYMBOL(var_i, for_scope, "i");
+  EXPECT_EQ(var_i_info.metatype, SymbolMetaType::kGenvar);
+
+  // The generate for-loop body (begin...end) creates another nested scope
+  // containing 'j'.
+  MUST_ASSIGN_LOOKUP_SYMBOL(body_block, for_scope, "gen_blk");
+  EXPECT_EQ(body_block_info.metatype, SymbolMetaType::kGenerate);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(var_j, body_block, "j");
+  EXPECT_EQ(var_j_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST_F(BuildSymbolTableTest, GenerateForVariableScopeAnonymous) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m;\n"
+                            "  for (genvar i = 0; i < 5; i++) begin\n"
+                            "    int j;\n"
+                            "  end\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode &root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  ASSERT_EQ(module_node.Children().size(), 1);
+  const SymbolTableNode &for_scope(module_node.Children().begin()->second);
+  EXPECT_EQ(for_scope.Value().metatype, SymbolMetaType::kGenerateLoop);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(var_i, for_scope, "i");
+  EXPECT_EQ(var_i_info.metatype, SymbolMetaType::kGenvar);
+
+  const SymbolTableNode *body_block = nullptr;
+  for (const auto &child : for_scope.Children()) {
+    if (child.second.Value().metatype == SymbolMetaType::kGenerate) {
+      body_block = &child.second;
+      break;
+    }
+  }
+  ASSERT_NE(body_block, nullptr);
+  MUST_ASSIGN_LOOKUP_SYMBOL(var_j, *body_block, "j");
+  EXPECT_EQ(var_j_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+}
+
+TEST_F(BuildSymbolTableTest, StandaloneGenvarDeclaration) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m;\n"
+                            "  genvar i, j;\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode &root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  MUST_ASSIGN_LOOKUP_SYMBOL(var_i, module_node, "i");
+  EXPECT_EQ(var_i_info.metatype, SymbolMetaType::kGenvar);
+  MUST_ASSIGN_LOOKUP_SYMBOL(var_j, module_node, "j");
+  EXPECT_EQ(var_j_info.metatype, SymbolMetaType::kGenvar);
+}
+
+TEST_F(BuildSymbolTableTest, ForLoopVariableScope) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m;\n"
+                            "  initial begin\n"
+                            "    for (int i = 0; i < 5; i++) begin\n"
+                            "      int j;\n"
+                            "    end\n"
+                            "  end\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode &root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+
+  // Module has one child: the initial block scope.
+  ASSERT_EQ(module_node.Children().size(), 1);
+  const SymbolTableNode &init_block(module_node.Children().begin()->second);
+  EXPECT_EQ(init_block.Value().metatype, SymbolMetaType::kProceduralBlock);
+
+  // The initial block has one child: the for-loop scope.
+  ASSERT_EQ(init_block.Children().size(), 1);
+  const SymbolTableNode &for_scope(init_block.Children().begin()->second);
+  EXPECT_EQ(for_scope.Value().metatype, SymbolMetaType::kLoopScope);
+
+  // 'i' is declared in the for-loop scope.
+  MUST_ASSIGN_LOOKUP_SYMBOL(var_i, for_scope, "i");
+  EXPECT_EQ(var_i_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+
+  // The for-loop body (begin...end) creates another nested scope containing
+  // 'j'. Find the block scope child (skip past 'i').
+  const SymbolTableNode *body_block = nullptr;
+  for (const auto &child : for_scope.Children()) {
+    if (child.second.Value().metatype == SymbolMetaType::kProceduralBlock) {
+      body_block = &child.second;
+      break;
+    }
+  }
+  ASSERT_NE(body_block, nullptr);
+  MUST_ASSIGN_LOOKUP_SYMBOL(var_j, *body_block, "j");
+  EXPECT_EQ(var_j_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST_F(BuildSymbolTableTest, ForLoopVariableShadowing) {
+  // Module-level 'i' and for-loop 'i' should not collide.
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m;\n"
+                            "  int i;\n"
+                            "  initial begin\n"
+                            "    for (int i = 0; i < 5; i++) begin\n"
+                            "    end\n"
+                            "  end\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode &root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+
+  // Module-level 'i' exists.
+  MUST_ASSIGN_LOOKUP_SYMBOL(outer_i, module_node, "i");
+  EXPECT_EQ(outer_i_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+
+  // Find the for-loop scope (nested inside the initial block scope).
+  const SymbolTableNode *for_scope = nullptr;
+  for (const auto &child : module_node.Children()) {
+    if (child.second.Value().metatype == SymbolMetaType::kProceduralBlock) {
+      // This is the initial block. Search inside for the for-loop scope.
+      for (const auto &grandchild : child.second.Children()) {
+        if (grandchild.second.Value().metatype == SymbolMetaType::kLoopScope) {
+          for_scope = &grandchild.second;
+          break;
+        }
+      }
+      break;
+    }
+  }
+  ASSERT_NE(for_scope, nullptr);
+
+  // For-loop 'i' lives in the for-loop scope.
+  MUST_ASSIGN_LOOKUP_SYMBOL(loop_i, *for_scope, "i");
+  EXPECT_EQ(loop_i_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
 TEST_F(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m (\n"

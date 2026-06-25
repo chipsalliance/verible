@@ -53,7 +53,9 @@ enum class SymbolMetaType {
   kRoot,
   kClass,
   kModule,
-  kGenerate,  // loop or conditional generate block
+  kGenerate,         // loop or conditional generate block
+  kProceduralBlock,  // begin...end block
+  kLoopScope,        // for loop body and init
   kPackage,
   kParameter,
   kTypeAlias,  // typedef
@@ -64,6 +66,8 @@ enum class SymbolMetaType {
   kEnumType,
   kEnumConstant,
   kInterface,
+  kGenvar,
+  kGenerateLoop,
 
   // The following enums represent classes/groups of the above types,
   // and are used for validating metatypes of symbol references.

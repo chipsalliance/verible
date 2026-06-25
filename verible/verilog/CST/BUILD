@@ -749,6 +749,8 @@ cc_library(
         "//verible/common/text:symbol",
         "//verible/common/text:tree-utils",
         "//verible/common/text:visitors",
+        "//verible/common/util:casts",
+        "//verible/verilog/parser:verilog-token-enum",
     ],
 )
 

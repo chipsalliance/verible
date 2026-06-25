@@ -21,11 +21,13 @@
 #include "verible/common/text/concrete-syntax-tree.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/tree-utils.h"
+#include "verible/common/util/casts.h"
 #include "verible/verilog/CST/declaration.h"
 #include "verible/verilog/CST/identifier.h"
 #include "verible/verilog/CST/type.h"
 #include "verible/verilog/CST/verilog-matchers.h"  // IWYU pragma: keep
 #include "verible/verilog/CST/verilog-nonterminals.h"
+#include "verible/verilog/parser/verilog-token-enum.h"
 
 namespace verilog {
 
@@ -447,6 +449,21 @@ const SyntaxTreeNode *GetAnyConditionalElseClause(const Symbol &conditional) {
 }
 
 // Returns the data type node from for loop initialization.
+const verible::SyntaxTreeLeaf *GetGenvarKeywordFromForInitialization(
+    const verible::Symbol &for_initialization) {
+  const verible::Symbol *child0 =
+      GetSubtreeAsSymbol(for_initialization, NodeEnum::kForInitialization, 0);
+  if (child0 == nullptr) return nullptr;
+  if (child0->Kind() == verible::SymbolKind::kLeaf) {
+    const auto *leaf =
+        verible::down_cast<const verible::SyntaxTreeLeaf *>(child0);
+    if (leaf->get().token_enum() == TK_genvar) {
+      return leaf;
+    }
+  }
+  return nullptr;
+}
+
 const verible::SyntaxTreeNode *GetDataTypeFromForInitialization(
     const verible::Symbol &for_initialization) {
   const auto *data_type = verible::GetSubtreeAsSymbol(
