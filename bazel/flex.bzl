@@ -16,10 +16,13 @@
 """Bazel rule to run flex toolchain
 """
 
-# Adapter rule around the @rules_flex toolchain.
 def genlex(name, src, out):
     """Generate C/C++ language source from lex file using Flex
     """
+
+    # Bazel 8 no longer allows select() in genrule.toolchains. Keep the
+    # toolchain-provided executables on the configurable tools attribute, and
+    # use PATH-provided flex/win_flex for the local Windows paths.
     native.genrule(
         name = name,
         srcs = [src],
@@ -29,7 +32,7 @@ def genlex(name, src, out):
             "@platforms//os:windows": "win_flex.exe --outfile=$@ $<",
             "//conditions:default": "M4=$(M4) $(FLEX) --outfile=$@ $<",
         }),
-        toolchains = select({
+        tools = select({
             "//bazel:use_local_flex_bison_enabled": [],
             "@platforms//os:windows": [],
             "//conditions:default": [
