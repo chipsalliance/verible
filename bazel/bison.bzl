@@ -32,6 +32,12 @@ def genyacc(
     bison_args = "--defines=$(location " + header_out + ") " + \
                  "--output-file=$(location " + source_out + ") " + \
                  " ".join(extra_options) + " $<"
+    default_cmd = "BISON=; " + \
+                  "for tool in $(execpaths @rules_bison//bison:current_bison_toolchain); do " + \
+                  "case $$tool in */bin/bison|*/bin/bison.exe) BISON=$$tool ;; esac; " + \
+                  "done; " + \
+                  "M4=$(execpath @rules_m4//m4:current_m4_toolchain) $$BISON " + \
+                  bison_args
 
     native.genrule(
         name = name,
@@ -40,7 +46,7 @@ def genyacc(
         cmd = select({
             "//bazel:use_local_flex_bison_enabled": "bison " + bison_args,
             "@platforms//os:windows": "win_bison.exe " + bison_args,
-            "//conditions:default": "M4=$(M4) $(BISON) " + bison_args,
+            "//conditions:default": default_cmd,
         }),
         tools = select({
             "//bazel:use_local_flex_bison_enabled": [],
