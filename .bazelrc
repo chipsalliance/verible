@@ -20,11 +20,10 @@ common:macos   --config=unix
 # https://github.com/bazelbuild/bazel/issues/4341#issuecomment-758361769
 common:macos --features=-supports_dynamic_linker --linkopt=-framework --linkopt=CoreFoundation --host_linkopt=-framework --host_linkopt=CoreFoundation
 
-# Use clang-cl by default on Windows. MSVC has some issues with the codebase,
-# so we focus the effort for now is to have a Windows Verible compiled with
-# clang-cl before fixing the issues unique to MSVC.
+# Use clang-cl by default on Windows. MSVC has separate codebase issues, so
+# keep this configuration focused on the documented Bazel 8 clang-cl path.
 common:windows --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl --extra_execution_platforms=//:x64_windows-clang-cl
-common:windows --compiler=clang-cl --cxxopt=/std:c++17 --host_cxxopt=/std:c++17 --client_env=BAZEL_CXXOPTS=/std:c++17
+common:windows --compiler=clang-cl --cxxopt=/std:c++17 --host_cxxopt=/std:c++17
 
 build --cxxopt="-Wno-unknown-warning-option" --host_cxxopt="-Wno-unknown-warning-option"
 # TODO: this looks like benign where it happens but to be explored further.
