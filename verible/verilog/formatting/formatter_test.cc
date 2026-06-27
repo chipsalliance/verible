@@ -19216,6 +19216,55 @@ TEST(FormatterEndToEndTest,
   }
 }
 
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentModuleAndPackage) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// localparam alignment in module body
+       "module m;\n"
+       "localparam foo = 4'b0000;\n"
+       "localparam barr = 4'b0010;\n"
+       "localparam baaaaz = 4'b0111;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo    = 4'b0000;\n"
+       "  localparam barr   = 4'b0010;\n"
+       "  localparam baaaaz = 4'b0111;\n"
+       "endmodule\n"},
+      {// localparam alignment in package body
+       "package p;\n"
+       "localparam foo = 4'b0000;\n"
+       "localparam barr = 4'b0010;\n"
+       "localparam baaaaz = 4'b0111;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  localparam foo    = 4'b0000;\n"
+       "  localparam barr   = 4'b0010;\n"
+       "  localparam baaaaz = 4'b0111;\n"
+       "endpackage\n"},
+      {// parameter alignment in module body
+       "module m;\n"
+       "parameter int foo = 1;\n"
+       "parameter int barr = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter int foo  = 1;\n"
+       "  parameter int barr = 2;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.formal_parameters_alignment = AlignmentPolicy::kAlign;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog

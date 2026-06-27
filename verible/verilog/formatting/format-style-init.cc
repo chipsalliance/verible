@@ -111,7 +111,12 @@ ABSL_FLAG(
     "Format net/variable declarations: {align,flush-left,preserve,infer}");
 ABSL_FLAG(AlignmentPolicy, formal_parameters_alignment,
           AlignmentPolicy::kInferUserIntent,
-          "Format formal parameters: {align,flush-left,preserve,infer}");
+          "Format formal parameters in module/interface/class headers "
+          "(inside #(...)): {align,flush-left,preserve,infer}");
+ABSL_FLAG(AlignmentPolicy, parameter_declaration_alignment,
+          AlignmentPolicy::kInferUserIntent,
+          "Format parameter/localparam declarations in module, package, "
+          "and interface bodies: {align,flush-left,preserve,infer}");
 ABSL_FLAG(AlignmentPolicy, class_member_variable_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format class member variables: {align,flush-left,preserve,infer}");
@@ -180,6 +185,7 @@ void InitializeFromFlags(FormatStyle *style) {
   STYLE_FROM_FLAG(enum_assignment_statement_alignment);
   STYLE_FROM_FLAG(formal_parameters_indentation);
   STYLE_FROM_FLAG(formal_parameters_alignment);
+  STYLE_FROM_FLAG(parameter_declaration_alignment);
   STYLE_FROM_FLAG(class_member_variable_alignment);
   STYLE_FROM_FLAG(case_items_alignment);
   STYLE_FROM_FLAG(distribution_items_alignment);

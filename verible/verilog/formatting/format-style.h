@@ -101,9 +101,16 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Control indentation amount for formal parameter declarations.
   IndentationStyle formal_parameters_indentation = IndentationStyle::kWrap;
 
-  // Control how formal parameters in modules/interfaces/classes are formatted.
+  // Control how formal parameters in module/interface/class headers
+  // (inside #(...)) are formatted. For parameter/localparam declarations
+  // in module/package bodies, see parameter_declaration_alignment.
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy formal_parameters_alignment = AlignmentPolicy::kAlign;
+
+  // Control how parameter/localparam declarations within module, package,
+  // and interface bodies are formatted.
+  // Internal tests assume these are forced to kAlign.
+  AlignmentPolicy parameter_declaration_alignment = AlignmentPolicy::kAlign;
 
   // Control how class member variables are formatted.
   // Internal tests assume these are forced to kAlign.
@@ -180,6 +187,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
     named_port_alignment = policy;
     module_net_variable_alignment = policy;
     formal_parameters_alignment = policy;
+    parameter_declaration_alignment = policy;
     class_member_variable_alignment = policy;
     case_items_alignment = policy;
     assignment_statement_alignment = policy;

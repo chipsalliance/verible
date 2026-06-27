@@ -632,7 +632,8 @@ enum class AlignableSyntaxSubtype {
   kDontCare = 0,
   kNamedActualParameters,
   kNamedActualPorts,
-  kParameterDeclaration,
+  kParameterDeclaration,        // formal parameter list (#(...))
+  kModuleParameterDeclaration,  // parameter/localparam in module/package body
   kPortDeclaration,
   kStructUnionMember,
   kDataDeclaration,  // net/variable declarations
@@ -674,6 +675,10 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
           return AlignClassify(AlignmentGroupAction::kIgnore);
         }
         const SyntaxTreeNode &node = verible::SymbolCastToNode(*origin);
+        if (node.MatchesTag(NodeEnum::kParamDeclaration)) {
+          return AlignClassify(AlignmentGroupAction::kMatch,
+                               AlignableSyntaxSubtype::kModuleParameterDeclaration);
+        }
         // Align net/variable declarations.
         if (IsAlignableDeclaration(node)) {
           return AlignClassify(AlignmentGroupAction::kMatch,
@@ -1456,6 +1461,11 @@ static const AlignmentHandlerMapType &AlignmentHandlerLibrary() {
             ParameterDeclarationColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::formal_parameters_alignment)}},
+      {AlignableSyntaxSubtype::kModuleParameterDeclaration,
+       {UnstyledAlignmentCellScannerGenerator<
+            ParameterDeclarationColumnSchemaScanner>(non_tree_column_scanner),
+        function_from_pointer_to_member(
+            &FormatStyle::parameter_declaration_alignment)}},
       {AlignableSyntaxSubtype::kPortDeclaration,
        {UnstyledAlignmentCellScannerGenerator<
             PortDeclarationColumnSchemaScanner>(non_tree_column_scanner),
@@ -1598,8 +1608,9 @@ ExtractAlignablePartitionGroupsWithBoundary(
 
 static std::vector<AlignablePartitionGroup> AlignModuleItems(
     const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
-  // Currently, this only handles data/net/variable declarations.
-  // TODO(b/161814377): align continuous assignments
+  // Applies to module, generate, and package item lists.
+  // Handles data/net/variable/parameter/localparam declarations
+  // and continuous assignments.
   auto group_extractor = [&vstyle](const TokenPartitionRange &range) {
     return GetConsecutiveModuleItemGroups(range,
                                           vstyle.alignment_group_boundary);
@@ -1683,6 +1694,7 @@ void TabularAlignTokenPartitions(const FormatStyle &style,
           {NodeEnum::kPortActualList, &AlignActualNamedPorts},
           {NodeEnum::kModuleItemList, &AlignModuleItems},
           {NodeEnum::kGenerateItemList, &AlignModuleItems},
+          {NodeEnum::kPackageItemList, &AlignModuleItems},
           {NodeEnum::kFormalParameterList, &AlignParameterDeclarations},
           {NodeEnum::kClassItems, &AlignClassItems},
           // various case-like constructs:
