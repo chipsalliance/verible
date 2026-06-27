@@ -86,10 +86,12 @@ struct FormatStyle : public verible::BasicFormatStyle {
   AlignmentPolicy named_port_alignment = AlignmentPolicy::kAlign;
 
   // Control how module-local net/variable declarations are formatted.
+  // Applies in module, generate, interface, and package bodies.
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy module_net_variable_alignment = AlignmentPolicy::kAlign;
 
   // Control how various assignment statements should be aligned.
+  // Applies in module, generate, interface, and package bodies.
   // This covers: continuous assignment statements,
   // blocking, and nonblocking assignments.
   // Internal tests assume these are forced to kAlign.
@@ -101,9 +103,19 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Control indentation amount for formal parameter declarations.
   IndentationStyle formal_parameters_indentation = IndentationStyle::kWrap;
 
-  // Control how formal parameters in modules/interfaces/classes are formatted.
+  // Control how formal parameters in module/interface/class headers
+  // (inside #(...)) are formatted.  For parameter/localparam
+  // declarations in module, generate, interface, and package bodies,
+  // see parameter_declaration_alignment.
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy formal_parameters_alignment = AlignmentPolicy::kAlign;
+
+  // Control how parameter/localparam declarations are formatted.
+  // Applies in module, generate, interface, and package bodies.
+  // Class body parameter declarations are not affected.
+  // For formal parameters in #(...) headers, see formal_parameters_alignment.
+  // Internal tests assume these are forced to kAlign.
+  AlignmentPolicy parameter_declaration_alignment = AlignmentPolicy::kAlign;
 
   // Control how class member variables are formatted.
   // Internal tests assume these are forced to kAlign.
@@ -174,12 +186,16 @@ struct FormatStyle : public verible::BasicFormatStyle {
                : indentation_spaces;
   }
 
+  // -- Note: When adding a new AlignmentPolicy field, add it here
+  // and to InitializeFromFlags in format-style-init.cc.
   void ApplyToAllAlignmentPolicies(AlignmentPolicy policy) {
     port_declarations_alignment = policy;
+    struct_union_members_alignment = policy;
     named_parameter_alignment = policy;
     named_port_alignment = policy;
     module_net_variable_alignment = policy;
     formal_parameters_alignment = policy;
+    parameter_declaration_alignment = policy;
     class_member_variable_alignment = policy;
     case_items_alignment = policy;
     assignment_statement_alignment = policy;

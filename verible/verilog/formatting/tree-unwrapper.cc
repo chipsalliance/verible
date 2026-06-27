@@ -1201,7 +1201,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     // For the following constructs, always expand the view to subpartitions.
     // Add a level of indentation.
     case NodeEnum::kPackageImportList:
-    case NodeEnum::kPackageItemList:
     case NodeEnum::kInterfaceClassDeclaration:
     case NodeEnum::kCasePatternItemList:
     case NodeEnum::kConstraintBlockItemList:
@@ -1314,6 +1313,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kClassItems:
     case NodeEnum::kModuleItemList:
     case NodeEnum::kGenerateItemList:
+    // Aligns parameter, net/variable, and assignment declarations in packages.
+    case NodeEnum::kPackageItemList:
     case NodeEnum::kDistributionItemList:
     case NodeEnum::kEnumNameList:
     case NodeEnum::kStructUnionMemberList: {
