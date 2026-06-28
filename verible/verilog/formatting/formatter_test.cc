@@ -20666,6 +20666,63 @@ TEST(FormatterEndToEndTest, BothParamAlignmentsInferUserIntent) {
   }
 }
 
+// Verify that a large multi-line comment block between parameter
+// declarations does not crash the formatter.  The tree-unwrapper may
+// produce a partition structure where the comment tokens are absorbed
+// into the following parameter partition, which the alignment code
+// must handle gracefully by skipping alignment for that row.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentCommentBlockNoCrash) {
+  // These inputs contain large multi-line comment blocks between
+  // parameter/localparam declarations.  The formatter must not crash
+  // (SIGABRT).  Output correctness is secondary; the formatter may
+  // fall back to preserving the original input when the partition
+  // structure prevents safe alignment.
+  const char *kInputs[] = {
+      "module m;\n"
+      "parameter int W = 8;\n"
+      "// Multi-line comment block\n"
+      "// that spans across\n"
+      "//\n"
+      "// several lines\n"
+      "// of explanatory text\n"
+      "//\n"
+      "// It contains enough\n"
+      "// lines to trigger\n"
+      "// the partition structure\n"
+      "// edge case where\n"
+      "// comment tokens are\n"
+      "// absorbed into the\n"
+      "// following parameter\n"
+      "// partition.\n"
+      "//\n"
+      "localparam int H = 2;\n"
+      "endmodule\n",
+      "package p;\n"
+      "parameter int X = 1;\n"
+      "// Long comment block\n"
+      "// with many lines\n"
+      "//\n"
+      "// of text\n"
+      "//\n"
+      "localparam int Y = 2;\n"
+      "endpackage\n",
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  for (const char *input : kInputs) {
+    VLOG(1) << "code-to-format:\n" << input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(input, "<filename>", style, stream);
+    // The primary requirement is that the formatter does not crash
+    // (SIGABRT).  Gtest will report failure if the process aborts.
+    // The partition structure may cause output format differences;
+    // the important thing is the formatter handled it gracefully.
+  }
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog

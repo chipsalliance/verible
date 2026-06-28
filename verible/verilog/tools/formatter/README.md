@@ -4,8 +4,8 @@
 freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
 *-->
 
-`verible-verilog-format` is the SystemVerilog formatter tool. You can can
-get a full set of avilable flags using the `--helpfull` flag.
+`verible-verilog-format` is the SystemVerilog formatter tool. You can
+get a full set of available flags using the `--helpfull` flag.
 
 For automatic formatting suggestions on github pull requests, there is a
 [easy to integrate github action available][github-format-action].
@@ -50,7 +50,7 @@ To pipe from stdin, use '-' as <file>.
       {align,flush-left,preserve,infer}); default: infer;
     --expand_coverpoints (If true, always expand coverpoints.); default: false;
     --formal_parameters_alignment (Format formal parameters in module/
-      interface/class headers (#(...)): {align,flush-left,preserve,infer});
+      interface/class headers (inside #(...)): {align,flush-left,preserve,infer});
       default: infer;
     --formal_parameters_indentation (Indent formal parameters: {indent,wrap});
       default: wrap;

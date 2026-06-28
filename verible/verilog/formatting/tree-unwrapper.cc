@@ -2899,7 +2899,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kConstraintBlockItemList: {
       HoistOnlyChildPartition(&partition);
 
-      // Alwyas expand constraint(s) blocks with braces inside them
+      // Always expand constraint(s) blocks with braces inside them
       const auto &uwline = partition.Value();
       const auto &ftokens = uwline.TokensRange();
       auto found = std::find_if(ftokens.begin(), ftokens.end(),

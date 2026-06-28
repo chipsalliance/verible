@@ -846,7 +846,7 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
       }
       case NodeEnum::kDimensionSlice:
       case NodeEnum::kDimensionAssociativeType: {
-        // all of these cases cover packed and unpacked dimensions
+        // All of these cases cover packed and unpacked dimensions
         ReserveNewColumn(node, FlushLeft);
         break;
       }
@@ -960,7 +960,6 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
         CHECK_EQ(node.size(), 5);
         auto *column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
 
-        SyntaxTreePath np;
         ReserveNewColumn(column, *node[0], FlushLeft);  // '['
 
         auto *value_subcolumn =

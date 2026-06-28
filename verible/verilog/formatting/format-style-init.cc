@@ -175,7 +175,7 @@ void InitializeFromFlags(FormatStyle *style) {
 
 #define STYLE_FROM_FLAG(name) style->name = absl::GetFlag(FLAGS_##name)
 
-  // Simply in the sequence as declared in struct FormatStyle
+  // In the same sequence as declared in struct FormatStyle
   STYLE_FROM_FLAG(port_declarations_indentation);
   STYLE_FROM_FLAG(port_declarations_alignment);
   STYLE_FROM_FLAG(struct_union_members_alignment);

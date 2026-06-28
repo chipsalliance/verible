@@ -25,7 +25,7 @@
 namespace verilog {
 namespace formatter {
 
-// Controls what breaks alignment groups for module items, statements,
+// Control what breaks alignment groups for module items, statements,
 // and class items.
 enum class AlignmentGroupBoundary {
   // No additional group splitting (default, current behavior).
@@ -52,11 +52,9 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   FormatStyle(const FormatStyle &) = default;
 
-  /*
-   * InitializeFromFlags() [format_style_init.h] provides flags that are
-   * named like these fields and allow configuration on the command line.
-   * So field foo here can be configured with flag --foo
-   */
+  // InitializeFromFlags() [format-style-init.cc] provides flags that are
+  // named like these fields and allow configuration on the command line.
+  // So field foo here can be configured with flag --foo.
 
   // TODO(hzeller): some of these are plural, some singular. Come up with
   // a consistent scheme.
@@ -97,7 +95,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Internal tests assume these are forced to kAlign.
   AlignmentPolicy assignment_statement_alignment = AlignmentPolicy::kAlign;
 
-  // Assignment within enumerations.
+  // Control how assignments in enumerations should be aligned.
   AlignmentPolicy enum_assignment_statement_alignment = AlignmentPolicy::kAlign;
 
   // Control indentation amount for formal parameter declarations.
@@ -132,7 +130,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
   bool port_declarations_right_align_packed_dimensions = false;
   bool port_declarations_right_align_unpacked_dimensions = false;
 
-  // Controls what breaks alignment groups for module items, statements,
+  // Control what breaks alignment groups for module items, statements,
   // and class items.
   AlignmentGroupBoundary alignment_group_boundary =
       AlignmentGroupBoundary::kNone;
@@ -151,7 +149,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Split with a \n end and else clauses
   bool wrap_end_else_clauses = false;
 
-  // -- Note: when adding new fields, add them in format_style_init.cc
+  // -- Note: When adding new fields, add them in format-style-init.cc
 
   // TODO(fangism): introduce the following knobs:
   //
