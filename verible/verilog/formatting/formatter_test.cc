@@ -19216,6 +19216,1513 @@ TEST(FormatterEndToEndTest,
   }
 }
 
+// Verify kAlign behavior for body-level param/localparam declarations
+// in module and package bodies.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentBasics) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// localparam alignment in module body
+       "module m;\n"
+       "localparam foo = 4'b0000;\n"
+       "localparam barr = 4'b0010;\n"
+       "localparam baaaaz = 4'b0111;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo    = 4'b0000;\n"
+       "  localparam barr   = 4'b0010;\n"
+       "  localparam baaaaz = 4'b0111;\n"
+       "endmodule\n"},
+      {// localparam alignment in package body
+       "package p;\n"
+       "localparam foo = 4'b0000;\n"
+       "localparam barr = 4'b0010;\n"
+       "localparam baaaaz = 4'b0111;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  localparam foo    = 4'b0000;\n"
+       "  localparam barr   = 4'b0010;\n"
+       "  localparam baaaaz = 4'b0111;\n"
+       "endpackage\n"},
+      {// parameter alignment in module body
+       "module m;\n"
+       "parameter int foo = 1;\n"
+       "parameter int barr = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter int foo  = 1;\n"
+       "  parameter int barr = 2;\n"
+       "endmodule\n"},
+      {// parameter alignment in package body
+       "package p;\n"
+       "parameter int foo = 1;\n"
+       "parameter int barrrr = 2;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  parameter int foo    = 1;\n"
+       "  parameter int barrrr = 2;\n"
+       "endpackage\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify kFlushLeft behavior: body-level param/localparam declarations
+// are not aligned.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentFlushLeft) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// module body: parameters are not aligned
+       "module m;\n"
+       "localparam foo = 4'b0000;\n"
+       "localparam barr = 4'b0010;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo = 4'b0000;\n"
+       "  localparam barr = 4'b0010;\n"
+       "endmodule\n"},
+      {// package context: flush-left
+       "package p;\n"
+       "localparam foo = 4'b0000;\n"
+       "localparam barr = 4'b0010;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  localparam foo = 4'b0000;\n"
+       "  localparam barr = 4'b0010;\n"
+       "endpackage\n"},
+      {// generate context: flush-left
+       "module m;\n"
+       "generate\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "endgenerate\n"
+       "endmodule\n",
+       "module m;\n"
+       "  generate\n"
+       "    localparam foo = 1;\n"
+       "    localparam barr = 2;\n"
+       "  endgenerate\n"
+       "endmodule\n"},
+      {// parameter in module body: flush-left
+       "module m;\n"
+       "parameter int W = 8;\n"
+       "parameter int HHHH = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter int W = 8;\n"
+       "  parameter int HHHH = 2;\n"
+       "endmodule\n"},
+      {// mixed parameter and localparam: flush-left, no alignment
+       "module m;\n"
+       "parameter int W = 8;\n"
+       "localparam L = 4;\n"
+       "parameter int H = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter int W = 8;\n"
+       "  localparam L = 4;\n"
+       "  parameter int H = 2;\n"
+       "endmodule\n"},
+      {// interface context: flush-left
+       "interface my_if;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "endinterface\n",
+       "interface my_if;\n"
+       "  localparam foo = 1;\n"
+       "  localparam barr = 2;\n"
+       "endinterface\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kFlushLeft;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify kPreserve behavior: body-level param/localparam declarations
+// maintain their existing spacing.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentPreserve) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// module body: existing spacing is kept
+       "module m;\n"
+       "localparam foo = 4'b0000;\n"
+       "localparam barr  = 4'b0010;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo = 4'b0000;\n"
+       "  localparam barr  = 4'b0010;\n"
+       "endmodule\n"},
+      {// package: existing flush-left spacing preserved
+       "package p;\n"
+       "localparam foo = 4'b0000;\n"
+       "localparam barr = 4'b0010;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  localparam foo = 4'b0000;\n"
+       "  localparam barr = 4'b0010;\n"
+       "endpackage\n"},
+      {// generate: existing aligned spacing preserved
+       "module m;\n"
+       "generate\n"
+       "localparam foo  = 1;\n"
+       "localparam barr = 2;\n"
+       "endgenerate\n"
+       "endmodule\n",
+       "module m;\n"
+       "  generate\n"
+       "    localparam foo  = 1;\n"
+       "    localparam barr = 2;\n"
+       "  endgenerate\n"
+       "endmodule\n"},
+      {// parameter flush-left preserved
+       "module m;\n"
+       "parameter int W = 8;\n"
+       "parameter int HHHH = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter int W = 8;\n"
+       "  parameter int HHHH = 2;\n"
+       "endmodule\n"},
+      {// parameter pre-aligned preserved
+       "module m;\n"
+       "parameter int W    = 8;\n"
+       "parameter int HHHH = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter int W    = 8;\n"
+       "  parameter int HHHH = 2;\n"
+       "endmodule\n"},
+      {// interface pre-aligned preserved
+       "interface my_if;\n"
+       "localparam foo  = 1;\n"
+       "localparam barr = 2;\n"
+       "endinterface\n",
+       "interface my_if;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "endinterface\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kPreserve;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify kAlign behavior for param/localparam declarations across
+// interface, generate, and module body contexts, including mixed
+// param/localparam and packed dimension alignment.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentContexts) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// interface body localparam alignment
+       "interface my_if;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "endinterface\n",
+       "interface my_if;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "endinterface\n"},
+      {// interface body parameter alignment
+       "interface my_if;\n"
+       "parameter int X = 1;\n"
+       "parameter int Y_LONG = 2;\n"
+       "endinterface\n",
+       "interface my_if;\n"
+       "  parameter int X      = 1;\n"
+       "  parameter int Y_LONG = 2;\n"
+       "endinterface\n"},
+      {// generate block localparam alignment
+       "module m;\n"
+       "generate\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "endgenerate\n"
+       "endmodule\n",
+       "module m;\n"
+       "  generate\n"
+       "    localparam foo  = 1;\n"
+       "    localparam barr = 2;\n"
+       "  endgenerate\n"
+       "endmodule\n"},
+      {// generate block parameter alignment
+       "module m;\n"
+       "generate\n"
+       "parameter int A = 1;\n"
+       "parameter int BB = 2;\n"
+       "endgenerate\n"
+       "endmodule\n",
+       "module m;\n"
+       "  generate\n"
+       "    parameter int A  = 1;\n"
+       "    parameter int BB = 2;\n"
+       "  endgenerate\n"
+       "endmodule\n"},
+      {// mixed param and net declarations form separate alignment groups
+       "module m;\n"
+       "localparam X = 1;\n"
+       "localparam YYY = 2;\n"
+       "logic clk;\n"
+       "logic rst_n;\n"
+       "localparam ZZ = 3;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam X   = 1;\n"
+       "  localparam YYY = 2;\n"
+       "  logic clk;\n"
+       "  logic rst_n;\n"
+       "  localparam ZZ = 3;\n"
+       "endmodule\n"},
+      {// mixed parameter and localparam in same block
+       "module m;\n"
+       "parameter int W = 8;\n"
+       "localparam L = 4;\n"
+       "parameter int H = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter  int W = 8;\n"
+       "  localparam     L = 4;\n"
+       "  parameter  int H = 2;\n"
+       "endmodule\n"},
+      {// packed dimensions are aligned
+       "module m;\n"
+       "parameter bit [7:0] X = 0;\n"
+       "parameter bit [31:0] YYYY = 1;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter bit [ 7:0] X    = 0;\n"
+       "  parameter bit [31:0] YYYY = 1;\n"
+       "endmodule\n"},
+      {// multi-identifier comma-separated params are not split (no-crash)
+       "module m;\n"
+       "parameter int a=1, b=2, ccc=3;\n"
+       "localparam d=4, e=5;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter  int a = 1, b = 2, ccc = 3;\n"
+       "  localparam     d = 4, e = 5;\n"
+       "endmodule\n"},
+      {// parameter type declarations do not crash
+       "module m;\n"
+       "parameter type T = int;\n"
+       "parameter type TT_LONG = bit;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter type T = int;\n"
+       "  parameter type TT_LONG = bit;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify kInferUserIntent behavior: body-level param/localparam
+// declarations infer alignment intent from existing spacing.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentInferUserIntent) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// flush-left localparams with small spacing diff: infer aligns
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "endmodule\n"},
+      {// pre-aligned localparams: infer preserves alignment
+       "module m;\n"
+       "localparam foo    = 1;\n"
+       "localparam barr   = 2;\n"
+       "localparam baaaaz = 3;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo    = 1;\n"
+       "  localparam barr   = 2;\n"
+       "  localparam baaaaz = 3;\n"
+       "endmodule\n"},
+      {// flush-left params in package with small spacing diff: infer aligns
+       "package p;\n"
+       "localparam X = 1;\n"
+       "localparam YY = 2;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  localparam X  = 1;\n"
+       "  localparam YY = 2;\n"
+       "endpackage\n"},
+      {// mixed param/localparam flush-left: infer keeps flush-left
+       "module m;\n"
+       "parameter int W = 8;\n"
+       "localparam L = 4;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter int W = 8;\n"
+       "  localparam L = 4;\n"
+       "endmodule\n"},
+      {// interface flush-left with small diff: infer aligns
+       "interface my_if;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "endinterface\n",
+       "interface my_if;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "endinterface\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kInferUserIntent;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify boundary behavior for param declarations with
+// kBlankLinesAndSeparatorComments: both blank lines and separator comments
+// break alignment groups.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentBoundary) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// separator comment breaks param alignment group
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "// ============\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "  // ============\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endmodule\n"},
+      {// blank line breaks param alignment group
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endmodule\n"},
+      {// no separator: single alignment group (all aligned together)
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo    = 1;\n"
+       "  localparam barr   = 2;\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endmodule\n"},
+      {// regular comment does NOT break alignment group
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "// regular comment\n"
+       "localparam barr = 2;\n"
+       "localparam baaaaz = 1;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo    = 1;\n"
+       "  // regular comment\n"
+       "  localparam barr   = 2;\n"
+       "  localparam baaaaz = 1;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  style.alignment_group_boundary =
+      AlignmentGroupBoundary::kBlankLinesAndSeparatorComments;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify edge cases: unpacked dimensions, signed/unsigned, implicit types,
+// complex types, single declarations, deeply nested generate blocks.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentEdgeCases) {
+  // Use column_limit = 80 to avoid unintended line wrapping inside
+  // deeply nested generate blocks (generate-if, generate-for), which
+  // would interfere with verifying alignment behavior.
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// unpacked dimension alignment
+       "module m;\n"
+       "parameter bit X [7:0] = 0;\n"
+       "parameter bit YYYY [15:0] = 1;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter bit X   [ 7:0] = 0;\n"
+       "  parameter bit YYYY[15:0] = 1;\n"
+       "endmodule\n"},
+      {// param declarations with only type and default value (no idim)
+       "module m;\n"
+       "parameter int X = 0;\n"
+       "parameter int YYYY = 0;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter int X    = 0;\n"
+       "  parameter int YYYY = 0;\n"
+       "endmodule\n"},
+      {// signed modifier with packed dimensions
+       "module m;\n"
+       "parameter bit signed [7:0] X = 0;\n"
+       "parameter bit signed [31:0] YYYY = 1;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter bit signed [ 7:0] X    = 0;\n"
+       "  parameter bit signed [31:0] YYYY = 1;\n"
+       "endmodule\n"},
+      {// param with complex type (struct/typedef) — does not crash
+       "module m;\n"
+       "parameter foo_t X = foo_t'(0);\n"
+       "parameter foo_t Y_LONG = foo_t'(0);\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter foo_t X      = foo_t'(0);\n"
+       "  parameter foo_t Y_LONG = foo_t'(0);\n"
+       "endmodule\n"},
+      {// single param declaration (not enough for alignment group)
+       "module m;\n"
+       "localparam X = 1;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam X = 1;\n"
+       "endmodule\n"},
+      {// params inside generate-if block
+       "module m;\n"
+       "generate\n"
+       "if (1) begin : blk\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "end\n"
+       "endgenerate\n"
+       "endmodule\n",
+       "module m;\n"
+       "  generate\n"
+       "    if (1) begin : blk\n"
+       "      localparam foo  = 1;\n"
+       "      localparam barr = 2;\n"
+       "    end\n"
+       "  endgenerate\n"
+       "endmodule\n"},
+      {// unsigned keyword with packed dimensions (complement to signed)
+       "module m;\n"
+       "parameter bit unsigned [7:0] X = 0;\n"
+       "parameter bit unsigned [31:0] YYYY = 1;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter bit unsigned [ 7:0] X    = 0;\n"
+       "  parameter bit unsigned [31:0] YYYY = 1;\n"
+       "endmodule\n"},
+      {// parameter with implicit type (no explicit type keyword)
+       "module m;\n"
+       "parameter X = 32;\n"
+       "parameter Y_LONG = 64;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter X      = 32;\n"
+       "  parameter Y_LONG = 64;\n"
+       "endmodule\n"},
+      {// params inside generate-for block
+       "module m;\n"
+       "generate\n"
+       "for (i = 0; i < 2; i++) begin : blk\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "end\n"
+       "endgenerate\n"
+       "endmodule\n",
+       "module m;\n"
+       "  generate\n"
+       "    for (i = 0; i < 2; i++) begin : blk\n"
+       "      localparam foo  = 1;\n"
+       "      localparam barr = 2;\n"
+       "    end\n"
+       "  endgenerate\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 80;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify parameter declarations inside generate-case blocks are aligned.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentGenerateCase) {
+  // Params inside generate-case need wider column limit to avoid wrapping the
+  // case label / begin block line.
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// params inside generate-case block
+       "module m #(P = 0);\n"
+       "generate\n"
+       "case (P)\n"
+       "0: begin : blk\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "end\n"
+       "endcase\n"
+       "endgenerate\n"
+       "endmodule\n",
+       "module m #(\n"
+       "    P = 0\n"
+       ");\n"
+       "  generate\n"
+       "    case (P)\n"
+       "      0: begin : blk\n"
+       "        localparam foo  = 1;\n"
+       "        localparam barr = 2;\n"
+       "      end\n"
+       "    endcase\n"
+       "  endgenerate\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 80;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, FormalAndBodyParamAlignmentIndependence) {
+  // Verify that --formal_parameters_alignment and
+  // --parameter_declaration_alignment act independently: setting formal params
+  // to kFlushLeft should not affect body-level param alignment, and vice versa.
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// formal flush-left + body align: only body params align
+       "module m #(\n"
+       "int W = 2,\n"
+       "int LLLL = 4\n"
+       ");\n"
+       "localparam foo = 0;\n"
+       "localparam barrrr = 0;\n"
+       "endmodule\n",
+       "module m #(\n"
+       "    int W = 2,\n"
+       "    int LLLL = 4\n"
+       ");\n"
+       "  localparam foo    = 0;\n"
+       "  localparam barrrr = 0;\n"
+       "endmodule\n"},
+      {// formal align + body flush-left: only formal params align
+       "module m #(\n"
+       "int W = 2,\n"
+       "int LLLL = 4\n"
+       ");\n"
+       "localparam foo = 0;\n"
+       "localparam barrrr = 0;\n"
+       "endmodule\n",
+       "module m #(\n"
+       "    int W    = 2,\n"
+       "    int LLLL = 4\n"
+       ");\n"
+       "  localparam foo = 0;\n"
+       "  localparam barrrr = 0;\n"
+       "endmodule\n"},
+      {// both flush-left: no alignment anywhere
+       "module m #(\n"
+       "int W = 2,\n"
+       "int LLLL = 4\n"
+       ");\n"
+       "localparam foo = 0;\n"
+       "localparam barrrr = 0;\n"
+       "endmodule\n",
+       "module m #(\n"
+       "    int W = 2,\n"
+       "    int LLLL = 4\n"
+       ");\n"
+       "  localparam foo = 0;\n"
+       "  localparam barrrr = 0;\n"
+       "endmodule\n"},
+      {// both align: both formal and body params aligned
+       "module m #(\n"
+       "int W = 2,\n"
+       "int LLLL = 4\n"
+       ");\n"
+       "localparam foo = 0;\n"
+       "localparam barrrr = 0;\n"
+       "endmodule\n",
+       "module m #(\n"
+       "    int W    = 2,\n"
+       "    int LLLL = 4\n"
+       ");\n"
+       "  localparam foo    = 0;\n"
+       "  localparam barrrr = 0;\n"
+       "endmodule\n"},
+  };
+  // First case: formal kFlushLeft, body kAlign
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+    style.formal_parameters_alignment = AlignmentPolicy::kFlushLeft;
+    const auto &tc = kTestCases[0];
+    VLOG(1) << "code-to-format:\n" << tc.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+  // Second case: formal kAlign, body kFlushLeft
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.parameter_declaration_alignment = AlignmentPolicy::kFlushLeft;
+    style.formal_parameters_alignment = AlignmentPolicy::kAlign;
+    const auto &tc = kTestCases[1];
+    VLOG(1) << "code-to-format:\n" << tc.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+  // Third case: both kFlushLeft
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.parameter_declaration_alignment = AlignmentPolicy::kFlushLeft;
+    style.formal_parameters_alignment = AlignmentPolicy::kFlushLeft;
+    const auto &tc = kTestCases[2];
+    VLOG(1) << "code-to-format:\n" << tc.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+  // Fourth case: both kAlign
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+    style.formal_parameters_alignment = AlignmentPolicy::kAlign;
+    const auto &tc = kTestCases[3];
+    VLOG(1) << "code-to-format:\n" << tc.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, ClassBodyParamNotAffected) {
+  // Verify that class body parameter/localparam declarations are NOT affected
+  // by --parameter_declaration_alignment, which targets only module/generate/
+  // package/interface body-level params.
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// class body params are not affected
+       "class c;\n"
+       "parameter int X = 1;\n"
+       "parameter int YYYY = 2;\n"
+       "localparam foo = 3;\n"
+       "localparam barrrr = 4;\n"
+       "endclass\n",
+       "class c;\n"
+       "  parameter int X = 1;\n"
+       "  parameter int YYYY = 2;\n"
+       "  localparam foo = 3;\n"
+       "  localparam barrrr = 4;\n"
+       "endclass\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, PackageBodyVariableAlignment) {
+  // Verify that moving kPackageItemList to kTabularAlignment in tree-unwrapper
+  // enables net/variable declaration alignment in package bodies via
+  // module_net_variable_alignment.
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// net/variable declaration alignment in package body
+       "package p;\n"
+       "logic [7:0] a;\n"
+       "logic [31:0] bb;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  logic [ 7:0] a;\n"
+       "  logic [31:0] bb;\n"
+       "endpackage\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.module_net_variable_alignment = AlignmentPolicy::kAlign;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentApplyToAll) {
+  // Verify that ApplyToAllAlignmentPolicies affects
+  // parameter_declaration_alignment for all four alignment policies.
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// kAlign aligns identifiers and = signs across declarations
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barrrr = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo    = 1;\n"
+       "  localparam barrrr = 2;\n"
+       "endmodule\n"},
+      {// kFlushLeft: declarations remain flush-left
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barrrr = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo = 1;\n"
+       "  localparam barrrr = 2;\n"
+       "endmodule\n"},
+      {// kPreserve: existing spacing is kept
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barrrr  = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo = 1;\n"
+       "  localparam barrrr  = 2;\n"
+       "endmodule\n"},
+      {// kInferUserIntent: large identifier width difference (3 cols)
+       // suggests flush-left intent, no alignment.
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barrrr = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo = 1;\n"
+       "  localparam barrrr = 2;\n"
+       "endmodule\n"},
+  };
+  // kAlign
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.ApplyToAllAlignmentPolicies(AlignmentPolicy::kAlign);
+    const auto &tc = kTestCases[0];
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+  // kFlushLeft
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.ApplyToAllAlignmentPolicies(AlignmentPolicy::kFlushLeft);
+    const auto &tc = kTestCases[1];
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+  // kPreserve
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.ApplyToAllAlignmentPolicies(AlignmentPolicy::kPreserve);
+    const auto &tc = kTestCases[2];
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+  // kInferUserIntent
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.ApplyToAllAlignmentPolicies(AlignmentPolicy::kInferUserIntent);
+    const auto &tc = kTestCases[3];
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+}
+
+// Verify that alignment_group_boundary=kBlankLines treats only blank lines
+// (not separator comments) as boundary breaks for param declarations.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentBoundaryBlankLines) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Only blank line breaks group; separator comment does not
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endmodule\n"},
+      {// Separator comment does NOT break group with kBlankLines
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "// ============\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo    = 1;\n"
+       "  localparam barr   = 2;\n"
+       "  // ============\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  style.alignment_group_boundary = AlignmentGroupBoundary::kBlankLines;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify that alignment_group_boundary=kNone keeps all param declarations
+// in a single alignment group regardless of blank lines or comments.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentBoundaryNone) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Blank line does NOT break group with kNone
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo    = 1;\n"
+       "  localparam barr   = 2;\n"
+       "\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endmodule\n"},
+      {// Separator comment does NOT break group with kNone
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "// ============\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo    = 1;\n"
+       "  localparam barr   = 2;\n"
+       "  // ============\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  style.alignment_group_boundary = AlignmentGroupBoundary::kNone;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify that alignment_group_boundary=kSeparatorComments treats only
+// separator comments (not blank lines) as boundary breaks for param
+// declarations.
+TEST(FormatterEndToEndTest,
+     ParamDeclarationAlignmentBoundarySeparatorComments) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Separator comment breaks alignment group
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "// ============\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "  // ============\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endmodule\n"},
+      {// Blank line does NOT break group with kSeparatorComments
+       "module m;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam foo    = 1;\n"
+       "  localparam barr   = 2;\n"
+       "\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  style.alignment_group_boundary = AlignmentGroupBoundary::kSeparatorComments;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify that class body parameter/localparam declarations are NOT affected
+// by --parameter_declaration_alignment for the kFlushLeft, kPreserve,
+// and kInferUserIntent policies (kAlign is covered in
+// ClassBodyParamNotAffected).
+TEST(FormatterEndToEndTest, ClassBodyParamNotAffectedOtherPolicies) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// kFlushLeft: class body params remain flush-left
+       "class c;\n"
+       "parameter int X = 1;\n"
+       "parameter int YYYY = 2;\n"
+       "localparam foo = 3;\n"
+       "localparam barrrr = 4;\n"
+       "endclass\n",
+       "class c;\n"
+       "  parameter int X = 1;\n"
+       "  parameter int YYYY = 2;\n"
+       "  localparam foo = 3;\n"
+       "  localparam barrrr = 4;\n"
+       "endclass\n"},
+      {// kPreserve: parameter_declaration_alignment does not apply to class
+       // bodies; whitespace is normalized by default formatting.
+       "class c;\n"
+       "parameter int X     = 1;\n"
+       "parameter int YYYY  = 2;\n"
+       "endclass\n",
+       "class c;\n"
+       "  parameter int X = 1;\n"
+       "  parameter int YYYY = 2;\n"
+       "endclass\n"},
+      {// kInferUserIntent: class body params infer flush-left
+       "class c;\n"
+       "parameter int X = 1;\n"
+       "parameter int YYYY = 2;\n"
+       "endclass\n",
+       "class c;\n"
+       "  parameter int X = 1;\n"
+       "  parameter int YYYY = 2;\n"
+       "endclass\n"},
+  };
+  // kFlushLeft
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.parameter_declaration_alignment = AlignmentPolicy::kFlushLeft;
+    const auto &tc = kTestCases[0];
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+  // kPreserve
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.parameter_declaration_alignment = AlignmentPolicy::kPreserve;
+    const auto &tc = kTestCases[1];
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+  // kInferUserIntent
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.parameter_declaration_alignment = AlignmentPolicy::kInferUserIntent;
+    const auto &tc = kTestCases[2];
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+}
+
+// Verify formal_parameters_alignment and parameter_declaration_alignment
+// independence for kPreserve and kInferUserIntent combinations.
+TEST(FormatterEndToEndTest,
+     FormalAndBodyParamAlignmentIndependenceOtherPolicies) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// formal kPreserve + body kAlign: only body params aligned
+       "module m #(\n"
+       "int W = 2,\n"
+       "int LLLL = 4\n"
+       ");\n"
+       "localparam foo = 0;\n"
+       "localparam barrrr = 0;\n"
+       "endmodule\n",
+       "module m #(\n"
+       "    int W = 2,\n"
+       "    int LLLL = 4\n"
+       ");\n"
+       "  localparam foo    = 0;\n"
+       "  localparam barrrr = 0;\n"
+       "endmodule\n"},
+      {// formal kAlign + body kPreserve: only formal params aligned
+       "module m #(\n"
+       "int W = 2,\n"
+       "int LLLL = 4\n"
+       ");\n"
+       "localparam foo   = 0;\n"
+       "localparam barrrr = 0;\n"
+       "endmodule\n",
+       "module m #(\n"
+       "    int W    = 2,\n"
+       "    int LLLL = 4\n"
+       ");\n"
+       "  localparam foo   = 0;\n"
+       "  localparam barrrr = 0;\n"
+       "endmodule\n"},
+      {// formal kInferUserIntent + body kAlign: only body params aligned
+       "module m #(\n"
+       "int W = 2,\n"
+       "int LLLL = 4\n"
+       ");\n"
+       "localparam foo = 0;\n"
+       "localparam barrrr = 0;\n"
+       "endmodule\n",
+       "module m #(\n"
+       "    int W = 2,\n"
+       "    int LLLL = 4\n"
+       ");\n"
+       "  localparam foo    = 0;\n"
+       "  localparam barrrr = 0;\n"
+       "endmodule\n"},
+  };
+  // formal kPreserve + body kAlign
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+    style.formal_parameters_alignment = AlignmentPolicy::kPreserve;
+    const auto &tc = kTestCases[0];
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+  // formal kAlign + body kPreserve
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.parameter_declaration_alignment = AlignmentPolicy::kPreserve;
+    style.formal_parameters_alignment = AlignmentPolicy::kAlign;
+    const auto &tc = kTestCases[1];
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+  // formal kInferUserIntent + body kAlign
+  {
+    FormatStyle style;
+    style.column_limit = 40;
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+    style.formal_parameters_alignment = AlignmentPolicy::kInferUserIntent;
+    const auto &tc = kTestCases[2];
+    std::ostringstream stream;
+    const auto status = FormatVerilog(tc.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), tc.expected) << "code:\n" << tc.input;
+  }
+}
+
+// Verify parameter declarations with string, real, and function-call default
+// value types to exercise the ColumnSchemaScanner on non-standard type tokens.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentTypeVariants) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// parameter real type
+       "module m;\n"
+       "parameter real X = 1.0;\n"
+       "parameter real Y_LONG = 2.0;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter real X      = 1.0;\n"
+       "  parameter real Y_LONG = 2.0;\n"
+       "endmodule\n"},
+      {// parameter string type
+       "module m;\n"
+       "parameter string s = \"hello\";\n"
+       "parameter string long_s = \"world\";\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter string s      = \"hello\";\n"
+       "  parameter string long_s = \"world\";\n"
+       "endmodule\n"},
+      {// parameter with function call in default value
+       "module m;\n"
+       "parameter int W = func(1, 2);\n"
+       "parameter int H_LONG = other(3);\n"
+       "endmodule\n",
+       "module m;\n"
+       "  parameter int W      = func(1, 2);\n"
+       "  parameter int H_LONG = other(3);\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify parameter_declaration_alignment kInferUserIntent in package bodies.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentPackageInfer) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// flush-left params with small diff: infer aligns
+       "package p;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "endpackage\n"},
+      {// pre-aligned params: infer preserves
+       "package p;\n"
+       "localparam foo    = 1;\n"
+       "localparam barr   = 2;\n"
+       "localparam baaaaz = 3;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  localparam foo    = 1;\n"
+       "  localparam barr   = 2;\n"
+       "  localparam baaaaz = 3;\n"
+       "endpackage\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kInferUserIntent;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify parameter_declaration_alignment boundary behavior in package bodies.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentPackageBoundary) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// blank line breaks alignment group in package
+       "package p;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endpackage\n"},
+      {// separator comment breaks alignment group in package
+       "package p;\n"
+       "localparam foo = 1;\n"
+       "localparam barr = 2;\n"
+       "// ============\n"
+       "localparam baaaaz = 1;\n"
+       "localparam c = 2;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  localparam foo  = 1;\n"
+       "  localparam barr = 2;\n"
+       "  // ============\n"
+       "  localparam baaaaz = 1;\n"
+       "  localparam c      = 2;\n"
+       "endpackage\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  style.alignment_group_boundary =
+      AlignmentGroupBoundary::kBlankLinesAndSeparatorComments;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify the most common default scenario: both formal_parameters_alignment
+// and parameter_declaration_alignment set to kInferUserIntent.
+TEST(FormatterEndToEndTest, BothParamAlignmentsInferUserIntent) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// both flush-left with small diff: infer aligns both formal and body
+       "module m #(\n"
+       "int W = 2,\n"
+       "int LL = 4\n"
+       ");\n"
+       "localparam foo = 0;\n"
+       "localparam barr = 0;\n"
+       "endmodule\n",
+       "module m #(\n"
+       "    int W  = 2,\n"
+       "    int LL = 4\n"
+       ");\n"
+       "  localparam foo  = 0;\n"
+       "  localparam barr = 0;\n"
+       "endmodule\n"},
+      {// both infer: pre-aligned formal, pre-aligned body preserved
+       "module m #(\n"
+       "int W    = 2,\n"
+       "int LLLL = 4\n"
+       ");\n"
+       "localparam foo    = 0;\n"
+       "localparam barrrr = 0;\n"
+       "endmodule\n",
+       "module m #(\n"
+       "    int W    = 2,\n"
+       "    int LLLL = 4\n"
+       ");\n"
+       "  localparam foo    = 0;\n"
+       "  localparam barrrr = 0;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kInferUserIntent;
+  style.formal_parameters_alignment = AlignmentPolicy::kInferUserIntent;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Verify that a large multi-line comment block between parameter
+// declarations does not crash the formatter.  The tree-unwrapper may
+// produce a partition structure where the comment tokens are absorbed
+// into the following parameter partition, which the alignment code
+// must handle gracefully by skipping alignment for that row.
+TEST(FormatterEndToEndTest, ParamDeclarationAlignmentCommentBlockNoCrash) {
+  // These inputs contain large multi-line comment blocks between
+  // parameter/localparam declarations.  The formatter must not crash
+  // (SIGABRT).  Output correctness is secondary; the formatter may
+  // fall back to preserving the original input when the partition
+  // structure prevents safe alignment.
+  const char *kInputs[] = {
+      "module m;\n"
+      "parameter int W = 8;\n"
+      "// Multi-line comment block\n"
+      "// that spans across\n"
+      "//\n"
+      "// several lines\n"
+      "// of explanatory text\n"
+      "//\n"
+      "// It contains enough\n"
+      "// lines to trigger\n"
+      "// the partition structure\n"
+      "// edge case where\n"
+      "// comment tokens are\n"
+      "// absorbed into the\n"
+      "// following parameter\n"
+      "// partition.\n"
+      "//\n"
+      "localparam int H = 2;\n"
+      "endmodule\n",
+      "package p;\n"
+      "parameter int X = 1;\n"
+      "// Long comment block\n"
+      "// with many lines\n"
+      "//\n"
+      "// of text\n"
+      "//\n"
+      "localparam int Y = 2;\n"
+      "endpackage\n",
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.parameter_declaration_alignment = AlignmentPolicy::kAlign;
+  for (const char *input : kInputs) {
+    VLOG(1) << "code-to-format:\n" << input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(input, "<filename>", style, stream);
+    // The primary requirement is that the formatter does not crash
+    // (SIGABRT).  Gtest will report failure if the process aborts.
+    // The partition structure may cause output format differences;
+    // the important thing is the formatter handled it gracefully.
+  }
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog

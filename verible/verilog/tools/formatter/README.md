@@ -4,8 +4,8 @@
 freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
 *-->
 
-`verible-verilog-format` is the SystemVerilog formatter tool. You can can
-get a full set of avilable flags using the `--helpfull` flag.
+`verible-verilog-format` is the SystemVerilog formatter tool. You can
+get a full set of available flags using the `--helpfull` flag.
 
 For automatic formatting suggestions on github pull requests, there is a
 [easy to integrate github action available][github-format-action].
@@ -35,7 +35,8 @@ To pipe from stdin, use '-' as <file>.
       operator.); default: 4;
 
   Flags from verilog/formatting/format_style_init.cc:
-    --assignment_statement_alignment (Format various assignments:
+    --assignment_statement_alignment (Format various assignments in
+      module, generate, interface, and package bodies:
       {align,flush-left,preserve,infer}); default: infer;
     --case_items_alignment (Format case items:
       {align,flush-left,preserve,infer}); default: infer;
@@ -48,11 +49,13 @@ To pipe from stdin, use '-' as <file>.
     --enum_assignment_statement_alignment (Format assignments with enums:
       {align,flush-left,preserve,infer}); default: infer;
     --expand_coverpoints (If true, always expand coverpoints.); default: false;
-    --formal_parameters_alignment (Format formal parameters:
-      {align,flush-left,preserve,infer}); default: infer;
+    --formal_parameters_alignment (Format formal parameters in module/
+      interface/class headers (inside #(...)): {align,flush-left,preserve,infer});
+      default: infer;
     --formal_parameters_indentation (Indent formal parameters: {indent,wrap});
       default: wrap;
-    --module_net_variable_alignment (Format net/variable declarations:
+    --module_net_variable_alignment (Format net/variable declarations
+      in module, generate, interface, and package bodies:
       {align,flush-left,preserve,infer}); default: infer;
     --named_parameter_alignment (Format named actual parameters:
       {align,flush-left,preserve,infer}); default: infer;
@@ -62,6 +65,10 @@ To pipe from stdin, use '-' as <file>.
       {align,flush-left,preserve,infer}); default: infer;
     --named_port_indentation (Indent named port connections: {indent,wrap});
       default: wrap;
+    --parameter_declaration_alignment (Format parameter/localparam declarations
+      in module, generate, interface, and package bodies:
+      {align,flush-left,preserve,infer}); default: infer;
+      NOTE: class body parameter declarations are NOT affected.
     --port_declarations_alignment (Format port declarations:
       {align,flush-left,preserve,infer}); default: infer;
     --port_declarations_indentation (Indent port declarations: {indent,wrap});
