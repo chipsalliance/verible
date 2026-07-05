@@ -268,6 +268,12 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
     if ((*token_iter)->text() == ")") {
       break;
     }
+    // Any other token -- in particular the EOF token from an unterminated
+    // macro call -- would otherwise leave token_iter and parameters_size
+    // unchanged and spin this loop forever. Stop scanning; the loop below
+    // back-fills the remaining parameters with default TokenInfo (the same
+    // terminal state produced by an early ')').
+    break;
   }
   if (parameters_size > 0) {
     while (parameters_size--) {
