@@ -90,10 +90,14 @@ bool PortNameSuffixRule::IsSuffixCorrect(std::string_view suffix,
        {"output", {"o", "no", "po"}},
        {"inout", {"io", "nio", "pio"}}};
 
-  // At this point it is guaranteed that the direction will be set to
-  // one of the expected values (used as keys in the map above).
-  // Therefore checking the suffix like this is safe
-  return suffixes.at(direction).count(suffix) == 1;
+  // `direction` is usually one of the map keys, but the grammar also permits a
+  // `ref` port direction, which has no suffix convention. Look the direction up
+  // safely and treat an unknown direction as "correct" (no violation),
+  // consistent with Violation() which also ignores non-input/output/inout
+  // directions. Using std::map::at() here would throw on e.g. "ref".
+  const auto it = suffixes.find(direction);
+  if (it == suffixes.end()) return true;
+  return it->second.count(suffix) == 1;
 }
 
 void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
@@ -113,8 +117,11 @@ void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
         absl::StrSplit(name, '_', absl::SkipEmpty());
 
     if (name_parts.size() < 2) {
-      // No suffix at all
+      // No suffix at all. This also covers an all-underscore name (e.g. "_"),
+      // for which SkipEmpty leaves name_parts empty; return here so the
+      // name_parts.back() access below is not reached on an empty vector.
       Violation(direction, token, context);
+      return;
     }
 
     if (!IsSuffixCorrect(name_parts.back(), direction)) {
