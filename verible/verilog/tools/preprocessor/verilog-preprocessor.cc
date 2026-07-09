@@ -122,6 +122,7 @@ static absl::Status PreprocessSingleFile(
     // source code just like it was, but with conditionals filtered.
     lexed_sequence.push_back(lexer.GetLastToken());
   }
+  lexed_sequence.push_back(lexer.GetLastToken());  // EOF end sentinel
   verible::TokenStreamView lexed_streamview;
   // Initializing the lexed token stream view.
   InitTokenStreamView(lexed_sequence, &lexed_streamview);

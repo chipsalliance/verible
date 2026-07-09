@@ -164,9 +164,11 @@ class VerilogPreprocess {
   absl::Status HandleElse(TokenStreamView::const_iterator else_pos);
   absl::Status HandleEndif(TokenStreamView::const_iterator endif_pos);
 
-  static absl::Status ConsumeAndParseMacroCall(
-      TokenStreamView::const_iterator, const StreamIteratorGenerator &,
-      verible::MacroCall *, const verible::MacroDefinition &);
+  // Non-static so it can record diagnostics into preprocess_data_.errors.
+  absl::Status ConsumeAndParseMacroCall(TokenStreamView::const_iterator,
+                                        const StreamIteratorGenerator &,
+                                        verible::MacroCall *,
+                                        const verible::MacroDefinition &);
 
   // The following functions return nullptr when there is no error:
   absl::Status ConsumeMacroDefinition(const StreamIteratorGenerator &,
