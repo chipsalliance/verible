@@ -58,6 +58,9 @@ bool IsUnlexed(verilog_tokentype);
 // identifiers.
 bool IsIdentifierLike(verilog_tokentype);
 
+// Checks if the token is a module def ex. [module foo (]
+bool IsModuleParenthesis(verilog_tokentype, const verible::SyntaxTreeContext&);
+
 // TODO(fangism): Identify specially lexed tokens that require a newline after.
 // e.g. MacroIdItem, TK_EOL_COMMENT, ...
 // bool RequiresNewlineAfterToken(verilog_tokentype);

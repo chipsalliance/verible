@@ -226,4 +226,12 @@ bool IsIdentifierLike(verilog_tokentype token_type) {
   return false;
 }
 
+bool IsModulePortListOpenParen(
+    verilog_tokentype token_type,
+    const verible::SyntaxTreeContext& context) {
+  return token_type == verilog_tokentype('(') &&
+         context.DirectParentIs(NodeEnum::kModuleHeader) &&
+         context.IsInside(NodeEnum::kModuleDeclaration);
+}
+
 }  // namespace verilog
