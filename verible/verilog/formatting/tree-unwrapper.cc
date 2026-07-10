@@ -3213,8 +3213,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf &leaf) {
         IsPreprocessorClause(NodeEnum(Context().top().Tag().tag))) {
       CurrentUnwrappedLine().SetIndentationSpaces(0);
     }
-  } else if (IsModuleParenthesis(tag, Context())) {
-    VLOG(4) << "starting module port list on a new line";
+  } else if (IsModulePortListOpenParen(tag, Context())) {
+    VLOG(4) << "starting module port list parenthesis on a new line";
     StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &leaf);
   } else if (IsEndKeyword(tag)) {
     VLOG(4) << "handling end* keyword";
