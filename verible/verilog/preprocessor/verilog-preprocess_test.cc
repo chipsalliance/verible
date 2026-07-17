@@ -139,6 +139,16 @@ TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
   }
 }
 
+// A function-like macro invoked with fewer arguments than parameters and no
+// closing ')' (EOF reached mid-call) must not spin ConsumeAndParseMacroCall
+// forever. Reaching any assertion below proves the preprocessor terminated and
+// back-filled the missing arguments instead of hanging.
+TEST(VerilogPreprocessTest, UnterminatedMacroCallDoesNotHang) {
+  PreprocessorTester tester("`define FOO(a, b) a\n`FOO(x",
+                            VerilogPreprocess::Config({.expand_macros = true}));
+  SUCCEED();
+}
+
 #define EXPECT_PARSE_OK()                                                \
   do {                                                                   \
     EXPECT_TRUE(tester.Status().ok()) << "Unexpected analyzer failure."; \
