@@ -500,11 +500,23 @@ static WithReason<int> SpacesRequiredBetween(
     // This may be controversial or context-dependent, as parameterized
     // classes often appear with method calls like:
     //   type#(params...)::method(...);
+    // A parameterized type in a typedef keeps the space before '#':
+    //   typedef my_class #(.P(P)) my_class_t;
+    // but a package-qualified type does not, matching the existing
+    // "type#(params...)::method(...)" convention:
+    //   typedef pkg::my_class#(.P(P)) my_class_t;
+    // Kept as separate IsInsideFirst() calls because MatchesTagAnyOf()
+    // only unrolls up to four tags.
+    const bool inside_unqualified_typedef =
+        left_context.IsInsideFirst({NodeEnum::kTypeDeclaration}, {}) &&
+        !left_context.IsInsideFirst({NodeEnum::kQualifiedId}, {});
+
     if (left_context.DirectParentIs(NodeEnum::kUnqualifiedId) &&
         !left_context.IsInsideFirst(
             {NodeEnum::kInstantiationType, NodeEnum::kBindTargetInstance,
              NodeEnum::kExtendsList, NodeEnum::kBraceGroup},
-            {})) {
+            {}) &&
+        !inside_unqualified_typedef) {
       return {0, "No space before # when direct parent is kUnqualifiedId."};
     }
     return {1, "Spaces before # in most other contexts."};
