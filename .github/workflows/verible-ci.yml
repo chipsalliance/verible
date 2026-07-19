@@ -333,8 +333,8 @@ jobs:
       with:
         path: |
           /private/var/tmp/_bazel_runner
-        key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_macos_
+        key: bazelcache_macos1_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_macos1_
 
     - name: Tests
       # MacOS has a broken patch utility:
