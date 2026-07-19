@@ -437,6 +437,17 @@ inline constexpr auto HasDefaultCase =
 //     ...
 inline constexpr auto HasUniqueQualifier =
     verible::matcher::MakePathMatcher(L(TK_unique));
+
+// Matches the `unique0` qualifier, e.g.
+//
+//   unique0 case (in)
+//     1: return 0;
+//   endcase
+//
+// Unlike `unique`, `unique0` permits zero matching case items, so it is
+// tracked separately from HasUniqueQualifier.
+inline constexpr auto HasUnique0Qualifier =
+    verible::matcher::MakePathMatcher(L(TK_unique0));
 // Clean up macros
 #undef N
 #undef L

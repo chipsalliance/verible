@@ -329,6 +329,97 @@ TEST(CaseMissingDefaultRuleTest, NestedCaseInsideTaskTests) {
   RunLintTestCases<VerilogAnalyzer, CaseMissingDefaultRule>(kTestCases);
 }
 
+// Tests that case statements carrying the `unique` or `unique0` qualifier are
+// exempt from requiring a default case-item, while an unqualified case
+// statement still reports a violation.
+TEST(CaseMissingDefaultRuleTest, UniqueQualifierTests) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      // `unique` exempts case/casex/casez from needing a default.
+      {R"(
+       function automatic int foo (input in);
+         unique case (in)
+           1: return 0;
+         endcase
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input in);
+         unique casex (in)
+           1: return 0;
+         endcase
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input in);
+         unique casez (in)
+           1: return 0;
+         endcase
+       endfunction
+       )"},
+
+      // `unique0` likewise exempts case/casex/casez.
+      {R"(
+       function automatic int foo (input in);
+         unique0 case (in)
+           1: return 0;
+         endcase
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input in);
+         unique0 casex (in)
+           1: return 0;
+         endcase
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input in);
+         unique0 casez (in)
+           1: return 0;
+         endcase
+       endfunction
+       )"},
+
+      // A qualifier combined with an explicit default is still fine.
+      {R"(
+       function automatic int foo (input in);
+         unique0 case (in)
+           1: return 0;
+           default: return 1;
+         endcase
+       endfunction
+       )"},
+
+      // Control: without a qualifier, a missing default still violates.
+      {R"(
+       function automatic int foo (input in);
+         )",
+       {TK_case, "case"},
+       R"( (in)
+           1: return 0;
+         endcase
+       endfunction
+       )"},
+
+      // A qualified outer case does not exempt an unqualified inner case.
+      {R"(
+       function automatic int foo (input in);
+         unique0 case (in)
+           1: begin;
+             )",
+       {TK_case, "case"},
+       R"( (in)
+               1: return 1;
+             endcase
+           end
+         endcase
+       endfunction
+       )"},
+  };
+
+  RunLintTestCases<VerilogAnalyzer, CaseMissingDefaultRule>(kTestCases);
+}
+
 }  // namespace
 }  // namespace analysis
 }  // namespace verilog
