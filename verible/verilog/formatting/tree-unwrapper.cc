@@ -855,7 +855,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kCaseInsideItem:
     case NodeEnum::kCasePatternItem:
     case NodeEnum::kGenerateCaseItem:
-    case NodeEnum::kGateInstance:
     case NodeEnum::kRegisterVariable:
     case NodeEnum::kGenerateIfClause:
     case NodeEnum::kGenerateElseClause:
@@ -873,6 +872,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     }
       // The following cases will always expand into their constituent
       // partitions:
+    case NodeEnum::kGateInstance:
     case NodeEnum::kModuleDeclaration:
     case NodeEnum::kProgramDeclaration:
     case NodeEnum::kPackageDeclaration:
