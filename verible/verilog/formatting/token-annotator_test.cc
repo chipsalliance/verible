@@ -2922,7 +2922,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'(', "("},
           {/* any context */},
           {NodeEnum::kActualNamedPort},
-          {0, SpacingOptions::kUndecided},
+          {1, SpacingOptions::kUndecided},
       },
       {
           DefaultStyle,
@@ -2930,7 +2930,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {'(', "("},
           {/* any context */},
           {NodeEnum::kGateInstance, NodeEnum::kActualNamedPort},
-          {0, SpacingOptions::kUndecided},
+          {1, SpacingOptions::kUndecided},
       },
       {
           DefaultStyle,
