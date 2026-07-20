@@ -155,6 +155,16 @@ static WithReason<int> SpacesRequiredBetween(
     // TODO(fangism): Take this from FormatStyle.
   }
 
+  if ((left.TokenEnum() == '(' &&
+       left_context.DirectParentsAre(
+           {NodeEnum::kParenGroup, NodeEnum::kActualNamedPort})) ||
+      (right.TokenEnum() == ')' &&
+       right_context.DirectParentsAre(
+           {NodeEnum::kParenGroup, NodeEnum::kActualNamedPort}))) {
+    return {1, "Space inside named port connection parentheses"};
+  }
+
+  // Keep all grouping delimiters compact unless a rule above overrides them.
   if (left.format_token_enum == FormatTokenType::open_group ||
       right.format_token_enum == FormatTokenType::close_group) {
     return {0,
