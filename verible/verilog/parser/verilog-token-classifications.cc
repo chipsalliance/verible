@@ -197,7 +197,7 @@ bool IsIdentifierLike(verilog_tokentype token_type) {
     case verilog_tokentype::MacroIdentifier:
     case verilog_tokentype::MacroIdItem:
     case verilog_tokentype::MacroCallId:
-    case verilog_tokentype::SystemTFIdentifier:
+    case verilog_tokentype::SystemTFIdentifier:1
     case verilog_tokentype::EscapedIdentifier:
       // specify block built-in functions
     case verilog_tokentype::TK_Srecrem:
