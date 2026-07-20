@@ -228,7 +228,7 @@ bool IsIdentifierLike(verilog_tokentype token_type) {
 bool IsModulePortListOpenParen(
     verilog_tokentype token_type,
     const verible::SyntaxTreeContext& context) {
-  if (token_type != verilog_tokentype{'('}) return false;
+  if (token_type != static_cast<verilog_tokentype>('(')) return false;
 
   const bool module_declaration = context.DirectParentsAre(
       {NodeEnum::kParenGroup, NodeEnum::kModuleHeader});
