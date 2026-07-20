@@ -2540,6 +2540,11 @@ static void HandleDataDeclaration(const SyntaxTreeNode &node,
       // This can yield an intermediate partition that contains:
       // ") instance_name (".
       MergeConsecutiveSiblings(&data_declaration_partition, fuse_position);
+      if (GetInstanceListFromDataDeclaration(node)->front()->Tag() ==
+          verible::NodeTag(NodeEnum::kGateInstance)) {
+        data_declaration_partition.Value().SetPartitionPolicy(
+            PartitionPolicyEnum::kAlwaysExpand);
+      }
     } else {
       // There is a qualifier before instance_type_partition.
       FlattenOnlyChildrenWithChildren(data_declaration_partition);
