@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_VERILOG_TOKEN_CLASSIFICATIONS_H_
 #define VERIBLE_VERILOG_FORMATTING_VERILOG_TOKEN_CLASSIFICATIONS_H_
 
+#include "verible/common/text/syntax-tree-context.h"
 #include "verible/verilog/parser/verilog-token-enum.h"
 
 namespace verilog {

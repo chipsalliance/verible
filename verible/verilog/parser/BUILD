@@ -232,6 +232,8 @@ cc_library(
     hdrs = ["verilog-token-classifications.h"],
     deps = [
         ":verilog-token-enum",
+        "//verible/common/text:syntax-tree-context",
+        "//verible/verilog/CST:verilog-nonterminals",
     ],
 )
 

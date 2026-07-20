@@ -13,8 +13,7 @@
 // limitations under the License.
 
 #include "verible/verilog/parser/verilog-token-classifications.h"
-
-#include "verible/verilog/parser/verilog-token-enum.h"
+#include "verible/verilog/CST/verilog-nonterminals.h"
 
 namespace verilog {
 
@@ -197,7 +196,7 @@ bool IsIdentifierLike(verilog_tokentype token_type) {
     case verilog_tokentype::MacroIdentifier:
     case verilog_tokentype::MacroIdItem:
     case verilog_tokentype::MacroCallId:
-    case verilog_tokentype::SystemTFIdentifier:1
+    case verilog_tokentype::SystemTFIdentifier:
     case verilog_tokentype::EscapedIdentifier:
       // specify block built-in functions
     case verilog_tokentype::TK_Srecrem:
@@ -226,19 +225,16 @@ bool IsIdentifierLike(verilog_tokentype token_type) {
   return false;
 }
 
-bool IsModulePortListOpenParen(verilog_tokentype token_type,
-                               const verible::SyntaxTreeContext &context) {
-  if (token_type != verilog_tokentype('(')) return false;
+bool IsModulePortListOpenParen(
+    verilog_tokentype token_type,
+    const verible::SyntaxTreeContext& context) {
+  if (token_type != verilog_tokentype{'('}) return false;
 
-  const bool module_declaration =
-      context.DirectParentIs(NodeEnum::kModuleHeader) &&
-      context.IsInside(NodeEnum::kModuleDeclaration);
+  const bool module_declaration = context.DirectParentsAre(
+      {NodeEnum::kParenGroup, NodeEnum::kModuleHeader});
 
-  const bool module_instantiation =
-      context.DirectParentsAre(
-          {NodeEnum::kParenGroup, NodeEnum::kGateInstance}) &&
-      context.IsInside(NodeEnum::kInstantiationType) &&
-      context.IsInside(NodeEnum::kDataDeclaration);
+  const bool module_instantiation = context.DirectParentsAre(
+      {NodeEnum::kParenGroup, NodeEnum::kGateInstance});
 
   return module_declaration || module_instantiation;
 }
