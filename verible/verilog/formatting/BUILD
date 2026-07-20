@@ -170,6 +170,7 @@ cc_library(
         "//verible/common/util:vector-tree",
         "//verible/common/util:vector-tree-iterators",
         "//verible/verilog/CST:declaration",
+        "//verible/verilog/CST:verilog-matchers",
         "//verible/verilog/CST:verilog-nonterminals",
         "//verible/verilog/analysis:verilog-analyzer",
         "//verible/verilog/analysis:verilog-equivalence",

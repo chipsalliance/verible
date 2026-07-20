@@ -57,6 +57,7 @@
 #include "verible/common/util/vector-tree-iterators.h"
 #include "verible/common/util/vector-tree.h"
 #include "verible/verilog/CST/declaration.h"
+#include "verible/verilog/CST/verilog-matchers.h"
 #include "verible/verilog/CST/verilog-nonterminals.h"
 #include "verible/verilog/analysis/verilog-analyzer.h"
 #include "verible/verilog/analysis/verilog-equivalence.h"
@@ -629,6 +630,23 @@ static void DisableSyntaxBasedRanges(ByteOffsetSet *disabled_ranges,
                                      const verible::Symbol &root,
                                      const FormatStyle &style,
                                      std::string_view full_text) {
+  const auto disable = [&](const verible::Symbol &symbol) {
+    disabled_ranges->Add(DisableByteOffsetRange(
+        verible::StringSpanOfSymbol(symbol), full_text));
+  };
+  for (const auto &match :
+       verible::SearchSyntaxTree(root, NodekTaskDeclaration())) {
+    disable(*match.match);
+  }
+  for (const auto &match :
+       verible::SearchSyntaxTree(root, NodekCaseStatement())) {
+    const auto &node = verible::SymbolCastToNode(*match.match);
+    const auto *keyword =
+        verible::GetSubtreeAsLeaf(node, NodeEnum::kCaseStatement, 1);
+    if (keyword != nullptr && keyword->get().token_enum() == TK_casez) {
+      disable(node);
+    }
+  }
   /**
   // Basic template:
   if (!style.controlling_flag) {
