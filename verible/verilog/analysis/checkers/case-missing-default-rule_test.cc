@@ -86,6 +86,22 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
        endfunction
        )"},
       {R"(
+       function automatic int foo (input [2:0] in);
+         unique casex (in)
+           3'b001: return 1;
+         endcase
+         return 0;
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input [2:0] in);
+         unique0 casex (in)
+           3'b001: return 1;
+         endcase
+         return 0;
+       endfunction
+       )"},
+      {R"(
        function automatic int foo (input in);
          )",
        {TK_casex, "casex"},
@@ -101,6 +117,22 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
          casez (in)
            default: return 0;
          endcase
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input [2:0] in);
+         unique casez (in)
+           3'b001: return 1;
+         endcase
+         return 0;
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input [2:0] in);
+         unique0 casez (in)
+           3'b001: return 1;
+         endcase
+         return 0;
        endfunction
        )"},
       {R"(

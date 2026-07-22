@@ -822,6 +822,15 @@ TEST(VerilogMatchers, HasUniqueQualifierTests) {
        endfunction
        )",
        1},
+      {HasUniqueQualifier(),
+       R"(
+       function automatic int foo (input in);
+         unique0 case (in)
+           1: return 0;
+         endcase
+       endfunction
+       )",
+       0},
   };
   for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
