@@ -144,6 +144,20 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
          endcase
        endfunction
        )"},
+      // A qualified outer case does not exempt an unqualified inner case.
+      {R"(
+       function automatic int foo (input in);
+         unique0 case (in)
+           1: begin;
+             )",
+       {TK_case, "case"},
+       R"( (in)
+               1: return 1;
+             endcase
+           end
+         endcase
+       endfunction
+       )"},
 
       // randcase should not be flagged
       {R"(
