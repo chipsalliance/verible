@@ -3729,7 +3729,7 @@ enum_name
 struct_data_type
   : TK_struct packed_signing_opt '{' struct_union_member_list '}'
     { $$ = MakeTaggedNode(N::kStructType, $1, $2, MakeBraceGroup($3, $4, $5)); }
-  | TK_union TK_tagged_opt packed_signing_opt '{' struct_union_member_list '}'
+  | TK_union TK_union_qualifier_opt packed_signing_opt '{' struct_union_member_list '}'
     { $$ = MakeTaggedNode(N::kUnionType, $1, $2, $3,
                           MakeBraceGroup($4, $5, $6)); }
   ;
@@ -7380,6 +7380,14 @@ TK_static_opt
   ;
 TK_tagged_opt
   : TK_tagged
+    { $$ = std::move($1); }
+  | /* empty */
+    { $$ = nullptr; }
+  ;
+TK_union_qualifier_opt
+  : TK_soft
+    { $$ = std::move($1); }
+  | TK_tagged
     { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }

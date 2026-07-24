@@ -8138,6 +8138,22 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  bit [31:0]          second;\n"
      "  generic_type_name_t third;\n"
      "} type_t;\n"},
+    {"typedef union soft packed {\n"
+     "bit [3:0] first; bit [31:0] second; generic_type_name_t third;\n"
+     "} type_t;",
+     "typedef union soft packed {\n"
+     "  bit [3:0]           first;\n"
+     "  bit [31:0]          second;\n"
+     "  generic_type_name_t third;\n"
+     "} type_t;\n"},
+    {"typedef union soft {\n"
+     "bit [3:0] first; bit [31:0] second; generic_type_name_t third;\n"
+     "} type_t;",
+     "typedef union soft {\n"
+     "  bit [3:0]           first;\n"
+     "  bit [31:0]          second;\n"
+     "  generic_type_name_t third;\n"
+     "} type_t;\n"},
     {"typedef struct {\n"
      "// comment\n"
      "bit [3:0] first; bit [31:0] second; generic_type_name_t third;\n"
