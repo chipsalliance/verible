@@ -15600,17 +15600,19 @@ endmodule
      ");\n"
      "endmodule\n"},
 
-    // ece2300: Test case for module instantiation always expanding with '(' fused to the instance name
+    // ece2300: Test case for module instantiation always expanding with '(' on its own line
     {"module m;foo bar(.a(a));endmodule\n",
      "module m;\n"
-     "  foo bar (\n"
+     "  foo bar\n"
+     "  (\n"
      "      .a (a)\n"
      "  );\n"
      "endmodule\n"},
     // ece2300: Test case for module instantiation always expanding, one named port connection per line
     {"module m;foo bar(.a(a),.b(b));endmodule\n",
      "module m;\n"
-     "  foo bar (\n"
+     "  foo bar\n"
+     "  (\n"
      "      .a (a),\n"
      "      .b (b)\n"
      "  );\n"
@@ -15618,7 +15620,8 @@ endmodule
     // ece2300: Test case for module instantiation formatting (extra spaces/tabs permutation, same canonical output)
     {"module m;  foo   bar( .a ( a ) ,\t.b(  b )  );endmodule\n",
      "module m;\n"
-     "  foo bar (\n"
+     "  foo bar\n"
+     "  (\n"
      "      .a (a),\n"
      "      .b (b)\n"
      "  );\n"
@@ -15626,7 +15629,8 @@ endmodule
     // ece2300: Test case for named port connection spacing between port name and '(' (permutation with extra spaces/tabs around the name, same canonical output)
     {"module m;foo bar(.a  (a),.b\t(b));endmodule\n",
      "module m;\n"
-     "  foo bar (\n"
+     "  foo bar\n"
+     "  (\n"
      "      .a (a),\n"
      "      .b (b)\n"
      "  );\n"

@@ -2898,6 +2898,15 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {/* any context */},
           {1, SpacingOptions::kUndecided},
       },
+      // ECE2300 module declaration port-list '(' must start a new line.
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "foo"},
+          {'(', "("},
+          {NodeEnum::kModuleHeader},
+          {NodeEnum::kModuleHeader, NodeEnum::kParenGroup},
+          {1, SpacingOptions::kMustWrap},
+      },
 
       // "a(" in "foo bar (.a(b));": instantiation with named ports
       {
@@ -2907,6 +2916,15 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {NodeEnum::kGateInstance},
           {NodeEnum::kGateInstance},
           {1, SpacingOptions::kUndecided},
+      },
+      // ECE2300 module instance port-list '(' must start a new line.
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "bar"},
+          {'(', "("},
+          {NodeEnum::kGateInstance},
+          {NodeEnum::kGateInstance, NodeEnum::kParenGroup},
+          {1, SpacingOptions::kMustWrap},
       },
       {
           DefaultStyle,

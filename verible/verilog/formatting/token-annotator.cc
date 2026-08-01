@@ -760,6 +760,15 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
             "Keep \\ line continuation is always followed by \\n."};
   }
 
+  // ece2300: HandleDataDeclaration() can merge the instance name and its
+  // port-list partition after tree unwrapping.  Keep the required line break
+  // even when both tokens end up in the same partition.
+  if (IsModulePortListOpenParen(
+          static_cast<verilog_tokentype>(right.TokenEnum()), right_context)) {
+    return {SpacingOptions::kMustWrap,
+            "Module port-list '(' must start on its own line"};
+  }
+
   if (left.TokenEnum() == PP_define) {
     return {SpacingOptions::kMustAppend,
             "Keep `define and macro name together."};

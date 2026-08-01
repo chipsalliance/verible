@@ -1,7 +1,7 @@
 # SystemVerilog Formatter Developer Guide
 
 <!--*
-freshness: { owner: 'hzeller' reviewed: '2022-09-16' }
+freshness: { owner: 'Anthony Song' reviewed: '2026-08-01' }
 *-->
 
 ## Design
@@ -119,6 +119,38 @@ determined in the token annotation phase. This algorithm is not very scalable,
 but there are plans to replace it with something like dynamic programming.
 
 ### Disable Control and Preservation
+
+Before token partitioning, `DisableSyntaxBasedRanges()` combines ranges selected
+by syntax with ranges selected by `verilog_format: off` comments. Disabled
+ranges retain their original token spacing and line breaks while the surrounding
+code is formatted normally.
+
+#### ECE2300 fork customizations
+
+The ECE2300 fork implements several fixed formatting policies. They are not
+controlled by command-line style flags:
+
+*   `IsModulePortListOpenParen()` uses the concrete syntax-tree context to
+    distinguish the opening parenthesis of a module declaration or module
+    instance from other parenthesized expressions.
+*   `TreeUnwrapper::Visit()` begins a new partition at a module declaration's
+    port-list parenthesis. Module instances are assigned `kAlwaysExpand`; the
+    data-declaration restructuring step retains this policy while reshaping the
+    instance type, name, and port list.
+*   The token annotator requires one space between a named port and its opening
+    parenthesis, producing `.port (expression)`. It also requires a line break
+    before module declaration and module instance port-list parentheses. This
+    preserves the ECE2300 break even if data-declaration restructuring merges
+    the adjacent partitions. Module declaration ports remain compact where the
+    same token pattern occurs in a different syntax context.
+*   `DisableSyntaxBasedRanges()` automatically disables complete
+    `task`...`endtask` ranges and `casez`...`endcase` ranges. Ordinary `case`
+    statements and `function` declarations continue through the normal
+    formatting pipeline.
+
+End-to-end coverage for these policies belongs in `formatter_test.cc`. Changes
+to context-sensitive spacing should also be covered in
+`token-annotator_test.cc`.
 
 ## Troubleshooting
 

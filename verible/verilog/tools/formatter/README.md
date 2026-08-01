@@ -1,7 +1,7 @@
-# SystemVerilog Formatter
+# SystemVerilog Formatter - ECE2300
 
 <!--*
-freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
+freshness: { owner: 'Anthony Song' reviewed: '2026-08-01' }
 *-->
 
 `verible-verilog-format` is the SystemVerilog formatter tool. You can can
@@ -113,6 +113,44 @@ To pipe from stdin, use '-' as <file>.
       --lines, verify that re-formatting the formatted output yields no further
       changes, i.e. formatting is convergent.); default: true;
 ```
+
+## ECE2300 Formatting Rules
+
+This fork applies several ECE2300-specific rules in addition to the options
+listed above. These rules are always enabled and do not have command-line
+flags.
+
+Module declaration port lists begin on a new line and expand one port per line:
+
+```systemverilog
+module foo
+(
+    input a,
+    input b,
+    output c
+);
+endmodule
+```
+
+Module instances always expand, even when they would fit on one line. Named
+port connections use a space before their parenthesized expression, and the
+port-list opening parenthesis starts on its own line:
+
+```systemverilog
+module top;
+  foo bar
+  (
+      .a (a),
+      .b (b)
+  );
+endmodule
+```
+
+The formatter automatically preserves the original line breaks and token
+spacing throughout `task`...`endtask` and `casez`...`endcase` constructs. It
+may still adjust indentation before the opening keyword to fit the surrounding
+code. Plain `case` statements and `function` declarations are formatted
+normally.
 
 ## Disabling Formatting {#disable-formatting}
 
