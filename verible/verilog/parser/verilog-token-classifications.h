@@ -59,6 +59,7 @@ bool IsUnlexed(verilog_tokentype);
 // identifiers.
 bool IsIdentifierLike(verilog_tokentype);
 
+// ece2300: added to support ECE2300 module port list formatting.
 // Checks if the token is a module def ex. [module foo (]
 bool IsModulePortListOpenParen(verilog_tokentype,
                                const verible::SyntaxTreeContext &);

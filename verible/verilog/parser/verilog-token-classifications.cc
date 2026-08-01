@@ -225,6 +225,8 @@ bool IsIdentifierLike(verilog_tokentype token_type) {
   return false;
 }
 
+// ece2300: identifies the '(' that opens a module definition's or module
+// instantiation's port list, so the formatter can place it on a new line.
 bool IsModulePortListOpenParen(
     verilog_tokentype token_type,
     const verible::SyntaxTreeContext& context) {

@@ -155,15 +155,6 @@ static WithReason<int> SpacesRequiredBetween(
     // TODO(fangism): Take this from FormatStyle.
   }
 
-  if ((left.TokenEnum() == '(' &&
-       left_context.DirectParentsAre(
-           {NodeEnum::kParenGroup, NodeEnum::kActualNamedPort})) ||
-      (right.TokenEnum() == ')' &&
-       right_context.DirectParentsAre(
-           {NodeEnum::kParenGroup, NodeEnum::kActualNamedPort}))) {
-    return {1, "Space inside named port connection parentheses"};
-  }
-
   // Keep all grouping delimiters compact unless a rule above overrides them.
   if (left.format_token_enum == FormatTokenType::open_group ||
       right.format_token_enum == FormatTokenType::close_group) {
@@ -311,6 +302,8 @@ static WithReason<int> SpacesRequiredBetween(
         IsKeywordCallable(verilog_tokentype(left.TokenEnum()))) {
       // TODO(fangism): This logic should use .DirectParentIs() to minimize risk
       // of unintended reach.
+      // ece2300: force a space between the port name and '(' so we get
+      // ".aaa (aaa)" instead of ".aaa(aaa)".
       if (right_context.IsInside(NodeEnum::kActualNamedPort)) {
         return {1, "Named port: space between ID and '('"};
       }

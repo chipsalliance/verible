@@ -15559,6 +15559,133 @@ endmodule
 
     },
 
+    // ece2300: Test case for module definition's port-list '(' starting on its own line
+    {"module foo(input a,input b,input c,input d);endmodule\n",
+     "module foo\n"
+     "(\n"
+     "    input a,\n"
+     "    input b,\n"
+     "    input c,\n"
+     "    input d\n"
+     ");\n"
+     "endmodule\n"},
+    // ece2300: Test case for module definition's port-list '(' starting on its own line (extra spaces/tabs permutation, same canonical output)
+    {"module   foo (  input\ta ,  input  b,\tinput c ,input   d ) ; endmodule\n",
+     "module foo\n"
+     "(\n"
+     "    input a,\n"
+     "    input b,\n"
+     "    input c,\n"
+     "    input d\n"
+     ");\n"
+     "endmodule\n"},
+    // ece2300: Test case for module definition's port-list '(' starting on its own line (mixed input/output directions)
+    {"module bar(input x,output y,input z,output w);endmodule\n",
+     "module bar\n"
+     "(\n"
+     "    input x,\n"
+     "    output y,\n"
+     "    input z,\n"
+     "    output w\n"
+     ");\n"
+     "endmodule\n"},
+    // ece2300: Test case for module definition's port-list '(' starting on its own line (newline/whitespace permutation, same canonical output)
+    {"module bar( input   x,\n  output y ,input z,\n output   w );endmodule\n",
+     "module bar\n"
+     "(\n"
+     "    input x,\n"
+     "    output y,\n"
+     "    input z,\n"
+     "    output w\n"
+     ");\n"
+     "endmodule\n"},
+
+    // ece2300: Test case for module instantiation always expanding with '(' fused to the instance name
+    {"module m;foo bar(.a(a));endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a (a)\n"
+     "  );\n"
+     "endmodule\n"},
+    // ece2300: Test case for module instantiation always expanding, one named port connection per line
+    {"module m;foo bar(.a(a),.b(b));endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a (a),\n"
+     "      .b (b)\n"
+     "  );\n"
+     "endmodule\n"},
+    // ece2300: Test case for module instantiation formatting (extra spaces/tabs permutation, same canonical output)
+    {"module m;  foo   bar( .a ( a ) ,\t.b(  b )  );endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a (a),\n"
+     "      .b (b)\n"
+     "  );\n"
+     "endmodule\n"},
+    // ece2300: Test case for named port connection spacing between port name and '(' (permutation with extra spaces/tabs around the name, same canonical output)
+    {"module m;foo bar(.a  (a),.b\t(b));endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a (a),\n"
+     "      .b (b)\n"
+     "  );\n"
+     "endmodule\n"},
+
+    // ece2300: Test case for task...endtask formatting being disabled (original spacing preserved), surrounding code still reformatted
+    {"module m1;\n"
+     "task automatic t1();\n"
+     "      x = 1;\n"
+     "   y=2;\n"
+     "endtask\n"
+     "      wire   w ;\n"
+     "endmodule\n",
+     "module m1;\n"
+     "  task automatic t1();\n"
+     "      x = 1;\n"
+     "   y=2;\n"
+     "endtask\n"
+     "  wire w;\n"
+     "endmodule\n"},
+    // ece2300: Test case for casez...endcase formatting being disabled (original spacing preserved), surrounding code still reformatted
+    {"module mc;\n"
+     "     wire   ww ;\n"
+     "casez(s)   a  :   bb   c  ;\n"
+     "      d:ee   f;\n"
+     "endcase\n"
+     "endmodule\n",
+     "module mc;\n"
+     "  wire ww;\n"
+     "  casez(s)   a  :   bb   c  ;\n"
+     "      d:ee   f;\n"
+     "endcase\n"
+     "endmodule\n"},
+    // ece2300: Test case confirming plain 'case' (not 'casez') is NOT exempted and is fully reformatted
+    {"module mc;\n"
+     "case(s)   a  :   bb   c  ;\n"
+     "      d:ee   f;\n"
+     "endcase\n"
+     "endmodule\n",
+     "module mc;\n"
+     "  case (s)\n"
+     "    a: bb c;\n"
+     "    d: ee f;\n"
+     "  endcase\n"
+     "endmodule\n"},
+    // ece2300: Test case confirming 'function' (not 'task') is NOT exempted and is fully reformatted
+    {"module m1;\n"
+     "function automatic f1();\n"
+     "      x = 1;\n"
+     "   y=2;\n"
+     "endfunction\n"
+     "endmodule\n",
+     "module m1;\n"
+     "  function automatic f1();\n"
+     "    x = 1;\n"
+     "    y = 2;\n"
+     "  endfunction\n"
+     "endmodule\n"},
+
     // -----------------------------------------------------------------
 };
 

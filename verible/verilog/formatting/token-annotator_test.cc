@@ -2940,23 +2940,6 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {NodeEnum::kModuleHeader, NodeEnum::kPort},
           {0, SpacingOptions::kUndecided},
       },
-      {
-          DefaultStyle,
-          {'(', "("},
-          {verilog_tokentype::SymbolIdentifier, "signal"},
-          {NodeEnum::kParenGroup, NodeEnum::kActualNamedPort},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
-      },
-      {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "signal"},
-          {')', ")"},
-          {/* any context */},
-          {NodeEnum::kParenGroup, NodeEnum::kActualNamedPort},
-          {1, SpacingOptions::kUndecided},
-      },
-
       // cases for the heavily overloaded ':'
 
       // ':' on the right, anything else on the left

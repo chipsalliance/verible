@@ -630,6 +630,8 @@ static void DisableSyntaxBasedRanges(ByteOffsetSet *disabled_ranges,
                                      const verible::Symbol &root,
                                      const FormatStyle &style,
                                      std::string_view full_text) {
+  // ece2300: disable formatting of task...endtask and casez...endcase bodies
+  // so ECE2300 style handwritten formatting is preserved.
   const auto disable = [&](const verible::Symbol &symbol) {
     disabled_ranges->Add(DisableByteOffsetRange(
         verible::StringSpanOfSymbol(symbol), full_text));
