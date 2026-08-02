@@ -4343,6 +4343,19 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    .L(L),\n"
      "    .W(W)\n"
      ") bar_t;\n"},
+    // unqualified parameterized type keeps a space before '#'
+    {"typedef dv_base_env_cov #(.CFG_T(tl_agent_env_cfg)) tl_agent_env_cov;\n",
+     "typedef dv_base_env_cov #(\n"
+     "    .CFG_T(tl_agent_env_cfg)\n"
+     ") tl_agent_env_cov;\n"},
+    // ... and is inserted when absent
+    {"typedef dv_base_env_cov#(.CFG_T(tl_agent_env_cfg)) tl_agent_env_cov;\n",
+     "typedef dv_base_env_cov #(\n"
+     "    .CFG_T(tl_agent_env_cfg)\n"
+     ") tl_agent_env_cov;\n"},
+    // single short parameter stays on one line
+    {"typedef my_class #(.P(P)) my_class_t;\n",
+     "typedef my_class #(.P(P)) my_class_t;\n"},
 
     // package test cases
     {"package fedex;localparam  int  www=3 ;endpackage   :  fedex\n",
