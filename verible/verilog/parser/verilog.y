@@ -2111,6 +2111,9 @@ data_type_or_implicit
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
                           MakeDataType($1, MakePackedDimensionsNode($2)),
                           $3, nullptr, nullptr); }
+  | data_type_primitive delay3_or_drive_opt
+    { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
+                          $1, $2, nullptr, nullptr); }
   | GenericIdentifier decl_dimensions_opt delay3_or_drive_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
                           MakeDataType(MakeTaggedNode(N::kLocalRoot,MakeTaggedNode(N::kUnqualifiedId,$1)), MakePackedDimensionsNode($2)),

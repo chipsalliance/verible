@@ -1339,6 +1339,15 @@ static constexpr ParserTestCaseArray kTaskTests = {
 static constexpr ParserTestCaseArray kModuleTests = {
     "module modular_thing;\n"
     "endmodule",
+    "module m;\n"
+    "wire logic b;\n"
+    "endmodule",
+    "module m;\n"
+    "wire bit b;\n"
+    "endmodule",
+    "module m;\n"
+    "wire logic [3:0] b;\n"
+    "endmodule",
     "module semicolon_madness;;;;;\n"
     "endmodule",
     "module automatic modular_thing;\n"
