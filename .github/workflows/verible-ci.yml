@@ -26,7 +26,7 @@ jobs:
 
 
   CheckFormatAndBuildClean:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
 
     - name: Checkout code
@@ -36,13 +36,15 @@ jobs:
 
     - name: Install Dependencies
       run: |
+        sudo apt-get install clang-format-19
+        clang-format-19 --version
         go install github.com/bazelbuild/buildtools/buildifier@latest
         echo "PATH=$PATH:$(go env GOPATH)/bin/" >> $GITHUB_ENV
 
     - name: Run formatting style check
       run: |
         echo "--- check formatting ---"
-        CLANG_FORMAT=clang-format-17 ./.github/bin/run-format.sh --show-diff
+        CLANG_FORMAT=clang-format-19 ./.github/bin/run-format.sh --show-diff
         echo "--- check build dependencies ---"
         ./.github/bin/run-build-cleaner.sh
         echo "--- check potential problems ---"

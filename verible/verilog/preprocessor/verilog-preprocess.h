@@ -124,7 +124,7 @@ class VerilogPreprocess {
   // Initialize preprocessing with safe default options
   // TODO(hzeller): remove this constructor once all places using the
   // preprocessor have been updated to pass a config.
-  VerilogPreprocess() : VerilogPreprocess(Config()){};
+  VerilogPreprocess() : VerilogPreprocess(Config()) {};
 
   // ScanStream reads in a stream of tokens returns the result as a move
   // of preprocessor_data_.  preprocessor_data_ should not be accessed
