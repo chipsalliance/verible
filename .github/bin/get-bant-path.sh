@@ -21,8 +21,7 @@ BANT=${BANT:-needs-to-be-compiled-locally}
 
 # Bant not given, compile from bzlmod dep.
 if [ "${BANT}" = "needs-to-be-compiled-locally" ]; then
-  "${BAZEL}" build -c opt --cxxopt=-std=c++20 @bant//bant:bant 2>/dev/null
-  BANT=$(realpath bazel-bin/external/bant*/bant/bant | tail -1)
+  BANT="$("${BAZEL}" run -c opt --cxxopt=-std=c++20 --run_under='echo' @bant//bant:bant 2>/dev/null)"
 fi
 
 echo $BANT

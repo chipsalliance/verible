@@ -19,11 +19,12 @@ set -u
 BAZEL=${BAZEL:-bazel}
 BANT=$($(dirname $0)/get-bant-path.sh)
 
-BAZEL_OPTS="-c opt --noshow_progress"
+BAZEL_OPTS="-c opt --noshow_progress --remote_download_outputs=all"
+
 # Bazel-build all targets that generate files, so that they can be
 # seen in dependency analysis.
-${BAZEL} build -k ${BAZEL_OPTS} $(${BANT} list-targets \
-  | awk '/genrule|cc_proto_library|genlex|genyacc/ {print $3}')
+${BAZEL} build -k ${BAZEL_OPTS} $(${BANT} list-targets ... \
+                         -g 'genrule|cc_proto_library|genlex|genyacc' -c3)
 
 # Some selected targets to trigger all dependency fetches from MODULE.bazel
 # verilog-y-final to create a header, kzip creator to trigger build of any.pb.h
@@ -41,8 +42,3 @@ ${BANT} compile-flags 2>/dev/null > compile_flags.txt
 for d in bazel-out/../../../external/*flex*/src/FlexLexer.h ; do
   echo "-I$(dirname $d)" >> compile_flags.txt
 done
-
-# clang-tidy sometimes has issues figuring out if a file is c++,
-# so let's tell it. Bant can't always exctract that yet from --config redirects
-# in .bazelrc
-echo "-xc++" >> compile_flags.txt
