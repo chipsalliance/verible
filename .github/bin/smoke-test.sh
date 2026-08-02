@@ -135,14 +135,14 @@ declare -A ExpectedFailCount
 
 ExpectedFailCount[syntax:ibex]=13
 ExpectedFailCount[lint:ibex]=13
-ExpectedFailCount[project:ibex]=223
+ExpectedFailCount[project:ibex]=218
 ExpectedFailCount[preprocessor:ibex]=397
 
-ExpectedFailCount[syntax:opentitan]=92
-ExpectedFailCount[lint:opentitan]=92
-ExpectedFailCount[project:opentitan]=1179
+ExpectedFailCount[syntax:opentitan]=88
+ExpectedFailCount[lint:opentitan]=88
+ExpectedFailCount[project:opentitan]=1068
 ExpectedFailCount[formatter:opentitan]=0
-ExpectedFailCount[preprocessor:opentitan]=3061
+ExpectedFailCount[preprocessor:opentitan]=3074
 
 ExpectedFailCount[syntax:sv-tests]=74
 ExpectedFailCount[lint:sv-tests]=73
@@ -151,8 +151,8 @@ ExpectedFailCount[preprocessor:sv-tests]=128
 
 ExpectedFailCount[syntax:caliptra-rtl]=39
 ExpectedFailCount[lint:caliptra-rtl]=38
-ExpectedFailCount[project:caliptra-rtl]=455
-ExpectedFailCount[preprocessor:caliptra-rtl]=903
+ExpectedFailCount[project:caliptra-rtl]=453
+ExpectedFailCount[preprocessor:caliptra-rtl]=911
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
@@ -161,17 +161,17 @@ ExpectedFailCount[preprocessor:Cores-VeeR-EH2]=43
 
 ExpectedFailCount[syntax:cva6]=7
 ExpectedFailCount[lint:cva6]=7
-ExpectedFailCount[project:cva6]=92
-ExpectedFailCount[preprocessor:cva6]=141
+ExpectedFailCount[project:cva6]=84
+ExpectedFailCount[preprocessor:cva6]=140
 
 ExpectedFailCount[syntax:uvm]=0
 ExpectedFailCount[lint:uvm]=0
-ExpectedFailCount[project:uvm]=47
+ExpectedFailCount[project:uvm]=40
 ExpectedFailCount[preprocessor:uvm]=126
 
 ExpectedFailCount[syntax:tnoc]=3
 ExpectedFailCount[lint:tnoc]=3
-ExpectedFailCount[project:tnoc]=24
+ExpectedFailCount[project:tnoc]=21
 ExpectedFailCount[preprocessor:tnoc]=57
 
 ExpectedFailCount[project:80x86]=2
@@ -187,17 +187,17 @@ ExpectedFailCount[lint:black-parrot]=155
 ExpectedFailCount[project:black-parrot]=172
 ExpectedFailCount[preprocessor:black-parrot]=173
 
-ExpectedFailCount[syntax:ivtest]=166
-ExpectedFailCount[lint:ivtest]=166
-ExpectedFailCount[project:ivtest]=198
+ExpectedFailCount[syntax:ivtest]=117
+ExpectedFailCount[lint:ivtest]=117
+ExpectedFailCount[project:ivtest]=146
 ExpectedFailCount[preprocessor:ivtest]=26
 
 ExpectedFailCount[syntax:nontrivial-mips]=2
 ExpectedFailCount[lint:nontrivial-mips]=2
-ExpectedFailCount[project:nontrivial-mips]=81
+ExpectedFailCount[project:nontrivial-mips]=79
 ExpectedFailCount[preprocessor:nontrivial-mips]=78
 
-ExpectedFailCount[project:axi]=82
+ExpectedFailCount[project:axi]=79
 ExpectedFailCount[preprocessor:axi]=79
 
 ExpectedFailCount[syntax:rsd]=5
@@ -205,15 +205,15 @@ ExpectedFailCount[lint:rsd]=5
 ExpectedFailCount[project:rsd]=52
 ExpectedFailCount[preprocessor:rsd]=49
 
-ExpectedFailCount[project:scr1]=45
+ExpectedFailCount[project:scr1]=44
 ExpectedFailCount[preprocessor:scr1]=46
 
 ExpectedFailCount[project:serv]=1
 ExpectedFailCount[preprocessor:serv]=1
 
-ExpectedFailCount[syntax:basejump_stl]=499
-ExpectedFailCount[lint:basejump_stl]=499
-ExpectedFailCount[project:basejump_stl]=620
+ExpectedFailCount[syntax:basejump_stl]=498
+ExpectedFailCount[lint:basejump_stl]=498
+ExpectedFailCount[project:basejump_stl]=619
 ExpectedFailCount[formatter:basejump_stl]=1
 ExpectedFailCount[preprocessor:basejump_stl]=659
 
