@@ -46,7 +46,8 @@ To pipe from stdin, use '-' as <file>.
       items, statements, and class items:
       {none,blank-lines,separator-comments,blank-lines-and-separator-comments});
       default: none;
-    --assignment_statement_alignment (Format various assignments:
+    --assignment_statement_alignment (Format various assignments in module,
+      generate, interface, and package bodies:
       {align,flush-left,preserve,infer}); default: infer;
     --case_items_alignment (Format case items:
       {align,flush-left,preserve,infer}); default: infer;
@@ -59,11 +60,13 @@ To pipe from stdin, use '-' as <file>.
     --enum_assignment_statement_alignment (Format assignments with enums:
       {align,flush-left,preserve,infer}); default: infer;
     --expand_coverpoints (If true, always expand coverpoints.); default: false;
-    --formal_parameters_alignment (Format formal parameters:
+    --formal_parameters_alignment (Format formal parameters in
+      module/interface/class headers (inside #(...)):
       {align,flush-left,preserve,infer}); default: infer;
     --formal_parameters_indentation (Indent formal parameters: {indent,wrap});
       default: wrap;
-    --module_net_variable_alignment (Format net/variable declarations:
+    --module_net_variable_alignment (Format net/variable declarations in module,
+      generate, interface, and package bodies:
       {align,flush-left,preserve,infer}); default: infer;
     --named_parameter_alignment (Format named actual parameters:
       {align,flush-left,preserve,infer}); default: infer;
@@ -73,6 +76,10 @@ To pipe from stdin, use '-' as <file>.
       {align,flush-left,preserve,infer}); default: infer;
     --named_port_indentation (Indent named port connections: {indent,wrap});
       default: wrap;
+    --parameter_declaration_alignment (Format parameter/localparam declarations
+      in module, generate, interface, and package bodies (class body parameter
+      declarations are NOT affected): {align,flush-left,preserve,infer});
+      default: infer;
     --port_declarations_alignment (Format port declarations:
       {align,flush-left,preserve,infer}); default: infer;
     --port_declarations_indentation (Indent port declarations: {indent,wrap});
@@ -136,4 +143,4 @@ path.
 
 ## Version
 
-Generated on 2026-07-19 23:58:55 +0200 from [f3e4d98](https://github.com/google/verible/commit/f3e4d98b10a97e1795f568933295b508e6d87466)
+Generated on 2026-08-02 12:28:04 +0200 from [d8a6915](https://github.com/google/verible/commit/d8a691512b96c3a3e546d843e1192493b03e1f86)

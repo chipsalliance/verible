@@ -97,7 +97,7 @@ Checks for banned declared name against set of unwanted patterns. See [Style: id
 Enabled by default: false
 
 ### case-missing-default
-Checks that a default case-item is always defined unless the case statement has the `unique` qualifier. See [Style: case-statements].
+Checks that a default case-item is always defined unless the case statement has the `unique` or `unique0` qualifier. See [Style: case-statements].
 
 Enabled by default: true
 
@@ -453,4 +453,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2026-07-19 23:58:55 +0200 from [f3e4d98](https://github.com/google/verible/commit/f3e4d98b10a97e1795f568933295b508e6d87466)
+Generated on 2026-08-02 12:28:04 +0200 from [d8a6915](https://github.com/google/verible/commit/d8a691512b96c3a3e546d843e1192493b03e1f86)
