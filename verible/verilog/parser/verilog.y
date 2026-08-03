@@ -679,7 +679,7 @@ is not locally defined, so the grammar here uses only generic identifiers.
 
 /* most likely a lexical error */
 %token TK_OTHER
-// LINT.ThenChange(../formatting/verilog_token.cc)
+// LINT.ThenChange(../formatting/verilog-token.cc)
 
 /* A glorified ';' specialized to mark the end of an
    assertion_variable_declaration list inside the
