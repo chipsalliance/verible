@@ -1464,10 +1464,26 @@ std::vector<AutoExpander::Expansion> AutoExpander::Expand() {
     module->RetrieveDependencies(modules_);
   }
   // Sort modules in the buffer based on a dependency graph, so that AUTOs are
-  // expanded in order
+  // expanded in order. Counting dependents and breaking ties by name induces a
+  // strict weak ordering even with dependency loops or independent modules.
+  absl::flat_hash_map<const Module *, int> dependents_count;
+  for (const Module *module : buffer_modules) {
+    int count = 0;
+    for (const Module *other : buffer_modules) {
+      if (other != module && other->DependsOn(module)) {
+        ++count;
+      }
+    }
+    dependents_count[module] = count;
+  }
   std::sort(buffer_modules.begin(), buffer_modules.end(),
-            [](const Module *left, const Module *right) {
-              return right->DependsOn(left);
+            [&dependents_count](const Module *left, const Module *right) {
+              const int left_count = dependents_count.at(left);
+              const int right_count = dependents_count.at(right);
+              if (left_count != right_count) {
+                return left_count > right_count;
+              }
+              return left->Name() < right->Name();
             });
   for (Module *const module : buffer_modules) {
     // Ports declared in AUTOINPUT/AUTOINOUT/AUTOOUTPUT must be removed from
