@@ -3805,6 +3805,10 @@ static constexpr ParserTestCaseArray kUnionTests = {
     "union tagged packed { int i; bit b; } foo;",
     "union tagged packed signed { int i; bit b; } foo;",
     "union tagged packed unsigned { int i; bit b; } foo;",
+    "union soft { int i; bit b; } foo;",
+    "union soft packed { int i; bit b; } foo;",
+    "union soft packed signed { int i; bit b; } foo;",
+    "union soft packed unsigned { int i; bit b; } foo;",
 };
 
 // TODO(fangism): implement and test ENUM_CONSTANT
