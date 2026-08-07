@@ -22,6 +22,9 @@ common:macos   --config=unix
 # clang-cl before fixing the issues unique to MSVC.
 common:windows --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl --extra_execution_platforms=//:x64_windows-clang-cl
 common:windows --compiler=clang-cl --cxxopt=/std:c++20 --host_cxxopt=/std:c++20 --client_env=BAZEL_CXXOPTS=/std:c++20
+# Actions (e.g. the genrules invoking win_flex.exe/win_bison.exe) need the
+# invoking shell's PATH to find tools installed.
+common:windows --action_env=PATH --host_action_env=PATH
 
 build --cxxopt="-Wno-unknown-warning-option" --host_cxxopt="-Wno-unknown-warning-option"
 # TODO: this looks like benign where it happens but to be explored further.
