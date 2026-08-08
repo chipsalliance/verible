@@ -214,17 +214,16 @@ bazel build -c opt  --//bazel:use_local_flex_bison //...
 
 ### Building on Windows
 
-Building on Windows requires LLVM, WinFlexBison 3 and Git-bash to be installed. Using package manager [chocolatey], this can be done with
+In addition to Bazel & Visual Studio, building on Windows requires WinFlexBison 3 and Git-bash to be installed. Using package manager [chocolatey], this can be done with
 
 ```powershell
-choco install git llvm winflexbison3
+choco install git winflexbison3
 ```
 
-Bazel may also require environment variable to use git-bash and LLVM, on powershell
+Bazel may also require environment variable to use git-bash, on powershell
 
 ```powershell
 $env:BAZEL_SH="C:\Program Files\Git\git-bash.exe"
-$env:BAZEL_LLVM="C:\Program Files\LLVM"
 ```
 
 ### Installation

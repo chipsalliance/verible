@@ -393,22 +393,17 @@ jobs:
 
     - name: Install dependencies
       run: |
-        choco install bazel --force --version=7.6.1
         choco install winflexbison3
-        choco install llvm --allow-downgrade --version=20.1.4
 
     - name: Debug bazel directory settings
-      # We need to explicitly call the bazel binary from choco, otherwise
-      # the default Windows runner seems to run bazelisk(?) and downloads the
-      # latest bazel, which is incompatible. Should be in variable.
-      run: C:/ProgramData/chocolatey/lib/bazel/bazel.exe info
+      run: bazel.exe info
 
     - name: Run Tests
-      run: C:/ProgramData/chocolatey/lib/bazel/bazel.exe test --keep_going --noshow_progress --test_output=errors //...
+      run: bazel.exe test --keep_going --noshow_progress --test_output=errors //...
 
     - name: Build Verible Binaries
       run: |
-        C:/ProgramData/chocolatey/lib/bazel/bazel.exe build --keep_going --noshow_progress -c opt :install-binaries
+        bazel.exe build --keep_going --noshow_progress -c opt :install-binaries
         # Litmus test
         bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax --version
 
@@ -429,7 +424,7 @@ jobs:
     # prevents packaging up the cache.
     - name: Stop Bazel
       run: |
-        C:/ProgramData/chocolatey/lib/bazel/bazel.exe shutdown
+        bazel.exe shutdown
         # The cache pack/restore has issues with these symbolic links
         rm c:/users/runneradmin/_bazel_runneradmin/*/install
         rm c:/users/runneradmin/_bazel_runneradmin/*/java.log
