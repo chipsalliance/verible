@@ -1821,6 +1821,7 @@ cc_library(
         "//verible/common/text:symbol",
         "//verible/common/text:syntax-tree-context",
         "//verible/common/text:token-info",
+        "//verible/common/util:container-util",
         "//verible/verilog/CST:port",
         "//verible/verilog/CST:verilog-matchers",
         "//verible/verilog/analysis:descriptions",

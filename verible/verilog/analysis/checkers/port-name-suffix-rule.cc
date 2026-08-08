@@ -28,6 +28,7 @@
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/token-info.h"
+#include "verible/common/util/container-util.h"
 #include "verible/verilog/CST/port.h"
 #include "verible/verilog/CST/verilog-matchers.h"
 #include "verible/verilog/analysis/descriptions.h"
@@ -91,13 +92,15 @@ bool PortNameSuffixRule::IsSuffixCorrect(std::string_view suffix,
        {"inout", {"io", "nio", "pio"}}};
 
   // `direction` is usually one of the map keys, but the grammar also permits a
-  // `ref` port direction, which has no suffix convention. Look the direction up
-  // safely and treat an unknown direction as "correct" (no violation),
+  // `ref` port direction, which has no suffix convention. FindWithDefault looks
+  // the direction up with an empty-set fallback, so an unknown direction (e.g.
+  // `ref`) has no required suffixes and is treated as "correct" (no violation),
   // consistent with Violation() which also ignores non-input/output/inout
-  // directions. Using std::map::at() here would throw on e.g. "ref".
-  const auto it = suffixes.find(direction);
-  if (it == suffixes.end()) return true;
-  return it->second.count(suffix) == 1;
+  // directions.
+  static const std::set<std::string_view> kNoConvention;
+  const std::set<std::string_view> &valid =
+      verible::container::FindWithDefault(suffixes, direction, kNoConvention);
+  return valid.empty() || valid.count(suffix) == 1;
 }
 
 void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
