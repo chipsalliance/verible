@@ -7,12 +7,13 @@ let
   verible_used_stdenv = pkgs.stdenv;
   #verible_used_stdenv = pkgs.gcc15Stdenv;
   #verible_used_stdenv = pkgs.clang19Stdenv;
+  bazel = pkgs.bazel_8;
 in
 verible_used_stdenv.mkDerivation {
   name = "verible-build-environment";
   buildInputs = with pkgs;
     [
-      bazel_7
+      bazel
       git
 
       # For scripts used inside bzl rules and tests
