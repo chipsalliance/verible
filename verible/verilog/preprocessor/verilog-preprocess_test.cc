@@ -139,14 +139,15 @@ TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
   }
 }
 
-// A function-like macro invoked with fewer arguments than parameters and no
-// closing ')' (EOF reached mid-call) must not spin ConsumeAndParseMacroCall
-// forever. Reaching any assertion below proves the preprocessor terminated and
-// back-filled the missing arguments instead of hanging.
-TEST(VerilogPreprocessTest, UnterminatedMacroCallDoesNotHang) {
+// A function-like macro invoked with no closing ')' (EOF reached mid-call) must
+// not spin ConsumeAndParseMacroCall forever. It is a malformed call, so the
+// preprocessor rejects it with an error rather than silently accepting it.
+// (Completing the test at all also proves the scan terminated instead of
+// hanging.)
+TEST(VerilogPreprocessTest, UnterminatedMacroCallIsRejected) {
   PreprocessorTester tester("`define FOO(a, b) a\n`FOO(x",
                             VerilogPreprocess::Config({.expand_macros = true}));
-  SUCCEED();
+  EXPECT_FALSE(tester.PreprocessorData().errors.empty());
 }
 
 #define EXPECT_PARSE_OK()                                                \

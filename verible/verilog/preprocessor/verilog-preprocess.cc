@@ -270,10 +270,14 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
     }
     // Any other token -- in particular the EOF token from an unterminated
     // macro call -- would otherwise leave token_iter and parameters_size
-    // unchanged and spin this loop forever. Stop scanning; the loop below
-    // back-fills the remaining parameters with default TokenInfo (the same
-    // terminal state produced by an early ')').
-    break;
+    // unchanged and spin this loop forever. An early ')' (handled above) is the
+    // legal way to pass fewer arguments than parameters; anything else here is
+    // a malformed call, so reject it rather than silently accepting it. The
+    // caller records the returned message as a preprocessor error.
+    return absl::InvalidArgumentError(absl::StrCat(
+        "unexpected token while scanning arguments of macro call `",
+        macro_name_str,
+        ": expected ',' or ')', but got: ", (*token_iter)->ToString()));
   }
   if (parameters_size > 0) {
     while (parameters_size--) {
@@ -307,8 +311,15 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
 
   if (config_.expand_macros) {
     verible::MacroCall macro_call;
-    RETURN_IF_ERROR(
-        ConsumeAndParseMacroCall(iter, generator, &macro_call, *found));
+    const absl::Status call_status =
+        ConsumeAndParseMacroCall(iter, generator, &macro_call, *found);
+    if (!call_status.ok()) {
+      // Surface a malformed macro call (e.g. an unterminated argument list) as
+      // a preprocessor error at the call site instead of silently accepting it.
+      std::string message(call_status.message());
+      preprocess_data_.errors.emplace_back(**iter, message);
+      return call_status;
+    }
     RETURN_IF_ERROR(ExpandMacro(macro_call, found));
   }
   auto &lexed = preprocess_data_.lexed_macros_backup.back();
