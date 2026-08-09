@@ -7378,12 +7378,6 @@ TK_static_opt
   | /* empty */
     { $$ = nullptr; }
   ;
-TK_tagged_opt
-  : TK_tagged
-    { $$ = std::move($1); }
-  | /* empty */
-    { $$ = nullptr; }
-  ;
 TK_union_qualifier_opt
   : TK_soft
     { $$ = std::move($1); }
