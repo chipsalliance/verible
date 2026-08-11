@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <fstream>
+#include <ios>
 #include <iostream>
+#include <memory>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -32,13 +36,6 @@
 #include "verible/verilog/tools/kythe/kythe-facts-extractor.h"
 #include "verible/verilog/tools/kythe/kythe-facts.h"
 #include "verible/verilog/tools/kythe/kythe-proto-output.h"
-
-#ifndef _WIN32
-#include <unistd.h>  // for STDOUT_FILENO
-#else
-#include <stdio.h>
-#define STDOUT_FILENO _fileno(stdout)
-#endif
 
 // for --print_kythe_facts flag
 enum class PrintMode {
@@ -109,14 +106,18 @@ if "A.sv" exists in both "directory1" and "directory2" the one in "directory1" i
 ABSL_FLAG(std::string, verilog_project_name, "",
           "Verilog project name to use as Kythe corpus. Optional");
 
+ABSL_FLAG(std::string, output_path, "",
+          R"(Path of the file to write the extracted Kythe facts to.
+Writes to stdout if empty or "-".)");
+
 namespace verilog {
 namespace kythe {
 
-// Prints Kythe facts in proto format to stdout.
+// Prints Kythe facts in proto format to the given stream.
 static void PrintKytheFactsProtoEntries(
     const IndexingFactNode &file_list_facts_tree, const VerilogProject &project,
-    int fd) {
-  KytheProtoOutput proto_output(fd);
+    std::ostream &stream) {
+  KytheProtoOutput proto_output(stream);
   StreamKytheFactsEntries(&proto_output, file_list_facts_tree, project);
 }
 
@@ -134,7 +135,7 @@ static void KytheFactsNullPrinter(const IndexingFactNode &file_list_facts_tree,
 
 static std::vector<absl::Status> ExtractTranslationUnits(
     std::string_view file_list_path, VerilogProject *project,
-    const std::vector<std::string> &file_names) {
+    const std::vector<std::string> &file_names, std::ostream &output_stream) {
   std::vector<absl::Status> errors;
   const verilog::kythe::IndexingFactNode file_list_facts_tree(
       verilog::kythe::ExtractFiles(file_list_path, project, file_names,
@@ -149,17 +150,17 @@ static std::vector<absl::Status> ExtractTranslationUnits(
   // check how to output kythe facts.
   switch (absl::GetFlag(FLAGS_print_kythe_facts)) {
     case PrintMode::kJSON:
-      std::cout << KytheFactsPrinter(file_list_facts_tree, *project)
-                << std::endl;
+      output_stream << KytheFactsPrinter(file_list_facts_tree, *project)
+                    << std::endl;
       break;
     case PrintMode::kJSONDebug:
-      std::cout << KytheFactsPrinter(file_list_facts_tree, *project,
-                                     /*debug=*/true)
-                << std::endl;
+      output_stream << KytheFactsPrinter(file_list_facts_tree, *project,
+                                         /*debug=*/true)
+                    << std::endl;
       break;
     case PrintMode::kProto:
       PrintKytheFactsProtoEntries(file_list_facts_tree, *project,
-                                  STDOUT_FILENO);
+                                  output_stream);
       break;
     case PrintMode::kNone:
       KytheFactsNullPrinter(file_list_facts_tree, *project);
@@ -211,9 +212,24 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
                                   absl::GetFlag(FLAGS_verilog_project_name),
                                   /*provide_lookup_file_origin=*/false);
 
+  // Send the facts to a file when asked to, otherwise to stdout. The file is
+  // opened in binary mode because --print_kythe_facts=proto is not text.
+  const std::string output_path = absl::GetFlag(FLAGS_output_path);
+  std::unique_ptr<std::ofstream> file_closer;
+  std::ostream *output_stream = &std::cout;
+  if (!output_path.empty() && output_path != "-") {
+    file_closer = std::make_unique<std::ofstream>(
+        output_path, std::ios::out | std::ios::binary);
+    if (!file_closer->good()) {
+      LOG(ERROR) << "Failed to create/open output file: " << output_path;
+      return 1;
+    }
+    output_stream = file_closer.get();
+  }
+
   const std::vector<absl::Status> errors(
       verilog::kythe::ExtractTranslationUnits(file_list_path, &project,
-                                              file_paths));
+                                              file_paths, *output_stream));
   if (!errors.empty()) {
     LOG(ERROR) << "Encountered some issues while indexing files (could result "
                   "in missing indexing data):"

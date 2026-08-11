@@ -14,9 +14,12 @@
 
 #include "verible/verilog/tools/kythe/kythe-proto-output.h"
 
+#include <memory>
+#include <ostream>
 #include <string>
 
 #include "google/protobuf/io/coded_stream.h"
+#include "google/protobuf/io/zero_copy_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "third_party/proto/kythe/storage.pb.h"
 #include "verible/verilog/tools/kythe/kythe-facts.h"
@@ -26,7 +29,8 @@ namespace kythe {
 namespace {
 
 using ::google::protobuf::io::CodedOutputStream;
-using ::google::protobuf::io::FileOutputStream;
+using ::google::protobuf::io::OstreamOutputStream;
+using ::google::protobuf::io::ZeroCopyOutputStream;
 using ::kythe::proto::Entry;
 
 // Returns the VName representation in Kythe's storage proto format.
@@ -60,7 +64,7 @@ Entry ConvertFactToEntry(const Fact &fact) {
 }
 
 // Output entry to the stream.
-void OutputProto(const Entry &entry, FileOutputStream *stream) {
+void OutputProto(const Entry &entry, ZeroCopyOutputStream *stream) {
   CodedOutputStream coded_stream(stream);
   coded_stream.WriteVarint32(entry.ByteSizeLong());
   entry.SerializeToCodedStream(&coded_stream);
@@ -68,14 +72,17 @@ void OutputProto(const Entry &entry, FileOutputStream *stream) {
 
 }  // namespace
 
-KytheProtoOutput::KytheProtoOutput(int fd) : out_(fd) {}
-KytheProtoOutput::~KytheProtoOutput() { out_.Close(); }
+KytheProtoOutput::KytheProtoOutput(std::ostream &output_stream)
+    : out_(std::make_unique<OstreamOutputStream>(&output_stream)) {}
+
+// OstreamOutputStream flushes its remaining bytes when destroyed.
+KytheProtoOutput::~KytheProtoOutput() = default;
 
 void KytheProtoOutput::Emit(const Fact &fact) {
-  OutputProto(ConvertFactToEntry(fact), &out_);
+  OutputProto(ConvertFactToEntry(fact), out_.get());
 }
 void KytheProtoOutput::Emit(const Edge &edge) {
-  OutputProto(ConvertEdgeToEntry(edge), &out_);
+  OutputProto(ConvertEdgeToEntry(edge), out_.get());
 }
 
 }  // namespace kythe
