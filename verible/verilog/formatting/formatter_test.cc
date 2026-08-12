@@ -3885,6 +3885,22 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  endtask\n"
      "  // class is about to end\n"
      "endclass\n"},
+
+    // interface class test cases
+    {"interface class Foo;\nendclass\n",
+     "interface class Foo;\n"
+     "endclass\n"},
+    {"interface   class   Foo  ;  endclass\n",
+     "interface class Foo;\n"
+     "endclass\n"},
+    {"interface class Foo extends Bar , Baz ;\nendclass\n",
+     "interface class Foo extends Bar, Baz;\n"
+     "endclass\n"},
+    {"interface class Foo;\n  pure   virtual   task   foo (  ) ; \nendclass\n",
+     "interface class Foo;\n"
+     "  pure virtual task foo();\n"
+     "endclass\n"},
+
     // class property alignment test cases
     {"class c;\n"
      "int foo  ;\n"
