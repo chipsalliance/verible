@@ -162,6 +162,12 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "`define  BAR\n",
      "`define FOO\n"
      "`define BAR\n"},
+    {"`define FOO_``BAR 1\n", "`define FOO_``BAR 1\n"},
+    {"`define FOO_```BAR 1\n", "`define FOO_```BAR 1\n"},
+    {"`define FOO ``BAR\n", "`define FOO ``BAR\n"},
+    {"`define A``B``C 2\n", "`define A``B``C 2\n"},
+    {"`define A(x)``y\n", "`define A(x) ``y\n"},
+    {"`define    FOO_``BAR\n", "`define FOO_``BAR\n"},
     {"`ifndef    FOO\n"
      "`endif // FOO\n",
      "`ifndef FOO\n"
