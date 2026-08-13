@@ -258,6 +258,16 @@ static WithReason<int> SpacesRequiredBetween(
     return {0, "No additional space around empty-string tokens."};
   }
 
+  // A macro definition body that begins with the token-concatenation
+  // operator "``" is part of macro name; preserve spacing if present.
+  // If a closing ')', that ends the definition name.
+  if (left.TokenEnum() == verilog_tokentype::PP_Identifier &&
+      right.TokenEnum() == verilog_tokentype::PP_define_body &&
+      right.Text().substr(0, 2) == "``" &&
+      right.OriginalLeadingSpaces().empty()) {
+    return {0, "Preserve spacing in concatenated name"};
+  }
+
   // Remove any extra spaces between numeric literals' width, base and digits.
   // "16'h123, 'h123" instead of "16 'h123", "16'h 123, 'h 123"
   if (IsInsideNumericLiteral(left, right)) {
