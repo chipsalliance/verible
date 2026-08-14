@@ -37,6 +37,11 @@
 #include "verible/verilog/tools/kythe/kythe-facts.h"
 #include "verible/verilog/tools/kythe/kythe-proto-output.h"
 
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 // for --print_kythe_facts flag
 enum class PrintMode {
   kJSON,
@@ -174,6 +179,13 @@ static std::vector<absl::Status> ExtractTranslationUnits(
 }  // namespace verilog
 
 int main(int argc, char **argv) {
+#ifdef _WIN32
+  // Windows messes with newlines by default. Fix this here, so that stdout
+  // carries the same bytes as --output_path, and so that the proto entries
+  // stay binary.
+  _setmode(_fileno(stdout), _O_BINARY);
+#endif
+
   const auto usage =
       absl::StrCat("usage: ", argv[0], " [options] --file_list_path FILE\n", R"(
 Extracts kythe indexing facts from the given SystemVerilog source files.
@@ -212,8 +224,8 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
                                   absl::GetFlag(FLAGS_verilog_project_name),
                                   /*provide_lookup_file_origin=*/false);
 
-  // Send the facts to a file when asked to, otherwise to stdout. The file is
-  // opened in binary mode because --print_kythe_facts=proto is not text.
+  // Send the facts to a file when asked to, otherwise to stdout. Both go out
+  // in binary mode, because --print_kythe_facts=proto is not text.
   const std::string output_path = absl::GetFlag(FLAGS_output_path);
   std::unique_ptr<std::ofstream> file_closer;
   std::ostream *output_stream = &std::cout;
