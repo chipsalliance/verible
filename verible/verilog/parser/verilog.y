@@ -5633,6 +5633,37 @@ module_port_declaration
     { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
                           MakeDataType($3, ForwardChildren($2), MakePackedDimensionsNode($4)),
                           $5, $6); }
+  | port_direction TK_bit signed_unsigned_opt decl_dimensions_opt
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2, $3),
+                                       MakePackedDimensionsNode($4)),
+                          $5, $6); }
+  | port_direction integer_atom_type signed_unsigned_opt
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2, $3)),
+                          $4, $5); }
+  | port_direction non_integer_type
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2)),
+                          $3, $4); }
+  | port_direction TK_string
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2)),
+                          $3, $4); }
+  | port_direction TK_event
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2)),
+                          $3, $4); }
+  | port_direction TK_chandle
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2)),
+                          $3, $4); }
   ;
 
 parameter_override
