@@ -174,9 +174,11 @@ void ReserveIfSupported(Container &, ...) {}  // NOLINT
 // `TreeNodeTraits<T>` is defined for every class `T` fulfilling the TreeNode
 // concept. It can be used in SFINAE tests.
 template <class Node,  //
-          typename Children_ =
-              tree_operations_internal::TreeNodeChildrenTraits<Node>>
+          typename Children_ = detected_or_t<
+              UnavailableFeatureTraits,
+              tree_operations_internal::TreeNodeChildrenTraits, Node>>
 struct TreeNodeTraits : FeatureTraits {
+  static constexpr bool available = Children_::available;
   using Parent =
       detected_or_t<UnavailableFeatureTraits,
                     tree_operations_internal::TreeNodeParentTraits, Node>;

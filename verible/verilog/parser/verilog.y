@@ -679,7 +679,7 @@ is not locally defined, so the grammar here uses only generic identifiers.
 
 /* most likely a lexical error */
 %token TK_OTHER
-// LINT.ThenChange(../formatting/verilog_token.cc)
+// LINT.ThenChange(../formatting/verilog-token.cc)
 
 /* A glorified ';' specialized to mark the end of an
    assertion_variable_declaration list inside the
@@ -2111,6 +2111,9 @@ data_type_or_implicit
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
                           MakeDataType($1, MakePackedDimensionsNode($2)),
                           $3, nullptr, nullptr); }
+  | data_type_primitive delay3_or_drive_opt
+    { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
+                          $1, $2, nullptr, nullptr); }
   | GenericIdentifier decl_dimensions_opt delay3_or_drive_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
                           MakeDataType(MakeTaggedNode(N::kLocalRoot,MakeTaggedNode(N::kUnqualifiedId,$1)), MakePackedDimensionsNode($2)),
@@ -3726,7 +3729,7 @@ enum_name
 struct_data_type
   : TK_struct packed_signing_opt '{' struct_union_member_list '}'
     { $$ = MakeTaggedNode(N::kStructType, $1, $2, MakeBraceGroup($3, $4, $5)); }
-  | TK_union TK_tagged_opt packed_signing_opt '{' struct_union_member_list '}'
+  | TK_union TK_union_qualifier_opt packed_signing_opt '{' struct_union_member_list '}'
     { $$ = MakeTaggedNode(N::kUnionType, $1, $2, $3,
                           MakeBraceGroup($4, $5, $6)); }
   ;
@@ -5630,6 +5633,37 @@ module_port_declaration
     { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
                           MakeDataType($3, ForwardChildren($2), MakePackedDimensionsNode($4)),
                           $5, $6); }
+  | port_direction TK_bit signed_unsigned_opt decl_dimensions_opt
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2, $3),
+                                       MakePackedDimensionsNode($4)),
+                          $5, $6); }
+  | port_direction integer_atom_type signed_unsigned_opt
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2, $3)),
+                          $4, $5); }
+  | port_direction non_integer_type
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2)),
+                          $3, $4); }
+  | port_direction TK_string
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2)),
+                          $3, $4); }
+  | port_direction TK_event
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2)),
+                          $3, $4); }
+  | port_direction TK_chandle
+    list_of_identifiers_unpacked_dimensions ';'
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2)),
+                          $3, $4); }
   ;
 
 parameter_override
@@ -7375,8 +7409,10 @@ TK_static_opt
   | /* empty */
     { $$ = nullptr; }
   ;
-TK_tagged_opt
-  : TK_tagged
+TK_union_qualifier_opt
+  : TK_soft
+    { $$ = std::move($1); }
+  | TK_tagged
     { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }

@@ -47,12 +47,6 @@ fi
 
 BUILDIFIER=${BUILDIFIER:-buildifier}
 
-# Currently, we're using clang-format 17, as newer versions still have some
-# volatility in minor version.
-${CLANG_FORMAT} --version | grep "17\." ||
-  ( echo "-- Need clang-format 17. Currently CLANG_FORMAT=$CLANG_FORMAT --";
-    exit 1)
-
 # Run on all files.
 
 find . -name "*.h" -o -name "*.cc" \

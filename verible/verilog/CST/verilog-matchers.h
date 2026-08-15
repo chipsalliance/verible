@@ -437,6 +437,8 @@ inline constexpr auto HasDefaultCase =
 //     ...
 inline constexpr auto HasUniqueQualifier =
     verible::matcher::MakePathMatcher(L(TK_unique));
+inline constexpr auto HasUnique0Qualifier =
+    verible::matcher::MakePathMatcher(L(TK_unique0));
 // Clean up macros
 #undef N
 #undef L

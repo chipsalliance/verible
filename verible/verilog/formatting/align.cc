@@ -632,7 +632,9 @@ enum class AlignableSyntaxSubtype {
   kDontCare = 0,
   kNamedActualParameters,
   kNamedActualPorts,
-  kParameterDeclaration,
+  kParameterDeclaration,      // formal parameter list (#(...))
+  kBodyParameterDeclaration,  // parameter/localparam in module/generate/
+                              //   package/interface body
   kPortDeclaration,
   kStructUnionMember,
   kDataDeclaration,  // net/variable declarations
@@ -674,6 +676,13 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
           return AlignClassify(AlignmentGroupAction::kIgnore);
         }
         const SyntaxTreeNode &node = verible::SymbolCastToNode(*origin);
+        // Align body-level parameter/localparam declarations.
+        if (node.MatchesTag(NodeEnum::kParamDeclaration)) {
+          return AlignClassify(
+              AlignmentGroupAction::kMatch,
+              AlignableSyntaxSubtype::kBodyParameterDeclaration);
+        }
+
         // Align net/variable declarations.
         if (IsAlignableDeclaration(node)) {
           return AlignClassify(AlignmentGroupAction::kMatch,
@@ -837,7 +846,7 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
       }
       case NodeEnum::kDimensionSlice:
       case NodeEnum::kDimensionAssociativeType: {
-        // all of these cases cover packed and unpacked dimensions
+        // All of these cases cover packed and unpacked dimensions
         ReserveNewColumn(node, FlushLeft);
         break;
       }
@@ -951,7 +960,6 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
         CHECK_EQ(node.size(), 5);
         auto *column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
 
-        SyntaxTreePath np;
         ReserveNewColumn(column, *node[0], FlushLeft);  // '['
 
         auto *value_subcolumn =
@@ -985,9 +993,8 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
   }
 };
 
-// This class marks up token-subranges in formal parameter declarations for
-// alignment.
-// e.g. "localparam int Width = 5;"
+// This class marks up token-subranges in formal and body-level parameter
+// declarations for alignment.  e.g. "localparam int Width = 5;"
 class ParameterDeclarationColumnSchemaScanner
     : public VerilogColumnSchemaScanner {
  public:
@@ -1061,7 +1068,7 @@ class ParameterDeclarationColumnSchemaScanner
         break;
       }
 
-      // Sometimes the parameter indentifier which is of token SymbolIdentifier
+      // Sometimes the parameter identifier which is of token SymbolIdentifier
       // can appear at different paths depending on the parameter type. Make
       // them aligned so they fall under the same column.
       case verilog_tokentype::SymbolIdentifier: {
@@ -1090,7 +1097,7 @@ class ParameterDeclarationColumnSchemaScanner
         break;
       }
 
-      // Align packed and unpacked dimenssions
+      // Align packed and unpacked dimensions
       case '[': {
         if (verilog::analysis::ContextIsInsideDeclarationDimensions(
                 Context()) &&
@@ -1456,6 +1463,11 @@ static const AlignmentHandlerMapType &AlignmentHandlerLibrary() {
             ParameterDeclarationColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::formal_parameters_alignment)}},
+      {AlignableSyntaxSubtype::kBodyParameterDeclaration,
+       {UnstyledAlignmentCellScannerGenerator<
+            ParameterDeclarationColumnSchemaScanner>(non_tree_column_scanner),
+        function_from_pointer_to_member(
+            &FormatStyle::parameter_declaration_alignment)}},
       {AlignableSyntaxSubtype::kPortDeclaration,
        {UnstyledAlignmentCellScannerGenerator<
             PortDeclarationColumnSchemaScanner>(non_tree_column_scanner),
@@ -1598,8 +1610,9 @@ ExtractAlignablePartitionGroupsWithBoundary(
 
 static std::vector<AlignablePartitionGroup> AlignModuleItems(
     const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
-  // Currently, this only handles data/net/variable declarations.
-  // TODO(b/161814377): align continuous assignments
+  // Applies to module/interface, generate, and package item lists.
+  // Handles data/net/variable declarations, parameter/localparam
+  // declarations, and continuous assignment statements.
   auto group_extractor = [&vstyle](const TokenPartitionRange &range) {
     return GetConsecutiveModuleItemGroups(range,
                                           vstyle.alignment_group_boundary);
@@ -1635,6 +1648,10 @@ static std::vector<AlignablePartitionGroup> AlignEnumItems(
       &IgnoreCommentsAndPreprocessingDirectives, full_range, vstyle);
 }
 
+// Aligns formal parameters in #(...) headers (module/interface/class port
+// parameter lists).  Body-level parameter/localparam declarations are
+// handled by AlignModuleItems which dispatches through
+// GetConsecutiveModuleItemGroups.
 static std::vector<AlignablePartitionGroup> AlignParameterDeclarations(
     const TokenPartitionRange &full_range, const FormatStyle &vstyle) {
   return ExtractAlignablePartitionGroups(
@@ -1681,8 +1698,11 @@ void TabularAlignTokenPartitions(const FormatStyle &style,
           {NodeEnum::kStructUnionMemberList, &AlignStructUnionMembers},
           {NodeEnum::kActualParameterByNameList, &AlignActualNamedParameters},
           {NodeEnum::kPortActualList, &AlignActualNamedPorts},
+          // module/interface bodies
           {NodeEnum::kModuleItemList, &AlignModuleItems},
           {NodeEnum::kGenerateItemList, &AlignModuleItems},
+          // package bodies
+          {NodeEnum::kPackageItemList, &AlignModuleItems},
           {NodeEnum::kFormalParameterList, &AlignParameterDeclarations},
           {NodeEnum::kClassItems, &AlignClassItems},
           // various case-like constructs:

@@ -33,7 +33,7 @@ Currrent limitations:
 
 ## Developers
 
-[Style lint rule development guide](../../../doc/style_lint.md).
+[Style lint rule development guide](../../../../doc/style_lint.md).
 
 ## Usage
 

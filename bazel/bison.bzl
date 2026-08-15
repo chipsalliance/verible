@@ -26,6 +26,23 @@ def genyacc(
         extra_outs = []):
     """Build rule for generating C or C++ sources with Bison.
     """
+
+    native.alias(
+        name = name + "_bison_toolchain",
+        actual = select({
+            "//bazel:use_local_flex_bison_enabled": "//bazel:no_toolchain",
+            "@platforms//os:windows": "//bazel:no_toolchain",
+            "//conditions:default": "@rules_bison//bison:current_bison_toolchain",
+        }),
+    )
+    native.alias(
+        name = name + "_m4_toolchain",
+        actual = select({
+            "//bazel:use_local_flex_bison_enabled": "//bazel:no_toolchain",
+            "@platforms//os:windows": "//bazel:no_toolchain",
+            "//conditions:default": "@rules_m4//m4:current_m4_toolchain",
+        }),
+    )
     native.genrule(
         name = name,
         srcs = [src],
@@ -35,12 +52,8 @@ def genyacc(
             "@platforms//os:windows": "win_bison.exe --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
             "//conditions:default": "M4=$(M4) $(BISON) --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
         }),
-        toolchains = select({
-            "//bazel:use_local_flex_bison_enabled": [],
-            "@platforms//os:windows": [],
-            "//conditions:default": [
-                "@rules_bison//bison:current_bison_toolchain",
-                "@rules_m4//m4:current_m4_toolchain",
-            ],
-        }),
+        toolchains = [
+            ":" + name + "_bison_toolchain",
+            ":" + name + "_m4_toolchain",
+        ],
     )

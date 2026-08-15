@@ -1373,7 +1373,7 @@ std::vector<TaggedTokenPartitionRange> GetPartitionAlignmentSubranges(
         break;
       }
     }  // switch
-  }    // for
+  }  // for
   // Flush out the last range.
   if (match_count >= min_match_count) {
     result.emplace_back(last_range_start, partitions.end(), last_match_subtype);
