@@ -740,11 +740,12 @@ TEST_F(GetPartitionAlignmentSubrangesTestFixture, VariousRanges) {
                                      partition_.Children().end());
 
   const std::vector<TaggedTokenPartitionRange> ranges(
-      GetPartitionAlignmentSubranges(children, [](const TokenPartitionTree
-                                                      &partition) {
-        // Don't care about the subtype tag.
-        return AlignedPartitionClassification{PartitionSelector(partition), 0};
-      }));
+      GetPartitionAlignmentSubranges(children,
+                                     [](const TokenPartitionTree &partition) {
+                                       // Don't care about the subtype tag.
+                                       return AlignedPartitionClassification{
+                                           PartitionSelector(partition), 0};
+                                     }));
 
   using P = std::pair<int, int>;
   std::vector<P> range_indices;

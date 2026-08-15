@@ -52,6 +52,22 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
        endfunction
        )"},
       {R"(
+       function automatic int foo (input [2:0] in);
+         unique case (in)
+           3'b001: return 1;
+         endcase
+         return 0;
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input [2:0] in);
+         unique0 case (in)
+           3'b001: return 1;
+         endcase
+         return 0;
+       endfunction
+       )"},
+      {R"(
        function automatic int foo (input in);
          )",
        {TK_case, "case"},
@@ -67,6 +83,22 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
          casex (in)
            default: return 0;
          endcase
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input [2:0] in);
+         unique casex (in)
+           3'b001: return 1;
+         endcase
+         return 0;
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input [2:0] in);
+         unique0 casex (in)
+           3'b001: return 1;
+         endcase
+         return 0;
        endfunction
        )"},
       {R"(
@@ -88,11 +120,41 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
        endfunction
        )"},
       {R"(
+       function automatic int foo (input [2:0] in);
+         unique casez (in)
+           3'b001: return 1;
+         endcase
+         return 0;
+       endfunction
+       )"},
+      {R"(
+       function automatic int foo (input [2:0] in);
+         unique0 casez (in)
+           3'b001: return 1;
+         endcase
+         return 0;
+       endfunction
+       )"},
+      {R"(
        function automatic int foo (input in);
          )",
        {TK_casez, "casez"},
        R"( (in)
            1: return 0;
+         endcase
+       endfunction
+       )"},
+      // A qualified outer case does not exempt an unqualified inner case.
+      {R"(
+       function automatic int foo (input in);
+         unique0 case (in)
+           1: begin;
+             )",
+       {TK_case, "case"},
+       R"( (in)
+               1: return 1;
+             endcase
+           end
          endcase
        endfunction
        )"},

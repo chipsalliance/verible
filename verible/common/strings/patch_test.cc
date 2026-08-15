@@ -755,6 +755,34 @@ TEST(HunkVerifyAgainstOriginalLinesTest, LineNumberOutOfBounds) {
   }
 }
 
+TEST(HunkVerifyAgainstOriginalLinesTest, NonPositiveStartLine) {
+  // A hunk header whose old-file start is 0 (line numbers are 1-indexed) must
+  // be rejected rather than indexing original_lines at a non-positive offset.
+  const std::vector<std::string_view> kHunkText = {
+      {
+          "@@ -0,2 +1,2 @@",  //
+          " line1",           // retained line reached with line_number == 0
+          "-line2",           //
+          "+line pi",         //
+      },
+  };
+  const std::vector<std::string_view> kOriginal = {
+      "line1",
+      "line2",
+  };
+  Hunk hunk;
+  {
+    const LineRange range(kHunkText.begin(), kHunkText.end());
+    const auto status = hunk.Parse(range);
+    ASSERT_TRUE(status.ok()) << status.message();
+  }
+  {
+    const auto status = hunk.VerifyAgainstOriginalLines(kOriginal);
+    EXPECT_EQ(status.code(), absl::StatusCode::kOutOfRange);
+    EXPECT_TRUE(absl::StrContains(status.message(), "references line 0"));
+  }
+}
+
 TEST(HunkVerifyAgainstOriginalLinesTest, InconsistentRetainedLine) {
   const std::vector<std::string_view> kHunkText = {
       {

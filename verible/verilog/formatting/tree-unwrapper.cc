@@ -803,6 +803,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kTypeDeclaration:
     case NodeEnum::kNetTypeDeclaration:
     case NodeEnum::kForwardDeclaration:
+    case NodeEnum::kInterfaceClassMethod:
     case NodeEnum::kConstraintDeclaration:
     case NodeEnum::kConstraintExpression:
     case NodeEnum::kCovergroupDeclaration:
@@ -881,6 +882,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kTaskDeclaration:
     case NodeEnum::kClassDeclaration:
     case NodeEnum::kClassHeader:
+    case NodeEnum::kInterfaceClassDeclaration:
     case NodeEnum::kBegin:
     case NodeEnum::kEnd:
     // case NodeEnum::kFork:  // TODO(fangism): introduce this node enum
@@ -1201,8 +1203,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     // For the following constructs, always expand the view to subpartitions.
     // Add a level of indentation.
     case NodeEnum::kPackageImportList:
-    case NodeEnum::kPackageItemList:
-    case NodeEnum::kInterfaceClassDeclaration:
     case NodeEnum::kCasePatternItemList:
     case NodeEnum::kConstraintBlockItemList:
     case NodeEnum::kConstraintExpressionList:
@@ -1312,8 +1312,11 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kCaseInsideItemList:
     case NodeEnum::kGenerateCaseItemList:
     case NodeEnum::kClassItems:
+    case NodeEnum::kInterfaceClassItemList:
     case NodeEnum::kModuleItemList:
     case NodeEnum::kGenerateItemList:
+    // Aligns parameter, net/variable, and assignment declarations in packages.
+    case NodeEnum::kPackageItemList:
     case NodeEnum::kDistributionItemList:
     case NodeEnum::kEnumNameList:
     case NodeEnum::kStructUnionMemberList: {
@@ -2915,7 +2918,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kConstraintBlockItemList: {
       HoistOnlyChildPartition(&partition);
 
-      // Alwyas expand constraint(s) blocks with braces inside them
+      // Always expand constraint(s) blocks with braces inside them
       const auto &uwline = partition.Value();
       const auto &ftokens = uwline.TokensRange();
       auto found = std::find_if(ftokens.begin(), ftokens.end(),

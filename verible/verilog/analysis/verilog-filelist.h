@@ -27,7 +27,7 @@ namespace verilog {
 // TODO(karimtera): Using "MacroDefiniton" struct might be better.
 struct TextMacroDefinition {
   TextMacroDefinition(std::string name, std::string value)
-      : name(std::move(name)), value(std::move(value)){};
+      : name(std::move(name)), value(std::move(value)) {};
   std::string name;
   std::string value;
 
