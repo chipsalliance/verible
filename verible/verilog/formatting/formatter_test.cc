@@ -19452,7 +19452,6 @@ TEST(FormatterEndToEndTest, EndElseIfWithEOLCommentConverges) {
   }
 }
 
-
 // Verify kAlign behavior for body-level param/localparam declarations
 // in module and package bodies.
 TEST(FormatterEndToEndTest, ParamDeclarationAlignmentBasics) {
