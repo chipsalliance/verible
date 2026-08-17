@@ -160,4 +160,90 @@ grep -q "barr" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
+echo "=== Write facts to --output_path instead of stdout."
+
+cat > "$MY_INPUT_FILE" <<EOF
+localparam int fooo = 1;
+localparam int barr = fooo;
+EOF
+
+echo "myinput.txt" > "${TEST_TMPDIR}/file_list"
+
+# Every print mode has to honor --output_path, and has to write the same bytes
+# it would have written to stdout.
+for mode in json json_debug proto ; do
+  "$extractor" \
+    --file_list_path "${TEST_TMPDIR}/file_list" \
+    --file_list_root "$(dirname "$MY_INPUT_FILE")" \
+    --print_kythe_facts="$mode" \
+    --output_path "$MY_OUTPUT_FILE" 2>/dev/null
+
+  status="$?"
+  [[ $status == 0 ]] || {
+    echo "Expected exit code 0 for --print_kythe_facts=$mode, but got $status"
+    exit 1
+  }
+
+  [[ -s "$MY_OUTPUT_FILE" ]] || {
+    echo "Expected --output_path file to be non-empty for mode $mode."
+    exit 1
+  }
+
+  "$extractor" \
+    --file_list_path "${TEST_TMPDIR}/file_list" \
+    --file_list_root "$(dirname "$MY_INPUT_FILE")" \
+    --print_kythe_facts="$mode" \
+    > "$MY_EXPECT_FILE" 2>/dev/null
+
+  cmp "$MY_OUTPUT_FILE" "$MY_EXPECT_FILE" || {
+    echo "--output_path output differs from stdout output for mode $mode."
+    exit 1
+  }
+done
+
+################################################################################
+echo "=== '--output_path -' writes to stdout."
+
+"$extractor" \
+  --file_list_path "${TEST_TMPDIR}/file_list" \
+  --file_list_root "$(dirname "$MY_INPUT_FILE")" \
+  --print_kythe_facts=json \
+  --output_path - \
+  > "$MY_OUTPUT_FILE" 2>/dev/null
+
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "signature" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"signature\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+################################################################################
+echo "=== Expect failure on unwritable --output_path."
+
+"$extractor" \
+  --file_list_path "${TEST_TMPDIR}/file_list" \
+  --file_list_root "$(dirname "$MY_INPUT_FILE")" \
+  --print_kythe_facts=json \
+  --output_path "${TEST_TMPDIR}/nonexistent-dir/out.json" \
+  > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+grep -q "Failed to create/open output file" "$MY_OUTPUT_FILE" || {
+  echo "Expected \"Failed to create/open output file\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+################################################################################
 echo "PASS"

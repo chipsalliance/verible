@@ -20,6 +20,23 @@
 def genlex(name, src, out):
     """Generate C/C++ language source from lex file using Flex
     """
+
+    native.alias(
+        name = name + "_flex_toolchain",
+        actual = select({
+            "//bazel:use_local_flex_bison_enabled": "//bazel:no_toolchain",
+            "@platforms//os:windows": "//bazel:no_toolchain",
+            "//conditions:default": "@rules_flex//flex:current_flex_toolchain",
+        }),
+    )
+    native.alias(
+        name = name + "_m4_toolchain",
+        actual = select({
+            "//bazel:use_local_flex_bison_enabled": "//bazel:no_toolchain",
+            "@platforms//os:windows": "//bazel:no_toolchain",
+            "//conditions:default": "@rules_m4//m4:current_m4_toolchain",
+        }),
+    )
     native.genrule(
         name = name,
         srcs = [src],
@@ -29,12 +46,8 @@ def genlex(name, src, out):
             "@platforms//os:windows": "win_flex.exe --outfile=$@ $<",
             "//conditions:default": "M4=$(M4) $(FLEX) --outfile=$@ $<",
         }),
-        toolchains = select({
-            "//bazel:use_local_flex_bison_enabled": [],
-            "@platforms//os:windows": [],
-            "//conditions:default": [
-                "@rules_flex//flex:current_flex_toolchain",
-                "@rules_m4//m4:current_m4_toolchain",
-            ],
-        }),
+        toolchains = [
+            ":" + name + "_flex_toolchain",
+            ":" + name + "_m4_toolchain",
+        ],
     )

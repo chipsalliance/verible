@@ -4,6 +4,7 @@ Rules for adding './configure && make' style dependencies.
 
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load(":no_toolchain.bzl", "no_toolchain")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -23,6 +24,7 @@ cc_library(
 exports_files([
     "bison.bzl",
     "flex.bzl",
+    "no_toolchain.bzl",
     "sh_test_with_runfiles_lib.bzl",
     "sh_test_with_runfiles_lib.sh",
 ])
@@ -35,6 +37,12 @@ bool_flag(
 config_setting(
     name = "use_local_flex_bison_enabled",
     flag_values = {":use_local_flex_bison": "true"},
+)
+
+# Placeholder used where a select() would otherwise need to switch a
+# genrule's non-configurable `toolchains` attribute (see flex.bzl/bison.bzl):
+no_toolchain(
+    name = "no_toolchain",
 )
 
 bool_flag(

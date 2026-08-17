@@ -810,13 +810,11 @@ TEST(FindLastSubtreeTest, MatchLeaf) {
 // FindSubtreeStartingAtOffset tests
 
 constexpr std::string_view kFindSubtreeTestText("abcdef");
-const std::string_view kFindSubtreeTestSubstring(
-    kFindSubtreeTestText.substr(1, 3));
 
 struct FindSubtreeStartingAtOffsetTest : public testing::Test {
   SymbolPtr tree;
   FindSubtreeStartingAtOffsetTest()
-      : tree(Leaf(0, kFindSubtreeTestSubstring)) {}
+      : tree(Leaf(0, kFindSubtreeTestText.substr(1, 3))) {}
 };
 
 // Test that a single leaf yields itself when it starts < offset.

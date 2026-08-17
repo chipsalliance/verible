@@ -77,7 +77,7 @@ class FlowTree {
   using VariantReceiver = std::function<bool(const Variant &variant)>;
 
   explicit FlowTree(verible::TokenSequence source_sequence)
-      : source_sequence_(std::move(source_sequence)){};
+      : source_sequence_(std::move(source_sequence)) {};
 
   // Generates all possible variants.
   absl::Status GenerateVariants(const VariantReceiver &receiver);

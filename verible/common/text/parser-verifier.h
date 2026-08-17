@@ -58,7 +58,7 @@ class ParserVerifier : public TreeVisitorRecursive {
   // TODO(jeremycs): changed these to protected and make SyntaxTreeLeaf
   //                 and SyntaxTreeNode friend classes
   void Visit(const SyntaxTreeLeaf &leaf) final;
-  void Visit(const SyntaxTreeNode &node) final{};
+  void Visit(const SyntaxTreeNode &node) final {};
 
  private:
   const Symbol &root_;

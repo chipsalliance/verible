@@ -7,12 +7,13 @@ let
   verible_used_stdenv = pkgs.stdenv;
   #verible_used_stdenv = pkgs.gcc15Stdenv;
   #verible_used_stdenv = pkgs.clang19Stdenv;
+  bazel = pkgs.bazel_8;
 in
 verible_used_stdenv.mkDerivation {
   name = "verible-build-environment";
   buildInputs = with pkgs;
     [
-      bazel_7
+      bazel
       git
 
       # For scripts used inside bzl rules and tests
@@ -37,14 +38,14 @@ verible_used_stdenv.mkDerivation {
       lcov              # coverage html generation.
       bazel-buildtools  # buildifier
 
-      llvmPackages_21.clang-tools    # for clang-tidy
-      llvmPackages_18.clang-tools    # for clang-format
+      llvmPackages_22.clang-tools    # for clang-tidy
+      llvmPackages_19.clang-tools    # for clang-format
     ];
   shellHook = ''
       # clang tidy: use latest.
-      export CLANG_TIDY=${pkgs.llvmPackages_21.clang-tools}/bin/clang-tidy
+      export CLANG_TIDY=${pkgs.llvmPackages_22.clang-tools}/bin/clang-tidy
 
       # Last version that current github CI supports.
-      export CLANG_FORMAT=${pkgs.llvmPackages_18.clang-tools}/bin/clang-format
+      export CLANG_FORMAT=${pkgs.llvmPackages_19.clang-tools}/bin/clang-format
   '';
 }

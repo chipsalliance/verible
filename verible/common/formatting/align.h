@@ -407,22 +407,33 @@ ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
     // Skip tree tokens. Non-tree tokens located between tree tokens (e.g. block
     // comments) are also skipped.
     while (*(ftoken_it->token) != last_tree_token) ++ftoken_it;
-    // Use next token as begining of trailing non-tree tokens
+    // Use next token as beginning of trailing non-tree tokens
     trailing_tokens.set_begin(ftoken_it + 1);
 
-    // Breaking following condition leads to e.g. concatenation of EOL comment
-    // and code in a single line. To fix situation that lead to this, flatten
-    // token partitions that contain EOL comment subpartition just before a
-    // subpartition that starts with the same token as Origin(). Example of a
-    // partition that needs flattening:
+    // When leading non-tree tokens (typically a comment block between list
+    // items) coexist with the first tree token being forced to start on a
+    // new line, the leading tokens belong on the preceding line and the
+    // tree content on a separate line.  Discard the leading tokens from
+    // alignment consideration instead of trying to align them.
+    // (This can also arise from EOL comments in a partition that needs
+    // flattening; see the example below.)
     //
+    // Example of a partition tree that needs flattening (from the tree
+    // unwrapper, not this code):
     //   { (>>[...], (origin: "input bit second"))
     //     { (>>[// comment] }
     //     { (>>[input bit second], (origin: "input")) }
     //   }
-    CHECK(leading_tokens.empty() || first_tree_token_it == ftokens.end() ||
-          first_tree_token_it->before.break_decision !=
-              SpacingOptions::kMustWrap);
+    if (!leading_tokens.empty() && first_tree_token_it != ftokens.end() &&
+        first_tree_token_it->before.break_decision ==
+            SpacingOptions::kMustWrap) {
+      // The partition has comment tokens that were absorbed into the
+      // following item's partition (a tree-unwrapper flattening gap).
+      // Return tree-scanned columns without non-tree additions,
+      // effectively skipping alignment for this row rather than
+      // risking corruption of the layout.
+      return column_entries;
+    }
   } else {
     // All tokens are passed as leading
     leading_tokens.set_end(ftokens.end());
