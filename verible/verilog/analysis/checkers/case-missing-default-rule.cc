@@ -42,7 +42,7 @@ VERILOG_REGISTER_LINT_RULE(CaseMissingDefaultRule);
 
 static constexpr std::string_view kMessage =
     "Explicitly define a default case for every case statement or add `unique` "
-    "qualifier to the case statement.";
+    "or `unique0` qualifier to the case statement.";
 
 const LintRuleDescriptor &CaseMissingDefaultRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -50,7 +50,7 @@ const LintRuleDescriptor &CaseMissingDefaultRule::GetDescriptor() {
       .topic = "case-statements",
       .desc =
           "Checks that a default case-item is always defined unless the case "
-          "statement has the `unique` qualifier.",
+          "statement has the `unique` or `unique0` qualifier.",
   };
   return d;
 }
@@ -67,12 +67,16 @@ void CaseMissingDefaultRule::HandleSymbol(
   static const Matcher uniqueCaseMatcher(
       NodekCaseStatement(HasUniqueQualifier()));
 
+  static const Matcher unique0CaseMatcher(
+      NodekCaseStatement(HasUnique0Qualifier()));
+
   static const Matcher caseMatcherWithDefaultCase(
       NodekCaseStatement(HasDefaultCase()));
 
   // If the case statement doesn't have the "unique" qualifier and
   // it is missing the "default" case, insert the violation
   if (!uniqueCaseMatcher.Matches(symbol, &manager) &&
+      !unique0CaseMatcher.Matches(symbol, &manager) &&
       !caseMatcherWithDefaultCase.Matches(symbol, &manager)) {
     violations_.insert(LintViolation(symbol, kMessage, context));
   }

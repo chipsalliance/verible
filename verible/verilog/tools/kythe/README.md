@@ -30,4 +30,6 @@ verible-verilog-kythe-extractor [options] --file_list_path FILE
                          File search will stop at the the first found among the listed directories.
                          e.g --include_dir_paths directory1,directory2
                          if "A.sv" exists in both "directory1" and "directory2" the one in "directory1" is the one we will use)
+    --output_path (Path of the file to write the extracted Kythe facts to.
+                   Writes to stdout if empty or "-"); default: "";
 ```

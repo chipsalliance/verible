@@ -29,7 +29,7 @@ fi
 
 export GIT_VERSION=${GIT_VERSION:-$(git describe --match='v*')}
 
-export BAZEL_CXXOPTS="-std=c++17"
+export BAZEL_CXXOPTS="-std=c++20"
 
 # Progress output is just noisy in CI outputs.
 export BAZEL_OPTS="-c opt --noshow_progress"

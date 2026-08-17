@@ -1339,6 +1339,15 @@ static constexpr ParserTestCaseArray kTaskTests = {
 static constexpr ParserTestCaseArray kModuleTests = {
     "module modular_thing;\n"
     "endmodule",
+    "module m;\n"
+    "wire logic b;\n"
+    "endmodule",
+    "module m;\n"
+    "wire bit b;\n"
+    "endmodule",
+    "module m;\n"
+    "wire logic [3:0] b;\n"
+    "endmodule",
     "module semicolon_madness;;;;;\n"
     "endmodule",
     "module automatic modular_thing;\n"
@@ -1381,6 +1390,62 @@ static constexpr ParserTestCaseArray kModuleTests = {
     "input logic [N:0] a;\n"
     "output logic co;\n"
     "endmodule",
+    "module t;\n"
+    "input bit i_bit;\n"
+    "input byte i_byte;\n"
+    "input chandle i_chandle;\n"
+    "input event i_event;\n"
+    "input int i_int;\n"
+    "input integer i_inte;\n"
+    "input longint i_longint;\n"
+    "input real i_real;\n"
+    "input realtime i_realtime;\n"
+    "input shortint i_shortint;\n"
+    "input shortreal i_shortreal;\n"
+    "input string i_string;\n"
+    "input time i_time;\n"
+    "output bit o_bit;\n"
+    "output byte o_byte;\n"
+    "output chandle o_chandle;\n"
+    "output event o_event;\n"
+    "output int o_int;\n"
+    "output integer o_inte;\n"
+    "output longint o_longint;\n"
+    "output real o_real;\n"
+    "output realtime o_realtime;\n"
+    "output shortint o_shortint;\n"
+    "output shortreal o_shortreal;\n"
+    "output string o_string;\n"
+    "output time o_time;\n"
+    "endmodule\n",
+    "module t (\n"
+    "input bit i_bit,\n"
+    "input byte i_byte,\n"
+    "input chandle i_chandle,\n"
+    "input event i_event,\n"
+    "input int i_int,\n"
+    "input integer i_inte,\n"
+    "input longint i_longint,\n"
+    "input real i_real,\n"
+    "input realtime i_realtime,\n"
+    "input shortint i_shortint,\n"
+    "input shortreal i_shortreal,\n"
+    "input string i_string,\n"
+    "input time i_time,\n"
+    "output bit o_bit,\n"
+    "output byte o_byte,\n"
+    "output chandle o_chandle,\n"
+    "output event o_event,\n"
+    "output int o_int,\n"
+    "output integer o_inte,\n"
+    "output longint o_longint,\n"
+    "output real o_real,\n"
+    "output realtime o_realtime,\n"
+    "output shortint o_shortint,\n"
+    "output shortreal o_shortreal,\n"
+    "output string o_string,\n"
+    "output time o_time);\n"
+    "endmodule\n",
     "module zoom (a, co);\n"
     "input bus_type a;\n"
     "output bus_type [3:0] co;\n"
@@ -3796,6 +3861,10 @@ static constexpr ParserTestCaseArray kUnionTests = {
     "union tagged packed { int i; bit b; } foo;",
     "union tagged packed signed { int i; bit b; } foo;",
     "union tagged packed unsigned { int i; bit b; } foo;",
+    "union soft { int i; bit b; } foo;",
+    "union soft packed { int i; bit b; } foo;",
+    "union soft packed signed { int i; bit b; } foo;",
+    "union soft packed unsigned { int i; bit b; } foo;",
 };
 
 // TODO(fangism): implement and test ENUM_CONSTANT

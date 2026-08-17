@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-# Copyright 2025 The Verible Authors.
+# -*- Python -*-
+# Copyright 2017-2026 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Print path to a bant binary. Can be provided by an environment variable
-# or built from our dependency.
+"""A placeholder target for genrule's `toolchains` attribute.
 
-BAZEL=${BAZEL:-bazel}
-BANT=${BANT:-needs-to-be-compiled-locally}
+genrule's `toolchains` attribute requires each entry to provide
+TemplateVariableInfo (or ToolchainTypeInfo). Used where a platform (e.g.
+Windows) needs no real toolchain there, like for using local winflexbison.
+"""
 
-# Bant not given, compile from bzlmod dep.
-if [ "${BANT}" = "needs-to-be-compiled-locally" ]; then
-  BANT="$("${BAZEL}" run -c opt --cxxopt=-std=c++20 --run_under='echo' @bant//bant:bant 2>/dev/null)"
-fi
+def _no_toolchain_impl(ctx):
+    return [platform_common.TemplateVariableInfo({})]
 
-echo $BANT
+no_toolchain = rule(
+    implementation = _no_toolchain_impl,
+)

@@ -15,7 +15,10 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_PROTO_OUTPUT_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_PROTO_OUTPUT_H_
 
-#include "google/protobuf/io/zero_copy_stream_impl.h"
+#include <memory>
+#include <ostream>
+
+#include "google/protobuf/io/zero_copy_stream.h"
 #include "verible/verilog/tools/kythe/kythe-facts-extractor.h"
 #include "verible/verilog/tools/kythe/kythe-facts.h"
 
@@ -24,7 +27,10 @@ namespace kythe {
 
 class KytheProtoOutput final : public KytheOutput {
  public:
-  explicit KytheProtoOutput(int output_fd);
+  // Writes to an already-open stream. The stream must outlive this object and
+  // must be opened in binary mode, as the proto entries are not text.
+  explicit KytheProtoOutput(std::ostream &output_stream);
+
   ~KytheProtoOutput() final;
 
   // Output Kythe facts from the indexing data in proto format.
@@ -32,7 +38,7 @@ class KytheProtoOutput final : public KytheOutput {
   void Emit(const Edge &edge) final;
 
  private:
-  ::google::protobuf::io::FileOutputStream out_;
+  std::unique_ptr<::google::protobuf::io::ZeroCopyOutputStream> out_;
 };
 
 }  // namespace kythe
