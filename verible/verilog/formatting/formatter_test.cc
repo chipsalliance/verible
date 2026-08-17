@@ -19398,6 +19398,78 @@ TEST(FormatterEndToEndTest, MacroBeforeCloseParenFormatEquivalent) {
   EXPECT_THAT(stream.str(), testing::HasSubstr("`TOKEN_BYTE"));
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2540:
+// Trailing EOL comment after `end` before `else if` must not change whether
+// the else-if assignment stays on one line across re-format (convergence).
+TEST(FormatterEndToEndTest, EndElseIfWithEOLCommentConverges) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Comment on its own line between end and else if
+       "module m;\n"
+       "  always_comb begin\n"
+       "    case (state)\n"
+       "      STATE_A: begin\n"
+       "        if (cond_aaaa) next_state_value = STATE_B;\n"
+       "        else if (cond_bbbb) begin\n"
+       "          next_state_value = STATE_B;\n"
+       "        end\n"
+       "        // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
+       "        else if (cond_cccc) next_state_value = STATE_C;\n"
+       "      end\n"
+       "    endcase\n"
+       "  end\n"
+       "endmodule\n",
+       "module m;\n"
+       "  always_comb begin\n"
+       "    case (state)\n"
+       "      STATE_A: begin\n"
+       "        if (cond_aaaa) next_state_value = STATE_B;\n"
+       "        else if (cond_bbbb) begin\n"
+       "          next_state_value = STATE_B;\n"
+       "        end  // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
+       "        else if (cond_cccc) next_state_value = STATE_C;\n"
+       "      end\n"
+       "    endcase\n"
+       "  end\n"
+       "endmodule\n"},
+      {// Same construct with comment already on the end line
+       "module m;\n"
+       "  always_comb begin\n"
+       "    case (state)\n"
+       "      STATE_A: begin\n"
+       "        if (cond_aaaa) next_state_value = STATE_B;\n"
+       "        else if (cond_bbbb) begin\n"
+       "          next_state_value = STATE_B;\n"
+       "        end  // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
+       "        else if (cond_cccc) next_state_value = STATE_C;\n"
+       "      end\n"
+       "    endcase\n"
+       "  end\n"
+       "endmodule\n",
+       "module m;\n"
+       "  always_comb begin\n"
+       "    case (state)\n"
+       "      STATE_A: begin\n"
+       "        if (cond_aaaa) next_state_value = STATE_B;\n"
+       "        else if (cond_bbbb) begin\n"
+       "          next_state_value = STATE_B;\n"
+       "        end  // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
+       "        else if (cond_cccc) next_state_value = STATE_C;\n"
+       "      end\n"
+       "    endcase\n"
+       "  end\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 // Verify kAlign behavior for body-level param/localparam declarations
 // in module and package bodies.
 TEST(FormatterEndToEndTest, ParamDeclarationAlignmentBasics) {

@@ -1819,6 +1819,14 @@ static void HoistOnlyChildPartition(TokenPartitionTree *partition) {
   }
 }
 
+// True if any token in this leaf partition is an EOL comment.
+static bool PartitionContainsEOLComment(const TokenPartitionTree &partition) {
+  for (const auto &token : partition.Value().TokensRange()) {
+    if (token.TokenEnum() == verilog_tokentype::TK_EOL_COMMENT) return true;
+  }
+  return false;
+}
+
 static void PushEndIntoElsePartition(TokenPartitionTree *partition_ptr) {
   // Then combine 'end' with the following 'else' ...
   // Do not flatten, so that if- and else- clauses can make formatting
@@ -1826,6 +1834,15 @@ static void PushEndIntoElsePartition(TokenPartitionTree *partition_ptr) {
   auto &partition = *partition_ptr;
   auto &if_clause_partition = partition.Children().front();
   auto *end_partition = &RightmostDescendant(if_clause_partition);
+  // When 'end' carries a trailing EOL comment, 'else' must start on the next
+  // line (see token annotator: comment before else => MustWrap). Merging
+  // end+comment into the else-if header makes fit-else-expand treat the
+  // header as wider than the eventual formatted line, which wraps the
+  // else-if body on re-format and fails convergence (GitHub issue 2540).
+  if (PartitionContainsEOLComment(*end_partition)) {
+    VLOG(4) << "end has EOL comment, skip merge into else";
+    return;
+  }
   auto *end_parent = verible::MergeLeafIntoNextLeaf(end_partition);
   // if moving leaf results in any singleton partitions, hoist.
   if (end_parent != nullptr) {
