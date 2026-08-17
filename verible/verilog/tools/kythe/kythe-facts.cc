@@ -154,12 +154,16 @@ std::ostream &Edge::FormatJSON(std::ostream &stream, bool debug,
     stream << idt << "\"source\": ";
     source_node.FormatJSON(stream, debug, indent_more) << "," << separator;
   }
-  { stream << idt << "\"edge_kind\": \"" << edge_name << "\"," << separator; }
+  {
+    stream << idt << "\"edge_kind\": \"" << edge_name << "\"," << separator;
+  }
   {
     stream << idt << "\"target\": ";
     target_node.FormatJSON(stream, debug, indent_more) << "," << separator;
   }
-  { stream << idt << "\"fact_name\": \"/\"" << separator; }
+  {
+    stream << idt << "\"fact_name\": \"/\"" << separator;
+  }
   return stream << verible::Spacer(indentation) << "}";
 }
 

@@ -229,7 +229,8 @@ absl::Status Hunk::VerifyAgainstOriginalLines(
   int line_number = header_.old_range.start;  // 1-indexed
   for (const MarkedLine &line : lines_) {
     if (line.IsAdded()) continue;  // ignore added lines
-    if (line_number > static_cast<int>(original_lines.size())) {
+    if (line_number < 1 ||
+        line_number > static_cast<int>(original_lines.size())) {
       return absl::OutOfRangeError(absl::StrCat(
           "Patch hunk references line ", line_number, " in a file with only ",
           original_lines.size(), " lines"));

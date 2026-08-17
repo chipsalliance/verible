@@ -1,0 +1,23 @@
+# -*- Python -*-
+# https://github.com/hzeller/bant#macros
+#
+# Tell bant (that is not looking at *.bzl files) how custom rules behave, just
+# enough for it to see through them to provide features such as dwyu.
+
+record_recovered_syntax_errors = genrule(
+    name = name,
+    srcs = [src],
+    outs = [out],
+)
+
+genlex = genrule(
+    name = name,
+    srcs = [src],
+    outs = [out],
+)
+
+genyacc = genrule(
+    name = name,
+    srcs = [src],
+    outs = [header_out, source_out] + extra_outs,
+)

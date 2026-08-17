@@ -1001,18 +1001,6 @@ void AlignablePartitionGroup::ApplyAlignment(
       auto &line = node.Value();
       auto ftokens = line.TokensRange();
 
-      // Leading non-tree tokens before a forced wrap must stay on their own
-      // line. Putting them in a kInline prolog cell would glue e.g. `//\` onto
-      // the following `input` (GitHub issue 2539). Preserve original spacing
-      // for the whole row instead.
-      if (align_actions.front().ftoken != ftokens.begin() &&
-          align_actions.front().ftoken->before.break_decision ==
-              SpacingOptions::kMustWrap) {
-        FormatUsingOriginalSpacing(TokenPartitionRange(*row, std::next(*row)));
-        ++row;
-        continue;
-      }
-
       line.SetPartitionPolicy(PartitionPolicyEnum::kAlreadyFormatted);
 
       verible::TokenPartitionTree *current_cell = nullptr;
@@ -1385,7 +1373,7 @@ std::vector<TaggedTokenPartitionRange> GetPartitionAlignmentSubranges(
         break;
       }
     }  // switch
-  }    // for
+  }  // for
   // Flush out the last range.
   if (match_count >= min_match_count) {
     result.emplace_back(last_range_start, partitions.end(), last_match_subtype);

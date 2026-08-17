@@ -407,26 +407,32 @@ ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
     // Skip tree tokens. Non-tree tokens located between tree tokens (e.g. block
     // comments) are also skipped.
     while (*(ftoken_it->token) != last_tree_token) ++ftoken_it;
-    // Use next token as begining of trailing non-tree tokens
+    // Use next token as beginning of trailing non-tree tokens
     trailing_tokens.set_begin(ftoken_it + 1);
 
-    // Leading non-tree tokens (e.g. // comments, line-continuation `\`) cannot
-    // be placed into alignment cells when the first syntax-tree token must
-    // start a new line (SpacingOptions::kMustWrap). Including them would glue
-    // the leading tokens onto the origin line via kInline cells.
+    // When leading non-tree tokens (typically a comment block between list
+    // items) coexist with the first tree token being forced to start on a
+    // new line, the leading tokens belong on the preceding line and the
+    // tree content on a separate line.  Discard the leading tokens from
+    // alignment consideration instead of trying to align them.
+    // (This can also arise from EOL comments in a partition that needs
+    // flattening; see the example below.)
     //
-    // This shape often appears when a `//` comment is followed by `\` (line
-    // continuation) and is partitioned with the following port/declaration
-    // (GitHub issue 2539). Prefer leaving leading tokens out of alignment
-    // over CHECK-failing. Callers should also ignore such partitions (see
-    // PartitionHasLeadingTokensBeforeForcedWrap) so ApplyAlignment never
-    // builds a kInline prolog for them. A future improvement could split the
-    // comment into its own ignored row so the following declaration can still
-    // participate in alignment.
+    // Example of a partition tree that needs flattening (from the tree
+    // unwrapper, not this code):
+    //   { (>>[...], (origin: "input bit second"))
+    //     { (>>[// comment] }
+    //     { (>>[input bit second], (origin: "input")) }
+    //   }
     if (!leading_tokens.empty() && first_tree_token_it != ftokens.end() &&
         first_tree_token_it->before.break_decision ==
             SpacingOptions::kMustWrap) {
-      leading_tokens.set_end(leading_tokens.begin());
+      // The partition has comment tokens that were absorbed into the
+      // following item's partition (a tree-unwrapper flattening gap).
+      // Return tree-scanned columns without non-tree additions,
+      // effectively skipping alignment for this row rather than
+      // risking corruption of the layout.
+      return column_entries;
     }
   } else {
     // All tokens are passed as leading
