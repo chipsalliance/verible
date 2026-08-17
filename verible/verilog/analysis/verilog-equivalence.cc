@@ -89,6 +89,20 @@ static bool ShouldRecursivelyAnalyzeToken(const TokenInfo &token) {
   return IsUnlexed(verilog_tokentype(token.token_enum()));
 }
 
+// MacroIdentifier vs MacroIdItem depends only on whether the macro ends the
+// line (see POST_MACRO_ID in verilog.lex). Spelling-equal macros are
+// format-equivalent across that reclassification.
+static bool AreSpellingEqualLineEndingMacros(const TokenInfo &left,
+                                             const TokenInfo &right) {
+  const auto is_line_ending_macro = [](int token_enum) {
+    return token_enum == verilog_tokentype::MacroIdentifier ||
+           token_enum == verilog_tokentype::MacroIdItem;
+  };
+  return is_line_ending_macro(left.token_enum()) &&
+         is_line_ending_macro(right.token_enum()) &&
+         left.text() == right.text();
+}
+
 DiffStatus VerilogLexicallyEquivalent(
     std::string_view left, std::string_view right,
     const std::function<bool(const verible::TokenInfo &)> &remove_predicate,
@@ -170,18 +184,14 @@ DiffStatus LexicallyEquivalent(
     // Some token enums differ only by surrounding whitespace (e.g. whether a
     // macro or ')' ends a line). Treat those pairs as matching enums when the
     // spelling is unchanged so FormatEquivalent tolerates re-wrapping.
-    const bool whitespace_dependent_enum_match =
+    const bool whitespace_dependent_macro_enum_match =
         ((l->token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
           r->text() == ")") ||
          (r->token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
           l->text() == ")") ||
-         ((l->token_enum() == verilog_tokentype::MacroIdentifier ||
-           l->token_enum() == verilog_tokentype::MacroIdItem) &&
-          (r->token_enum() == verilog_tokentype::MacroIdentifier ||
-           r->token_enum() == verilog_tokentype::MacroIdItem) &&
-          l->text() == r->text()));
+         AreSpellingEqualLineEndingMacros(*l, *r));
     if (l->token_enum() != r->token_enum() &&
-        !whitespace_dependent_enum_match) {
+        !whitespace_dependent_macro_enum_match) {
       if (errstream != nullptr) {
         *errstream << "Mismatched token enums.  got: ";
         token_printer(*l, *errstream);
@@ -268,14 +278,7 @@ DiffStatus FormatEquivalent(std::string_view left, std::string_view right,
              (r.text() == ")"))) {
           return true;
         }
-        // MacroIdentifier vs MacroIdItem depends only on whether the macro
-        // ends the line (see POST_MACRO_ID in verilog.lex). Spelling-equal
-        // macros are format-equivalent across that reclassification.
-        if ((l.token_enum() == verilog_tokentype::MacroIdentifier ||
-             l.token_enum() == verilog_tokentype::MacroIdItem) &&
-            (r.token_enum() == verilog_tokentype::MacroIdentifier ||
-             r.token_enum() == verilog_tokentype::MacroIdItem) &&
-            l.text() == r.text()) {
+        if (AreSpellingEqualLineEndingMacros(l, r)) {
           return true;
         }
         return l.EquivalentWithoutLocation(r);
