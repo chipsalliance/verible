@@ -20959,6 +20959,122 @@ TEST(FormatterEndToEndTest, ParamDeclarationAlignmentCommentBlockNoCrash) {
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/886:
+// Packed dimensions with $clog2()/$bits() used to split the function header
+// so ReshapeFittingSubpartitions dropped the port list.
+TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallKeepsPorts) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Original issue sample (default column_limit 100)
+       "package foo;\n"
+       "  function some_large_return_type [$clog2(some_large_contant_name)-1:0] "
+       "f_some_long_function( input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n",
+       "package foo;\n"
+       "  function some_large_return_type [$clog2(some_large_contant_name)-1:0] "
+       "f_some_long_function(\n"
+       "      input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n"},
+      {// Short names still keep ports and stay on one line
+       "package foo;\n"
+       "  function logic [$clog2(N)-1:0] f(input int a, input int b);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n",
+       "package foo;\n"
+       "  function logic [$clog2(N)-1:0] f(input int a, input int b);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n"},
+      {// $bits() in packed dimensions
+       "package foo;\n"
+       "  function some_large_return_type [$bits(some_large_contant_name)-1:0] "
+       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n",
+       "package foo;\n"
+       "  function some_large_return_type [$bits(some_large_contant_name)-1:0] "
+       "f_some_long_function(\n"
+       "      input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n"},
+      {// Multi-argument system function in packed dimensions
+       "package foo;\n"
+       "  function some_large_return_type "
+       "[$clog2(some_large_contant_name, WIDTH)-1:0] "
+       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n",
+       "package foo;\n"
+       "  function some_large_return_type "
+       "[$clog2(some_large_contant_name, WIDTH)-1:0] "
+       "f_some_long_function(\n"
+       "      input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n"},
+      {// extern prototype
+       "class c;\n"
+       "  extern function some_large_return_type "
+       "[$clog2(some_large_contant_name)-1:0] "
+       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
+       "endclass\n",
+       "class c;\n"
+       "  extern function some_large_return_type "
+       "[$clog2(some_large_contant_name)-1:0] "
+       "f_some_long_function(\n"
+       "      input int parameter_1, input int parameter_2);\n"
+       "endclass\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallWrapsArgs) {
+  // Tight column limit still keeps the ports (the original bug dropped them).
+  // The header itself is longer than 40 columns, so it wraps.
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"package foo;\n"
+       "  function some_large_return_type [$clog2(some_large_contant_name)-1:0] "
+       "f_some_long_function( input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n",
+       "package foo;\n"
+       "  function\n"
+       "      some_large_return_type [$clog2(some_large_contant_name)-1\n"
+       "      :0] f_some_long_function(\n"
+       "      input int parameter_1,\n"
+       "      input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog

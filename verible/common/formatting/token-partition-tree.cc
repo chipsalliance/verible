@@ -783,6 +783,41 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
 //
 // When "subpartitions" group has kAlwaysExpand policy, line break is forced
 // between each subpartition from the group.
+// kAppendFittingSubPartitions expects [header, args] or [header, args,
+// trailer]. Packed dimensions with $clog2(...) (issue #886) can split the
+// header into extra sibling leaves; if those are left in place, the port
+// list is treated as a trailer and dropped.
+// Only merge leading *leaf* fragments. Nested argument lists (non-leaves)
+// are flattened only when another non-leaf (the real port list) follows.
+static int CountNonLeafChildren(const TokenPartitionTree &node) {
+  int n = 0;
+  for (const auto &child : node.Children()) {
+    if (!is_leaf(child)) ++n;
+  }
+  return n;
+}
+
+static void CollapseHeaderFragmentsBeforeArgs(TokenPartitionTree *node) {
+  while (node->Children().size() > 2) {
+    auto &children = node->Children();
+    auto &first = children[0];
+    auto &second = children[1];
+    // Merge extra header leaves only when a nested argument list still
+    // follows.  All-leaf trees are the flattened one-argument form
+    // ([header, arg] or [header, arg, trailer]) and must be left intact.
+    if (is_leaf(first) && is_leaf(second) &&
+        CountNonLeafChildren(*node) >= 1) {
+      MergeConsecutiveSiblings(node, 0);
+      continue;
+    }
+    if (!is_leaf(second) && CountNonLeafChildren(*node) >= 2) {
+      FlattenOneChild(*node, 1);
+      continue;
+    }
+    break;
+  }
+}
+
 void ReshapeFittingSubpartitions(const BasicFormatStyle &style,
                                  TokenPartitionTree *node) {
   VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
@@ -791,6 +826,11 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle &style,
   // Leaf or simple node, e.g. '[function foo ( ) ;]'
   if (node->Children().size() < 2) {
     // Nothing to do
+    return;
+  }
+
+  CollapseHeaderFragmentsBeforeArgs(node);
+  if (node->Children().size() < 2) {
     return;
   }
 
