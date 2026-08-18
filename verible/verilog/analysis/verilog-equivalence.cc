@@ -92,8 +92,8 @@ static bool ShouldRecursivelyAnalyzeToken(const TokenInfo &token) {
 // True when left/right differ only because surrounding whitespace changed
 // token classification (e.g. MacroCallCloseToEndLine vs ')', or
 // MacroIdentifier vs MacroIdItem with unchanged spelling).
-static bool TokensAreWhitespaceDependentFormatEquivalent(const TokenInfo &left,
-                                                         const TokenInfo &right) {
+static bool TokensAreWhitespaceDependentFormatEquivalent(
+    const TokenInfo &left, const TokenInfo &right) {
   if ((left.token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
        right.text() == ")") ||
       (right.token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
