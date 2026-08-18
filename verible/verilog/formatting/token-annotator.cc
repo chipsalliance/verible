@@ -123,10 +123,9 @@ static bool InRangeLikeContext(const SyntaxTreeContext &context) {
 // '/' between identifiers inside a macro argument is a filesystem path
 // (e.g. `INCLUDE(`PATH/src/file.sv)), not a division operator (issue #2352).
 static bool InMacroArgumentContext(const SyntaxTreeContext &context) {
-  return context.IsInsideFirst(
-      {NodeEnum::kMacroArgList, NodeEnum::kMacroCall,
-       NodeEnum::kMacroGenericItem},
-      {});
+  return context.IsInsideFirst({NodeEnum::kMacroArgList, NodeEnum::kMacroCall,
+                                NodeEnum::kMacroGenericItem},
+                               {});
 }
 
 static bool IsPathSeparatorSlashInMacroArg(
