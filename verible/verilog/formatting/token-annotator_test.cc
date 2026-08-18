@@ -4715,6 +4715,48 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {/* unspecified context */},
           {1, SpacingOptions::kUndecided},
       },
+      // '/' between identifiers is a path separator in macro args (#2352),
+      // but remains a binary operator in other contexts.
+      {
+          DefaultStyle,
+          {verilog_tokentype::MacroIdentifier, "`PATH"},
+          {'/', "/"},
+          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          {0, SpacingOptions::kUndecided},
+      },
+      {
+          DefaultStyle,
+          {'/', "/"},
+          {verilog_tokentype::SymbolIdentifier, "src"},
+          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          {0, SpacingOptions::kUndecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "src"},
+          {'/', "/"},
+          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          {0, SpacingOptions::kUndecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "a"},
+          {'/', "/"},
+          {/* expression, not a macro argument */},
+          {/* expression, not a macro argument */},
+          {1, SpacingOptions::kUndecided},
+      },
+      {
+          DefaultStyle,
+          {'/', "/"},
+          {verilog_tokentype::SymbolIdentifier, "b"},
+          {/* expression, not a macro argument */},
+          {/* expression, not a macro argument */},
+          {1, SpacingOptions::kUndecided},
+      },
   };
   int test_index = 0;
   for (const auto &test_case : kTestCases) {
