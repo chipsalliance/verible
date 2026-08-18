@@ -805,8 +805,7 @@ static void CollapseHeaderFragmentsBeforeArgs(TokenPartitionTree *node) {
     // Merge extra header leaves only when a nested argument list still
     // follows.  All-leaf trees are the flattened one-argument form
     // ([header, arg] or [header, arg, trailer]) and must be left intact.
-    if (is_leaf(first) && is_leaf(second) &&
-        CountNonLeafChildren(*node) >= 1) {
+    if (is_leaf(first) && is_leaf(second) && CountNonLeafChildren(*node) >= 1) {
       MergeConsecutiveSiblings(node, 0);
       continue;
     }

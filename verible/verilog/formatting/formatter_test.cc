@@ -20966,13 +20966,15 @@ TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallKeepsPorts) {
   static constexpr FormatterTestCase kTestCases[] = {
       {// Original issue sample (default column_limit 100)
        "package foo;\n"
-       "  function some_large_return_type [$clog2(some_large_contant_name)-1:0] "
+       "  function some_large_return_type "
+       "[$clog2(some_large_contant_name)-1:0] "
        "f_some_long_function( input int parameter_1, input int parameter_2);\n"
        "    return 1;\n"
        "  endfunction\n"
        "endpackage\n",
        "package foo;\n"
-       "  function some_large_return_type [$clog2(some_large_contant_name)-1:0] "
+       "  function some_large_return_type "
+       "[$clog2(some_large_contant_name)-1:0] "
        "f_some_long_function(\n"
        "      input int parameter_1, input int parameter_2);\n"
        "    return 1;\n"
@@ -21048,7 +21050,8 @@ TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallWrapsArgs) {
   // The header itself is longer than 40 columns, so it wraps.
   static constexpr FormatterTestCase kTestCases[] = {
       {"package foo;\n"
-       "  function some_large_return_type [$clog2(some_large_contant_name)-1:0] "
+       "  function some_large_return_type "
+       "[$clog2(some_large_contant_name)-1:0] "
        "f_some_long_function( input int parameter_1, input int parameter_2);\n"
        "    return 1;\n"
        "  endfunction\n"
