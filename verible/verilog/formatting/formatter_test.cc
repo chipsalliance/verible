@@ -20959,6 +20959,114 @@ TEST(FormatterEndToEndTest, ParamDeclarationAlignmentCommentBlockNoCrash) {
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2008
+// (also https://github.com/chipsalliance/verible/issues/2474 and
+// https://github.com/chipsalliance/verible/issues/2063):
+// Non-ANSI "input wire signed" used to abort in the tree-unwrapper because
+// the CST visited "signed" before "wire", which is the reverse of source
+// order.
+TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Original issue #2008 sample
+       "module uut( sig1 );\n"
+       "\n"
+       "input wire signed [15:0] sig1;\n"
+       "\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1\n"
+       ");\n"
+       "\n"
+       "  input wire signed [15:0] sig1;\n"
+       "\n"
+       "endmodule\n"},
+      {// Issue #2474 sample
+       "module myModule (\n"
+       "    myinput\n"
+       ");\n"
+       "input wire signed [7:0] myInput;\n"
+       "endmodule\n",
+       "module myModule (\n"
+       "    myinput\n"
+       ");\n"
+       "  input wire signed [7:0] myInput;\n"
+       "endmodule\n"},
+      {// Issue #2063 sample: signed wire with no packed dimensions
+       "module top(a);\n"
+       "    input wire signed a;\n"
+       "endmodule\n",
+       "module top (\n"
+       "    a\n"
+       ");\n"
+       "  input wire signed a;\n"
+       "endmodule\n"},
+      {// Same production with logic instead of wire
+       "module uut(sig1);\n"
+       "input logic signed [15:0] sig1;\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1\n"
+       ");\n"
+       "  input logic signed [15:0] sig1;\n"
+       "endmodule\n"},
+      {// output / inout net types
+       "module uut(sig1, sig2);\n"
+       "output wire signed [15:0] sig1;\n"
+       "inout wire signed [7:0] sig2;\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1,\n"
+       "    sig2\n"
+       ");\n"
+       "  output wire signed [15:0] sig1;\n"
+       "  inout wire signed [7:0] sig2;\n"
+       "endmodule\n"},
+      {// unsigned is the same production
+       "module uut(sig1);\n"
+       "input wire unsigned [15:0] sig1;\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1\n"
+       ");\n"
+       "  input wire unsigned [15:0] sig1;\n"
+       "endmodule\n"},
+      {// ANSI form already worked; keep as a regression
+       "module uut(input wire signed [15:0] sig1);\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    input wire signed [15:0] sig1\n"
+       ");\n"
+       "endmodule\n"},
+      {// Non-ANSI without signed still works
+       "module uut(sig1);\n"
+       "input wire [15:0] sig1;\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1\n"
+       ");\n"
+       "  input wire [15:0] sig1;\n"
+       "endmodule\n"},
+      {// Non-ANSI signed without net type still works
+       "module uut(sig1);\n"
+       "input signed [15:0] sig1;\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1\n"
+       ");\n"
+       "  input signed [15:0] sig1;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
