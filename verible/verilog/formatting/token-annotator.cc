@@ -150,6 +150,20 @@ static WithReason<int> SpacesRequiredBetween(
     return {0, "Add no spaces after \\ line continuation."};
   }
 
+  // ece2300: the port-list '(' now starts its own line, so a trailing comment
+  // sits at column('(') + 3 with the usual 2-space gap - exactly one column
+  // away from the port-list body indent, column('(') + 4.  The
+  // continuation-comment aligner in formatter.cc groups comment-only lines
+  // whose starting columns differ by at most 1, so on the second formatting
+  // pass it would swallow the first body comment into the '(' comment group
+  // and move it; formatting would never converge.  A single space puts the
+  // comment at column('(') + 2, two columns clear of the body indent.
+  if (IsComment(FormatTokenType(right.format_token_enum)) &&
+      IsModulePortListOpenParen(
+          static_cast<verilog_tokentype>(left.TokenEnum()), left_context)) {
+    return {1, "Module port-list '(': one space before a trailing comment"};
+  }
+
   if (IsComment(FormatTokenType(right.format_token_enum))) {
     return {2, "Style: require 2+ spaces before comments"};
     // TODO(fangism): Take this from FormatStyle.

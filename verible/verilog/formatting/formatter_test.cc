@@ -16999,7 +16999,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "module m;\n"
        "  foo bar\n"
        "  (\n"
-       "      .baz (baz)\n"
+       "      .baz(baz)\n"
        "  );\n"  // indentation still takes effect
        "endmodule\n"},
       {"module  m  ;\t\n"
@@ -17011,8 +17011,8 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "module m;\n"
        "  foo bar\n"
        "  (\n"           // indentation still takes effect
-       "      .baz (baz  ),\n"  // named port connections preserved
-       "      .blaaa (blaaa)\n"   // named port connections preserved
+       "      .baz  (baz  ),\n"  // named port connections preserved
+       "      .blaaa(blaaa)\n"   // named port connections preserved
        "  );\n"                  // this indentation is fixed
        "endmodule\n"},
       {"module  m  ;\t\n"
@@ -18274,9 +18274,13 @@ TEST(FormatterEndToEndTest, DiagnosticShowFullTree) {
     control.show_token_partition_tree = true;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, kEnableAllLines, control);
-    EXPECT_EQ(status.code(), StatusCode::kCancelled);
+    EXPECT_EQ(status.code(), StatusCode::kCancelled)
+        << "code:\n"
+        << test_case.input << "status: " << status.message();
     EXPECT_TRUE(
-        absl::StartsWith(debug_stream.str(), "Full token partition tree"));
+        absl::StartsWith(debug_stream.str(), "Full token partition tree"))
+        << "code:\n"
+        << test_case.input;
   }
 }
 
@@ -18293,9 +18297,12 @@ TEST(FormatterEndToEndTest, DiagnosticLargestPartitions) {
     control.show_largest_token_partitions = 2;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, kEnableAllLines, control);
-    EXPECT_EQ(status.code(), StatusCode::kCancelled);
+    EXPECT_EQ(status.code(), StatusCode::kCancelled)
+        << "code:\n"
+        << test_case.input << "status: " << status.message();
     EXPECT_TRUE(absl::StartsWith(debug_stream.str(), "Showing the "))
-        << "got: " << debug_stream.str();
+        << "code:\n"
+        << test_case.input << "got: " << debug_stream.str();
   }
 }
 
@@ -18568,7 +18575,8 @@ static constexpr DimensionsAlignmentTestCase
          "input bit foo\n"
          "); endmodule:m\n",
          {
-             "module m (\n"
+             "module m\n"
+             "(\n"
              "    output bit [   2:0][  2:0][ 2:0] quuz  [  8][16:12],\n"
              "    input  bit [    16]              quux  [8:2][   16][32],\n"
              "    input  bit [FOOBAZ][31:24]       qux   [ 16],\n"
@@ -18579,7 +18587,8 @@ static constexpr DimensionsAlignmentTestCase
              "    input  bit                       foo\n"
              ");\n"
              "endmodule : m\n",
-             "module m (\n"
+             "module m\n"
+             "(\n"
              "    output bit [   2:0][  2:0][ 2:0] quuz       [ 8][16:12],\n"
              "    input  bit [    16]              quux  [8:2][16][   32],\n"
              "    input  bit [FOOBAZ][31:24]       qux            [   16],\n"
@@ -18590,7 +18599,8 @@ static constexpr DimensionsAlignmentTestCase
              "    input  bit                       foo\n"
              ");\n"
              "endmodule : m\n",
-             "module m (\n"
+             "module m\n"
+             "(\n"
              "    output bit [2:0][   2:0][  2:0] quuz  [  8][16:12],\n"
              "    input  bit              [   16] quux  [8:2][   16][32],\n"
              "    input  bit      [FOOBAZ][31:24] qux   [ 16],\n"
@@ -18601,7 +18611,8 @@ static constexpr DimensionsAlignmentTestCase
              "    input  bit                      foo\n"
              ");\n"
              "endmodule : m\n",
-             "module m (\n"
+             "module m\n"
+             "(\n"
              "    output bit [2:0][   2:0][  2:0] quuz       [ 8][16:12],\n"
              "    input  bit              [   16] quux  [8:2][16][   32],\n"
              "    input  bit      [FOOBAZ][31:24] qux            [   16],\n"
