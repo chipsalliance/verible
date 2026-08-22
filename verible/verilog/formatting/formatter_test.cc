@@ -2021,7 +2021,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  (\n"
      "      .clk (ex_input_pins.clk),\n"
      "      .rst (ex_input_pins.rst),\n"
-     "      .in (ex_input_pins.in)\n"  // aligned
+     "      .in  (ex_input_pins.in)\n"  // aligned
      "  );\n"
      "endmodule\n"},
     {"module test;\n"
@@ -2069,7 +2069,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    .out (ooooooout),\n"
      "    .clk (ccccccclk),\n"
      "\n"
-     "    .in1234 (in),\n"
+     "    .in1234  (in),\n"
      "    //c1\n"
      "    .out1234 (out),\n"
      "    .clk1234 (clk),\n"
@@ -4050,13 +4050,12 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "class c;\n"
      "  task automatic delayed_assigner;#   100   y = w;endtask\n"
      "endclass\n"},
+    // ece2300: task body preserved verbatim, so the label spacing is kept
     {"class c; task automatic labeled_assigner;"
      "lbl   :   y = w;"  // delayed assignment
      "endtask endclass",
      "class c;\n"
-     "  task automatic labeled_assigner;\n"
-     "    lbl : y = w;\n"  // TODO(fangism): no space before ':'
-     "  endtask\n"
+     "  task automatic labeled_assigner;lbl   :   y = w;endtask\n"
      "endclass\n"},
     // task with macro call
     {"module m1;\ntask automatic t1();\n"
@@ -4138,8 +4137,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  function f(integer size);\n"
      "  endfunction\n"
      "  // t is for true\n"
-     "  task t();\n"
-     "  endtask\n"
+     "  task t();endtask\n"
      "  // class is about to end\n"
      "endclass\n"},
     // class property alignment test cases
@@ -5581,13 +5579,18 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
     {"  module foo   ; bar bq(), bq2(  );endmodule\n",
      "module foo;\n"
-     "  bar bq\n"
-     "  (), bq2 ();\n"  // multiple instances, still fitting on one line
+     "  bar\n"  // ece2300: instances always expand, one per line
+     "      bq\n"
+     "      (),\n"
+     "      bq2\n"
+     "      ();\n"
      "endmodule\n"},
     {"module foo; bar #(.N(N)) bq (.bus(bus));endmodule\n",
      // instance parameter and port fits on line
      "module foo;\n"
-     "  bar #(.N(N)) bq\n"
+     "  bar #(\n"
+     "      .N(N)\n"
+     "  ) bq\n"
      "  (\n"
      "      .bus (bus)\n"
      "  );\n"
@@ -5751,9 +5754,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
     {"module foo; bar #(.N(N)) bq (//\n.bus(bus));endmodule\n",
      "module foo;\n"
-     "  bar #(\n"  // would fit on one line, but forced to expand by //
+     "  bar #(\n"
      "      .N(N)\n"
-     "  ) bq (  //\n"
+     "  ) bq\n"
+     "  ( //\n"
      "      .bus (bus)\n"
      "  );\n"
      "endmodule\n"},
@@ -6042,7 +6046,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ");\n"},
     {// tests bind declaration, with type params
      "bind   foo   bar# ( . W ( W ) ) baz  ( . clk ( clk  ) ) ;",
-     "bind foo bar #(.W(W)) baz\n"
+     "bind foo bar #(\n"
+     "    .W(W)\n"
+     ") baz\n"
      "(\n"
      "    .clk (clk)\n"
      ");\n"},
@@ -6061,14 +6067,15 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    .MaxDelta(MaxDelta)\n"
      ") bar\n"
      "(\n"
-     "    .clk (clk),\n"
-     "    .rst (rst),\n"
+     "    .clk   (clk),\n"
+     "    .rst   (rst),\n"
      "    .value (value)\n"
      ");\n"},
     {"bind foo bar baz(\\\n"
      "`undef d\\\n"
      "`undef d);",
-     "bind foo bar baz (\\\n"
+     "bind foo bar baz\n"
+     "(\\\n"
      "    `undef d\\\n"
      "    `undef d\n"
      ");\n"},
@@ -6083,7 +6090,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "    .D(D_CONST)\n"
         ") instaaance_name\n"
         "(\n"
-        "    .in (iiiiiiiin),\n"
+        "    .in  (iiiiiiiin),\n"
         "    .out (ooooooout),\n"
         "    .clk (ccccccclk)\n"
         ");\n",
@@ -6099,7 +6106,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "    .D(D_CONST)\n"
         ") instaaance_name\n"
         "(\n"
-        "    .in (iiiiiiiin),\n"
+        "    .in  (iiiiiiiin),\n"
         "    .out (ooooooout),\n"
         "    .clk (ccccccclk)\n"
         ");\n",
@@ -6220,41 +6227,35 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     // task test cases
     {"task t ;endtask:t",  //
      "task t ;endtask:t\n"},
+    // ece2300: task body preserved verbatim, delay expressions untouched
     {"task t ;#   10 ;# 5ns ; # 0.1 ; # 1step ;endtask",
-     "task t;\n"
-     "  #10;\n"  // no space in delay expression
-     "  #5ns;\n"
-     "  #0.1;\n"
-     "  #1step;\n"
-     "endtask\n"},
+     "task t ;#   10 ;# 5ns ; # 0.1 ; # 1step ;endtask\n"},
     {"task t\n;a<=b ;c<=d ;endtask\n",
      "task t\n"
      ";a<=b ;c<=d ;endtask\n"},
     {"class c;   virtual protected task\tt  ( foo bar);"
      "a.a<=b.b;\t\tc.c\n<=   d.d; endtask   endclass",
      "class c;\n"
-     "  virtual protected task t(foo bar);\n"
-     "    a.a <= b.b;\n"
-     "    c.c <= d.d;\n"
-     "  endtask\n"
+     "  virtual protected task\tt  ( foo bar);a.a<=b.b;\t\tc.c\n"
+     "<=   d.d; endtask\n"
      "endclass\n"},
     {"task t;\n// statement comment\nendtask\n",
      "task t;\n"
-     "  // statement comment\n"  // indented
+     "// statement comment\n"  // indented
      "endtask\n"},
     {"task t( );\n// statement comment\nendtask\n",
-     "task t();\n"
-     "  // statement comment\n"  // indented
+     "task t( );\n"
+     "// statement comment\n"  // indented
      "endtask\n"},
     {"task t( input x  );\n"
      "// statement comment\n"
      "s();\n"
      "// statement comment\n"
      "endtask\n",
-     "task t(input x);\n"
-     "  // statement comment\n"  // indented
-     "  s();\n"
-     "  // statement comment\n"  // indented
+     "task t( input x  );\n"
+     "// statement comment\n"  // indented
+     "s();\n"
+     "// statement comment\n"  // indented
      "endtask\n"},
     {"task fj;fork join fork join\tendtask",
      "task fj;fork join fork join\tendtask\n"},
@@ -6268,15 +6269,13 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "fork  \n"
      "//c3\n"
      "join\tendtask",
-     "task fj;\n"
-     "  fork\n"
-     "    //c1\n"
-     "  join\n"
-     "  //c2\n"
-     "  fork\n"
-     "    //c3\n"
-     "  join\n"
-     "endtask\n"},
+     "task fj;fork\n"
+     "//c1\n"
+     "join\n"
+     "//c2\n"
+     "fork  \n"
+     "//c3\n"
+     "join\tendtask\n"},
     {"task fj;\n"
      "fork "
      "begin "
@@ -6388,16 +6387,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "))) begin "
         "end "
         "endtask : t",
-        "task t;\n"
-        "  if (!$cast(\n"
-        "          ssssssssssssssss,\n"
-        "          vvvvvvvvvv.gggggggg(\n"
-        "              .ppppppp (ppppppp),\n"
-        "              .yyyyy (\"xxxxxxxxxxxxx\")\n"
-        "          )\n"
-        "      )) begin\n"
-        "  end\n"
-        "endtask : t\n",
+        "task t;if (!$cast(ssssssssssssssss, vvvvvvvvvv.gggggggg(.ppppppp(ppppppp),.yyyyy(\"xxxxxxxxxxxxx\")))) begin end endtask : t\n",
     },
 
     {
@@ -6914,12 +6904,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "SqRgavM[15:2];\n"
         "JgQLBG == 4'h0;, \"foo\" )\n"
         "endtask\n",
-        "task S;\n"
-        "  `ppgJH3JoxhwyTmZ2dgPiuMQzpRAWiSs(\n"
-        "      {xYtxuh6.FIMcVPEWfhtoI2FSe, xYtxuh6.ZVL5XASVGLYz32} == "
-        "SqRgavM[15:2];\n"
-        "JgQLBG == 4'h0;,\n"
-        "      \"foo\")\n"
+        "task  S ; `ppgJH3JoxhwyTmZ2dgPiuMQzpRAWiSs({xYtxuh6.FIMcVPEWfhtoI2FSe, xYtxuh6.ZVL5XASVGLYz32} == SqRgavM[15:2];\n"
+        "JgQLBG == 4'h0;, \"foo\" )\n"
         "endtask\n",
     },
 
@@ -6945,8 +6931,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
-     "      .aa (aa),\n"
+     "      .a   (a),\n"
+     "      .aa  (aa),\n"
      "      .aaa (aaa)\n"
      "  );\n"
      "endmodule\n"},
@@ -6957,8 +6943,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (),\n"
-     "      .aa (),\n"
+     "      .a   (),\n"
+     "      .aa  (),\n"
      "      .aaa ()\n"
      "  );\n"
      "endmodule\n"},
@@ -6969,10 +6955,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
+     "      .a   (a),\n"
      "      .aaa (aaa),\n"
      "\n"
-     "      .b (b),\n"
+     "      .b      (b),\n"
      "      .bbbbbb (bbbbb)\n"
      "  );\n"
      "endmodule\n"},
@@ -6983,7 +6969,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
+     "      .a   (a),\n"
      "      .aaa ({a, b, c})\n"
      "  );\n"
      "endmodule\n"},
@@ -6994,7 +6980,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
+     "      .a   (a),\n"
      "      .aaa (q[r:s])\n"
      "  );\n"
      "endmodule\n"},
@@ -7005,9 +6991,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
+     "      .a   (a),\n"
      "`ifdef MACRO\n"
-     "      .aa (aa),\n"
+     "      .aa  (aa),\n"
      "`endif\n"
      "      .aaa (aaa)\n"
      "  );\n"
@@ -7019,8 +7005,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
-     "      .aa (aa[`RANGE]),\n"
+     "      .a   (a),\n"
+     "      .aa  (aa[`RANGE]),\n"
      "      .aaa (aaa)\n"
      "  );\n"
      "endmodule\n"},
@@ -7030,7 +7016,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
+     "      .a   (a),\n"
      "      .AA,\n"
      "      .aaa (aaa)\n"
      "  );\n"
@@ -7042,8 +7028,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
-     "      .aa (aa)  /*comment*/,\n"
+     "      .a   (a),\n"
+     "      .aa  (aa)  /*comment*/,\n"
      "      .aaa (aaa)\n"
      "  );\n"
      "endmodule\n"},
@@ -7053,7 +7039,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),   //comment1\n"
+     "      .a   (a),   //comment1\n"
      "      .aaa (aaa)  //comment2\n"
      "  );\n"
      "endmodule\n"},
@@ -7065,8 +7051,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
-     "      //.aa (aa),\n"
+     "      .a   (a),\n"
+     "      //.aa(aa),\n"
      "      .aaa (aaa)\n"
      "  );\n"
      "endmodule\n"},
@@ -7080,7 +7066,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "        .a (a)    //comment1\n"
+     "        .a   (a)    //comment1\n"
      "      , .aaa (aaa)  //comment2\n"
      "  )  //comment3\n"
      "  ;\n"
@@ -7104,7 +7090,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
+     "      .a     (a),\n"
      "      .aa,\n"
      "      .aaaaa (aaaaa)\n"
      "  );\n"
@@ -7116,7 +7102,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
+     "      .a   (a),\n"
      "      .aaa (aaa),\n"
      "      .*\n"
      "  );\n"
@@ -7127,8 +7113,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar\n"
      "  (\n"
-     "      .a (a),\n"
-     "      .aa (aa),\n"
+     "      .a   (a),\n"
+     "      .aa  (aa),\n"
      "      .*,\n"
      "      .aaa (aaa)\n"
      "  );\n"
@@ -8335,8 +8321,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "`define BAR 1 // A\n"
      "module foo\n"
      "();  // B\n"
-     "                // B.1\n"
-     "                // B.2\n"
+     "     // B.1\n"
+     "     // B.2\n"
      "  wire baz;  // C\n"
      "             // C.1\n"
      "             // C.2\n"
@@ -8362,8 +8348,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "// X\n"
      "module foo\n"
      "();  // B\n"
-     "                // B.1\n"
-     "                // B.2\n"
+     "     // B.1\n"
+     "     // B.2\n"
      "  // Y\n"
      "  wire baz;  // C\n"
      "             // C.1\n"
@@ -8384,8 +8370,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "output reg o1 // D\n"
      "              // D.1\n"
      ");endmodule:foo\n",
-     "module foo (  // A\n"
-     "              // A.1\n"
+     "module foo\n"
+     "( // A\n"
+     "  // A.1\n"
      "    // X\n"
      "    input wire       i1[a:b],  // B\n"
      "                               // B.1\n"
@@ -8426,8 +8413,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "             // C.2\n",     // C's column - 1
      "module foo\n"
      "();  // A\n"
-     "                // A.1\n"
-     "                // A.2\n"
+     "     // A.1\n"
+     "     // A.2\n"
      "  wire baz;  // B\n"
      "             // B.1\n"
      "             // B.2\n"
@@ -8793,7 +8780,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "        .first (1)  // c1\n"
+     "        .first  (1)  // c1\n"
      "      , .second (2)  // c2\n"
      "  );\n"
      "endmodule\n"},
@@ -8806,7 +8793,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "        .first (1)  // c1\n"
+     "        .first  (1)  // c1\n"
      "      , .second (2)  // c2\n"
      "  );\n"
      "endmodule\n"},
@@ -8822,7 +8809,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "        .first (1)\n"
+     "        .first  (1)\n"
      "      // c1\n"
      "      , .second (2)\n"
      "      // c2\n"
@@ -8839,7 +8826,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "        .first (1)\n"
+     "        .first  (1)\n"
      "      // c1\n"
      "      , .second (2)\n"
      "      // c2\n"
@@ -8857,7 +8844,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "      .first (1)\n"
+     "      .first  (1)\n"
      "      // c1\n"
      "      ,  // c2\n"
      "      .second (2)\n"
@@ -8883,12 +8870,12 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  (\n"
      "      // c1\n"
      "      // c1+\n"
-     "      .first (1)  // c2\n"
-     "                  // c2+\n"
+     "      .first  (1)  // c2\n"
+     "                   // c2+\n"
      "      ,  // c3\n"
      "         // c3+\n"
      "      .second (2)  // c4\n"
-     "                  // c4+\n"
+     "                   // c4+\n"
      "      // c5\n"
      "      // c5+\n"
      "  );\n"
@@ -8903,7 +8890,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "        .first (1)  /* c1 */\n"
+     "        .first  (1)  /* c1 */\n"
      "      , .second (2)  /* c2 */\n"
      "  );\n"
      "endmodule\n"},
@@ -8916,7 +8903,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "      /* c1 */.first (1),\n"
+     "      /* c1 */.first  (1),\n"
      "      /* c2 */.second (2)\n"
      "  );\n"
      "endmodule\n"},
@@ -8929,7 +8916,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "        .first (1)  /* c1 */\n"
+     "        .first  (1)  /* c1 */\n"
      "      , .second (2)  /* c2 */\n"
      "  );\n"
      "endmodule\n"},
@@ -8942,7 +8929,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "      /* c1 */  .first (1)\n"
+     "      /* c1 */  .first  (1)\n"
      "      /* c2 */, .second (2)\n"
      "  );\n"
      "endmodule\n"},
@@ -8958,7 +8945,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "        .first (1)\n"
+     "        .first  (1)\n"
      "      /* c1 */\n"
      "      , .second (2)\n"
      "      /* c2 */\n"
@@ -8975,7 +8962,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "        .first (1)\n"
+     "        .first  (1)\n"
      "      /* c1 */\n"
      "      , .second (2)\n"
      "      /* c2 */\n"
@@ -8993,7 +8980,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "      .first (1)\n"
+     "      .first  (1)\n"
      "      /* c1 */\n"
      "      ,  /* c2 */\n"
      "      .second (2)\n"
@@ -9012,7 +8999,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar foobar\n"
      "  (\n"
-     "      .first (1)\n"
+     "      .first  (1)\n"
      "      /* c1 */\n"
      "      ,  /* c2 */\n"
      "      .second (2)\n"
@@ -9038,7 +9025,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  (\n"
      "      /* c1  */\n"
      "      /* c1+ */\n"
-     "      .first (1)  /* c2  */\n"
+     "      .first  (1)  /* c2  */\n"
      "      /* c2+ */\n"
      "      ,  /* c3  */\n"
      "      /* c3+ */\n"
@@ -15675,9 +15662,9 @@ endmodule
     {"module bar(input x,output y,input z,output w);endmodule\n",
      "module bar\n"
      "(\n"
-     "    input x,\n"
+     "    input  x,\n"
      "    output y,\n"
-     "    input z,\n"
+     "    input  z,\n"
      "    output w\n"
      ");\n"
      "endmodule\n"},
@@ -15685,9 +15672,9 @@ endmodule
     {"module bar( input   x,\n  output y ,input z,\n output   w );endmodule\n",
      "module bar\n"
      "(\n"
-     "    input x,\n"
+     "    input  x,\n"
      "    output y,\n"
-     "    input z,\n"
+     "    input  z,\n"
      "    output w\n"
      ");\n"
      "endmodule\n"},
@@ -15743,30 +15730,44 @@ endmodule
      "endtask\n"
      "  wire w;\n"
      "endmodule\n"},
-    // ece2300: Test case for casez...endcase formatting being disabled (original spacing preserved), surrounding code still reformatted
+    // ece2300: Test case for casez...endcase formatting being disabled (original spacing preserved), surrounding code still reformatted.
+    // 'casez' is only legal inside a procedural block; at module level only
+    // plain 'case' parses, as a conditional generate construct.
     {"module mc;\n"
      "     wire   ww ;\n"
-     "casez(s)   a  :   bb   c  ;\n"
-     "      d:ee   f;\n"
+     "always @(*) begin\n"
+     "casez(s)   2'b1?  :   y   = a  ;\n"
+     "      2'b0?:y   = b;\n"
      "endcase\n"
+     "end\n"
      "endmodule\n",
      "module mc;\n"
      "  wire ww;\n"
-     "  casez(s)   a  :   bb   c  ;\n"
-     "      d:ee   f;\n"
+     "  always @(*) begin\n"
+     "    casez(s)   2'b1?  :   y   = a  ;\n"
+     "      2'b0?:y   = b;\n"
      "endcase\n"
+     "  end\n"
      "endmodule\n"},
-    // ece2300: Test case confirming plain 'case' (not 'casez') is NOT exempted and is fully reformatted
+    // ece2300: Test case confirming plain 'case' (not 'casez') is NOT exempted and is fully reformatted.
+    // Identical to the case above apart from the keyword, so the exemption is
+    // the only difference between the two expected outputs.
     {"module mc;\n"
-     "case(s)   a  :   bb   c  ;\n"
-     "      d:ee   f;\n"
+     "     wire   ww ;\n"
+     "always @(*) begin\n"
+     "case(s)   2'b10  :   y   = a  ;\n"
+     "      2'b01:y   = b;\n"
      "endcase\n"
+     "end\n"
      "endmodule\n",
      "module mc;\n"
-     "  case (s)\n"
-     "    a: bb c;\n"
-     "    d: ee f;\n"
-     "  endcase\n"
+     "  wire ww;\n"
+     "  always @(*) begin\n"
+     "    case (s)\n"
+     "      2'b10: y = a;\n"
+     "      2'b01: y = b;\n"
+     "    endcase\n"
+     "  end\n"
      "endmodule\n"},
     // ece2300: Test case confirming 'function' (not 'task') is NOT exempted and is fully reformatted
     {"module m1;\n"
@@ -16036,7 +16037,7 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "module mm;\n"
        "  foo bar\n"
        "  (\n"
-       "      .a (a),\n"  // align doesn't add too many spaces, so align
+       "      .a  (a),\n"  // align doesn't add too many spaces, so align
        "      .bb (bb)\n"
        "  );\n"
        "endmodule : mm\n"},
@@ -16049,8 +16050,8 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "module mm;\n"
        "  foo bar\n"
        "  (\n"
-       "      .a (a),\n"  // align would add too many spaces, so flush-left
-       "      .bbbbbb (bb)\n"
+       "      .a    (a),\n"  // align would add too many spaces, so flush-left
+       "      .bbbbbb(bb)\n"
        "  );\n"
        "endmodule : mm\n"},
       {"module  mm ;\n"
@@ -16062,8 +16063,8 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "module mm;\n"
        "  foo bar\n"
        "  (\n"
-       "      .a (a),\n"  // alignment fixed
-       "      .bbbbbb (bb)\n"
+       "      .a    (a),\n"  // alignment fixed
+       "      .bbbbbb(bb)\n"
        "  );\n"
        "endmodule : mm\n"},
 
@@ -16252,9 +16253,9 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "aa =  b;\n"
        "c = 1'b0;\n"
        "endtask\n",
-       "task ta;\n"
-       "  aa = b;\n"
-       "  c  = 1'b0;\n"  // only one space to align
+       "task  ta ; \n"
+       "aa =  b;\n"
+       "c = 1'b0;\n"  // only one space to align
        "endtask\n"},
       {"module  ma ;\n"
        "always@( posedge clk) begin\n"
@@ -16283,10 +16284,10 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "aa <=  b;\n"
        "c <= 1'b0;\n"
        "endtask\n",
-       "task ta;\n"
-       "  $display(\"hello\");\n"
-       "  aa <= b;\n"
-       "  c  <= 1'b0;\n"  // only one space to align
+       "task  ta ; \n"
+       "$display (\"hello\" );\n"
+       "aa <=  b;\n"
+       "c <= 1'b0;\n"  // only one space to align
        "endtask\n"},
       {// mixed blocking and nonblocking assignments
        "module  ma ;\n"
@@ -16312,22 +16313,22 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "zzaa <=  b;\n"
        "zzc <= 1'b0;\n"
        "endtask\n",
-       "task ta;\n"
-       "  aa <= b;\n"
-       "  c  <= 1'b0;\n"  // only one space to align
-       "  $display(\"hello\");\n"
-       "  zzaa <= b;\n"
-       "  zzc  <= 1'b0;\n"  // only one space to align
+       "task  ta ; \n"
+       "aa <=  b;\n"
+       "c <= 1'b0;\n"  // only one space to align
+       "$display (\"hello\" );\n"
+       "zzaa <=  b;\n"
+       "zzc <= 1'b0;\n"  // only one space to align
        "endtask\n"},
       {"task  ta ; \n"
        "$display (\"hello\" );\n"
        "aaaaa <=  b;\n"
        "c <= 1'b0;\n"  // need too many spaces to align
        "endtask\n",
-       "task ta;\n"
-       "  $display(\"hello\");\n"
-       "  aaaaa <= b;\n"
-       "  c <= 1'b0;\n"  // so keep flush-left
+       "task  ta ; \n"
+       "$display (\"hello\" );\n"
+       "aaaaa <=  b;\n"
+       "c <= 1'b0;\n"  // so keep flush-left
        "endtask\n"},
       {"function void  fa ; \n"
        "$display (\"hello\" );\n"
@@ -16383,9 +16384,9 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "int foo;\n"  // only 2 spaces needed to align
        "bar_t baz;\n"
        "endtask\n",
-       "task tt;\n"
-       "  int   foo;\n"  // aligned
-       "  bar_t baz;\n"
+       "task tt ;\n"
+       "int foo;\n"  // aligned
+       "bar_t baz;\n"
        "endtask\n"},
       {"function ff ;\n"
        "bar_t baz;\n"
@@ -16399,9 +16400,9 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "int  foo;\n"  // too many spaces needed to align
        "baaaar_t baz;\n"
        "endtask\n",
-       "task tt;\n"
-       "  int foo;\n"  // so flush-left
-       "  baaaar_t baz;\n"
+       "task tt ;\n"
+       "int  foo;\n"  // so flush-left
+       "baaaar_t baz;\n"
        "endtask\n"},
       {"function ff ;\n"
        "baaaar_t baz;\n"
@@ -16415,9 +16416,9 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "int        foo;\n"  // injected spaces to induce alignment
        "baaaar_t baz;\n"
        "endtask\n",
-       "task tt;\n"
-       "  int      foo;\n"  // aligned
-       "  baaaar_t baz;\n"
+       "task tt ;\n"
+       "int        foo;\n"  // aligned
+       "baaaar_t baz;\n"
        "endtask\n"},
       {"function ff ;\n"
        "baaaar_t baz    ;\n"  // injected spaces to induce alignment
@@ -16576,7 +16577,10 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    kVVV:   cd = 24;\n"  // aligned
        "  endcase\n"
        "endfunction\n"},
-      {// induced alignment, ignore multiline case item in the middle
+      {// induced alignment, ignore multiline case item in the middle.
+       // ece2300: task body preserved verbatim, so no alignment happens here;
+       // the kFormatterTestCasesCaseItems entry above covers the same shape
+       // inside a function, where alignment is still exercised.
        "task t; case (x)"
        "kZ  :if( b )break; "
        "kYY    :return 2;"           // excess spaces induce alignment
@@ -16584,18 +16588,9 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    kWWWWW: cc = 23;\n"
        "    kVVV: cd = 24;\n"
        "endcase endtask\n",
-       "task t;\n"
-       "  case (x)\n"
-       "    kZ:     if (b) break;\n"
-       "    kYY:    return 2;\n"
-       "    kXXXXXXXXX:\n"  // TODO(fangism): allow this to merge with fork
-                            // else indent the following two lines
-       "    fork\n"         // separates above/below groups
-       "    join\n"
-       "    kWWWWW: cc = 23;\n"
-       "    kVVV:   cd = 24;\n"  // aligned
-       "  endcase\n"
-       "endtask\n"},
+       "task t; case (x)kZ  :if( b )break; kYY    :return 2;    kXXXXXXXXX: fork  join    kWWWWW: cc = 23;\n"
+       "    kVVV: cd = 24;\n"
+       "endcase endtask\n"},
       {// case-inside: small difference between flush-left and align, so align
        "function f; case (x)inside [0:3]  :yy=zzz; [4:11] :yy=zz;"
        "endcase endfunction\n",
@@ -16641,8 +16636,10 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "endcase endmodule\n",
        "module mc;\n"
        "  case (x)\n"
-       "    kZ:   gg h ();\n"  // align
-       "    kXYY: j kk ();\n"
+       "    kZ:   gg h\n"  // align
+       " ();\n"
+       "    kXYY: j kk\n"
+       " ();\n"
        "  endcase\n"
        "endmodule\n"},
       {// case-generate + comment: align would add few spaces, so align
@@ -16650,9 +16647,11 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "endcase endmodule\n",
        "module mc;\n"
        "  case (x)\n"
-       "    kZ:   gg h ();\n"  // align
+       "    kZ:   gg h\n"
+       " ();\n"
        "    //c1\n"
-       "    kXYY: j kk ();\n"
+       "    kXYY: j kk\n"
+       " ();\n"
        "  endcase\n"
        "endmodule\n"},
       {// case-generate: align would add too many space, so flush-left
@@ -16660,8 +16659,12 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "endcase endmodule\n",
        "module mc;\n"
        "  case (x)\n"
-       "    kZ: gg h ();\n"  // flush-left
-       "    kXYYYY: j kk ();\n"
+       "    kZ:\n"  // flush-left
+       "    gg h\n"
+       "    ();\n"
+       "    kXYYYY:\n"
+       "    j kk\n"
+       "    ();\n"
        "  endcase\n"
        "endmodule\n"},
       {// case-generate: inject spaces to induce alignment
@@ -16669,29 +16672,24 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "endcase endmodule\n",
        "module mc;\n"
        "  case (x)\n"
-       "    kZ:     gg h ();\n"  // align
-       "    kXYYYY: j kk ();\n"
+       "    kZ:     gg h\n"  // align
+       " ();\n"
+       "    kXYYYY: j kk\n"
+       " ();\n"
        "  endcase\n"
        "endmodule\n"},
+      // ece2300: all three randcase entries sit inside a task, whose body is
+      // preserved verbatim, so none of the alignment modes below are exercised
+      // any more; they are kept as regression coverage for the exemption.
       {// randcase: align (small difference from flush-left)
        "task trc  ;randcase 10: x = 1; 1: x = 3; endcase endtask",
-       "task trc;\n"
-       "  randcase\n"
-       "    10: x = 1;\n"
-       "    1:  x = 3;\n"  // aligned
-       "  endcase\n"
-       "endtask\n"},
+       "task trc  ;randcase 10: x = 1; 1: x = 3; endcase endtask\n"},
       {// randcase: inferred flush-left
        "task trc  ;randcase 10000: x = 1; 1: x = 3; endcase endtask",
        "task trc  ;randcase 10000: x = 1; 1: x = 3; endcase endtask\n"},
       {// randcase: induce alignment
        "task trc  ;randcase 10000: x = 1    ; 1: x = 3; endcase endtask",
-       "task trc;\n"
-       "  randcase\n"
-       "    10000: x = 1;\n"
-       "    1:     x = 3;\n"  // aligned
-       "  endcase\n"
-       "endtask\n"},
+       "task trc  ;randcase 10000: x = 1    ; 1: x = 3; endcase endtask\n"},
 
       // distributions
       {"class foo;\n"
@@ -16999,7 +16997,7 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "module m;\n"
        "  foo bar\n"
        "  (\n"
-       "      .baz(baz)\n"
+       "      .baz (baz)\n"
        "  );\n"  // indentation still takes effect
        "endmodule\n"},
       {"module  m  ;\t\n"
@@ -17019,7 +17017,9 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
        "foo  #(   .baz(baz)   ) bar();"  // named parameters
        "  endmodule\n",
        "module m;\n"
-       "  foo #(.baz(baz)) bar\n"
+       "  foo #(\n"
+       "      .baz(baz)\n"
+       "  ) bar\n"
        "  ();\n"  // indentation still takes effect
        "endmodule\n"},
       {"module  m  ;\t\n"
@@ -17253,7 +17253,7 @@ TEST(FormatterEndToEndTest, NamedPortConnectionsIndentNotWrap) {
        "module m;\n"
        "  foo bar\n"
        "  (\n"
-       "      .clk (clk)\n"
+       "    .clk (clk)\n"
        "  );\n"
        "endmodule\n"},
       {// two port example
@@ -17425,7 +17425,9 @@ TEST(FormatterEndToEndTest, NamedParametersIndentNotWrap) {
        "foo #(.W(1)) bar();\n"
        "  endmodule\n",
        "module m;\n"
-       "  foo #(.W(1)) bar\n"
+       "  foo #(\n"
+       "    .W(1)\n"
+       "  ) bar\n"
        "  ();\n"
        "endmodule\n"},
       {// two named parameters
@@ -17650,7 +17652,8 @@ TEST(FormatterEndToEndTest, SelectLines) {
        ");\n"
        "endmodule:m\n",
        {},  // format all lines
-       "module m (\n"
+       "module m\n"
+       "(\n"
        "    input wire     f,\n"
        "    input foo::bar ggg\n"
        ");\n"
@@ -17777,7 +17780,8 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
           "// item comment 2\n"
           "endmodule\n",
           "// humble module\n"
-          "module foo (  // non-port comment\n"
+          "module foo\n"
+          "( // non-port comment\n"
           "    // port comment 1\n"
           "    // port comment 2\n"
           ");  // header trailing comment\n"
@@ -17799,7 +17803,8 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
           "// item comment 2\n"
           "endmodule\n",
           "// humble module\n"
-          "module foo (  // non-port comment\n"
+          "module foo\n"
+          "( // non-port comment\n"
           "    // port comment 1\n"
           "    input logic f\n"
           "    // port comment 2\n"
@@ -17826,10 +17831,7 @@ static constexpr FormatterTestCase kFormatterTestCasesElseStatements[] = {
      "task static t; if (r == t) a.b(c); else d.e(f); endtask;"
      "endmodule",
      "module m;\n"
-     "  task static t;\n"
-     "    if (r == t) a.b(c);\n"
-     "    else d.e(f);\n"
-     "  endtask\n"
+     "  task static t; if (r == t) a.b(c); else d.e(f); endtask\n"
      "  ;\n"  // possibly unintended stray ';'
      "endmodule\n"},
     {"module m;"
@@ -17837,13 +17839,7 @@ static constexpr FormatterTestCase kFormatterTestCasesElseStatements[] = {
      "endtask;"
      "endmodule",
      "module m;\n"
-     "  task static t;\n"
-     "    if (r == t) begin\n"
-     "      a.b(c);\n"
-     "    end else begin\n"
-     "      d.e(f);\n"
-     "    end\n"
-     "  endtask\n"
+     "  task static t; if (r == t) begin a.b(c); end else begin d.e(f); end endtask\n"
      "  ;\n"  // stray ';'
      "endmodule\n"},
     {"module m;initial begin if(a==b)"
