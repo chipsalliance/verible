@@ -16050,8 +16050,8 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "module mm;\n"
        "  foo bar\n"
        "  (\n"
-       "      .a    (a),\n"  // align would add too many spaces, so flush-left
-       "      .bbbbbb(bb)\n"
+       "      .a (a),\n"  // align would add too many spaces, so flush-left
+       "      .bbbbbb (bb)\n"
        "  );\n"
        "endmodule : mm\n"},
       {"module  mm ;\n"
