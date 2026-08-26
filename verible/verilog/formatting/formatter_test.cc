@@ -4707,6 +4707,15 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  for (int i = 0; i < f(m); i--) begin\n"
      "  end\n"
      "endfunction\n"},
+    {// for loop with an attribute instance in the initializer.
+     // Regression: this used to abort with a CHECK failure while reshaping
+     // the kForSpec partitions when an attribute appears in the header.
+     "module m; initial for(int i=0(* a *);i<4;i++) x=i; endmodule",
+     "module m;\n"
+     "  initial\n"
+     "    for (int i = 0 (* a *); i < 4; i++)\n"
+     "      x = i;\n"
+     "endmodule\n"},
     {// forever loop
      "function\nvoid\tforevah;forever  begin "
      "++k\n;end endfunction\n",

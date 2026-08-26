@@ -2990,10 +2990,15 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       auto &children = partition.Children();
       const auto iter1 = std::find_if(children.begin(), children.end(),
                                       PartitionStartsWithSemicolon);
-      CHECK(iter1 != children.end());
+      // An attribute instance ((* ... *)) in the for-loop header can change
+      // the partition structure so that the expected semicolon-leading
+      // partitions are not present.  When they are missing, leave the
+      // partitions unreshaped rather than aborting (avoids a CHECK-failure
+      // crash on attributed/unusual for-headers).
+      if (iter1 == children.end()) break;
       const auto iter2 =
           std::find_if(iter1 + 1, children.end(), PartitionStartsWithSemicolon);
-      CHECK(iter2 != children.end());
+      if (iter2 == children.end()) break;
       const int dist1 = std::distance(children.begin(), iter1);
       const int dist2 = std::distance(children.begin(), iter2);
       VLOG(4) << "kForSpec got ';' at child " << dist1 << " and " << dist2;
