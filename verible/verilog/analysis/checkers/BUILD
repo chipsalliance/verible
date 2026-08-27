@@ -817,6 +817,7 @@ cc_library(
         "//verible/common/analysis:syntax-tree-lint-rule",
         "//verible/common/analysis/matcher",
         "//verible/common/analysis/matcher:bound-symbol-manager",
+        "//verible/common/text:config-utils",
         "//verible/common/text:symbol",
         "//verible/common/text:syntax-tree-context",
         "//verible/common/text:token-info",
@@ -826,7 +827,9 @@ cc_library(
         "//verible/verilog/CST:verilog-nonterminals",
         "//verible/verilog/analysis:descriptions",
         "//verible/verilog/analysis:lint-rule-registry",
+        "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/strings",
+        "@re2",
     ],
     alwayslink = 1,
 )
