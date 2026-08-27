@@ -15,8 +15,10 @@
 #include "verible/verilog/analysis/checkers/generate-label-prefix-rule.h"
 
 #include <memory>
+#include <string>
 #include <string_view>
 
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
@@ -57,6 +59,7 @@ const LintRuleDescriptor &GenerateLabelPrefixRule::GetDescriptor() {
           "gen_. Refer to https://github.com/chipsalliance/verible/tree/master/"
           "verilog/tools/lint#readme for more detail on verible regex "
           "patterns.",
+      // NOLINTNEXTLINE(misc-include-cleaner)
       .param = {{"style_regex", std::string(kDefaultStyleRegex),
                  "A regex used to check generate label style."}},
   };
@@ -109,6 +112,7 @@ void GenerateLabelPrefixRule::HandleSymbol(
   }
 }
 
+// NOLINTNEXTLINE(misc-include-cleaner)
 absl::Status GenerateLabelPrefixRule::Configure(
     std::string_view configuration) {
   using verible::config::SetRegex;
