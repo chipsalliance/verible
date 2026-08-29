@@ -221,11 +221,10 @@ function verify_expected_non_zero_exit_count() {
   expected_count_key="${TOOL_SHORT_NAME}:${PROJECT_NAME}"
   if [[ -v ExpectedFailCount[${expected_count_key}] ]]; then
     expected_count=${ExpectedFailCount[${expected_count_key}]}
-    # We allow some 5% deviation from expected values before we complain loudly
-    local GRACE_VALUE=$(( ${expected_count} / 20 ))
-    if [ ${GRACE_VALUE} -lt 2 ]; then
-      GRACE_VALUE=2
-    fi
+
+    # Since we have a fixed set of projects and hashes, we don't allow any
+    # derivation from the expected value (used to be 5%)
+    local GRACE_VALUE=0
     if [ ${OBSERVED_NONZERO_COUNT} -gt ${expected_count} ] ; then
       local ALLOWED_UP_TO=$((${expected_count} + ${GRACE_VALUE}))
       if [ ${OBSERVED_NONZERO_COUNT} -gt ${ALLOWED_UP_TO} ]; then
@@ -238,6 +237,7 @@ function verify_expected_non_zero_exit_count() {
     elif [ ${OBSERVED_NONZERO_COUNT} -lt ${expected_count} ] ; then
       echo "::notice:: 🎉 Yay, reduced non-zero exit count ${expected_count} -> ${OBSERVED_NONZERO_COUNT}"
       echo "Set ExpectedFailCount[${TOOL_SHORT_NAME}:${PROJECT_NAME}]=${OBSERVED_NONZERO_COUNT}"
+      return 1  # we still want the exact value to be recorded so actively fail
     fi
   else
     if [ ${OBSERVED_NONZERO_COUNT} -gt 0 ] ; then
@@ -408,7 +408,7 @@ done < "${PROJECT_HASHES_FILE}"
 
 echo "::endgroup::"
 
-echo "There were a total of ${status_sum} new, undocumented issues."
+echo "There were a total of ${status_sum} mismatches"
 
 # Let's see if there are any issues that are fixed in the meantime.
 if [ "${#KnownIssue[@]}" -ne 0 ]; then
