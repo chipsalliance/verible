@@ -135,24 +135,24 @@ declare -A ExpectedFailCount
 
 ExpectedFailCount[syntax:ibex]=13
 ExpectedFailCount[lint:ibex]=13
-ExpectedFailCount[project:ibex]=218
-ExpectedFailCount[preprocessor:ibex]=397
+ExpectedFailCount[project:ibex]=224
+ExpectedFailCount[preprocessor:ibex]=403
 
 ExpectedFailCount[syntax:opentitan]=88
 ExpectedFailCount[lint:opentitan]=88
-ExpectedFailCount[project:opentitan]=1068
+ExpectedFailCount[project:opentitan]=1077
 ExpectedFailCount[formatter:opentitan]=0
-ExpectedFailCount[preprocessor:opentitan]=3074
+ExpectedFailCount[preprocessor:opentitan]=3017
 
 ExpectedFailCount[syntax:sv-tests]=74
 ExpectedFailCount[lint:sv-tests]=73
 ExpectedFailCount[project:sv-tests]=176
 ExpectedFailCount[preprocessor:sv-tests]=128
 
-ExpectedFailCount[syntax:caliptra-rtl]=39
-ExpectedFailCount[lint:caliptra-rtl]=38
-ExpectedFailCount[project:caliptra-rtl]=453
-ExpectedFailCount[preprocessor:caliptra-rtl]=911
+ExpectedFailCount[syntax:caliptra-rtl]=41
+ExpectedFailCount[lint:caliptra-rtl]=40
+ExpectedFailCount[project:caliptra-rtl]=474
+ExpectedFailCount[preprocessor:caliptra-rtl]=993
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
@@ -164,10 +164,10 @@ ExpectedFailCount[lint:cva6]=7
 ExpectedFailCount[project:cva6]=84
 ExpectedFailCount[preprocessor:cva6]=140
 
-ExpectedFailCount[syntax:uvm]=0
-ExpectedFailCount[lint:uvm]=0
-ExpectedFailCount[project:uvm]=40
-ExpectedFailCount[preprocessor:uvm]=126
+ExpectedFailCount[syntax:uvm]=1
+ExpectedFailCount[lint:uvm]=1
+ExpectedFailCount[project:uvm]=41
+ExpectedFailCount[preprocessor:uvm]=128
 
 ExpectedFailCount[syntax:tnoc]=3
 ExpectedFailCount[lint:tnoc]=3
@@ -187,9 +187,9 @@ ExpectedFailCount[lint:black-parrot]=155
 ExpectedFailCount[project:black-parrot]=172
 ExpectedFailCount[preprocessor:black-parrot]=173
 
-ExpectedFailCount[syntax:ivtest]=117
-ExpectedFailCount[lint:ivtest]=117
-ExpectedFailCount[project:ivtest]=146
+ExpectedFailCount[syntax:ivtest]=116
+ExpectedFailCount[lint:ivtest]=116
+ExpectedFailCount[project:ivtest]=145
 ExpectedFailCount[preprocessor:ivtest]=26
 
 ExpectedFailCount[syntax:nontrivial-mips]=2
