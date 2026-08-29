@@ -39,6 +39,7 @@ BAZEL_BUILD_OPTIONS="-c opt"
 
 TMPDIR="${TMPDIR:-/tmp}"
 readonly BASE_TEST_DIR="${TMPDIR}/test/verible-smoke-test"
+readonly DEFAULT_HASH_FILE="$(dirname $0)/smoke-projects.hashes"
 
 # Write log files to this directory
 readonly SMOKE_LOGGING_DIR="${SMOKE_LOGGING_DIR:-$BASE_TEST_DIR/error-logs}"
@@ -81,29 +82,12 @@ readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
 #
 # There are some known issues which are all recorded in the associative
 # array below, mapping them to Verible issue tracker numbers.
-# TODO(hzeller): there should be a configuration file that contains two
-# columns: URL + hash, so that we can fetch a particular known version not
-# a moving target.
-readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
-         https://github.com/lowRISC/opentitan \
-         https://github.com/chipsalliance/sv-tests \
-         https://github.com/chipsalliance/Cores-VeeR-EH2 \
-         https://github.com/chipsalliance/caliptra-rtl \
-         https://github.com/openhwgroup/cva6 \
-         https://github.com/SymbiFlow/uvm \
-         https://github.com/taichi-ishitani/tnoc \
-         https://github.com/ijor/fx68k \
-         https://github.com/jamieiles/80x86 \
-         https://github.com/SymbiFlow/XilinxUnisimLibrary \
-         https://github.com/black-parrot/black-parrot
-         https://github.com/steveicarus/ivtest \
-         https://github.com/trivialmips/nontrivial-mips \
-         https://github.com/pulp-platform/axi \
-         https://github.com/rsd-devel/rsd \
-         https://github.com/syntacore/scr1 \
-         https://github.com/olofk/serv \
-         https://github.com/bespoke-silicon-group/basejump_stl \
-         https://github.com/gtaylormb/opl3_fpga"
+readonly PROJECT_HASHES_FILE="${1:-${DEFAULT_HASH_FILE}}"
+
+if [ ! -f "${PROJECT_HASHES_FILE}" ]; then
+  echo "Project hashes file not found: ${PROJECT_HASHES_FILE}"
+  exit 1
+fi
 
 ##
 # Some of the files in the projects will have issues.
@@ -270,11 +254,14 @@ function verify_expected_non_zero_exit_count() {
 #
 # First parameter : project name
 # Second parameter: name of file containing a list of {System}Verilog files
+# Third parameter : git URL
+# Fourth parameter: git hash (optional, defaults to master)
 function run_smoke_test() {
   local PROJECT_FILE_LIST=${TMPDIR}/filelist.$$.list
   local PROJECT_NAME=$1
   local FILELIST=$2
   local GIT_URL=$3
+  local GIT_HASH=${4:-master}
   local NUM_FILES=$(wc -l < ${FILELIST})
   local result=0
 
@@ -355,7 +342,7 @@ function run_smoke_test() {
         else
           # This is an so far unknown issue
           echo "::error:: 😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
-          echo "Input File URL: ${GIT_URL}/blob/master/$(echo $single_file | cut -d/ -f6-)"
+          echo "Input File URL: ${GIT_URL}/blob/${GIT_HASH}/$(echo $single_file | cut -d/ -f6-)"
           head -15 ${PROJECT_FILE_TOOL_OUT}   # Might be useful in this case
           result=$((${result} + 1))
         fi
@@ -388,18 +375,20 @@ status_sum=0
 bazel build ${BAZEL_BUILD_OPTIONS} :install-binaries &
 
 # While compiling, run potentially slow network ops
-for git_project in ${TEST_GIT_PROJECTS} ; do
-  PROJECT_NAME="$(basename $git_project)"
+while read -r git_hash git_project _; do
+  [[ -z "${git_hash}" || "${git_hash}" =~ ^# ]] && continue
+  PROJECT_NAME="$(basename "${git_project}")"
   PROJECT_DIR="${BASE_TEST_DIR}/${PROJECT_NAME}"
-  git clone ${git_project} ${PROJECT_DIR} 2>/dev/null &
-done
+  ( git clone "${git_project}" "${PROJECT_DIR}" && git -C "${PROJECT_DIR}" checkout -q "${git_hash}" ) 2>/dev/null &
+done < "${PROJECT_HASHES_FILE}"
 
 echo "base test dir ${BASE_TEST_DIR}; writing logs to ${SMOKE_LOGGING_DIR}"
 echo "Waiting... for compilation and project download finished"
 wait
 
-for git_project in ${TEST_GIT_PROJECTS} ; do
-  PROJECT_NAME="$(basename $git_project)"
+while read -r git_hash git_project _; do
+  [[ -z "${git_hash}" || "${git_hash}" =~ ^# ]] && continue
+  PROJECT_NAME="$(basename "${git_project}")"
   PROJECT_DIR="${BASE_TEST_DIR}/${PROJECT_NAME}"
   # Already cloned above
 
@@ -412,10 +401,10 @@ for git_project in ${TEST_GIT_PROJECTS} ; do
   FILELIST="${PROJECT_DIR}/verible.filelist"
   find "${PROJECT_DIR}" -name "*.sv" -o -name "*.svh" -o -name "*.v" | sort > ${FILELIST}
 
-  run_smoke_test "${PROJECT_NAME}" "${FILELIST}" "${git_project}"
+  run_smoke_test "${PROJECT_NAME}" "${FILELIST}" "${git_project}" "${git_hash}"
   status_sum=$((${status_sum} + $?))
   echo
-done
+done < "${PROJECT_HASHES_FILE}"
 
 echo "::endgroup::"
 
