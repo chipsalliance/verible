@@ -19380,6 +19380,50 @@ TEST(FormatterEndToEndTest,
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2547:
+// A localparam initialized to a sum of long macros must converge: infix `+`
+// stays with the following operand so re-format does not oscillate between
+// `+\n`MACRO` and `+ `MACRO`.
+TEST(FormatterEndToEndTest, LongMacroSumLocalparamConverges) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"module m;\n"
+       "  localparam N =\n"
+       "      `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
+       "      + `MACRO_GEN3_SCRAMBLE_REGIN\n"
+       "      + `MACRO_GEN3_SCRAMBLE_REGOUT\n"
+       "      ;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam N =\n"
+       "  `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
+       "  + `MACRO_GEN3_SCRAMBLE_REGIN\n"
+       "  + `MACRO_GEN3_SCRAMBLE_REGOUT;\n"
+       "endmodule\n"},
+      // Already in pass-1 form must stay stable.
+      {"module m;\n"
+       "  localparam N =\n"
+       "  `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
+       "  + `MACRO_GEN3_SCRAMBLE_REGIN\n"
+       "  + `MACRO_GEN3_SCRAMBLE_REGOUT;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  localparam N =\n"
+       "  `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
+       "  + `MACRO_GEN3_SCRAMBLE_REGIN\n"
+       "  + `MACRO_GEN3_SCRAMBLE_REGOUT;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 // Regression for https://github.com/chipsalliance/verible/issues/2540:
 // Trailing EOL comment after `end` before `else if` must not change whether
 // the else-if assignment stays on one line across re-format (convergence).

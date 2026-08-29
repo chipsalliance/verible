@@ -1640,6 +1640,53 @@ static void AttachSeparatorsToListElementPartitions(
   }
 }
 
+// True when a leaf partition contains only a binary/infix operator (and
+// optional comments/attributes). Used to normalize wrapping of expressions
+// like `A + B + C` so operators always stay with the following operand.
+static bool PartitionIsInfixOperatorOnly(const TokenPartitionTree &partition) {
+  if (!is_leaf(partition)) return false;
+  const auto tokens = partition.Value().TokensRange();
+  if (tokens.empty()) return false;
+
+  const verible::PreFormatToken *op = nullptr;
+  for (const auto &token : tokens) {
+    switch (token.TokenEnum()) {
+      case verilog_tokentype::TK_COMMENT_BLOCK:
+      case verilog_tokentype::TK_EOL_COMMENT:
+      case verilog_tokentype::TK_ATTRIBUTE:
+        break;
+      default:
+        if (GetFormatTokenType(static_cast<verilog_tokentype>(
+                token.TokenEnum())) != FormatTokenType::binary_operator ||
+            op != nullptr) {
+          return false;
+        }
+        op = &token;
+        break;
+    }
+  }
+  return op != nullptr;
+}
+
+// Always attach infix-operator-only partitions to the following operand.
+// Attachment based on original newlines is unstable for macro sums:
+//   `A\n+\n`B  vs  `A\n+ `B  produce different partition shapes and oscillate
+// under re-format (GitHub issue 2547).
+static void AttachInfixOperatorsToFollowingOperands(
+    TokenPartitionTree *partition) {
+  // Iterate by index; merges invalidate sibling pointers.
+  for (int i = 0; i < static_cast<int>(partition->Children().size()); ++i) {
+    auto &child = partition->Children()[i];
+    if (!PartitionIsInfixOperatorOnly(child)) continue;
+    if (NextLeaf(child) == nullptr) continue;
+    VLOG(4) << "Attaching infix operator partition to following operand:\n"
+            << child;
+    verible::MergeLeafIntoNextLeaf(&child);
+    // Children shifted; re-check current index.
+    --i;
+  }
+}
+
 static void AttachTrailingSemicolonToPreviousPartition(
     TokenPartitionTree *partition) {
   // TODO(mglb): Replace this function with
@@ -3131,6 +3178,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kParamDeclaration: {
       AttachTrailingSemicolonToPreviousPartition(&partition);
       AttachOpeningBraceToDeclarationsAssignmentOperator(&partition);
+      AttachInfixOperatorsToFollowingOperands(&partition);
       break;
     }
 
