@@ -4437,8 +4437,6 @@ bitand_expr
     { $$ = std::move($1); }
   | bitand_expr '&' caseeq_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
-  | bitand_expr TK_NAND caseeq_expr
-    { $$ = MakeBinaryExpression($1, $2, $3); }
   ;
 
 xor_expr
@@ -4454,8 +4452,6 @@ bitor_expr
   : xor_expr
     { $$ = std::move($1); }
   | bitor_expr '|' xor_expr
-    { $$ = MakeBinaryExpression($1, $2, $3); }
-  | bitor_expr TK_NOR xor_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   ;
 
