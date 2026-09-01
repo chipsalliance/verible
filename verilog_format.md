@@ -143,4 +143,4 @@ path.
 
 ## Version
 
-Generated on 2026-08-29 17:21:52 +0200 from [fdbac31](https://github.com/google/verible/commit/fdbac312ba11d6a75977443b48f4b90780da9d78)
+Generated on 2026-09-01 20:00:09 +0200 from [6cce8f1](https://github.com/google/verible/commit/6cce8f192b55640ddd5221b926cc952d979aa2b7)
