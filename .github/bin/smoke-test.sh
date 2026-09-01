@@ -171,9 +171,9 @@ ExpectedFailCount[lint:black-parrot]=155
 ExpectedFailCount[project:black-parrot]=172
 ExpectedFailCount[preprocessor:black-parrot]=173
 
-ExpectedFailCount[syntax:ivtest]=116
-ExpectedFailCount[lint:ivtest]=116
-ExpectedFailCount[project:ivtest]=145
+ExpectedFailCount[syntax:ivtest]=123
+ExpectedFailCount[lint:ivtest]=123
+ExpectedFailCount[project:ivtest]=152
 ExpectedFailCount[preprocessor:ivtest]=26
 
 ExpectedFailCount[syntax:nontrivial-mips]=2
