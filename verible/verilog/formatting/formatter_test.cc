@@ -19380,6 +19380,50 @@ TEST(FormatterEndToEndTest,
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2542:
+// Continuation EOL comments after a wrapped assign must keep a stable column
+// across re-format (convergence).
+TEST(FormatterEndToEndTest, ContinuationCommentAfterWrappedAssignConverges) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Comments originally column-aligned after a wrapped assign
+       "module m;\n"
+       "  assign status_ur = !(status_sc || status_ca ||\n"
+       "    status_crs);      // Completions with a Reserved Completion\n"
+       "                      // Status value are treated as UR\n"
+       "endmodule\n",
+       "module m;\n"
+       "  assign status_ur =\n"
+       "      !(status_sc || status_ca || status_crs);  // Completions with a "
+       "Reserved Completion\n"
+       "                                                // Status value are "
+       "treated as UR\n"
+       "endmodule\n"},
+      {// Previously mis-aligned continuation is not treated as a continuation
+       // (column delta > 1) and must still converge
+       "module m;\n"
+       "  assign status_ur = !(status_sc || status_ca ||\n"
+       "    status_crs);      // Completions with a Reserved Completion\n"
+       "                                                                       "
+       "// Status value are treated as UR\n"
+       "endmodule\n",
+       "module m;\n"
+       "  assign status_ur =\n"
+       "      !(status_sc || status_ca || status_crs);  // Completions with a "
+       "Reserved Completion\n"
+       "  // Status value are treated as UR\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 // Regression for https://github.com/chipsalliance/verible/issues/2540:
 // Trailing EOL comment after `end` before `else if` must not change whether
 // the else-if assignment stays on one line across re-format (convergence).
