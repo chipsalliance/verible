@@ -5623,15 +5623,23 @@ module_port_declaration
   | port_direction signed_unsigned_opt list_of_module_item_identifiers ';'
     { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, MakeDataType($2, nullptr, nullptr), $3, $4);}
     /* implicit type */
+    /* Keep net/var type before signing so CST leaf order matches source
+     * ("wire signed", not "signed" then "wire"). The formatter walks CST
+     * order and CHECK-fails when a later leaf appears earlier in the file.
+     * Wrap as kDataTypePrimitive like the TK_bit rule so
+     * GetBaseTypeFromDataType still treats child 1 as the type.
+     */
   | port_direction port_net_type signed_unsigned_opt decl_dimensions_opt
     list_of_identifiers_unpacked_dimensions ';'
     { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
-                          MakeDataType($3, ForwardChildren($2), MakePackedDimensionsNode($4)),
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2, $3),
+                                       MakePackedDimensionsNode($4)),
                           $5, $6); }
   | dir var_type signed_unsigned_opt decl_dimensions_opt
     list_of_port_identifiers ';'
     { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
-                          MakeDataType($3, ForwardChildren($2), MakePackedDimensionsNode($4)),
+                          MakeDataType(MakeTaggedNode(N::kDataTypePrimitive, $2, $3),
+                                       MakePackedDimensionsNode($4)),
                           $5, $6); }
   | port_direction TK_bit signed_unsigned_opt decl_dimensions_opt
     list_of_identifiers_unpacked_dimensions ';'
