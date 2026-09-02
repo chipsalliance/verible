@@ -16,7 +16,10 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_GENERATE_LABEL_PREFIX_RULE_H_
 
 #include <set>
+#include <string>
+#include <string_view>
 
+#include "absl/status/status.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
 #include "verible/common/text/symbol.h"
@@ -32,6 +35,8 @@ class GenerateLabelPrefixRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
+  GenerateLabelPrefixRule();
+
   static const LintRuleDescriptor &GetDescriptor();
 
   void HandleSymbol(const verible::Symbol &symbol,
@@ -39,8 +44,13 @@ class GenerateLabelPrefixRule : public verible::SyntaxTreeLintRule {
 
   verible::LintRuleStatus Report() const final;
 
+  absl::Status Configure(std::string_view configuration) final;
+
  private:
   std::set<verible::LintViolation> violations_;
+  
+  // Configurable prefix for generate block labels
+  std::string prefix_;
 };
 
 }  // namespace analysis
