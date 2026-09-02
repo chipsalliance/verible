@@ -120,6 +120,29 @@ static bool InRangeLikeContext(const SyntaxTreeContext &context) {
       {});
 }
 
+// '/' between identifiers inside a macro argument is a filesystem path
+// (e.g. `INCLUDE(`PATH/src/file.sv)), not a division operator (issue #2352).
+static bool InMacroArgumentContext(const SyntaxTreeContext &context) {
+  return context.IsInsideFirst({NodeEnum::kMacroArgList, NodeEnum::kMacroCall,
+                                NodeEnum::kMacroGenericItem},
+                               {});
+}
+
+static bool IsPathSeparatorSlashInMacroArg(
+    const PreFormatToken &left, const PreFormatToken &right,
+    const SyntaxTreeContext &left_context,
+    const SyntaxTreeContext &right_context) {
+  if (left.TokenEnum() != '/' && right.TokenEnum() != '/') return false;
+  const bool identifier_on_other_side =
+      (left.TokenEnum() == '/' &&
+       right.format_token_enum == FormatTokenType::identifier) ||
+      (right.TokenEnum() == '/' &&
+       left.format_token_enum == FormatTokenType::identifier);
+  if (!identifier_on_other_side) return false;
+  return InMacroArgumentContext(left_context) ||
+         InMacroArgumentContext(right_context);
+}
+
 static bool IsAnySemicolon(const PreFormatToken &ftoken) {
   // These are just syntactically disambiguated versions of ';'.
   return ftoken.TokenEnum() == ';' ||
@@ -228,6 +251,10 @@ static WithReason<int> SpacesRequiredBetween(
   // Consider assignment operators in the same class as binary operators.
   if (left.format_token_enum == FormatTokenType::binary_operator ||
       right.format_token_enum == FormatTokenType::binary_operator) {
+    if (IsPathSeparatorSlashInMacroArg(left, right, left_context,
+                                       right_context)) {
+      return {0, "No space around '/' path separators in macro arguments"};
+    }
     // Inside [], allows 0 or 1 spaces, and symmetrize.
     // TODO(fangism): make this behavior configurable
     if (right.format_token_enum == FormatTokenType::binary_operator &&

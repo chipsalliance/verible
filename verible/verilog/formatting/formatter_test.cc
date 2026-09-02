@@ -21003,6 +21003,41 @@ TEST(FormatterEndToEndTest, ParamDeclarationAlignmentCommentBlockNoCrash) {
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2352:
+// '/' between identifiers in a macro argument is a path separator and must
+// not be spaced as a division operator (that breaks compiles).
+TEST(FormatterEndToEndTest, MacroArgPathSeparatorsKeepNoSpace) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Original issue sample
+       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n",
+       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n"},
+      {// Extra spaces around '/' are removed in macro args
+       "`PROJECT_INCLUDE(`PATH_MY_MODULE / src / config_class.sv)\n",
+       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n"},
+      {// Nested directories
+       "`INCLUDE(foo/bar/baz.svh)\n", "`INCLUDE(foo/bar/baz.svh)\n"},
+      {// Path as a later argument
+       "`LOAD(cfg, `ROOT/hw/ip/file.sv)\n",
+       "`LOAD(cfg, `ROOT/hw/ip/file.sv)\n"},
+      {// Division between identifiers outside macros still gets spaces
+       "module m;\n"
+       "  assign x = a/b;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  assign x = a / b;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
