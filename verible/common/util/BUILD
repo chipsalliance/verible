@@ -22,7 +22,6 @@ cc_library(
     hdrs = ["auto-pop-stack.h"],
     deps = [
         ":logging",
-        "@abseil-cpp//absl/base:core_headers",
     ],
 )
 
