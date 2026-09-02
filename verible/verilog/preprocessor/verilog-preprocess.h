@@ -27,14 +27,15 @@
 //   body text to lexer.  This approach works if the definition text
 //   does not depend on the start-condition state at the macro call site.
 // TODO(fangism): implement conditional evaluation policy (`ifdef, `else, ...)
-// TODO(fangism): token concatenation, e.g. a``b
-//   This will produce tokens that are not in the original source text.
+// Token concatenation (a``b) is now supported.
+//   This produces tokens that are not in the original source text.
 // TODO(fangism): token string-ification (turning symbol names into strings)
 // TODO(fangism): evaluate `defines inside `defines at expansion time.
 
 #ifndef VERIBLE_VERILOG_PREPROCESSOR_VERILOG_PREPROCESS_H_
 #define VERIBLE_VERILOG_PREPROCESSOR_VERILOG_PREPROCESS_H_
 
+#include <deque>
 #include <functional>
 #include <map>
 #include <memory>
@@ -75,6 +76,11 @@ struct VerilogPreprocessData {
   // Resulting token stream after preprocessing
   verible::TokenStreamView preprocessed_token_stream;
   std::vector<TokenSequence> lexed_macros_backup;
+
+  // Storage for concatenated token text (from `` operator).
+  // These strings must persist for the lifetime of tokens that reference them.
+  // Using deque because it doesn't invalidate references when adding elements.
+  std::deque<std::string> concatenated_strings;
 
   // A backup memory that owns the content of the included files.
   std::vector<std::unique_ptr<verible::TextStructure>> included_text_structure;

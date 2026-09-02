@@ -14,6 +14,7 @@
 
 #include "verible/verilog/preprocessor/verilog-preprocess.h"
 
+#include <cstddef>
 #include <filesystem>
 #include <functional>
 #include <map>
@@ -328,6 +329,91 @@ void VerilogPreprocess::RegisterMacroDefinition(
   // TODO(hzeller): multiline warning with 'previously defined here' location
 }
 
+// Process token concatenation (`` operator) in a token sequence.
+// This function scans for PP_TOKEN_CONCAT operators and concatenates
+// adjacent tokens by combining their text and re-lexing the result.
+// Whitespace around `` is removed per SystemVerilog standard.
+// Chained concatenations (a``b``c) are processed left-to-right.
+// Concatenated strings are stored in preprocess_data for lifetime management.
+static void ProcessTokenConcatenation(verible::TokenSequence *tokens,
+                                      VerilogPreprocessData *preprocess_data) {
+  if (tokens->empty()) return;
+
+  verible::TokenSequence result;
+  result.reserve(tokens->size());
+
+  for (size_t i = 0; i < tokens->size(); ++i) {
+    const auto &curr_token = (*tokens)[i];
+
+    // Check if next non-space token is `` operator.
+    size_t next_idx = i + 1;
+    while (next_idx < tokens->size() &&
+           (*tokens)[next_idx].token_enum() == TK_SPACE) {
+      ++next_idx;
+    }
+
+    if (next_idx < tokens->size() &&
+        (*tokens)[next_idx].token_enum() == PP_TOKEN_CONCAT) {
+      // Handle chained concatenations (a``b``c) by accumulating text.
+      std::string accumulated(curr_token.text());
+
+      size_t scan_idx = next_idx;
+      while (scan_idx < tokens->size()) {
+        if ((*tokens)[scan_idx].token_enum() != PP_TOKEN_CONCAT) break;
+
+        // Skip to token after ``, skipping whitespace.
+        size_t after_concat_idx = scan_idx + 1;
+        while (after_concat_idx < tokens->size() &&
+               (*tokens)[after_concat_idx].token_enum() == TK_SPACE) {
+          ++after_concat_idx;
+        }
+
+        if (after_concat_idx >= tokens->size()) break;
+
+        accumulated += std::string((*tokens)[after_concat_idx].text());
+
+        // Check if there's another `` after this token.
+        scan_idx = after_concat_idx + 1;
+        while (scan_idx < tokens->size() &&
+               (*tokens)[scan_idx].token_enum() == TK_SPACE) {
+          ++scan_idx;
+        }
+
+        if (scan_idx >= tokens->size() ||
+            (*tokens)[scan_idx].token_enum() != PP_TOKEN_CONCAT) {
+          i = after_concat_idx;
+          break;
+        }
+      }
+
+      // Store the accumulated string in persistent storage.
+      preprocess_data->concatenated_strings.push_back(accumulated);
+      const std::string &concatenated =
+          preprocess_data->concatenated_strings.back();
+
+      // Re-lex the concatenated text to get the proper token type.
+      VerilogLexer concat_lexer(concatenated);
+      concat_lexer.DoNextToken();
+      const verible::TokenInfo &lexed_token = concat_lexer.GetLastToken();
+
+      // Create a token with the correct type and pointing to persistent
+      // storage.
+      verible::TokenInfo new_token(lexed_token.token_enum(), concatenated);
+
+      result.push_back(new_token);
+      continue;
+    }
+
+    // Not part of concatenation - keep token unless it's PP_TOKEN_CONCAT
+    // itself.
+    if (curr_token.token_enum() != PP_TOKEN_CONCAT) {
+      result.push_back(curr_token);
+    }
+  }
+
+  *tokens = std::move(result);
+}
+
 // This function expands a text.
 // The expanded tokens are saved as a TokenSequence, stored at
 // preprocess_data_.lexed_macros_backup Can be accessed directly after expansion
@@ -371,6 +457,10 @@ absl::Status VerilogPreprocess::ExpandText(
     }
     expanded_lexed_sequence.push_back(last_token);
   }
+
+  // Process token concatenation operators.
+  ProcessTokenConcatenation(&expanded_lexed_sequence, &preprocess_data_);
+
   preprocess_data_.lexed_macros_backup.emplace_back(expanded_lexed_sequence);
   return absl::OkStatus();
 }
@@ -434,6 +524,10 @@ absl::Status VerilogPreprocess::ExpandMacro(
     }
     expanded_lexed_sequence.push_back(last_token);
   }
+
+  // Process token concatenation operators.
+  ProcessTokenConcatenation(&expanded_lexed_sequence, &preprocess_data_);
+
   preprocess_data_.lexed_macros_backup.emplace_back(expanded_lexed_sequence);
   return absl::OkStatus();
 }
