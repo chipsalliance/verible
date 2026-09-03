@@ -730,7 +730,13 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %nonassoc TK_else
 /* to resolve exclude (... ambiguity */
 %nonassoc '('
+/* resolve the `analog <identifier>` ambiguity.
+ * after "analog" a following identifier can start either an analog_construct or a declaration in which "analog" is itself the identifier.
+ * Ranking TK_analog below every token that can follow it there */
+%right TK_analog
 %nonassoc TK_exclude
+%precedence SymbolIdentifier EscapedIdentifier MacroIdentifier
+%precedence TK_access TK_continuous TK_discrete TK_flow TK_from TK_infinite TK_sample
 
 /* root of syntax tree: */
 %start source_text
