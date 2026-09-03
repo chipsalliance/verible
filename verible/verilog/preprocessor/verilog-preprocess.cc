@@ -311,7 +311,7 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
 
   if (config_.expand_macros) {
     verible::MacroCall macro_call;
-    const absl::Status call_status =
+    absl::Status call_status =
         ConsumeAndParseMacroCall(iter, generator, &macro_call, *found);
     if (!call_status.ok()) {
       // Surface a malformed macro call (e.g. an unterminated argument list) as
