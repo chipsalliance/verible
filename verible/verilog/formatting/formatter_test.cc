@@ -19380,6 +19380,24 @@ TEST(FormatterEndToEndTest,
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2544:
+// Wrapping a $bits(...)'(...) cast may leave `MACRO at EOL, reclassifying
+// MacroIdentifier as MacroIdItem. FormatEquivalent must accept that, and
+// formatting must still pass verification.
+TEST(FormatterEndToEndTest, MacroBeforeCloseParenFormatEquivalent) {
+  static constexpr std::string_view kInput =
+      "module m;\n"
+      "  assign result_value = $bits(result_value)'( "
+      "compare_bytes(input_data[DATA_WIDTH_INT-1:0], "
+      "input_datak[STROBE_WIDTH_INT-1:0], `TOKEN_BYTE) );\n"
+      "endmodule\n";
+  FormatStyle style;
+  std::ostringstream stream;
+  const auto status = FormatVerilog(kInput, "<filename>", style, stream);
+  EXPECT_OK(status) << status.message();
+  EXPECT_THAT(stream.str(), testing::HasSubstr("`TOKEN_BYTE"));
+}
+
 // Regression for https://github.com/chipsalliance/verible/issues/2542:
 // Continuation EOL comments after a wrapped assign must keep a stable column
 // across re-format (convergence).
