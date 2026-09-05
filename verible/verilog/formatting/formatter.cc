@@ -26,7 +26,6 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/base/attributes.h"
 #include "absl/log/die_if_null.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -50,7 +49,6 @@
 #include "verible/common/util/expandable-tree-view.h"
 #include "verible/common/util/interval-set.h"
 #include "verible/common/util/interval.h"
-#include "verible/common/util/iterator-range.h"
 #include "verible/common/util/logging.h"
 #include "verible/common/util/spacer.h"
 #include "verible/common/util/tree-operations.h"
@@ -749,15 +747,24 @@ class ContinuationCommentAligner {
       case verible::SpacingDecision::kPreserve: {
         if (token.before.preserved_space_start !=
             verible::string_view_null_iterator()) {
-          *column += token.OriginalLeadingSpaces().length();
+          const std::string_view leading = token.OriginalLeadingSpaces();
+          const auto last_nl = leading.find_last_of('\n');
+          if (last_nl == std::string_view::npos) {
+            *column += leading.length();
+          } else {
+            // Reset column after the last newline, same as FormattedToken
+            // emit (GitHub issue 2542).
+            *column = static_cast<int>(leading.length() - last_nl - 1);
+          }
         } else {
           *column += token.before.spaces;
         }
         break;
       }
       case verible::SpacingDecision::kWrap:
-        *column = 0;
-        ABSL_FALLTHROUGH_INTENDED;
+        // Newline then only the wrap indent (same as FormattedToken emit).
+        *column = token.before.spaces;
+        break;
       case verible::SpacingDecision::kAlign:
       case verible::SpacingDecision::kAppend:
         *column += token.before.spaces;
@@ -766,6 +773,15 @@ class ContinuationCommentAligner {
   }
 
   static int CalculateEolCommentColumn(const verible::FormattedExcerpt &line) {
+    // Compute the starting column of the trailing EOL comment the same way
+    // FormattedExcerpt::FormattedText emits spaces, including:
+    //   * wrap indents (SpacingDecision::kWrap), and
+    //   * preserved leading whitespace that may contain newlines (common when
+    //     an original line break is kept). Counting those newlines as width
+    //     made continuation comments land on the wrong column and fail to
+    //     converge on re-format (GitHub issue 2542).
+    if (line.Tokens().empty()) return 0;
+
     int column = 0;
     const auto &front = line.Tokens().front();
 
@@ -777,12 +793,16 @@ class ContinuationCommentAligner {
     }
     column += front.token->text().length();
 
-    for (const auto &ftoken : verible::make_range(line.Tokens().begin() + 1,
-                                                  line.Tokens().end() - 1)) {
+    const auto &tokens = line.Tokens();
+    for (size_t i = 1; i < tokens.size(); ++i) {
+      const auto &ftoken = tokens[i];
       AdjustColumnUsingTokenSpacing(ftoken, &column);
-      column += ftoken.token->text().length();
+      // Do not add the last token's length: that is the EOL comment whose
+      // starting column we want.
+      if (i + 1 < tokens.size()) {
+        column += ftoken.token->text().length();
+      }
     }
-    AdjustColumnUsingTokenSpacing(line.Tokens().back(), &column);
 
     CHECK_GE(column, 0);
     return column;
