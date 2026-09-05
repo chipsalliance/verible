@@ -39,6 +39,7 @@ BAZEL_BUILD_OPTIONS="-c opt"
 
 TMPDIR="${TMPDIR:-/tmp}"
 readonly BASE_TEST_DIR="${TMPDIR}/test/verible-smoke-test"
+readonly DEFAULT_HASH_FILE="$(dirname $0)/smoke-projects.hashes"
 
 # Write log files to this directory
 readonly SMOKE_LOGGING_DIR="${SMOKE_LOGGING_DIR:-$BASE_TEST_DIR/error-logs}"
@@ -81,29 +82,12 @@ readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
 #
 # There are some known issues which are all recorded in the associative
 # array below, mapping them to Verible issue tracker numbers.
-# TODO(hzeller): there should be a configuration file that contains two
-# columns: URL + hash, so that we can fetch a particular known version not
-# a moving target.
-readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
-         https://github.com/lowRISC/opentitan \
-         https://github.com/chipsalliance/sv-tests \
-         https://github.com/chipsalliance/Cores-VeeR-EH2 \
-         https://github.com/chipsalliance/caliptra-rtl \
-         https://github.com/openhwgroup/cva6 \
-         https://github.com/SymbiFlow/uvm \
-         https://github.com/taichi-ishitani/tnoc \
-         https://github.com/ijor/fx68k \
-         https://github.com/jamieiles/80x86 \
-         https://github.com/SymbiFlow/XilinxUnisimLibrary \
-         https://github.com/black-parrot/black-parrot
-         https://github.com/steveicarus/ivtest \
-         https://github.com/trivialmips/nontrivial-mips \
-         https://github.com/pulp-platform/axi \
-         https://github.com/rsd-devel/rsd \
-         https://github.com/syntacore/scr1 \
-         https://github.com/olofk/serv \
-         https://github.com/bespoke-silicon-group/basejump_stl \
-         https://github.com/gtaylormb/opl3_fpga"
+readonly PROJECT_HASHES_FILE="${1:-${DEFAULT_HASH_FILE}}"
+
+if [ ! -f "${PROJECT_HASHES_FILE}" ]; then
+  echo "Project hashes file not found: ${PROJECT_HASHES_FILE}"
+  exit 1
+fi
 
 ##
 # Some of the files in the projects will have issues.
@@ -135,24 +119,24 @@ declare -A ExpectedFailCount
 
 ExpectedFailCount[syntax:ibex]=13
 ExpectedFailCount[lint:ibex]=13
-ExpectedFailCount[project:ibex]=218
-ExpectedFailCount[preprocessor:ibex]=397
+ExpectedFailCount[project:ibex]=224
+ExpectedFailCount[preprocessor:ibex]=403
 
 ExpectedFailCount[syntax:opentitan]=88
 ExpectedFailCount[lint:opentitan]=88
-ExpectedFailCount[project:opentitan]=1068
+ExpectedFailCount[project:opentitan]=1077
 ExpectedFailCount[formatter:opentitan]=0
-ExpectedFailCount[preprocessor:opentitan]=3074
+ExpectedFailCount[preprocessor:opentitan]=3017
 
 ExpectedFailCount[syntax:sv-tests]=74
 ExpectedFailCount[lint:sv-tests]=73
 ExpectedFailCount[project:sv-tests]=176
 ExpectedFailCount[preprocessor:sv-tests]=128
 
-ExpectedFailCount[syntax:caliptra-rtl]=39
-ExpectedFailCount[lint:caliptra-rtl]=38
-ExpectedFailCount[project:caliptra-rtl]=453
-ExpectedFailCount[preprocessor:caliptra-rtl]=911
+ExpectedFailCount[syntax:caliptra-rtl]=41
+ExpectedFailCount[lint:caliptra-rtl]=40
+ExpectedFailCount[project:caliptra-rtl]=474
+ExpectedFailCount[preprocessor:caliptra-rtl]=993
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
@@ -164,10 +148,10 @@ ExpectedFailCount[lint:cva6]=7
 ExpectedFailCount[project:cva6]=84
 ExpectedFailCount[preprocessor:cva6]=140
 
-ExpectedFailCount[syntax:uvm]=0
-ExpectedFailCount[lint:uvm]=0
-ExpectedFailCount[project:uvm]=40
-ExpectedFailCount[preprocessor:uvm]=126
+ExpectedFailCount[syntax:uvm]=1
+ExpectedFailCount[lint:uvm]=1
+ExpectedFailCount[project:uvm]=41
+ExpectedFailCount[preprocessor:uvm]=128
 
 ExpectedFailCount[syntax:tnoc]=3
 ExpectedFailCount[lint:tnoc]=3
@@ -187,9 +171,9 @@ ExpectedFailCount[lint:black-parrot]=155
 ExpectedFailCount[project:black-parrot]=172
 ExpectedFailCount[preprocessor:black-parrot]=173
 
-ExpectedFailCount[syntax:ivtest]=117
-ExpectedFailCount[lint:ivtest]=117
-ExpectedFailCount[project:ivtest]=146
+ExpectedFailCount[syntax:ivtest]=116
+ExpectedFailCount[lint:ivtest]=116
+ExpectedFailCount[project:ivtest]=145
 ExpectedFailCount[preprocessor:ivtest]=26
 
 ExpectedFailCount[syntax:nontrivial-mips]=2
@@ -237,11 +221,10 @@ function verify_expected_non_zero_exit_count() {
   expected_count_key="${TOOL_SHORT_NAME}:${PROJECT_NAME}"
   if [[ -v ExpectedFailCount[${expected_count_key}] ]]; then
     expected_count=${ExpectedFailCount[${expected_count_key}]}
-    # We allow some 5% deviation from expected values before we complain loudly
-    local GRACE_VALUE=$(( ${expected_count} / 20 ))
-    if [ ${GRACE_VALUE} -lt 2 ]; then
-      GRACE_VALUE=2
-    fi
+
+    # Since we have a fixed set of projects and hashes, we don't allow any
+    # derivation from the expected value (used to be 5%)
+    local GRACE_VALUE=0
     if [ ${OBSERVED_NONZERO_COUNT} -gt ${expected_count} ] ; then
       local ALLOWED_UP_TO=$((${expected_count} + ${GRACE_VALUE}))
       if [ ${OBSERVED_NONZERO_COUNT} -gt ${ALLOWED_UP_TO} ]; then
@@ -254,6 +237,7 @@ function verify_expected_non_zero_exit_count() {
     elif [ ${OBSERVED_NONZERO_COUNT} -lt ${expected_count} ] ; then
       echo "::notice:: 🎉 Yay, reduced non-zero exit count ${expected_count} -> ${OBSERVED_NONZERO_COUNT}"
       echo "Set ExpectedFailCount[${TOOL_SHORT_NAME}:${PROJECT_NAME}]=${OBSERVED_NONZERO_COUNT}"
+      return 1  # we still want the exact value to be recorded so actively fail
     fi
   else
     if [ ${OBSERVED_NONZERO_COUNT} -gt 0 ] ; then
@@ -270,11 +254,14 @@ function verify_expected_non_zero_exit_count() {
 #
 # First parameter : project name
 # Second parameter: name of file containing a list of {System}Verilog files
+# Third parameter : git URL
+# Fourth parameter: git hash (optional, defaults to master)
 function run_smoke_test() {
   local PROJECT_FILE_LIST=${TMPDIR}/filelist.$$.list
   local PROJECT_NAME=$1
   local FILELIST=$2
   local GIT_URL=$3
+  local GIT_HASH=${4:-master}
   local NUM_FILES=$(wc -l < ${FILELIST})
   local result=0
 
@@ -355,7 +342,7 @@ function run_smoke_test() {
         else
           # This is an so far unknown issue
           echo "::error:: 😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
-          echo "Input File URL: ${GIT_URL}/blob/master/$(echo $single_file | cut -d/ -f6-)"
+          echo "Input File URL: ${GIT_URL}/blob/${GIT_HASH}/$(echo $single_file | cut -d/ -f6-)"
           head -15 ${PROJECT_FILE_TOOL_OUT}   # Might be useful in this case
           result=$((${result} + 1))
         fi
@@ -388,18 +375,20 @@ status_sum=0
 bazel build ${BAZEL_BUILD_OPTIONS} :install-binaries &
 
 # While compiling, run potentially slow network ops
-for git_project in ${TEST_GIT_PROJECTS} ; do
-  PROJECT_NAME="$(basename $git_project)"
+while read -r git_hash git_project _; do
+  [[ -z "${git_hash}" || "${git_hash}" =~ ^# ]] && continue
+  PROJECT_NAME="$(basename "${git_project}")"
   PROJECT_DIR="${BASE_TEST_DIR}/${PROJECT_NAME}"
-  git clone ${git_project} ${PROJECT_DIR} 2>/dev/null &
-done
+  ( git clone "${git_project}" "${PROJECT_DIR}" && git -C "${PROJECT_DIR}" checkout -q "${git_hash}" ) 2>/dev/null &
+done < "${PROJECT_HASHES_FILE}"
 
 echo "base test dir ${BASE_TEST_DIR}; writing logs to ${SMOKE_LOGGING_DIR}"
 echo "Waiting... for compilation and project download finished"
 wait
 
-for git_project in ${TEST_GIT_PROJECTS} ; do
-  PROJECT_NAME="$(basename $git_project)"
+while read -r git_hash git_project _; do
+  [[ -z "${git_hash}" || "${git_hash}" =~ ^# ]] && continue
+  PROJECT_NAME="$(basename "${git_project}")"
   PROJECT_DIR="${BASE_TEST_DIR}/${PROJECT_NAME}"
   # Already cloned above
 
@@ -412,14 +401,14 @@ for git_project in ${TEST_GIT_PROJECTS} ; do
   FILELIST="${PROJECT_DIR}/verible.filelist"
   find "${PROJECT_DIR}" -name "*.sv" -o -name "*.svh" -o -name "*.v" | sort > ${FILELIST}
 
-  run_smoke_test "${PROJECT_NAME}" "${FILELIST}" "${git_project}"
+  run_smoke_test "${PROJECT_NAME}" "${FILELIST}" "${git_project}" "${git_hash}"
   status_sum=$((${status_sum} + $?))
   echo
-done
+done < "${PROJECT_HASHES_FILE}"
 
 echo "::endgroup::"
 
-echo "There were a total of ${status_sum} new, undocumented issues."
+echo "There were a total of ${status_sum} mismatches"
 
 # Let's see if there are any issues that are fixed in the meantime.
 if [ "${#KnownIssue[@]}" -ne 0 ]; then
