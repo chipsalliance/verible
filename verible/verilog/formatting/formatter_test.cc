@@ -19380,6 +19380,32 @@ TEST(FormatterEndToEndTest,
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2539:
+// A // comment followed by a line-continuation `\` before aligned ports must
+// not abort in align.h, and must keep the comment on its own line.
+TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
+  static constexpr std::string_view kInput =
+      "module m (\n"
+      "//\\\n"
+      "input a\n"
+      ",input b\n"
+      ");\n"
+      "endmodule\n";
+  FormatStyle style;
+  std::ostringstream stream;
+  const auto status = FormatVerilog(kInput, "<filename>", style, stream);
+  EXPECT_OK(status) << status.message();
+  const std::string out = stream.str();
+  // Must not glue the line-continuation onto the following port declaration.
+  EXPECT_THAT(out, testing::Not(testing::HasSubstr("//\\  input")));
+  EXPECT_THAT(out, testing::HasSubstr("//\\"));
+  EXPECT_THAT(out, testing::HasSubstr("input a"));
+  EXPECT_THAT(out, testing::HasSubstr("input b"));
+  EXPECT_THAT(out, testing::HasSubstr("endmodule"));
+  // Comment line and first port remain on separate lines.
+  EXPECT_THAT(out, testing::ContainsRegex(R"(//\\\n\s*input a)"));
+}
+
 // Regression for https://github.com/chipsalliance/verible/issues/2542:
 // Continuation EOL comments after a wrapped assign must keep a stable column
 // across re-format (convergence).
