@@ -4492,6 +4492,18 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"typedef my_class #(.P(P)) my_class_t;\n",
      "typedef my_class #(.P(P)) my_class_t;\n"},
 
+    // let declarations each stay on their own line
+    {"module t;\n"
+     "let OFF = 4;\n"
+     "let UNIQUE = 32;\n"
+     "let PP(a) = 30 + a;\n"
+     "endmodule\n",
+     "module t;\n"
+     "  let OFF = 4;\n"
+     "  let UNIQUE = 32;\n"
+     "  let PP(a) = 30 + a;\n"
+     "endmodule\n"},
+
     // package test cases
     {"package fedex;localparam  int  www=3 ;endpackage   :  fedex\n",
      "package fedex;\n"
