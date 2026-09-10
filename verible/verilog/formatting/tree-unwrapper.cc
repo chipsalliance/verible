@@ -801,6 +801,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kPreprocessorUndef:
     case NodeEnum::kTFPortDeclaration:
     case NodeEnum::kTypeDeclaration:
+    case NodeEnum::kLetDeclaration:
     case NodeEnum::kNetTypeDeclaration:
     case NodeEnum::kForwardDeclaration:
     case NodeEnum::kInterfaceClassMethod:
