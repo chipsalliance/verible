@@ -215,7 +215,10 @@ Checks that every generate block statement is labeled. See [Style: generate-stat
 Enabled by default: true
 
 ### generate-label-prefix
-Checks that every generate block label starts with g_ or gen_. See [Style: generate-constructs].
+Checks that every generate block label matches the regex defined by style_regex. The default regex requires labels to start with g_ or gen_. Refer to https://github.com/chipsalliance/verible/tree/master/verilog/tools/lint#readme for more detail on verible regex patterns. See [Style: generate-constructs].
+
+##### Parameter
+  * `style_regex` Default: `(g_|gen_).*` A regex used to check generate label style.
 
 Enabled by default: true
 
@@ -453,4 +456,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2026-09-09 07:14:49 +0200 from [a5e3878](https://github.com/google/verible/commit/a5e38787b696a1834ec891995f6152439a3fd3ed)
+Generated on 2026-09-10 09:41:13 +0200 from [682a1d5](https://github.com/google/verible/commit/682a1d502d749ced074537a14aba4f15076dd668)

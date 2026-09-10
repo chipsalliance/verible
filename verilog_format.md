@@ -53,6 +53,11 @@ To pipe from stdin, use '-' as <file>.
       {align,flush-left,preserve,infer}); default: infer;
     --class_member_variable_alignment (Format class member variables:
       {align,flush-left,preserve,infer}); default: infer;
+    --class_parameter_space (If true, keep/insert a space before '#' in a
+      classparameterized typedef, e.g. "typedef my_class #(.P(P)) my_class_t;".
+      If false (default), no space is inserted, matching the convention used for
+      IEEE parameterized class instantiations, e.g.
+      "type#(params...)::method(...)".); default: false;
     --compact_indexing_and_selections (Use compact binary expressions inside
       indexing / bit selection operators); default: true;
     --distribution_items_alignment (Align distribution items:
@@ -143,4 +148,4 @@ path.
 
 ## Version
 
-Generated on 2026-09-09 07:14:49 +0200 from [a5e3878](https://github.com/google/verible/commit/a5e38787b696a1834ec891995f6152439a3fd3ed)
+Generated on 2026-09-10 09:41:13 +0200 from [682a1d5](https://github.com/google/verible/commit/682a1d502d749ced074537a14aba4f15076dd668)
