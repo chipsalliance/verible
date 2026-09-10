@@ -29,17 +29,13 @@
 # crash Verible, we're good.
 ###
 
-# Suppress '... aborted' messages bash would print when a tool crashes.
-# Comment out to see syntax errors in bash while working on script.
-exec 2>/dev/null
-
 set -u   # Be strict: only allow using a variable after it is assigned
 
 BAZEL_BUILD_OPTIONS="-c opt"
 
 TMPDIR="${TMPDIR:-/tmp}"
 readonly BASE_TEST_DIR="${TMPDIR}/test/verible-smoke-test"
-readonly DEFAULT_HASH_FILE="$(dirname $0)/smoke-projects.hashes"
+readonly PROJECT_HASHES_FILE="$(dirname $0)/smoke-projects.hashes"
 
 # Write log files to this directory
 readonly SMOKE_LOGGING_DIR="${SMOKE_LOGGING_DIR:-$BASE_TEST_DIR/error-logs}"
@@ -82,7 +78,6 @@ readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
 #
 # There are some known issues which are all recorded in the associative
 # array below, mapping them to Verible issue tracker numbers.
-readonly PROJECT_HASHES_FILE="${1:-${DEFAULT_HASH_FILE}}"
 
 if [ ! -f "${PROJECT_HASHES_FILE}" ]; then
   echo "Project hashes file not found: ${PROJECT_HASHES_FILE}"
@@ -359,8 +354,55 @@ function run_smoke_test() {
   return ${result}
 }
 
+# --- main
+
+KEEP_LOGS=0
+VERBOSE=0
+PROJECT_FILTER=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --keep-logs)
+      KEEP_LOGS=1
+      shift
+      ;;
+    --verbose|-v)
+      VERBOSE=1
+      shift
+      ;;
+    --filter=*)
+      PROJECT_FILTER="${1#*=}"
+      shift
+      ;;
+    --filter|-f)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: $1 requires an argument." >&2
+        exit 1
+      fi
+      PROJECT_FILTER="$2"
+      shift 2
+      ;;
+    -h|--help)
+      echo "Usage: $0 [--keep-logs] [--verbose] [--filter=<name>]"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      echo "Usage: $0 [--keep-logs] [--verbose] [--filter=<name>]" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [ ${VERBOSE} -eq 0 ]; then
+  # Suppress '... aborted' messages bash would print when a tool crashes.
+  exec 2>/dev/null
+fi
+
 mkdir -p "${BASE_TEST_DIR}"
-trap 'rm -rf -- "${BASE_TEST_DIR}"' EXIT
+if [ ${KEEP_LOGS} -eq 0 ]; then
+  trap 'rm -rf -- "${BASE_TEST_DIR}"' EXIT
+fi
 
 status_sum=0
 
@@ -378,6 +420,9 @@ bazel build ${BAZEL_BUILD_OPTIONS} :install-binaries &
 while read -r git_hash git_project _; do
   [[ -z "${git_hash}" || "${git_hash}" =~ ^# ]] && continue
   PROJECT_NAME="$(basename "${git_project}")"
+  if [[ -n "${PROJECT_FILTER}" && "${PROJECT_NAME}" != *"${PROJECT_FILTER}"* ]]; then
+    continue
+  fi
   PROJECT_DIR="${BASE_TEST_DIR}/${PROJECT_NAME}"
   ( git clone "${git_project}" "${PROJECT_DIR}" && git -C "${PROJECT_DIR}" checkout -q "${git_hash}" ) 2>/dev/null &
 done < "${PROJECT_HASHES_FILE}"
@@ -389,6 +434,9 @@ wait
 while read -r git_hash git_project _; do
   [[ -z "${git_hash}" || "${git_hash}" =~ ^# ]] && continue
   PROJECT_NAME="$(basename "${git_project}")"
+  if [[ -n "${PROJECT_FILTER}" && "${PROJECT_NAME}" != *"${PROJECT_FILTER}"* ]]; then
+    continue
+  fi
   PROJECT_DIR="${BASE_TEST_DIR}/${PROJECT_NAME}"
   # Already cloned above
 
@@ -411,7 +459,7 @@ echo "::endgroup::"
 echo "There were a total of ${status_sum} mismatches"
 
 # Let's see if there are any issues that are fixed in the meantime.
-if [ "${#KnownIssue[@]}" -ne 0 ]; then
+if [ -z "${PROJECT_FILTER}" ] && [ "${#KnownIssue[@]}" -ne 0 ]; then
   echo "::warning ::There are ${#KnownIssue[@]} tool/file combinations, that no longer fail"
   declare -A DistinctIssues
   for key in "${!KnownIssue[@]}"; do
@@ -423,7 +471,10 @@ if [ "${#KnownIssue[@]}" -ne 0 ]; then
   for issue_id in "${!DistinctIssues[@]}"; do
     echo " 🐞 ${ISSUE_PREFIX}/${issue_id}"
   done
-  echo
+fi
+
+if [ ${KEEP_LOGS} -ne 0 ]; then
+  echo "Logs and project files kept in ${BASE_TEST_DIR} (error logs: ${SMOKE_LOGGING_DIR})"
 fi
 
 exit ${status_sum}
