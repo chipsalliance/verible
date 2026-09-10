@@ -8,6 +8,17 @@ let
   #verible_used_stdenv = pkgs.gcc15Stdenv;
   #verible_used_stdenv = pkgs.clang19Stdenv;
   bazel = pkgs.bazel_8;
+
+
+  userNixPath = ./user.nix;  # optional user config
+  userPackages =
+    if builtins.pathExists userNixPath
+    then
+      let loaded = import userNixPath;
+      in if builtins.isFunction loaded
+         then loaded { inherit pkgs; }
+         else loaded
+    else [];
 in
 verible_used_stdenv.mkDerivation {
   name = "verible-build-environment";
@@ -40,7 +51,7 @@ verible_used_stdenv.mkDerivation {
 
       llvmPackages_22.clang-tools    # for clang-tidy
       llvmPackages_19.clang-tools    # for clang-format
-    ];
+    ] ++ userPackages;
   shellHook = ''
       # clang tidy: use latest.
       export CLANG_TIDY=${pkgs.llvmPackages_22.clang-tools}/bin/clang-tidy
