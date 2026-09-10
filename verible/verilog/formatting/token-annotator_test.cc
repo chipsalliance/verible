@@ -2716,6 +2716,43 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {0, SpacingOptions::kMustAppend},
       },
 
+      // Postfix "i++"/"j--": operand and operator share the same
+      // kIncrementDecrementExpression node, so no space is required.
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "i"},
+          {verilog_tokentype::TK_INCR, "++"},
+          {NodeEnum::kIncrementDecrementExpression},
+          {NodeEnum::kIncrementDecrementExpression},
+          {0, SpacingOptions::kUndecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::SymbolIdentifier, "j"},
+          {verilog_tokentype::TK_DECR, "--"},
+          {NodeEnum::kIncrementDecrementExpression},
+          {NodeEnum::kIncrementDecrementExpression},
+          {0, SpacingOptions::kUndecided},
+      },
+      // Prefix "++i"/"--j" used as its own statement/expression: the
+      // preceding token (e.g. a ')') is not part of the same expression
+      {
+          DefaultStyle,
+          {')', ")"},
+          {verilog_tokentype::TK_INCR, "++"},
+          {/* any context */},
+          {NodeEnum::kIncrementDecrementExpression},
+          {1, SpacingOptions::kUndecided},
+      },
+      {
+          DefaultStyle,
+          {')', ")"},
+          {verilog_tokentype::TK_DECR, "--"},
+          {/* any context */},
+          {NodeEnum::kIncrementDecrementExpression},
+          {1, SpacingOptions::kUndecided},
+      },
+
       // Handle '->' as a unary prefix expression.
       {
           DefaultStyle,
