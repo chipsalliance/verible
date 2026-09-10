@@ -874,13 +874,14 @@ TYPED_TEST(MutableRandomAccessContainerProxyTest, Capacity) {
 
   const int new_capacity = initial_capacity + 42;
   this->proxy.reserve(new_capacity);
-  EXPECT_EQ(this->proxy.capacity(), new_capacity);
-  EXPECT_EQ(this->container.capacity(), new_capacity);
+  EXPECT_GE(this->proxy.capacity(), new_capacity);
+  EXPECT_EQ(this->proxy.capacity(), this->container.capacity());
 
+  const int capacity_after_first_reserve = this->proxy.capacity();
   const int lower_capacity = 1;
   this->proxy.reserve(lower_capacity);
-  EXPECT_EQ(this->proxy.capacity(), new_capacity);
-  EXPECT_EQ(this->container.capacity(), new_capacity);
+  EXPECT_EQ(this->proxy.capacity(), capacity_after_first_reserve);
+  EXPECT_EQ(this->container.capacity(), capacity_after_first_reserve);
 }
 
 }  // namespace
