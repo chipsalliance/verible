@@ -4478,19 +4478,30 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    .L(L),\n"
      "    .W(W)\n"
      ") bar_t;\n"},
-    // unqualified parameterized type keeps a space before '#'
+    // By default (class_parameter_space == false), no space before '#'
     {"typedef dv_base_env_cov #(.CFG_T(tl_agent_env_cfg)) tl_agent_env_cov;\n",
-     "typedef dv_base_env_cov #(\n"
+     "typedef dv_base_env_cov#(\n"
      "    .CFG_T(tl_agent_env_cfg)\n"
      ") tl_agent_env_cov;\n"},
-    // ... and is inserted when absent
     {"typedef dv_base_env_cov#(.CFG_T(tl_agent_env_cfg)) tl_agent_env_cov;\n",
-     "typedef dv_base_env_cov #(\n"
+     "typedef dv_base_env_cov#(\n"
      "    .CFG_T(tl_agent_env_cfg)\n"
      ") tl_agent_env_cov;\n"},
     // single short parameter stays on one line
     {"typedef my_class #(.P(P)) my_class_t;\n",
-     "typedef my_class #(.P(P)) my_class_t;\n"},
+     "typedef my_class#(.P(P)) my_class_t;\n"},
+
+    // let declarations each stay on their own line
+    {"module t;\n"
+     "let OFF = 4;\n"
+     "let UNIQUE = 32;\n"
+     "let PP(a) = 30 + a;\n"
+     "endmodule\n",
+     "module t;\n"
+     "  let OFF = 4;\n"
+     "  let UNIQUE = 32;\n"
+     "  let PP(a) = 30 + a;\n"
+     "endmodule\n"},
 
     // let declarations each stay on their own line
     {"module t;\n"
@@ -18790,6 +18801,50 @@ TEST(FormatterEndToEndTest, compactIndexingAndSelectionsTestCases) {
   style.compact_indexing_and_selections = false;
 
   for (const auto &test_case : noCompactIndexingAndSelectionsTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+static constexpr FormatterTestCase
+    kSpaceBeforeHashInUnqualifiedTypedefTestCases[] = {
+        // unqualified parameterized type keeps a space before '#'
+        {"typedef dv_base_env_cov #(.CFG_T(tl_agent_env_cfg)) "
+         "tl_agent_env_cov;\n",
+         "typedef dv_base_env_cov #(\n"
+         "    .CFG_T(tl_agent_env_cfg)\n"
+         ") tl_agent_env_cov;\n"},
+        // ... and is inserted when absent
+        {"typedef dv_base_env_cov#(.CFG_T(tl_agent_env_cfg)) "
+         "tl_agent_env_cov;\n",
+         "typedef dv_base_env_cov #(\n"
+         "    .CFG_T(tl_agent_env_cfg)\n"
+         ") tl_agent_env_cov;\n"},
+        // single short parameter stays on one line
+        {"typedef my_class #(.P(P)) my_class_t;\n",
+         "typedef my_class #(.P(P)) my_class_t;\n"},
+        // package-qualified types are unaffected (no space before '#')
+        {"typedef foo_pkg::baz_t#(.L(L), .W(W)) bar_t;\n",
+         "typedef foo_pkg::baz_t#(\n"
+         "    .L(L),\n"
+         "    .W(W)\n"
+         ") bar_t;\n"},
+};
+
+TEST(FormatterEndToEndTest, SpaceBeforeHashInUnqualifiedTypedefTestCases) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.class_parameter_space = true;
+
+  for (const auto &test_case : kSpaceBeforeHashInUnqualifiedTypedefTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
