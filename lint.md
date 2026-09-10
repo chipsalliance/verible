@@ -385,4 +385,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2026-09-10 09:41:13 +0200 from [682a1d5](https://github.com/google/verible/commit/682a1d502d749ced074537a14aba4f15076dd668)
+Generated on 2026-09-10 12:59:31 +0200 from [0ff5184](https://github.com/google/verible/commit/0ff518493ad12b20f300aad4e356ad9219aefbee)
