@@ -181,26 +181,89 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "formatter_test",
-    srcs = ["formatter_test.cc"],
+cc_library(
+    name = "formatter-test-utils",
+    testonly = True,
+    hdrs = ["formatter-test-utils.h"],
     deps = [
         ":format-style",
         ":formatter",
-        "//verible/common/formatting:align",
-        "//verible/common/formatting:basic-format-style",
-        "//verible/common/strings:display-utils",
-        "//verible/common/strings:position",
-        "//verible/common/text:text-structure",
-        "//verible/common/util:interval",
         "//verible/common/util:logging",
-        "//verible/verilog/analysis:verilog-analyzer",
-        "@abseil-cpp//absl/log:die_if_null",
-        "@abseil-cpp//absl/status",
-        "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
+)
+
+_FORMATTER_E2E_TEST_DEPS = [
+    ":format-style",
+    ":formatter",
+    ":formatter-test-utils",
+    "//verible/common/formatting:align",
+    "//verible/common/formatting:basic-format-style",
+    "//verible/common/strings:display-utils",
+    "//verible/common/strings:position",
+    "//verible/common/text:text-structure",
+    "//verible/common/util:interval",
+    "//verible/common/util:logging",
+    "//verible/verilog/analysis:verilog-analyzer",
+    "@abseil-cpp//absl/log:die_if_null",
+    "@abseil-cpp//absl/status",
+    "@abseil-cpp//absl/strings",
+    "@googletest//:gtest",
+    "@googletest//:gtest_main",
+]
+
+cc_test(
+    name = "formatter_test",
+    srcs = ["formatter_test.cc"],
+    deps = _FORMATTER_E2E_TEST_DEPS,
+)
+
+cc_test(
+    name = "formatter_macro_test",
+    srcs = ["formatter_macro_test.cc"],
+    deps = _FORMATTER_E2E_TEST_DEPS,
+)
+
+cc_test(
+    name = "formatter_module_test",
+    srcs = ["formatter_module_test.cc"],
+    deps = _FORMATTER_E2E_TEST_DEPS,
+)
+
+cc_test(
+    name = "formatter_class_package_test",
+    srcs = ["formatter_class_package_test.cc"],
+    deps = _FORMATTER_E2E_TEST_DEPS,
+)
+
+cc_test(
+    name = "formatter_function_task_test",
+    srcs = ["formatter_function_task_test.cc"],
+    deps = _FORMATTER_E2E_TEST_DEPS,
+)
+
+cc_test(
+    name = "formatter_align_test",
+    srcs = ["formatter_align_test.cc"],
+    deps = _FORMATTER_E2E_TEST_DEPS,
+)
+
+cc_test(
+    name = "formatter_wrap_style_test",
+    srcs = ["formatter_wrap_style_test.cc"],
+    deps = _FORMATTER_E2E_TEST_DEPS,
+)
+
+cc_test(
+    name = "formatter_disable_test",
+    srcs = ["formatter_disable_test.cc"],
+    deps = _FORMATTER_E2E_TEST_DEPS,
+)
+
+cc_test(
+    name = "formatter_issue_regression_test",
+    srcs = ["formatter_issue_regression_test.cc"],
+    deps = _FORMATTER_E2E_TEST_DEPS,
 )
 
 cc_test(
