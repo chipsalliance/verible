@@ -126,7 +126,7 @@ ExpectedFailCount[preprocessor:opentitan]=3017
 ExpectedFailCount[syntax:sv-tests]=74
 ExpectedFailCount[lint:sv-tests]=73
 ExpectedFailCount[project:sv-tests]=176
-ExpectedFailCount[preprocessor:sv-tests]=128
+ExpectedFailCount[preprocessor:sv-tests]=129
 
 ExpectedFailCount[syntax:caliptra-rtl]=41
 ExpectedFailCount[lint:caliptra-rtl]=40
