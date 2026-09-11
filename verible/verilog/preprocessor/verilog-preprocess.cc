@@ -245,11 +245,15 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
   if ((*token_iter)->text() == "(") {
     token_iter = GenerateBypassWhiteSpaces(generator);  // skip the "("
   } else {
+    preprocess_data_.errors.emplace_back(
+        **token_iter,
+        "Error it is illegal to call a callable macro without ().");
     return absl::InvalidArgumentError(
         "Error it is illegal to call a callable macro without ().");
   }
 
   while (parameters_size > 0) {
+    if ((*token_iter)->isEOF()) break;  // truncated call; stop scanning args
     if ((*token_iter)->token_enum() == MacroArg) {
       macro_call->positional_arguments.emplace_back(**token_iter);
       token_iter = GenerateBypassWhiteSpaces(generator);
@@ -342,6 +346,10 @@ absl::Status VerilogPreprocess::ExpandText(
        lexer.DoNextToken()) {
     lexed_sequence.push_back(lexer.GetLastToken());
   }
+  // Retain the EOF token as an end sentinel so a truncated callable-macro
+  // invocation stops at EOF in GenerateBypassWhiteSpaces instead of
+  // dereferencing past the end of the stream view.
+  lexed_sequence.push_back(lexer.GetLastToken());
   verible::TokenStreamView lexed_streamview;
   // Initializing the lexed token stream view.
   InitTokenStreamView(lexed_sequence, &lexed_streamview);
@@ -352,6 +360,7 @@ absl::Status VerilogPreprocess::ExpandText(
   // Token-pulling loop.
   for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
     auto &last_token = **iter;
+    if (last_token.isEOF()) break;  // end sentinel; nothing to forward
     // TODO: handle lexical error
     if (lexer.GetLastToken().token_enum() == TK_SPACE) {
       continue;  // don't forward spaces
@@ -396,6 +405,8 @@ absl::Status VerilogPreprocess::ExpandMacro(
        lexer.DoNextToken()) {
     lexed_sequence.push_back(lexer.GetLastToken());
   }
+  // Retain EOF end sentinel (see ExpandText).
+  lexed_sequence.push_back(lexer.GetLastToken());
   verible::TokenStreamView lexed_streamview;
   // Initializing the lexed token stream view.
   InitTokenStreamView(lexed_sequence, &lexed_streamview);
@@ -407,6 +418,7 @@ absl::Status VerilogPreprocess::ExpandMacro(
   for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
     // TODO: handle lexical error
     auto &last_token = **iter;
+    if (last_token.isEOF()) break;  // end sentinel; nothing to forward
     if (last_token.token_enum() == TK_SPACE) continue;  // don't forward spaces
     // If the expanded token is another macro identifier that needs to be
     // expanded.
@@ -635,6 +647,9 @@ absl::Status VerilogPreprocess::HandleInclude(
        lexer.DoNextToken()) {
     included_sequence.push_back(lexer.GetLastToken());
   }
+  // Retain EOF end sentinel; the child ScanStream expects an EOF-terminated
+  // stream.
+  included_sequence.push_back(lexer.GetLastToken());
 
   // Preprocessing the included file tokens.
   verible::TokenStreamView lexed_streamview;
@@ -657,8 +672,11 @@ absl::Status VerilogPreprocess::HandleInclude(
     preprocess_data_.included_text_structure.push_back(std::move(u));
   }
 
-  // Forwarding the included preprocessed view.
+  // Forwarding the included preprocessed view.  The EOF end sentinel appended
+  // above is consumed by the child ScanStream and must not be spliced into the
+  // middle of the parent's token stream.
   for (const auto &u : child_preprocessed_data.preprocessed_token_stream) {
+    if (u->isEOF()) continue;
     preprocess_data_.preprocessed_token_stream.push_back(u);
   }
 

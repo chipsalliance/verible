@@ -4478,19 +4478,42 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    .L(L),\n"
      "    .W(W)\n"
      ") bar_t;\n"},
-    // unqualified parameterized type keeps a space before '#'
+    // By default (class_parameter_space == false), no space before '#'
     {"typedef dv_base_env_cov #(.CFG_T(tl_agent_env_cfg)) tl_agent_env_cov;\n",
-     "typedef dv_base_env_cov #(\n"
+     "typedef dv_base_env_cov#(\n"
      "    .CFG_T(tl_agent_env_cfg)\n"
      ") tl_agent_env_cov;\n"},
-    // ... and is inserted when absent
     {"typedef dv_base_env_cov#(.CFG_T(tl_agent_env_cfg)) tl_agent_env_cov;\n",
-     "typedef dv_base_env_cov #(\n"
+     "typedef dv_base_env_cov#(\n"
      "    .CFG_T(tl_agent_env_cfg)\n"
      ") tl_agent_env_cov;\n"},
     // single short parameter stays on one line
     {"typedef my_class #(.P(P)) my_class_t;\n",
-     "typedef my_class #(.P(P)) my_class_t;\n"},
+     "typedef my_class#(.P(P)) my_class_t;\n"},
+
+    // let declarations each stay on their own line
+    {"module t;\n"
+     "let OFF = 4;\n"
+     "let UNIQUE = 32;\n"
+     "let PP(a) = 30 + a;\n"
+     "endmodule\n",
+     "module t;\n"
+     "  let OFF = 4;\n"
+     "  let UNIQUE = 32;\n"
+     "  let PP(a) = 30 + a;\n"
+     "endmodule\n"},
+
+    // let declarations each stay on their own line
+    {"module t;\n"
+     "let OFF = 4;\n"
+     "let UNIQUE = 32;\n"
+     "let PP(a) = 30 + a;\n"
+     "endmodule\n",
+     "module t;\n"
+     "  let OFF = 4;\n"
+     "  let UNIQUE = 32;\n"
+     "  let PP(a) = 30 + a;\n"
+     "endmodule\n"},
 
     // package test cases
     {"package fedex;localparam  int  www=3 ;endpackage   :  fedex\n",
@@ -4707,6 +4730,15 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  for (int i = 0; i < f(m); i--) begin\n"
      "  end\n"
      "endfunction\n"},
+    {// for loop with an attribute instance in the initializer.
+     // Regression: this used to abort with a CHECK failure while reshaping
+     // the kForSpec partitions when an attribute appears in the header.
+     "module m; initial for(int i=0(* a *);i<4;i++) x=i; endmodule",
+     "module m;\n"
+     "  initial\n"
+     "    for (int i = 0 (* a *); i < 4; i++)\n"
+     "      x = i;\n"
+     "endmodule\n"},
     {// forever loop
      "function\nvoid\tforevah;forever  begin "
      "++k\n;end endfunction\n",
@@ -18788,6 +18820,50 @@ TEST(FormatterEndToEndTest, compactIndexingAndSelectionsTestCases) {
   }
 }
 
+static constexpr FormatterTestCase
+    kSpaceBeforeHashInUnqualifiedTypedefTestCases[] = {
+        // unqualified parameterized type keeps a space before '#'
+        {"typedef dv_base_env_cov #(.CFG_T(tl_agent_env_cfg)) "
+         "tl_agent_env_cov;\n",
+         "typedef dv_base_env_cov #(\n"
+         "    .CFG_T(tl_agent_env_cfg)\n"
+         ") tl_agent_env_cov;\n"},
+        // ... and is inserted when absent
+        {"typedef dv_base_env_cov#(.CFG_T(tl_agent_env_cfg)) "
+         "tl_agent_env_cov;\n",
+         "typedef dv_base_env_cov #(\n"
+         "    .CFG_T(tl_agent_env_cfg)\n"
+         ") tl_agent_env_cov;\n"},
+        // single short parameter stays on one line
+        {"typedef my_class #(.P(P)) my_class_t;\n",
+         "typedef my_class #(.P(P)) my_class_t;\n"},
+        // package-qualified types are unaffected (no space before '#')
+        {"typedef foo_pkg::baz_t#(.L(L), .W(W)) bar_t;\n",
+         "typedef foo_pkg::baz_t#(\n"
+         "    .L(L),\n"
+         "    .W(W)\n"
+         ") bar_t;\n"},
+};
+
+TEST(FormatterEndToEndTest, SpaceBeforeHashInUnqualifiedTypedefTestCases) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.class_parameter_space = true;
+
+  for (const auto &test_case : kSpaceBeforeHashInUnqualifiedTypedefTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 static constexpr FormatterTestCase kFunctionCallsWithComments[] = {
     {// no comments
      "module foo;\n"
@@ -19411,6 +19487,68 @@ TEST(FormatterEndToEndTest, LongMacroSumLocalparamConverges) {
        "  `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
        "  + `MACRO_GEN3_SCRAMBLE_REGIN\n"
        "  + `MACRO_GEN3_SCRAMBLE_REGOUT;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// Regression for https://github.com/chipsalliance/verible/issues/2544:
+// Wrapping a $bits(...)'(...) cast may leave `MACRO at EOL, reclassifying
+// MacroIdentifier as MacroIdItem. FormatEquivalent must accept that, and
+// formatting must still pass verification.
+TEST(FormatterEndToEndTest, MacroBeforeCloseParenFormatEquivalent) {
+  static constexpr std::string_view kInput =
+      "module m;\n"
+      "  assign result_value = $bits(result_value)'( "
+      "compare_bytes(input_data[DATA_WIDTH_INT-1:0], "
+      "input_datak[STROBE_WIDTH_INT-1:0], `TOKEN_BYTE) );\n"
+      "endmodule\n";
+  FormatStyle style;
+  std::ostringstream stream;
+  const auto status = FormatVerilog(kInput, "<filename>", style, stream);
+  EXPECT_OK(status) << status.message();
+  EXPECT_THAT(stream.str(), testing::HasSubstr("`TOKEN_BYTE"));
+}
+
+// Regression for https://github.com/chipsalliance/verible/issues/2542:
+// Continuation EOL comments after a wrapped assign must keep a stable column
+// across re-format (convergence).
+TEST(FormatterEndToEndTest, ContinuationCommentAfterWrappedAssignConverges) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Comments originally column-aligned after a wrapped assign
+       "module m;\n"
+       "  assign status_ur = !(status_sc || status_ca ||\n"
+       "    status_crs);      // Completions with a Reserved Completion\n"
+       "                      // Status value are treated as UR\n"
+       "endmodule\n",
+       "module m;\n"
+       "  assign status_ur =\n"
+       "      !(status_sc || status_ca || status_crs);  // Completions with a "
+       "Reserved Completion\n"
+       "                                                // Status value are "
+       "treated as UR\n"
+       "endmodule\n"},
+      {// Previously mis-aligned continuation is not treated as a continuation
+       // (column delta > 1) and must still converge
+       "module m;\n"
+       "  assign status_ur = !(status_sc || status_ca ||\n"
+       "    status_crs);      // Completions with a Reserved Completion\n"
+       "                                                                       "
+       "// Status value are treated as UR\n"
+       "endmodule\n",
+       "module m;\n"
+       "  assign status_ur =\n"
+       "      !(status_sc || status_ca || status_crs);  // Completions with a "
+       "Reserved Completion\n"
+       "  // Status value are treated as UR\n"
        "endmodule\n"},
   };
   FormatStyle style;  // default column_limit (100)
@@ -21000,6 +21138,114 @@ TEST(FormatterEndToEndTest, ParamDeclarationAlignmentCommentBlockNoCrash) {
     // (SIGABRT).  Gtest will report failure if the process aborts.
     // The partition structure may cause output format differences;
     // the important thing is the formatter handled it gracefully.
+  }
+}
+
+// Regression for https://github.com/chipsalliance/verible/issues/2008
+// (also https://github.com/chipsalliance/verible/issues/2474 and
+// https://github.com/chipsalliance/verible/issues/2063):
+// Non-ANSI "input wire signed" used to abort in the tree-unwrapper because
+// the CST visited "signed" before "wire", which is the reverse of source
+// order.
+TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Original issue #2008 sample
+       "module uut( sig1 );\n"
+       "\n"
+       "input wire signed [15:0] sig1;\n"
+       "\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1\n"
+       ");\n"
+       "\n"
+       "  input wire signed [15:0] sig1;\n"
+       "\n"
+       "endmodule\n"},
+      {// Issue #2474 sample
+       "module myModule (\n"
+       "    myinput\n"
+       ");\n"
+       "input wire signed [7:0] myInput;\n"
+       "endmodule\n",
+       "module myModule (\n"
+       "    myinput\n"
+       ");\n"
+       "  input wire signed [7:0] myInput;\n"
+       "endmodule\n"},
+      {// Issue #2063 sample: signed wire with no packed dimensions
+       "module top(a);\n"
+       "    input wire signed a;\n"
+       "endmodule\n",
+       "module top (\n"
+       "    a\n"
+       ");\n"
+       "  input wire signed a;\n"
+       "endmodule\n"},
+      {// Same production with logic instead of wire
+       "module uut(sig1);\n"
+       "input logic signed [15:0] sig1;\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1\n"
+       ");\n"
+       "  input logic signed [15:0] sig1;\n"
+       "endmodule\n"},
+      {// output / inout net types
+       "module uut(sig1, sig2);\n"
+       "output wire signed [15:0] sig1;\n"
+       "inout wire signed [7:0] sig2;\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1,\n"
+       "    sig2\n"
+       ");\n"
+       "  output wire signed [15:0] sig1;\n"
+       "  inout wire signed [7:0] sig2;\n"
+       "endmodule\n"},
+      {// unsigned is the same production
+       "module uut(sig1);\n"
+       "input wire unsigned [15:0] sig1;\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1\n"
+       ");\n"
+       "  input wire unsigned [15:0] sig1;\n"
+       "endmodule\n"},
+      {// ANSI form already worked; keep as a regression
+       "module uut(input wire signed [15:0] sig1);\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    input wire signed [15:0] sig1\n"
+       ");\n"
+       "endmodule\n"},
+      {// Non-ANSI without signed still works
+       "module uut(sig1);\n"
+       "input wire [15:0] sig1;\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1\n"
+       ");\n"
+       "  input wire [15:0] sig1;\n"
+       "endmodule\n"},
+      {// Non-ANSI signed without net type still works
+       "module uut(sig1);\n"
+       "input signed [15:0] sig1;\n"
+       "endmodule\n",
+       "module uut (\n"
+       "    sig1\n"
+       ");\n"
+       "  input signed [15:0] sig1;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
 

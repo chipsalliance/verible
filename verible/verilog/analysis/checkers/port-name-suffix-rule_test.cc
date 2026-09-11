@@ -57,6 +57,9 @@ TEST(PortNameSuffixRuleTest, AcceptTests) {
       {"module t (input bit name_i); endmodule;"},
       {"module t (output bit abc_o); endmodule;"},
       {"module t (inout bit xyz_io); endmodule;"},
+      // A `ref` port has no suffix convention and must not be flagged (and must
+      // not crash the rule via std::map::at).
+      {"module t (ref logic data_x); endmodule;"},
       {"module t (input logic name_i,\n"
        "output logic abc_o,\n"
        "inout logic xyz_io,\n"
@@ -89,6 +92,10 @@ TEST(PortNameSuffixRuleTest, RejectTests) {
       {"module t (input logic ", {kToken, "_i"}, "); endmodule;"},
       {"module t (output logic ", {kToken, "_o"}, "); endmodule;"},
       {"module t (inout logic ", {kToken, "_io"}, "); endmodule;"},
+
+      // An all-underscore name splits (SkipEmpty) to an empty parts list; it
+      // must report a suffix violation, not dereference an empty vector.
+      {"module t (input logic ", {kToken, "_"}, "); endmodule;"},
 
       {"module t (input logic ", {kToken, "namei"}, "); endmodule;"},
       {"module t (input logic ", {kToken, "nam_ei"}, "); endmodule;"},

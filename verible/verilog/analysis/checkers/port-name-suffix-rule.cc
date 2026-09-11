@@ -28,6 +28,7 @@
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/token-info.h"
+#include "verible/common/util/container-util.h"
 #include "verible/verilog/CST/port.h"
 #include "verible/verilog/CST/verilog-matchers.h"
 #include "verible/verilog/analysis/descriptions.h"
@@ -90,10 +91,16 @@ bool PortNameSuffixRule::IsSuffixCorrect(std::string_view suffix,
        {"output", {"o", "no", "po"}},
        {"inout", {"io", "nio", "pio"}}};
 
-  // At this point it is guaranteed that the direction will be set to
-  // one of the expected values (used as keys in the map above).
-  // Therefore checking the suffix like this is safe
-  return suffixes.at(direction).count(suffix) == 1;
+  // `direction` is usually one of the map keys, but the grammar also permits a
+  // `ref` port direction, which has no suffix convention. FindWithDefault looks
+  // the direction up with an empty-set fallback, so an unknown direction (e.g.
+  // `ref`) has no required suffixes and is treated as "correct" (no violation),
+  // consistent with Violation() which also ignores non-input/output/inout
+  // directions.
+  static const std::set<std::string_view> kNoConvention;
+  const std::set<std::string_view> &valid =
+      verible::container::FindWithDefault(suffixes, direction, kNoConvention);
+  return valid.empty() || valid.count(suffix) == 1;
 }
 
 void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
@@ -113,8 +120,11 @@ void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
         absl::StrSplit(name, '_', absl::SkipEmpty());
 
     if (name_parts.size() < 2) {
-      // No suffix at all
+      // No suffix at all. This also covers an all-underscore name (e.g. "_"),
+      // for which SkipEmpty leaves name_parts empty; return here so the
+      // name_parts.back() access below is not reached on an empty vector.
       Violation(direction, token, context);
+      return;
     }
 
     if (!IsSuffixCorrect(name_parts.back(), direction)) {

@@ -15,8 +15,13 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_GENERATE_LABEL_PREFIX_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_GENERATE_LABEL_PREFIX_RULE_H_
 
+#include <memory>
 #include <set>
+#include <string>
+#include <string_view>
 
+#include "absl/status/status.h"
+#include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
 #include "verible/common/text/symbol.h"
@@ -27,20 +32,28 @@ namespace verilog {
 namespace analysis {
 
 // GenerateLabelPrefixRule checks that all generate block labels start
-// with g_ or gen_
+// with g_ or gen_ (configurable via style_regex)
 class GenerateLabelPrefixRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
+  GenerateLabelPrefixRule();
+
   static const LintRuleDescriptor &GetDescriptor();
+
+  std::string CreateViolationMessage() const;
 
   void HandleSymbol(const verible::Symbol &symbol,
                     const verible::SyntaxTreeContext &context) final;
 
   verible::LintRuleStatus Report() const final;
 
+  absl::Status Configure(std::string_view configuration) final;
+
  private:
   std::set<verible::LintViolation> violations_;
+
+  std::unique_ptr<re2::RE2> style_regex_;
 };
 
 }  // namespace analysis
