@@ -489,6 +489,10 @@ static WithReason<int> SpacesRequiredBetween(
       !left_context.IsInside(NodeEnum::kIncrementDecrementExpression)) {
     return {1, "Space before prefix '++'/'--'."};
   }
+  if (right.TokenEnum() == verilog_tokentype::TK_TRIGGER ||
+      right.TokenEnum() == verilog_tokentype::TK_NONBLOCKING_TRIGGER) {
+    return {1, "Space before event trigger '->'/'->>' statement."};
+  }
   if (left.format_token_enum == FormatTokenType::unary_operator) {
     return {0, "++i over ++ i"};  // "++i" instead of "++ i"
   }

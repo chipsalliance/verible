@@ -3461,6 +3461,20 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "endmodule\n",
     },
     {
+        "module t;initial #2 ->e1; initial #3 ->>e1[3]; "
+        "initial begin ->a; ->b; ->>c; ->>d; end endmodule",
+        "module t;\n"
+        "  initial #2 ->e1;\n"
+        "  initial #3 ->>e1[3];\n"
+        "  initial begin\n"
+        "    ->a;\n"
+        "    ->b;\n"
+        "    ->>c;\n"
+        "    ->>d;\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
         // qualified variables
         "module m ;initial  begin automatic int a; "
         " static byte s=0;end endmodule",

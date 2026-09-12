@@ -2771,6 +2771,24 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {0, SpacingOptions::kUndecided},  // could be MustAppend though
       },
 
+      // Handle '->'/'->>' as event trigger statements
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_DecNumber, "1"},
+          {TK_TRIGGER, "->"},
+          {/* any context */},  // context
+          {/* any context */},  // context
+          {1, SpacingOptions::kUndecided},
+      },
+      {
+          DefaultStyle,
+          {verilog_tokentype::TK_DecNumber, "1"},
+          {TK_NONBLOCKING_TRIGGER, "->>"},
+          {/* any context */},  // context
+          {/* any context */},  // context
+          {1, SpacingOptions::kUndecided},
+      },
+
       // Handle '->' as a binary operator
       {
           DefaultStyle,
