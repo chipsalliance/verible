@@ -1839,6 +1839,7 @@ static constexpr ParserTestCaseArray kModuleTests = {
     // keyword tests
     "module keyword_identifiers;\n"
     "reg branch;  // branch is a Verilog-AMS keyword\n"
+    "reg analog;  // analog is a Verilog-AMS keyword\n"
     "input from;  // from is a Verilog-AMS keyword\n"
     "wire access;  // access is a Verilog-AMS keyword\n"
     "wire exclude;  // exclude is a Verilog-AMS keyword\n"
@@ -4748,6 +4749,18 @@ static constexpr ParserTestCaseArray kModuleMemberTests = {
     "    `MACRO();\n"  // macro as item
     "  }\n"
     "endgroup",
+    // Verilog-AMS analog_construct, which starts with the same "analog" that is
+    // also accepted as a plain identifier.
+    "module mymodule;\n"
+    "  analog V(a, b) <+ 1;\n"
+    "endmodule",
+    "module mymodule;\n"
+    "  analog I(x) <+ y + 1;\n"
+    "endmodule",
+    "module mymodule;\n"
+    "  reg analog;\n"  // analog as identifier, next to the construct
+    "  analog V(a, b) <+ analog;\n"
+    "endmodule",
 };
 
 static constexpr ParserTestCaseArray kClassMemberTests = {
