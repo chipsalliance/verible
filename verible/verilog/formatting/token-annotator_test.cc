@@ -5446,6 +5446,31 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
           {NodeEnum::kUnpackedDimensions},
           {1, SpacingOptions::kPreserve},
       },
+      {
+          // [b > 1'h0 ? 1'h0 : c] : space around '>' in ternary inside
+          // subscript
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "b",
+          " ",  // 1 space originally
+          '>',
+          ">",
+          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
+          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
+          {1, SpacingOptions::kUndecided},
+      },
+      {
+          // [b > 1 ? 1 : c] : space before '?' in ternary inside subscript
+          DefaultStyle,
+          verilog_tokentype::TK_DecNumber,
+          "1",
+          " ",  // 1 space originally
+          '?',
+          "?",
+          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
+          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
+          {1, SpacingOptions::kUndecided},
+      },
   };
   int test_index = 0;
   for (const auto &test_case : kTestCases) {
