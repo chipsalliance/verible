@@ -29,8 +29,6 @@ namespace verilog {
 namespace formatter {
 namespace {
 
-using testing::HasSubstr;
-
 // Regression for https://github.com/chipsalliance/verible/issues/2547:
 // A localparam initialized to a sum of long macros must converge: infix `+`
 // stays with the following operand so re-format does not oscillate between

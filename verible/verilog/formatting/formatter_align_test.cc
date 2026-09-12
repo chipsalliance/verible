@@ -20,7 +20,6 @@
 
 #include "gtest/gtest.h"
 #include "verible/common/formatting/align.h"
-#include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/util/logging.h"
 #include "verible/verilog/formatting/format-style.h"
 #include "verible/verilog/formatting/formatter-test-utils.h"

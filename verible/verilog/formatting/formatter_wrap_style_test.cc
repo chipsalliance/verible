@@ -17,7 +17,6 @@
 
 #include <cctype>
 #include <cstddef>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <string_view>

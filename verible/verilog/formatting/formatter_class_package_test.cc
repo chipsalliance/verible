@@ -15,13 +15,8 @@
 // Test cases in this file should be *insensitive* to wrapping penalties.
 // Penalty-sensitive tests belong in formatter-tuning_test.cc.
 
-#include <sstream>
-#include <string_view>
-
 #include "gtest/gtest.h"
-#include "verible/verilog/formatting/format-style.h"
 #include "verible/verilog/formatting/formatter-test-utils.h"
-#include "verible/verilog/formatting/formatter.h"
 
 namespace verilog {
 namespace formatter {

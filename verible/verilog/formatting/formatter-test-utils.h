@@ -18,7 +18,6 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_FORMATTER_TEST_UTILS_H_
 #define VERIBLE_VERILOG_FORMATTING_FORMATTER_TEST_UTILS_H_
 
-#include <cstddef>
 #include <sstream>
 #include <string_view>
 
