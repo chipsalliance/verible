@@ -1,0 +1,24 @@
+bazel build -c opt //...
+# FAILS, not debugged
+
+verible-verilog-format
+
+
+Binaries
+https://github.com/chipsalliance/verible/releases
+
+mkdir download_bin
+cd download_bin
+wget https://github.com/chipsalliance/verible/releases/download/v0.0-4053-g89d4d98a/verible-v0.0-4053-g89d4d98a-linux-static-x86_64.tar.gz
+
+
+ln -sf ~/SandBox/verible/download_bin/verible-v0.0-4053-g89d4d98a/bin/verible-verilog-format ~/bin/verible-verilog-format
+
+verible-verilog-format --inplace
+
+
+`ifdef indentation:
+
+verible-verilog-format --inplace --wrap_end_else_clauses include/verilated.v
+
+

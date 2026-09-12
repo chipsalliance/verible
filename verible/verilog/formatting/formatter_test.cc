@@ -3445,6 +3445,36 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "endmodule\n",
     },
     {
+        // prefix increment/decrement as statement after a ')'
+        "module m ;function automatic void f;"
+        "if(a==8'ha0)++result; if(b==8'ha0)--result;"
+        "i++; j--; c[i]++;"
+        "endfunction endmodule",
+        "module m;\n"
+        "  function automatic void f;\n"
+        "    if (a == 8'ha0) ++result;\n"
+        "    if (b == 8'ha0) --result;\n"
+        "    i++;\n"
+        "    j--;\n"
+        "    c[i]++;\n"
+        "  endfunction\n"
+        "endmodule\n",
+    },
+    {
+        "module t;initial #2 ->e1; initial #3 ->>e1[3]; "
+        "initial begin ->a; ->b; ->>c; ->>d; end endmodule",
+        "module t;\n"
+        "  initial #2 ->e1;\n"
+        "  initial #3 ->>e1[3];\n"
+        "  initial begin\n"
+        "    ->a;\n"
+        "    ->b;\n"
+        "    ->>c;\n"
+        "    ->>d;\n"
+        "  end\n"
+        "endmodule\n",
+    },
+    {
         // qualified variables
         "module m ;initial  begin automatic int a; "
         " static byte s=0;end endmodule",
@@ -4772,7 +4802,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "function\nvoid\tpete;repeat(3)  "
      "++k\n;endfunction\n",
      "function void pete;\n"
-     "  repeat (3)++k;\n"  // TODO(fangism): space before ++
+     "  repeat (3) ++k;\n"
      "endfunction\n"},
     {// repeat loop, forced break
      "function\nvoid\tpete;repeat(3)//\n"
@@ -4793,7 +4823,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "function\nvoid\twily;while( coyote )  "
      "++ super_genius\n;   endfunction\n",
      "function void wily;\n"
-     "  while (coyote)++super_genius;\n"  // TODO(fangism): space before ++
+     "  while (coyote) ++super_genius;\n"
      "endfunction\n"},
     {// while loop, forced break
      "function\nvoid\twily;while( coyote ) //\n "
@@ -6420,6 +6450,14 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "task t;\n"
         "  assert property (x) j();\n"
         "  assert property (y) k();\n"
+        "endtask\n",
+    },
+    {
+        // assert property statement, with prefix inc/dec
+        "task  t ;assert  property( x) ++j; else --k;endtask",
+        "task t;\n"
+        "  assert property (x) ++j;\n"
+        "  else --k;\n"
         "endtask\n",
     },
     {
