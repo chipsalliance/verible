@@ -2035,7 +2035,8 @@ static std::initializer_list<LexerTestData> kUnfilteredDirectiveTests = {
      {'/', "/"},
      {TK_TimeLiteral, "1ps"},
      {TK_NEWLINE, "\n"}},
-    // Issue #2605: CRLF `//` comments in TIMESCALE_DIRECTIVE must not keep `\r`.
+    // Issue #2605: CRLF `//` comments in TIMESCALE_DIRECTIVE must not keep
+    // `\r`.
     {{DR_timescale, "`timescale"},
      {TK_SPACE, " "},
      {TK_TimeLiteral, "1ps"},
