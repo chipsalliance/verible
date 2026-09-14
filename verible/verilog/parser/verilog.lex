@@ -990,7 +990,13 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
     return TK_COMMENT_BLOCK;
   }
   {EndOfLineComment} {
-    yyless(yyleng-1);  /* return \n to input stream */
+    // Match IN_EOL_COMMENT: CRLF is a two-character terminator. Using
+    // yyless(yyleng-1) left `\r` in the comment token, so the formatter
+    // emitted `\r\r\n` after `timescale comments (issue #2605, PR #2371).
+    if (yyleng >= 2 && yytext[yyleng - 2] == '\r')
+      yyless(yyleng - 2);  /* return \r\n to input stream */
+    else
+      yyless(yyleng - 1);  /* return \n to input stream */
     UpdateLocation();
     return TK_EOL_COMMENT;
   }
