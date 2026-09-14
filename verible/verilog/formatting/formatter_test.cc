@@ -21249,6 +21249,22 @@ TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2607:
+// A CRLF macro definition must keep a single line terminator so formatting
+// converges.
+TEST(FormatterEndToEndTest, DefineCrlfConverges) {
+  static constexpr std::string_view kInput =
+      "`define A x.y\r\n"
+      "module m;\r\n"
+      "endmodule\r\n";
+  FormatStyle style;
+  style.line_terminator = verible::LineTerminatorOptionStyle::kAuto;
+  std::ostringstream stream;
+  const auto status = FormatVerilog(kInput, "<filename>", style, stream);
+  EXPECT_OK(status) << status.message();
+  EXPECT_EQ(stream.str(), kInput);
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
