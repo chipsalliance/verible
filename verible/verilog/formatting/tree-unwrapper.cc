@@ -962,13 +962,13 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kProceduralContinuousDeassignmentStatement:
     case NodeEnum::kProceduralContinuousForceStatement:
     case NodeEnum::kProceduralContinuousReleaseStatement:
-    case NodeEnum::kNetVariableAssignment:           // e.g. x=y
-    case NodeEnum::kBlockingAssignmentStatement:     // id=expr
-    case NodeEnum::kBlockingEventTriggerStatement:   // ->e;
-    case NodeEnum::kNonblockingAssignmentStatement:  // dest <= src;
+    case NodeEnum::kNetVariableAssignment:             // e.g. x=y
+    case NodeEnum::kBlockingAssignmentStatement:       // id=expr
+    case NodeEnum::kBlockingEventTriggerStatement:     // ->e;
+    case NodeEnum::kNonblockingAssignmentStatement:    // dest <= src;
     case NodeEnum::kNonblockingEventTriggerStatement:  // ->>e;
-    case NodeEnum::kAssignModifyStatement:           // id+=expr
-    case NodeEnum::kIncrementDecrementExpression:    // --y
+    case NodeEnum::kAssignModifyStatement:             // id+=expr
+    case NodeEnum::kIncrementDecrementExpression:      // --y
     case NodeEnum::kProceduralTimingControlStatement:
 
       // various flow control constructs
