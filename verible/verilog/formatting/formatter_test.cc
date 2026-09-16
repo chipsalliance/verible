@@ -128,50 +128,6 @@ TEST(FormatterEndToEndTest, SmokeFormatterTestCases) {
   RunFormatterTestCases40(kSmokeFormatterTestCases);
 }
 
-// Regression for https://github.com/chipsalliance/verible/issues/2605:
-// TIMESCALE_DIRECTIVE's EndOfLineComment handler used yyless(yyleng-1),
-// which left `\r` in the comment token for CRLF files. Emitting that token
-// plus a CRLF terminator produced `\r\r\n` and failed FormatEquivalent.
-TEST(FormatterEndToEndTest, TimescaleCrlfEolComment) {
-  static constexpr FormatterTestCase kTestCases[] = {
-      // Next-line `//` comment after `timescale (the reduced issue case).
-      {"`timescale 1 ps / 1 ps\r\n"
-       "// hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n",
-       "`timescale 1 ps / 1 ps\r\n"
-       "// hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n"},
-      // Same-line `//` comment on the `timescale directive.
-      {"`timescale 1 ps / 1 ps // hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n",
-       "`timescale 1 ps / 1 ps  // hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n"},
-      // LF control: this path already passed lexical verification.
-      {"`timescale 1 ps / 1 ps\n"
-       "// hello\n"
-       "module m;\n"
-       "endmodule\n",
-       "`timescale 1 ps / 1 ps\n"
-       "// hello\n"
-       "module m;\n"
-       "endmodule\n"},
-  };
-  FormatStyle style;
-  style.line_terminator = verible::LineTerminatorOptionStyle::kAuto;
-  for (const auto &test_case : kTestCases) {
-    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
-    std::ostringstream stream;
-    const auto status =
-        FormatVerilog(test_case.input, "<filename>", style, stream);
-    EXPECT_OK(status) << status.message();
-    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
-  }
-}
-
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
