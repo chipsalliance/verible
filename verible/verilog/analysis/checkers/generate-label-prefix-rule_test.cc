@@ -27,6 +27,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
 TEST(GenerateLabelPrefixRuleTest, Various) {
@@ -227,6 +228,40 @@ TEST(GenerateLabelPrefixRuleTest, Various) {
   };
 
   RunLintTestCases<VerilogAnalyzer, GenerateLabelPrefixRule>(kTestCases);
+}
+
+TEST(GenerateLabelPrefixRuleTest, CustomRegex) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"module m;\n"
+       "generate\n"
+       "if (1) begin : my_custom_label\n"
+       "end\n"
+       "endgenerate\nendmodule\n"},
+      {"module m;\n"
+       "generate\n"
+       "for (genvar i=0; i<5; i++) begin : my_custom_label\n"
+       "end\n"
+       "endgenerate\nendmodule\n"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, GenerateLabelPrefixRule>(
+      kTestCases, "style_regex:my_.*");
+
+  const std::initializer_list<LintTestCase> kFailCases = {
+      {"module m;\n"
+       "generate\n"
+       "if (1) begin : ",
+       {SymbolIdentifier, "g_label"},
+       "\nend\n"
+       "endgenerate\nendmodule\n"},
+      {"module m;\n"
+       "generate\n"
+       "if (1) begin : ",
+       {SymbolIdentifier, "gen_label"},
+       "\nend\n"
+       "endgenerate\nendmodule\n"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, GenerateLabelPrefixRule>(
+      kFailCases, "style_regex:my_.*");
 }
 
 }  // namespace

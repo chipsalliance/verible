@@ -31,10 +31,16 @@ done
 
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 
-# Use the provided Clang format binary, or try to fallback to clang-format-17
-# or clang-format.
+# Use the provided Clang format binary, or try clang-format-19 (CI version),
+# then older numbered versions, then unversioned clang-format.
 if [[ ! -v CLANG_FORMAT ]]; then
-  if command -v "clang-format-17" 2>&1 >/dev/null
+  if command -v "clang-format-19" 2>&1 >/dev/null
+  then
+    CLANG_FORMAT="clang-format-19"
+  elif command -v "clang-format-18" 2>&1 >/dev/null
+  then
+    CLANG_FORMAT="clang-format-18"
+  elif command -v "clang-format-17" 2>&1 >/dev/null
   then
     CLANG_FORMAT="clang-format-17"
   elif command -v "clang-format" 2>&1 >/dev/null
@@ -44,6 +50,7 @@ if [[ ! -v CLANG_FORMAT ]]; then
     (echo "-- Missing the clang-format binary! --"; exit 1)
   fi
 fi
+echo "Using ${CLANG_FORMAT} ($("${CLANG_FORMAT}" --version))"
 
 BUILDIFIER=${BUILDIFIER:-buildifier}
 

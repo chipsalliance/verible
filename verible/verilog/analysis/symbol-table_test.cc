@@ -73,8 +73,7 @@ static std::ostream &operator<<(std::ostream &stream,
   const auto found_##dest(map.find(key)); /* iterator */ \
   ASSERT_NE(found_##dest, map.end())                     \
       << "No element at \"" << key << "\" in " #map;     \
-  const auto &dest ABSL_ATTRIBUTE_UNUSED(                \
-      found_##dest->second); /* mapped_type */
+  const auto &dest [[maybe_unused]] (found_##dest->second); /* mapped_type */
 
 // Assert that container is not empty, and reference its first element.
 // Works on any container type with .begin().
@@ -103,7 +102,7 @@ static std::ostream &operator<<(std::ostream &stream,
       << "No symbol at \"" << key << "\" in " << ScopePathPrinter{scope}; \
   EXPECT_EQ(found_##dest->first, key);                                    \
   const SymbolTableNode &dest(found_##dest->second);                      \
-  const SymbolInfo &dest##_info ABSL_ATTRIBUTE_UNUSED(dest.Value())
+  const SymbolInfo &dest##_info [[maybe_unused]] (dest.Value())
 
 // For SymbolInfo::references_map_view_type only: Assert that there is exactly
 // one element at 'key' in 'map' and assign it to 'dest' (DependentReferences).
