@@ -14,12 +14,17 @@
 
 #include "verible/verilog/analysis/checkers/generate-label-prefix-rule.h"
 
+#include <memory>
+#include <string>
 #include <string_view>
 
-#include "absl/strings/match.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
+#include "re2/re2.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/matcher/bound-symbol-manager.h"
 #include "verible/common/analysis/matcher/matcher.h"
+#include "verible/common/text/config-utils.h"
 #include "verible/common/text/symbol.h"
 #include "verible/common/text/syntax-tree-context.h"
 #include "verible/common/text/token-info.h"
@@ -38,20 +43,34 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(GenerateLabelPrefixRule);
 
-static constexpr std::string_view kMessage =
-    "All generate block labels must start with g_ or gen_";
+static constexpr std::string_view kDefaultStyleRegex = "(g_|gen_).*";
 
-// TODO(fangism): and be lower_snake_case?
-// TODO(fangism): generalize to a configurable pattern and
-// rename this class/rule to GenerateLabelNamingStyle?
+GenerateLabelPrefixRule::GenerateLabelPrefixRule()
+    : style_regex_(
+          std::make_unique<re2::RE2>(kDefaultStyleRegex, re2::RE2::Quiet)) {}
 
 const LintRuleDescriptor &GenerateLabelPrefixRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "generate-label-prefix",
       .topic = "generate-constructs",
-      .desc = "Checks that every generate block label starts with g_ or gen_.",
+      .desc =
+          "Checks that every generate block label matches the regex defined by "
+          "style_regex. The default regex requires labels to start with g_ or "
+          "gen_. Refer to https://github.com/chipsalliance/verible/tree/master/"
+          "verilog/tools/lint#readme for more detail on verible regex "
+          "patterns.",
+      // NOLINTNEXTLINE(misc-include-cleaner)
+      .param = {{"style_regex", std::string(kDefaultStyleRegex),
+                 "A regex used to check generate label style."}},
   };
   return d;
+}
+
+std::string GenerateLabelPrefixRule::CreateViolationMessage() const {
+  return absl::StrCat(
+      "Generate block label does not match the naming convention defined by "
+      "regex pattern: ",
+      style_regex_->pattern());
 }
 
 // Matches begin statements
@@ -84,13 +103,22 @@ void GenerateLabelPrefixRule::HandleSymbol(
       }
 
       if (label != nullptr) {
-        if (!(absl::StartsWith(label->text(), "g_") ||
-              absl::StartsWith(label->text(), "gen_"))) {
-          violations_.insert(verible::LintViolation(*label, kMessage, context));
+        if (!RE2::FullMatch(label->text(), *style_regex_)) {
+          violations_.insert(verible::LintViolation(
+              *label, CreateViolationMessage(), context));
         }
       }
     }
   }
+}
+
+// NOLINTNEXTLINE(misc-include-cleaner)
+absl::Status GenerateLabelPrefixRule::Configure(
+    std::string_view configuration) {
+  using verible::config::SetRegex;
+  absl::Status s = verible::ParseNameValues(
+      configuration, {{"style_regex", SetRegex(&style_regex_)}});
+  return s;
 }
 
 verible::LintRuleStatus GenerateLabelPrefixRule::Report() const {

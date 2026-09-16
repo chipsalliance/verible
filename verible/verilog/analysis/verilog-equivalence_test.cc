@@ -255,6 +255,21 @@ TEST(FormatEquivalentTest, EquivalenceOfRightParen) {
   }
 }
 
+// MacroIdentifier vs MacroIdItem depends on whether the macro ends the line.
+TEST(FormatEquivalentTest, EquivalenceOfMacroIdentifierAndMacroIdItem) {
+  const char *kSameSpelling[] = {
+      "assign x = f(`TOKEN);\n",
+      "assign x = f(\n`TOKEN\n);\n",
+  };
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                             kSameSpelling[0], kSameSpelling[1]);
+
+  // Different macro names remain different.
+  ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kDifferent,
+                             "assign x = f(`TOKEN);\n",
+                             "assign x = f(`OTHER);\n");
+}
+
 TEST(FormatEquivalentTest, DiagnosticMismatch) {
   const char *kTestCases[] = {
       "module foo;\n",

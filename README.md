@@ -172,8 +172,9 @@ guide and the [development resources](./doc/development.md).
 
 Verible's code base is written in C++.
 
-To build, you need the [bazel] build system (Min version 7) and a C++20
-compatible compiler.
+To build, you need the [bazel] build system (get it from
+[bazel install][bazel-install] if not already on your system) and a
+C++20 compatible compiler.
 
 Use your package manager to install the dependencies; on a system with
 the nix package manager simply run `nix-shell` to get a build environment.
@@ -191,13 +192,30 @@ target name `//verible/verilog/tools/syntax:verible-verilog-syntax`).
 Moreover, if you need statically linked executables that don't depend on your
 shared libraries, you can use custom config
 `create_static_linked_executables` (with this setting `bfd` linker will be used,
-instead of default `gold` linker).
+instead of default `gold` linker). This is the same approach used by CI to
+produce the Linux static release tarballs, and is useful when you build on a
+newer distribution (for example Ubuntu 24.04) but need binaries that run on
+older systems whose glibc is too old for a dynamically linked build.
 
 ```bash
 # Generate statically linked executables.
-# Uses bfd linker and needs static system libs available.
+# Uses bfd linker and needs static system libs available
+# (e.g. libc.a / libstdc++.a from your C/C++ development packages).
 bazel build -c opt --config=create_static_linked_executables //...
+
+# Or build only the tools you need, e.g. the formatter:
+bazel build -c opt --config=create_static_linked_executables \
+  //verible/verilog/tools/formatter:verible-verilog-format
+
+# Same flag works with the install target:
+bazel build -c opt --config=create_static_linked_executables :install-binaries
+.github/bin/simple-install.sh ~/bin
 ```
+
+Confirm a binary is fully static with `ldd path/to/binary` (it should report
+that it is not a dynamic executable) or with `file path/to/binary`.
+
+See [Installation](#installation-1) for install.
 
 ### Optionally using local flex/bison for build
 
@@ -283,6 +301,7 @@ abstract syntax tree (AST) or possibly even provide more higher-level
 [UHDM] format. If you are interested in collaborating, contact us.
 
 [bazel]: https://bazel.build/
+[bazel-install]: https://bazel.build/install
 [SV-LRM]: https://ieeexplore.ieee.org/document/8299595
 [lint-rule-list]: https://chipsalliance.github.io/verible/lint.html
 [github-lint-action]: https://github.com/chipsalliance/verible-linter-action
