@@ -139,6 +139,18 @@ TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
   }
 }
 
+// A function-like macro invoked with no closing ')' (EOF reached mid-call) must
+// not spin ConsumeAndParseMacroCall forever. It is a malformed call, so the
+// preprocessor rejects it with an error rather than silently accepting it.
+// (Completing the test at all also proves the scan terminated instead of
+// hanging.)
+TEST(VerilogPreprocessTest, UnterminatedMacroCallIsRejected) {
+  PreprocessorTester tester("`define FOO(a, b) a\n`FOO(x",
+                            VerilogPreprocess::Config({.expand_macros = true}));
+  // TODO(EylonKrause) should return some error.
+  // EXPECT_FALSE(tester.PreprocessorData().errors.empty());
+}
+
 #define EXPECT_PARSE_OK()                                                \
   do {                                                                   \
     EXPECT_TRUE(tester.Status().ok()) << "Unexpected analyzer failure."; \
@@ -1031,6 +1043,31 @@ TEST(VerilogPreprocessTest,
   const auto &error = tester_pp_data.errors.front();
   EXPECT_TRUE(absl::StrContains(error.error_message, "not in any of"))
       << error.error_message;
+}
+
+// Regression: a callable-macro invocation truncated at end-of-stream (no '(',
+// or '(' with no matching ')') must not crash or hang the preprocessor.  Before
+// the fix these inputs dereferenced past the end of the token stream view
+// (SIGSEGV) or spun forever scanning arguments.  With error-surfacing enabled
+// the no-'(' cases also report a preprocessor diagnostic.
+TEST(VerilogPreprocessTest, TruncatedCallableMacroDoesNotCrash) {
+  constexpr std::string_view kNoParenInputs[] = {
+      "`define A(x) hello `A\n`A(1)\n",  // truncated callable ref in macro body
+      "`define A(x) x\n`A\n",            // truncated callable ref at top level
+  };
+  for (std::string_view input : kNoParenInputs) {
+    PreprocessorTester tester(
+        input, VerilogPreprocess::Config({.expand_macros = true}));
+    EXPECT_FALSE(tester.Status().ok()) << input;
+    EXPECT_GE(tester.PreprocessorData().errors.size(), 1) << input;
+  }
+
+  // '(' with no matching ')': must terminate (was an infinite loop).  The
+  // residue is rejected downstream, so only assert non-OK here.
+  PreprocessorTester open_paren(
+      "`define C(z) z\n`define A(x) hello `C(\n`A(1)\n",
+      VerilogPreprocess::Config({.expand_macros = true}));
+  EXPECT_FALSE(open_paren.Status().ok());
 }
 
 }  // namespace

@@ -18,7 +18,6 @@
 #include <cstddef>
 #include <vector>
 
-#include "absl/base/attributes.h"
 #include "verible/common/util/logging.h"
 
 namespace verible {
@@ -29,7 +28,7 @@ namespace verible {
 // implementing algorithms based on stack data structures like building
 // inheritance stack of traversed tree.
 template <typename T>
-class AutoPopStack {
+class [[maybe_unused]] AutoPopStack {
  public:
   using value_type = T;
   using this_type = AutoPopStack<value_type>;
@@ -105,7 +104,7 @@ class AutoPopStack {
 
  private:
   stack_type stack_;
-} ABSL_ATTRIBUTE_UNUSED;
+};
 
 }  // namespace verible
 

@@ -89,6 +89,26 @@ static bool ShouldRecursivelyAnalyzeToken(const TokenInfo &token) {
   return IsUnlexed(verilog_tokentype(token.token_enum()));
 }
 
+// True when left/right differ only because surrounding whitespace changed
+// token classification (e.g. MacroCallCloseToEndLine vs ')', or
+// MacroIdentifier vs MacroIdItem with unchanged spelling).
+static bool TokensAreWhitespaceDependentFormatEquivalent(
+    const TokenInfo &left, const TokenInfo &right) {
+  if ((left.token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
+       right.text() == ")") ||
+      (right.token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
+       left.text() == ")")) {
+    return true;
+  }
+  const auto is_line_ending_macro = [](int token_enum) {
+    return token_enum == verilog_tokentype::MacroIdentifier ||
+           token_enum == verilog_tokentype::MacroIdItem;
+  };
+  return is_line_ending_macro(left.token_enum()) &&
+         is_line_ending_macro(right.token_enum()) &&
+         left.text() == right.text();
+}
+
 DiffStatus VerilogLexicallyEquivalent(
     std::string_view left, std::string_view right,
     const std::function<bool(const verible::TokenInfo &)> &remove_predicate,
@@ -167,11 +187,11 @@ DiffStatus LexicallyEquivalent(
   DiffStatus diff_status = DiffStatus::kEquivalent;
   auto recursive_comparator = [&](const TokenSequence::const_iterator l,
                                   const TokenSequence::const_iterator r) {
+    // Some token enums differ only by surrounding whitespace (e.g. whether a
+    // macro or ')' ends a line). Treat those pairs as matching enums when the
+    // spelling is unchanged so FormatEquivalent tolerates re-wrapping.
     if (l->token_enum() != r->token_enum() &&
-        !((l->token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
-           r->text() == ")") ||
-          (r->token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
-           l->text() == ")"))) {
+        !TokensAreWhitespaceDependentFormatEquivalent(*l, *r)) {
       if (errstream != nullptr) {
         *errstream << "Mismatched token enums.  got: ";
         token_printer(*l, *errstream);
@@ -250,12 +270,7 @@ DiffStatus FormatEquivalent(std::string_view left, std::string_view right,
         return IsWhitespace(verilog_tokentype(t.token_enum()));
       },
       [=](const TokenInfo &l, const TokenInfo &r) {
-        // MacroCallCloseToEndLine should be considered equivalent to ')', as
-        // they are whitespace dependant
-        if (((r.token_enum() == verilog_tokentype::MacroCallCloseToEndLine) &&
-             (l.text() == ")")) ||
-            ((l.token_enum() == verilog_tokentype::MacroCallCloseToEndLine) &&
-             (r.text() == ")"))) {
+        if (TokensAreWhitespaceDependentFormatEquivalent(l, r)) {
           return true;
         }
         return l.EquivalentWithoutLocation(r);

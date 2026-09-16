@@ -801,6 +801,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kPreprocessorUndef:
     case NodeEnum::kTFPortDeclaration:
     case NodeEnum::kTypeDeclaration:
+    case NodeEnum::kLetDeclaration:
     case NodeEnum::kNetTypeDeclaration:
     case NodeEnum::kForwardDeclaration:
     case NodeEnum::kInterfaceClassMethod:
@@ -1637,6 +1638,53 @@ static void AttachSeparatorsToListElementPartitions(
     auto &subpartition = partition->Children()[i];
     // This can change children count
     AttachSeparatorToPreviousOrNextPartition(&subpartition);
+  }
+}
+
+// True when a leaf partition contains only a binary/infix operator (and
+// optional comments/attributes). Used to normalize wrapping of expressions
+// like `A + B + C` so operators always stay with the following operand.
+static bool PartitionIsInfixOperatorOnly(const TokenPartitionTree &partition) {
+  if (!is_leaf(partition)) return false;
+  const auto tokens = partition.Value().TokensRange();
+  if (tokens.empty()) return false;
+
+  const verible::PreFormatToken *op = nullptr;
+  for (const auto &token : tokens) {
+    switch (token.TokenEnum()) {
+      case verilog_tokentype::TK_COMMENT_BLOCK:
+      case verilog_tokentype::TK_EOL_COMMENT:
+      case verilog_tokentype::TK_ATTRIBUTE:
+        break;
+      default:
+        if (GetFormatTokenType(static_cast<verilog_tokentype>(
+                token.TokenEnum())) != FormatTokenType::binary_operator ||
+            op != nullptr) {
+          return false;
+        }
+        op = &token;
+        break;
+    }
+  }
+  return op != nullptr;
+}
+
+// Always attach infix-operator-only partitions to the following operand.
+// Attachment based on original newlines is unstable for macro sums:
+//   `A\n+\n`B  vs  `A\n+ `B  produce different partition shapes and oscillate
+// under re-format (GitHub issue 2547).
+static void AttachInfixOperatorsToFollowingOperands(
+    TokenPartitionTree *partition) {
+  // Iterate by index; merges invalidate sibling pointers.
+  for (int i = 0; i < static_cast<int>(partition->Children().size()); ++i) {
+    auto &child = partition->Children()[i];
+    if (!PartitionIsInfixOperatorOnly(child)) continue;
+    if (NextLeaf(child) == nullptr) continue;
+    VLOG(4) << "Attaching infix operator partition to following operand:\n"
+            << child;
+    verible::MergeLeafIntoNextLeaf(&child);
+    // Children shifted; re-check current index.
+    --i;
   }
 }
 
@@ -2990,10 +3038,15 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       auto &children = partition.Children();
       const auto iter1 = std::find_if(children.begin(), children.end(),
                                       PartitionStartsWithSemicolon);
-      CHECK(iter1 != children.end());
+      // An attribute instance ((* ... *)) in the for-loop header can change
+      // the partition structure so that the expected semicolon-leading
+      // partitions are not present.  When they are missing, leave the
+      // partitions unreshaped rather than aborting (avoids a CHECK-failure
+      // crash on attributed/unusual for-headers).
+      if (iter1 == children.end()) break;
       const auto iter2 =
           std::find_if(iter1 + 1, children.end(), PartitionStartsWithSemicolon);
-      CHECK(iter2 != children.end());
+      if (iter2 == children.end()) break;
       const int dist1 = std::distance(children.begin(), iter1);
       const int dist2 = std::distance(children.begin(), iter2);
       VLOG(4) << "kForSpec got ';' at child " << dist1 << " and " << dist2;
@@ -3131,6 +3184,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kParamDeclaration: {
       AttachTrailingSemicolonToPreviousPartition(&partition);
       AttachOpeningBraceToDeclarationsAssignmentOperator(&partition);
+      AttachInfixOperatorsToFollowingOperands(&partition);
       break;
     }
 
