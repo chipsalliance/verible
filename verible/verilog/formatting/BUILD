@@ -301,6 +301,7 @@ cc_test(
         ":format-style",
         ":formatter",
         ":formatter-test-utils",
+        "//verible/common/formatting:basic-format-style",
         "//verible/common/util:logging",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
