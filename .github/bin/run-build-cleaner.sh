@@ -18,6 +18,10 @@ set -e
 
 BANT=$($(dirname $0)/get-bant-path.sh)
 
+# Run build so that we have all dependencies downloaded and genrules
+# materialized.
+bazel build -k --remote_download_outputs=all ...
+
 if "${BANT}" -q dwyu ... ; then
   echo "Dependencies ok." >&2
 else
