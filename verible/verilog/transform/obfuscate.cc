@@ -73,7 +73,7 @@ static void ObfuscateVerilogCodeInternal(std::string_view content,
       case verilog_tokentype::MacroIdentifier:
       case verilog_tokentype::MacroCallId:
       case verilog_tokentype::MacroIdItem:
-        // TODO(fangism): verilog_tokentype::EscapedIdentifier
+      case verilog_tokentype::EscapedIdentifier:
         *output << token.text()[0] << (*subst)(token.text().substr(1));
         break;
       // The following tokens are un-lexed, so they need to be lexed
