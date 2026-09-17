@@ -190,7 +190,7 @@ static constexpr FormatterTestCase kFunctionTaskFormatterTestCases[] = {
      "function\nvoid\tpete;repeat(3)  "
      "++k\n;endfunction\n",
      "function void pete;\n"
-     "  repeat (3)++k;\n"  // TODO(fangism): space before ++
+     "  repeat (3) ++k;\n"
      "endfunction\n"},
     {// repeat loop, forced break
      "function\nvoid\tpete;repeat(3)//\n"
@@ -211,7 +211,7 @@ static constexpr FormatterTestCase kFunctionTaskFormatterTestCases[] = {
      "function\nvoid\twily;while( coyote )  "
      "++ super_genius\n;   endfunction\n",
      "function void wily;\n"
-     "  while (coyote)++super_genius;\n"  // TODO(fangism): space before ++
+     "  while (coyote) ++super_genius;\n"
      "endfunction\n"},
     {// while loop, forced break
      "function\nvoid\twily;while( coyote ) //\n "
@@ -1838,6 +1838,14 @@ static constexpr FormatterTestCase kFunctionTaskFormatterTestCases[] = {
         "task t;\n"
         "  assert property (x) j();\n"
         "  assert property (y) k();\n"
+        "endtask\n",
+    },
+    {
+        // assert property statement, with prefix inc/dec
+        "task  t ;assert  property( x) ++j; else --k;endtask",
+        "task t;\n"
+        "  assert property (x) ++j;\n"
+        "  else --k;\n"
         "endtask\n",
     },
     {
