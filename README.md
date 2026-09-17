@@ -192,28 +192,13 @@ target name `//verible/verilog/tools/syntax:verible-verilog-syntax`).
 Moreover, if you need statically linked executables that don't depend on your
 shared libraries, you can use custom config
 `create_static_linked_executables` (with this setting `bfd` linker will be used,
-instead of default `gold` linker). This is the same approach used by CI to
-produce the Linux static release tarballs, and is useful when you build on a
-newer distribution (for example Ubuntu 24.04) but need binaries that run on
-older systems whose glibc is too old for a dynamically linked build.
+instead of default `gold` linker).
 
 ```bash
 # Generate statically linked executables.
-# Uses bfd linker and needs static system libs available
-# (e.g. libc.a / libstdc++.a from your C/C++ development packages).
+# Uses bfd linker and needs static system libs available.
 bazel build -c opt --config=create_static_linked_executables //...
-
-# Or build only the tools you need, e.g. the formatter:
-bazel build -c opt --config=create_static_linked_executables \
-  //verible/verilog/tools/formatter:verible-verilog-format
-
-# Same flag works with the install target:
-bazel build -c opt --config=create_static_linked_executables :install-binaries
-.github/bin/simple-install.sh ~/bin
 ```
-
-Confirm a binary is fully static with `ldd path/to/binary` (it should report
-that it is not a dynamic executable) or with `file path/to/binary`.
 
 See [Installation](#installation-1) for install.
 
