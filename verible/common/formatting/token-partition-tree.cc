@@ -790,11 +790,11 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
 // Only merge leading *leaf* fragments. Nested argument lists (non-leaves)
 // are flattened only when another non-leaf (the real port list) follows.
 static int CountNonLeafChildren(const TokenPartitionTree &node) {
-  int n = 0;
-  for (const auto &child : node.Children()) {
-    if (!is_leaf(child)) ++n;
-  }
-  return n;
+  const auto &children = node.Children();
+  return std::count_if(children.begin(), children.end(),
+                       [](const TokenPartitionTree &child) {
+                         return !is_leaf(child);
+                       });
 }
 
 static void CollapseHeaderFragmentsBeforeArgs(TokenPartitionTree *node) {
