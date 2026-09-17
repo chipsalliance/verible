@@ -791,10 +791,9 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
 // are flattened only when another non-leaf (the real port list) follows.
 static int CountNonLeafChildren(const TokenPartitionTree &node) {
   const auto &children = node.Children();
-  return std::count_if(children.begin(), children.end(),
-                       [](const TokenPartitionTree &child) {
-                         return !is_leaf(child);
-                       });
+  return std::count_if(
+      children.begin(), children.end(),
+      [](const TokenPartitionTree &child) { return !is_leaf(child); });
 }
 
 static void CollapseHeaderFragmentsBeforeArgs(TokenPartitionTree *node) {
