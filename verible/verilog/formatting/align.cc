@@ -147,6 +147,32 @@ static bool SeparatorCommentsBreakGroups(AlignmentGroupBoundary b) {
          b == AlignmentGroupBoundary::kBlankLinesAndSeparatorComments;
 }
 
+// True when non-tree tokens (e.g. // comments, line-continuation `\`) precede
+// the origin, and the first origin token must start a new line. Aligning such
+// partitions would glue the leading tokens onto the origin line via kInline
+// cells (GitHub issue 2539). Leave them out of alignment instead.
+static bool PartitionHasLeadingTokensBeforeForcedWrap(
+    const TokenPartitionTree &partition) {
+  const auto &uwline = partition.Value();
+  const verible::Symbol *origin = uwline.Origin();
+  if (origin == nullptr) return false;
+
+  const auto ftokens = uwline.TokensRange();
+  if (ftokens.empty()) return false;
+
+  const verible::SyntaxTreeLeaf *first_leaf = verible::GetLeftmostLeaf(*origin);
+  if (first_leaf == nullptr) return false;
+
+  const verible::TokenInfo &first_tree_token = first_leaf->get();
+  auto ftoken_it = ftokens.begin();
+  while (ftoken_it != ftokens.end() &&
+         *(ftoken_it->token) != first_tree_token) {
+    ++ftoken_it;
+  }
+  if (ftoken_it == ftokens.begin() || ftoken_it == ftokens.end()) return false;
+  return ftoken_it->before.break_decision == verible::SpacingOptions::kMustWrap;
+}
+
 static bool IgnoreCommentsAndPreprocessingDirectives(
     const TokenPartitionTree &partition) {
   const auto &uwline = partition.Value();
@@ -158,6 +184,8 @@ static bool IgnoreCommentsAndPreprocessingDirectives(
   CHECK(!token_range.empty());
   // ignore lines containing only comments
   if (TokensAreAllCommentsOrAttributes(token_range)) return true;
+
+  if (PartitionHasLeadingTokensBeforeForcedWrap(partition)) return true;
 
   // ignore partitions belonging to preprocessing directives
   return IsPreprocessorKeyword(
@@ -198,6 +226,8 @@ static bool IgnoreWithinStructUnionMemberPartitionGroup(
           verilog_tokentype(token_range.front().TokenEnum()))) {
     return true;
   }
+
+  if (PartitionHasLeadingTokensBeforeForcedWrap(partition)) return true;
 
   // ignore nested structs/unions
   if (verible::FindFirstSubtree(

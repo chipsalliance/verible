@@ -135,6 +135,109 @@ TEST(FormatterEndToEndTest, ContinuationCommentAfterWrappedAssignConverges) {
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/886:
+// Packed dimensions with $clog2()/$bits() used to split the function header
+// so ReshapeFittingSubpartitions dropped the port list.
+TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallKeepsPorts) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Original issue sample (default column_limit 100)
+       "package foo;\n"
+       "  function some_large_return_type "
+       "[$clog2(some_large_contant_name)-1:0] "
+       "f_some_long_function( input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n",
+       "package foo;\n"
+       "  function some_large_return_type "
+       "[$clog2(some_large_contant_name)-1:0] "
+       "f_some_long_function(\n"
+       "      input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n"},
+      {// Short names still keep ports and stay on one line
+       "package foo;\n"
+       "  function logic [$clog2(N)-1:0] f(input int a, input int b);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n",
+       "package foo;\n"
+       "  function logic [$clog2(N)-1:0] f(input int a, input int b);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n"},
+      {// $bits() in packed dimensions
+       "package foo;\n"
+       "  function some_large_return_type [$bits(some_large_contant_name)-1:0] "
+       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n",
+       "package foo;\n"
+       "  function some_large_return_type [$bits(some_large_contant_name)-1:0] "
+       "f_some_long_function(\n"
+       "      input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n"},
+      {// Multi-argument system function in packed dimensions
+       "package foo;\n"
+       "  function some_large_return_type "
+       "[$clog2(some_large_contant_name, WIDTH)-1:0] "
+       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n",
+       "package foo;\n"
+       "  function some_large_return_type "
+       "[$clog2(some_large_contant_name, WIDTH)-1:0] "
+       "f_some_long_function(\n"
+       "      input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n"},
+      {// extern prototype
+       "class c;\n"
+       "  extern function some_large_return_type "
+       "[$clog2(some_large_contant_name)-1:0] "
+       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
+       "endclass\n",
+       "class c;\n"
+       "  extern function some_large_return_type "
+       "[$clog2(some_large_contant_name)-1:0] "
+       "f_some_long_function(\n"
+       "      input int parameter_1, input int parameter_2);\n"
+       "endclass\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  RunFormatterTestCases(style, kTestCases);
+}
+
+TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallWrapsArgs) {
+  // Tight column limit still keeps the ports (the original bug dropped them).
+  // The header itself is longer than 40 columns, so it wraps.
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"package foo;\n"
+       "  function some_large_return_type "
+       "[$clog2(some_large_contant_name)-1:0] "
+       "f_some_long_function( input int parameter_1, input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n",
+       "package foo;\n"
+       "  function\n"
+       "      some_large_return_type [$clog2(some_large_contant_name)-1\n"
+       "      :0] f_some_long_function(\n"
+       "      input int parameter_1,\n"
+       "      input int parameter_2);\n"
+       "    return 1;\n"
+       "  endfunction\n"
+       "endpackage\n"},
+  };
+  RunFormatterTestCases40(kTestCases);
+}
+
 // Regression for https://github.com/chipsalliance/verible/issues/2540:
 // Trailing EOL comment after `end` before `else if` must not change whether
 // the else-if assignment stays on one line across re-format (convergence).
@@ -315,107 +418,26 @@ TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
   }
 }
 
-// Regression for https://github.com/chipsalliance/verible/issues/886:
-// Packed dimensions with $clog2()/$bits() used to split the function header
-// so ReshapeFittingSubpartitions dropped the port list.
-TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallKeepsPorts) {
+// Regression for https://github.com/chipsalliance/verible/issues/2539:
+// A // comment followed by a line-continuation `\` before aligned ports must
+// not abort in align.h, and must keep the comment on its own line.
+TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
   static constexpr FormatterTestCase kTestCases[] = {
-      {// Original issue sample (default column_limit 100)
-       "package foo;\n"
-       "  function some_large_return_type "
-       "[$clog2(some_large_contant_name)-1:0] "
-       "f_some_long_function( input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n",
-       "package foo;\n"
-       "  function some_large_return_type "
-       "[$clog2(some_large_contant_name)-1:0] "
-       "f_some_long_function(\n"
-       "      input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n"},
-      {// Short names still keep ports and stay on one line
-       "package foo;\n"
-       "  function logic [$clog2(N)-1:0] f(input int a, input int b);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n",
-       "package foo;\n"
-       "  function logic [$clog2(N)-1:0] f(input int a, input int b);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n"},
-      {// $bits() in packed dimensions
-       "package foo;\n"
-       "  function some_large_return_type [$bits(some_large_contant_name)-1:0] "
-       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n",
-       "package foo;\n"
-       "  function some_large_return_type [$bits(some_large_contant_name)-1:0] "
-       "f_some_long_function(\n"
-       "      input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n"},
-      {// Multi-argument system function in packed dimensions
-       "package foo;\n"
-       "  function some_large_return_type "
-       "[$clog2(some_large_contant_name, WIDTH)-1:0] "
-       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n",
-       "package foo;\n"
-       "  function some_large_return_type "
-       "[$clog2(some_large_contant_name, WIDTH)-1:0] "
-       "f_some_long_function(\n"
-       "      input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n"},
-      {// extern prototype
-       "class c;\n"
-       "  extern function some_large_return_type "
-       "[$clog2(some_large_contant_name)-1:0] "
-       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
-       "endclass\n",
-       "class c;\n"
-       "  extern function some_large_return_type "
-       "[$clog2(some_large_contant_name)-1:0] "
-       "f_some_long_function(\n"
-       "      input int parameter_1, input int parameter_2);\n"
-       "endclass\n"},
+      {"module m (\n"
+       "//\\\n"
+       "input a\n"
+       ",input b\n"
+       ");\n"
+       "endmodule\n",
+       "module m (\n"
+       "    //\\\n"
+       "        input a\n"
+       "    , input b\n"
+       ");\n"
+       "endmodule\n"},
   };
   FormatStyle style;  // default column_limit (100)
   RunFormatterTestCases(style, kTestCases);
-}
-
-TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallWrapsArgs) {
-  // Tight column limit still keeps the ports (the original bug dropped them).
-  // The header itself is longer than 40 columns, so it wraps.
-  static constexpr FormatterTestCase kTestCases[] = {
-      {"package foo;\n"
-       "  function some_large_return_type "
-       "[$clog2(some_large_contant_name)-1:0] "
-       "f_some_long_function( input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n",
-       "package foo;\n"
-       "  function\n"
-       "      some_large_return_type [$clog2(some_large_contant_name)-1\n"
-       "      :0] f_some_long_function(\n"
-       "      input int parameter_1,\n"
-       "      input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n"},
-  };
-  RunFormatterTestCases40(kTestCases);
 }
 }  // namespace
 }  // namespace formatter
