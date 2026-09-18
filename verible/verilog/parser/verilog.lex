@@ -1229,7 +1229,10 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
     yymore();
   }
   {DiscontinuedLine} {
-    yyless(yyleng-1);  /* return \n to input stream */
+    if (yyleng >= 2 && yytext[yyleng - 2] == '\r')
+      yyless(yyleng - 2);  /* return \r\n to input stream */
+    else
+      yyless(yyleng - 1);  /* return \n to input stream */
     UpdateLocation();
     yy_pop_state();
     /* Return a dummy token so the Location range of the definition (@$) spans
