@@ -139,8 +139,7 @@ absl::Status FlowTree::AddMacroOfConditional(
   }
   auto macro_iterator = conditional_iterator + 1;
   auto macro_identifier = macro_iterator->text();
-  if (conditional_macro_id_.find(macro_identifier) ==
-      conditional_macro_id_.end()) {
+  if (!conditional_macro_id_.contains(macro_identifier)) {
     conditional_macro_id_[macro_identifier] = conditional_macros_counter_;
     conditional_macros_.push_back(macro_iterator);
     conditional_macros_counter_++;

@@ -535,7 +535,7 @@ absl::Status VerilogPreprocess::HandleIf(
   const auto &macro_name = *macro_name_extract.value();
   const bool negative_if = (*ifpos)->token_enum() == PP_ifndef;
   const auto &defs = preprocess_data_.macro_definitions;
-  const bool name_is_defined = defs.find(macro_name->text()) != defs.end();
+  const bool name_is_defined = defs.contains(macro_name->text());
   const bool condition_met = (name_is_defined ^ negative_if);
 
   if ((*ifpos)->token_enum() == PP_elsif) {

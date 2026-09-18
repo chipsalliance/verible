@@ -263,8 +263,7 @@ static WithReason<int> SpacesRequiredBetween(
   // If a closing ')', that ends the definition name.
   if (left.TokenEnum() == verilog_tokentype::PP_Identifier &&
       right.TokenEnum() == verilog_tokentype::PP_define_body &&
-      right.Text().substr(0, 2) == "``" &&
-      right.OriginalLeadingSpaces().empty()) {
+      right.Text().starts_with("``") && right.OriginalLeadingSpaces().empty()) {
     return {0, "Preserve spacing in concatenated name"};
   }
 

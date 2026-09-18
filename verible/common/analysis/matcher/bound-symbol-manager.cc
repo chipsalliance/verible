@@ -27,7 +27,7 @@ namespace verible {
 namespace matcher {
 
 bool BoundSymbolManager::ContainsSymbol(const std::string &id) const {
-  return bound_symbols_.find(id) != bound_symbols_.end();
+  return bound_symbols_.contains(id);
 }
 
 const Symbol *BoundSymbolManager::FindSymbol(const std::string &id) const {

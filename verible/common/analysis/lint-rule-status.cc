@@ -60,7 +60,7 @@ std::string AutoFix::Apply(std::string_view base) const {
 bool AutoFix::AddEdits(const std::set<ReplacementEdit> &new_edits) {
   // Check for conflicts
   for (const auto &edit : new_edits) {
-    if (edits_.find(edit) != edits_.end()) {
+    if (edits_.contains(edit)) {
       return false;
     }
   }

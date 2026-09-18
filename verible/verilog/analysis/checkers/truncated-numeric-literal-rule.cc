@@ -18,6 +18,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstddef>
+#include <numbers>
 #include <set>
 #include <string>
 #include <string_view>
@@ -136,11 +137,13 @@ static size_t GetBitWidthOfNumber(const BasedNumber &n, bool *is_lower_bound) {
       // without fully parsing the decimal number ?
       double v;
       if (absl::SimpleAtod(literal, &v) && !std::isinf(v)) {
-        return std::max(129, static_cast<int>(ceil(log(v) / log(2))));
+        return std::max(129,
+                        static_cast<int>(ceil(log(v) / std::numbers::ln2)));
       }
 
       // Uh, more than 300-ish decimal digits ? ... rough estimation it is.
-      return ceil((literal.length() - 1) * log(10) / log(2));
+      return ceil((literal.length() - 1) * std::numbers::ln10 /
+                  std::numbers::ln2);
     } break;
     default:
       break;  // unexpected base
