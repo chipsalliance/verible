@@ -51,7 +51,7 @@ jobs:
         echo "--- check formatting ---"
         CLANG_FORMAT=clang-format-19 ./.github/bin/run-format.sh --show-diff
         echo "--- check build dependencies ---"
-        ./.github/bin/run-build-cleaner.sh
+        ./.github/bin/run-build-cleaner.sh ...
         echo "--- check potential problems ---"
         ./.github/bin/check-potential-problems.sh
 

@@ -17,19 +17,25 @@ set -u
 set -e
 
 BANT=$($(dirname $0)/get-bant-path.sh)
+BAZEL=bazel
 
 # Run build so that we have all dependencies downloaded and genrules
 # materialized.
-bazel build -k --remote_download_outputs=all ...
+for f in abseil-cpp nlohmann_json protobuf re2 rules_flex zlib googletest ; do
+  "${BAZEL}" fetch --repo "@$f" > /dev/null 2>&1
+done
 
-if "${BANT}" -q dwyu ... ; then
+"${BAZEL}" build -k --remote_download_outputs=all \
+           $(${BANT} genrule-outputs ... -c2) > /dev/null 2>&1
+
+if "${BANT}" dwyu $@; then
   echo "Dependencies ok." >&2
 else
   cat >&2 <<EOF
 
 Build dependency issues found, the following one-liner will fix it. Amend PR.
 
-source <(.github/bin/run-build-cleaner.sh)
+source <(.github/bin/run-build-cleaner.sh $@)
 EOF
   exit 1
 fi
