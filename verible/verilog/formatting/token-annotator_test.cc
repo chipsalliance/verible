@@ -2753,6 +2753,24 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {1, SpacingOptions::kUndecided},
       },
 
+      // Modport explicit port name, e.g. "input .a(sig)"
+      {
+          DefaultStyle,
+          {TK_input, "input"},
+          {'.', "."},
+          {/* any context */},
+          {NodeEnum::kModportSimplePort},
+          {1, SpacingOptions::kUndecided},
+      },
+      {
+          DefaultStyle,
+          {TK_output, "output"},
+          {'.', "."},
+          {/* any context */},
+          {NodeEnum::kModportSimplePort},
+          {1, SpacingOptions::kUndecided},
+      },
+
       // Handle '->' as a unary prefix expression.
       {
           DefaultStyle,
