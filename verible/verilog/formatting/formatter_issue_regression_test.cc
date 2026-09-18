@@ -20,7 +20,6 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/util/logging.h"
 #include "verible/verilog/formatting/format-style.h"
 #include "verible/verilog/formatting/formatter-test-utils.h"
@@ -90,6 +89,43 @@ TEST(FormatterEndToEndTest, MacroBeforeCloseParenFormatEquivalent) {
   const auto status = FormatVerilog(kInput, "<filename>", style, stream);
   EXPECT_OK(status) << status.message();
   EXPECT_THAT(stream.str(), testing::HasSubstr("`TOKEN_BYTE"));
+}
+
+// Regression for https://github.com/chipsalliance/verible/issues/2605:
+// TIMESCALE_DIRECTIVE's EndOfLineComment handler used yyless(yyleng-1),
+// which left `\r` in the comment token for CRLF files. Emitting that token
+// plus a CRLF terminator produced `\r\r\n` and failed FormatEquivalent.
+TEST(FormatterEndToEndTest, TimescaleCrlfEolComment) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      // Next-line `//` comment after `timescale (the reduced issue case).
+      {"`timescale 1 ps / 1 ps\r\n"
+       "// hello\r\n"
+       "module m;\r\n"
+       "endmodule\r\n",
+       "`timescale 1 ps / 1 ps\r\n"
+       "// hello\r\n"
+       "module m;\r\n"
+       "endmodule\r\n"},
+      // Same-line `//` comment on the `timescale directive.
+      {"`timescale 1 ps / 1 ps // hello\r\n"
+       "module m;\r\n"
+       "endmodule\r\n",
+       "`timescale 1 ps / 1 ps  // hello\r\n"
+       "module m;\r\n"
+       "endmodule\r\n"},
+      // LF control: this path already passed lexical verification.
+      {"`timescale 1 ps / 1 ps\n"
+       "// hello\n"
+       "module m;\n"
+       "endmodule\n",
+       "`timescale 1 ps / 1 ps\n"
+       "// hello\n"
+       "module m;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.line_terminator = verible::LineTerminatorOptionStyle::kAuto;
+  RunFormatterTestCases(style, kTestCases);
 }
 
 // Regression for https://github.com/chipsalliance/verible/issues/2542:
@@ -316,40 +352,25 @@ TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
   }
 }
 
-// Regression for https://github.com/chipsalliance/verible/issues/2605:
-// TIMESCALE_DIRECTIVE's EndOfLineComment handler used yyless(yyleng-1),
-// which left `\r` in the comment token for CRLF files. Emitting that token
-// plus a CRLF terminator produced `\r\r\n` and failed FormatEquivalent.
-TEST(FormatterEndToEndTest, TimescaleCrlfEolComment) {
+// Regression for https://github.com/chipsalliance/verible/issues/2539:
+// A // comment followed by a line-continuation `\` before aligned ports must
+// not abort in align.h, and must keep the comment on its own line.
+TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
   static constexpr FormatterTestCase kTestCases[] = {
-      // Next-line `//` comment after `timescale (the reduced issue case).
-      {"`timescale 1 ps / 1 ps\r\n"
-       "// hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n",
-       "`timescale 1 ps / 1 ps\r\n"
-       "// hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n"},
-      // Same-line `//` comment on the `timescale directive.
-      {"`timescale 1 ps / 1 ps // hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n",
-       "`timescale 1 ps / 1 ps  // hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n"},
-      // LF control: this path already passed lexical verification.
-      {"`timescale 1 ps / 1 ps\n"
-       "// hello\n"
-       "module m;\n"
+      {"module m (\n"
+       "//\\\n"
+       "input a\n"
+       ",input b\n"
+       ");\n"
        "endmodule\n",
-       "`timescale 1 ps / 1 ps\n"
-       "// hello\n"
-       "module m;\n"
+       "module m (\n"
+       "    //\\\n"
+       "        input a\n"
+       "    , input b\n"
+       ");\n"
        "endmodule\n"},
   };
-  FormatStyle style;
-  style.line_terminator = verible::LineTerminatorOptionStyle::kAuto;
+  FormatStyle style;  // default column_limit (100)
   RunFormatterTestCases(style, kTestCases);
 }
 }  // namespace

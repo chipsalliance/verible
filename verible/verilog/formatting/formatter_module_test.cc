@@ -3050,6 +3050,40 @@ TEST(FormatterEndToEndTest, ModuleFormatterTestCases) {
   RunFormatterTestCases40(kModuleFormatterTestCases);
 }
 
+TEST(FormatterEndToEndTest, TernaryInsideSubscriptExpression_issue2597) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      // Outside subscript
+      {"module foo ();\n"
+       "assign a = b > 1'h0 ? 1'h0 : c;\n"
+       "endmodule\n",
+
+       "module foo ();\n"
+       "  assign a = b > 1'h0 ? 1'h0 : c;\n"
+       "endmodule\n"},
+
+      // Inside subscript.
+      {"module foo ();\n"
+       "assign a = some_array[b > 1'h0 ? 1'h0 : c];\n"
+       "endmodule\n",
+
+       "module foo ();\n"
+       "  assign a = some_array[b > 1'h0 ? 1'h0 : c];\n"
+       "endmodule\n"},
+  };
+
+  FormatStyle style;
+  style.indentation_spaces = 2;
+  for (const auto &test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog

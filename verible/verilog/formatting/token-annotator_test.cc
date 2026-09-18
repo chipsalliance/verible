@@ -2753,6 +2753,24 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {1, SpacingOptions::kUndecided},
       },
 
+      // Modport explicit port name, e.g. "input .a(sig)"
+      {
+          DefaultStyle,
+          {TK_input, "input"},
+          {'.', "."},
+          {/* any context */},
+          {NodeEnum::kModportSimplePort},
+          {1, SpacingOptions::kUndecided},
+      },
+      {
+          DefaultStyle,
+          {TK_output, "output"},
+          {'.', "."},
+          {/* any context */},
+          {NodeEnum::kModportSimplePort},
+          {1, SpacingOptions::kUndecided},
+      },
+
       // Handle '->' as a unary prefix expression.
       {
           DefaultStyle,
@@ -5500,6 +5518,31 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
           {NodeEnum::kUnpackedDimensions},
           {NodeEnum::kUnpackedDimensions},
           {1, SpacingOptions::kPreserve},
+      },
+      {
+          // [b > 1'h0 ? 1'h0 : c] : space around '>' in ternary inside
+          // subscript
+          DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "b",
+          " ",  // 1 space originally
+          '>',
+          ">",
+          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
+          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
+          {1, SpacingOptions::kUndecided},
+      },
+      {
+          // [b > 1 ? 1 : c] : space before '?' in ternary inside subscript
+          DefaultStyle,
+          verilog_tokentype::TK_DecNumber,
+          "1",
+          " ",  // 1 space originally
+          '?',
+          "?",
+          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
+          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
+          {1, SpacingOptions::kUndecided},
       },
   };
   int test_index = 0;
