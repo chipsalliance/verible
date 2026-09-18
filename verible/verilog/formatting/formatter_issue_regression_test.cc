@@ -207,6 +207,34 @@ TEST(FormatterEndToEndTest, EndElseIfWithEOLCommentConverges) {
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2352:
+// '/' between identifiers in a macro argument is a path separator and must
+// not be spaced as a division operator (that breaks compiles).
+TEST(FormatterEndToEndTest, MacroArgPathSeparatorsKeepNoSpace) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Original issue sample
+       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n",
+       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n"},
+      {// Extra spaces around '/' are removed in macro args
+       "`PROJECT_INCLUDE(`PATH_MY_MODULE / src / config_class.sv)\n",
+       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n"},
+      {// Nested directories
+       "`INCLUDE(foo/bar/baz.svh)\n", "`INCLUDE(foo/bar/baz.svh)\n"},
+      {// Path as a later argument
+       "`LOAD(cfg, `ROOT/hw/ip/file.sv)\n",
+       "`LOAD(cfg, `ROOT/hw/ip/file.sv)\n"},
+      {// Division between identifiers outside macros still gets spaces
+       "module m;\n"
+       "  assign x = a/b;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  assign x = a / b;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  RunFormatterTestCases(style, kTestCases);
+}
+
 // Regression for https://github.com/chipsalliance/verible/issues/2008
 // (also https://github.com/chipsalliance/verible/issues/2474 and
 // https://github.com/chipsalliance/verible/issues/2063):
@@ -315,28 +343,22 @@ TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
   }
 }
 
-// Regression for https://github.com/chipsalliance/verible/issues/2352:
-// '/' between identifiers in a macro argument is a path separator and must
-// not be spaced as a division operator (that breaks compiles).
-TEST(FormatterEndToEndTest, MacroArgPathSeparatorsKeepNoSpace) {
+// Regression for https://github.com/chipsalliance/verible/issues/2539:
+// A // comment followed by a line-continuation `\` before aligned ports must
+// not abort in align.h, and must keep the comment on its own line.
+TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
   static constexpr FormatterTestCase kTestCases[] = {
-      {// Original issue sample
-       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n",
-       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n"},
-      {// Extra spaces around '/' are removed in macro args
-       "`PROJECT_INCLUDE(`PATH_MY_MODULE / src / config_class.sv)\n",
-       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n"},
-      {// Nested directories
-       "`INCLUDE(foo/bar/baz.svh)\n", "`INCLUDE(foo/bar/baz.svh)\n"},
-      {// Path as a later argument
-       "`LOAD(cfg, `ROOT/hw/ip/file.sv)\n",
-       "`LOAD(cfg, `ROOT/hw/ip/file.sv)\n"},
-      {// Division between identifiers outside macros still gets spaces
-       "module m;\n"
-       "  assign x = a/b;\n"
+      {"module m (\n"
+       "//\\\n"
+       "input a\n"
+       ",input b\n"
+       ");\n"
        "endmodule\n",
-       "module m;\n"
-       "  assign x = a / b;\n"
+       "module m (\n"
+       "    //\\\n"
+       "        input a\n"
+       "    , input b\n"
+       ");\n"
        "endmodule\n"},
   };
   FormatStyle style;  // default column_limit (100)

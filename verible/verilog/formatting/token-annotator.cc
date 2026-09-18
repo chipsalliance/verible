@@ -117,7 +117,7 @@ static bool InRangeLikeContext(const SyntaxTreeContext &context) {
   return context.IsInsideFirst(
       {NodeEnum::kDimensionScalar, NodeEnum::kDimensionRange,
        NodeEnum::kDimensionSlice, NodeEnum::kCycleDelayRange},
-      {});
+      {NodeEnum::kConditionExpression});  // exclude
 }
 
 // '/' between identifiers inside a macro argument is a filesystem path
@@ -308,6 +308,12 @@ static WithReason<int> SpacesRequiredBetween(
   }
 
   // TODO(fangism): Never insert trailing spaces before a newline.
+
+  // Modport port name separator, e.g. "input .a("
+  if (right.TokenEnum() == '.' &&
+      right_context.IsInside(NodeEnum::kModportSimplePort)) {
+    return {1, "Space before modport explicit port name '.'"};
+  }
 
   // Hierarchy examples: "a.b", "a::b"
   if (left.format_token_enum == FormatTokenType::hierarchy ||
