@@ -46,7 +46,7 @@ static bool KeywordAcceptsOptionalLabel(int token_enum) {
        TK_endprogram, TK_endproperty, TK_endsequence, TK_endchecker,
        TK_endconnectrules, TK_enddiscipline, TK_endnature, TK_endparamset,
        TK_join, TK_join_any, TK_join_none});
-  return keywords->find(token_enum) != keywords->end();
+  return keywords->contains(token_enum);
 }
 
 void KeywordLabelStateMachine::UpdateState(int token_enum) {

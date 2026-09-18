@@ -106,13 +106,13 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
             "Section with unit names need to start with digit", context));
         return;
       }
-      if (exceptions_.find(std::string(ns)) != exceptions_.end()) {
+      if (exceptions_.contains(std::string(ns))) {
         continue;  // number + unit exception found
       }
       const auto &alpha =
           std::find_if(ns.begin(), ns.end(), absl::ascii_isalpha);
       const auto ns_substr = std::string(alpha, ns.end());
-      if (exceptions_.find(ns_substr) == exceptions_.end()) {
+      if (!exceptions_.contains(ns_substr)) {
         violations_.insert(
             LintViolation(*identifier_leaf,
                           "found digit followed by unit that is "
