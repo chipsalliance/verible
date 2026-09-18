@@ -21,22 +21,20 @@ BANT=$($(dirname $0)/get-bant-path.sh)
 
 BAZEL_OPTS="-c opt --noshow_progress --remote_download_outputs=all"
 
+# Trigger necessary fetches from MODULE.bazel
+for f in abseil-cpp nlohmann_json protobuf re2 rules_flex zlib googletest ; do
+  "${BAZEL}" fetch --repo "@$f" > /dev/null 2>&1
+done
+
 # Bazel-build all targets that generate files, so that they can be
 # seen in dependency analysis.
-${BAZEL} build -k ${BAZEL_OPTS} $(${BANT} list-targets ... \
-                         -g 'genrule|cc_proto_library|genlex|genyacc' -c3)
-
-# Some selected targets to trigger all dependency fetches from MODULE.bazel
-# verilog-y-final to create a header, kzip creator to trigger build of any.pb.h
-# and some test that triggers fetching nlohmann_json and gtest
-${BAZEL} build -k ${BAZEL_OPTS} //verible/verilog/parser:verilog-y-final \
-  //verible/verilog/tools/kythe:verible-verilog-kythe-kzip-writer \
-  //verible/common/lsp:json-rpc-dispatcher_test
+"${BAZEL}" build ${BAZEL_OPTS} \
+           $(${BANT} list-targets -g "genrule|cc_proto_library" -m -c3 ...)
 
 # bant does not distinguish the compile flags per file yet, so instead of
 # a compile_commands.json, we can just as well create a simpler
 # compile_flags.txt which is easier to digest for all kinds of tools anyway.
-${BANT} compile-flags 2>/dev/null > compile_flags.txt
+${BANT} compile-flags -o compile_flags.txt
 
 # Bant does not see the flex dependency inside the toolchain yet.
 for d in bazel-out/../../../external/*flex*/src/FlexLexer.h ; do
