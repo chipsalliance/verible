@@ -117,7 +117,7 @@ static bool InRangeLikeContext(const SyntaxTreeContext &context) {
   return context.IsInsideFirst(
       {NodeEnum::kDimensionScalar, NodeEnum::kDimensionRange,
        NodeEnum::kDimensionSlice, NodeEnum::kCycleDelayRange},
-      {});
+      {NodeEnum::kConditionExpression});  // exclude
 }
 
 static bool IsAnySemicolon(const PreFormatToken &ftoken) {
