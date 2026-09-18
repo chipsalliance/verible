@@ -96,6 +96,18 @@ static constexpr FormatterTestCase kClassPackageFormatterTestCases[] = {
         "endinterface\n",
     },
     {
+        // Keep space before explicit modport port name
+        "interface\tfoo  ;"
+        "modport mp1(input  .a(sig), output  .b(sig));"
+        "endinterface",
+        "interface foo;\n"
+        "  modport mp1(\n"
+        "      input .a(sig),\n"
+        "      output .b(sig)\n"
+        "  );\n"
+        "endinterface\n",
+    },
+    {
         // interface with long modport port names
         "interface\tfoo_if  ;"
         "modport  mp1\t( output a_long_output, input detailed_input_name);"

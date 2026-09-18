@@ -20,7 +20,6 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "verible/common/formatting/basic-format-style.h"
 #include "verible/common/util/logging.h"
 #include "verible/verilog/formatting/format-style.h"
 #include "verible/verilog/formatting/formatter-test-utils.h"
@@ -72,6 +71,23 @@ TEST(FormatterEndToEndTest, LongMacroSumLocalparamConverges) {
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
+}
+
+// Regression for https://github.com/chipsalliance/verible/issues/2607:
+// A CRLF macro definition must keep a single line terminator so formatting
+// converges.
+TEST(FormatterEndToEndTest, DefineCrlfConverges) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"`define A x.y\r\n"
+       "module m;\r\n"
+       "endmodule\r\n",
+       "`define A x.y\r\n"
+       "module m;\r\n"
+       "endmodule\r\n"},
+  };
+  FormatStyle style;
+  style.line_terminator = verible::LineTerminatorOptionStyle::kAuto;
+  RunFormatterTestCases(style, kTestCases);
 }
 
 // Regression for https://github.com/chipsalliance/verible/issues/2544:
@@ -316,20 +332,25 @@ TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
   }
 }
 
-// Regression for https://github.com/chipsalliance/verible/issues/2607:
-// A CRLF macro definition must keep a single line terminator so formatting
-// converges.
-TEST(FormatterEndToEndTest, DefineCrlfConverges) {
+// Regression for https://github.com/chipsalliance/verible/issues/2539:
+// A // comment followed by a line-continuation `\` before aligned ports must
+// not abort in align.h, and must keep the comment on its own line.
+TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
   static constexpr FormatterTestCase kTestCases[] = {
-      {"`define A x.y\r\n"
-       "module m;\r\n"
-       "endmodule\r\n",
-       "`define A x.y\r\n"
-       "module m;\r\n"
-       "endmodule\r\n"},
+      {"module m (\n"
+       "//\\\n"
+       "input a\n"
+       ",input b\n"
+       ");\n"
+       "endmodule\n",
+       "module m (\n"
+       "    //\\\n"
+       "        input a\n"
+       "    , input b\n"
+       ");\n"
+       "endmodule\n"},
   };
-  FormatStyle style;
-  style.line_terminator = verible::LineTerminatorOptionStyle::kAuto;
+  FormatStyle style;  // default column_limit (100)
   RunFormatterTestCases(style, kTestCases);
 }
 }  // namespace
