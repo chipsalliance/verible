@@ -314,6 +314,28 @@ TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
+
+// Regression for https://github.com/chipsalliance/verible/issues/2539:
+// A // comment followed by a line-continuation `\` before aligned ports must
+// not abort in align.h, and must keep the comment on its own line.
+TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"module m (\n"
+       "//\\\n"
+       "input a\n"
+       ",input b\n"
+       ");\n"
+       "endmodule\n",
+       "module m (\n"
+       "    //\\\n"
+       "        input a\n"
+       "    , input b\n"
+       ");\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  RunFormatterTestCases(style, kTestCases);
+}
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
