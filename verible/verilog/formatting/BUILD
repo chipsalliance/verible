@@ -224,7 +224,10 @@ cc_test(
     name = "formatter_module_test",
     srcs = ["formatter_module_test.cc"],
     deps = [
+        ":format-style",
+        ":formatter",
         ":formatter-test-utils",
+        "@abseil-cpp//absl/log",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
