@@ -472,6 +472,12 @@ static std::initializer_list<LexerTestData> kUnfilteredMacroCallTests = {
 static std::initializer_list<LexerTestData> kMacroDefineTests = {
     {{PP_define, "`define"},
      {TK_SPACE, " "},
+     {PP_Identifier, "A"},
+     {TK_SPACE, " "},
+     {PP_define_body, "x.y"},
+     {TK_NEWLINE, "\r\n"}},
+    {{PP_define, "`define"},
+     {TK_SPACE, " "},
      {PP_Identifier, "FOO"},
      {PP_define_body, ""},
      {TK_NEWLINE, "\n"}},

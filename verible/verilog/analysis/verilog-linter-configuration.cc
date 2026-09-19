@@ -163,7 +163,7 @@ bool RuleBundle::ParseConfiguration(std::string_view text, char separator,
     // same configuration file, warn the user about it.
     // NOTE: ignore producing a warning if there is no configuration, just
     // disabing/enabling
-    if (!setting.configuration.empty() && rules.count(*rule_iter)) {
+    if (!setting.configuration.empty() && rules.contains(*rule_iter)) {
       absl::StrAppend(error, error->empty() ? "" : "\n", kRepeatedFlagMessage,
                       " \"", rule_name, "\" = ", setting.configuration);
       parsed_correctly = false;

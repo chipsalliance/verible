@@ -98,7 +98,7 @@ void VoidCastRule::HandleSymbol(const verible::Symbol &symbol,
   if (FunctionMatcher().Matches(symbol, &manager)) {
     if (const verible::SyntaxTreeLeaf *function_id = manager.GetAsLeaf("id")) {
       const auto &bfs = ForbiddenFunctionsSet();
-      if (bfs.find(std::string(function_id->get().text())) != bfs.end()) {
+      if (bfs.contains(std::string(function_id->get().text()))) {
         violations_.insert(LintViolation(function_id->get(),
                                          FormatReason(*function_id), context));
       }

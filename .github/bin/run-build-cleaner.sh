@@ -26,7 +26,8 @@ for f in abseil-cpp nlohmann_json protobuf re2 rules_flex zlib googletest ; do
 done
 
 "${BAZEL}" build -k --remote_download_outputs=all \
-           $(${BANT} genrule-outputs ... -c2) > /dev/null 2>&1
+           $(${BANT} list-targets -g "genrule|cc_proto_library" -m -c3 ...) \
+           > /dev/null 2>&1
 
 if "${BANT}" dwyu $@; then
   echo "Dependencies ok." >&2
