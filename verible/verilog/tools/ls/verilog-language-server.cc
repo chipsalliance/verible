@@ -33,6 +33,7 @@
 #include "verible/common/util/logging.h"
 #include "verible/verilog/analysis/verilog-project.h"
 #include "verible/verilog/tools/ls/hover.h"
+#include "verible/verilog/tools/ls/inlay-hint.h"
 #include "verible/verilog/tools/ls/lsp-parse-buffer.h"
 #include "verible/verilog/tools/ls/symbol-table-handler.h"
 #include "verible/verilog/tools/ls/verible-lsp-adapter.h"
@@ -96,6 +97,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::GetCapabilities() {
       // Hover available, but not yet offered to client until tested.
       {"hoverProvider", enable_hover},  // Hover info over cursor
       {"renameProvider", true},         // Provide symbol renaming
+      {"inlayHintProvider", true},      // Show port info at instantiations
       {"diagnosticProvider",            // Pull model of diagnostics.
        {
            {"interFileDependencies", false},
@@ -185,6 +187,11 @@ void VerilogLanguageServer::SetRequestHandlers() {
       "textDocument/hover", [this](const verible::lsp::HoverParams &p) {
         return CreateHoverInformation(&symbol_table_handler_, parsed_buffers_,
                                       p);
+      });
+  dispatcher_.AddRequestHandler(  // Inlay hints for port info
+      "textDocument/inlayHint", [this](const verible::lsp::InlayHintParams &p) {
+        return verilog::GenerateInlayHints(&symbol_table_handler_,
+                                           parsed_buffers_, p);
       });
   // The client sends a request to shut down. Use that to exit our loop.
   dispatcher_.AddRequestHandler("shutdown", [this](const nlohmann::json &) {
