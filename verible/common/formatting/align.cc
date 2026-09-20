@@ -337,8 +337,8 @@ struct AlignedColumnConfiguration {
   // adding a new column.
   if (parent_column->Children().empty() ||
       parent_column->Children().back().Value().path != path) {
-    parent_column->Children().emplace_back(
-        ColumnPositionEntry{path, leaf->get(), properties});
+    parent_column->Children().emplace_back(ColumnPositionEntry{
+        .path = path, .starting_token = leaf->get(), .properties = properties});
     const auto &column = parent_column->Children().back();
     ColumnsTreePath column_path;
     verible::Path(column, column_path);
@@ -901,7 +901,8 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
         });
     const AlignmentRowData row_data{
         // Extract the range of format tokens whose spacings should be adjusted.
-        unwrapped_line.TokensRange(), std::move(sparse_columns)};
+        .ftoken_range = unwrapped_line.TokensRange(),
+        .sparse_columns = std::move(sparse_columns)};
 
     alignment_row_data.emplace_back(row_data);
     VLOG(2) << "Row sparse columns:\n" << row_data.sparse_columns;

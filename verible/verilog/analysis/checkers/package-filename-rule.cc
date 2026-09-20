@@ -57,9 +57,11 @@ const LintRuleDescriptor &PackageFilenameRule::GetDescriptor() {
           "Checks that the package name matches the filename. Depending on "
           "configuration, it is also allowed to replace underscore with dashes "
           "in filenames.",
-      .param = {{"allow-dash-for-underscore", "false",
-                 "Allow dashes in the filename corresponding to the "
-                 "underscores in the package"}},
+      .param = {{.name = "allow-dash-for-underscore",
+                 .default_value = "false",
+                 .description =
+                     "Allow dashes in the filename corresponding to the "
+                     "underscores in the package"}},
   };
   return d;
 }
@@ -123,8 +125,8 @@ LintRuleStatus PackageFilenameRule::Report() const {
 absl::Status PackageFilenameRule::Configure(std::string_view configuration) {
   using verible::config::SetBool;
   return verible::ParseNameValues(
-      configuration,
-      {{"allow-dash-for-underscore", SetBool(&allow_dash_for_underscore_)}});
+      configuration, {{.name = "allow-dash-for-underscore",
+                       .set_value = SetBool(&allow_dash_for_underscore_)}});
 }
 }  // namespace analysis
 }  // namespace verilog

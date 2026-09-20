@@ -79,20 +79,28 @@ const LintRuleDescriptor &DffNameStyleRule::GetDescriptor() {
           "Exceptions to this rule can be configured using a regular "
           "expression or waiving whole `if` blocks",
       .param = {
-          {"input", std::string(kDefaultInputSuffixes),
-           "Comma separated list of allowed suffixes for the input port. "
-           "Suffixes should not include the preceding \"_\". Empty field "
-           "means no checks for the input port"},
-          {"output", std::string(kDefaultOutputSuffixes),
-           "Comma separated list of allowed suffixes for the output port. "
-           "Should not include the preceding \"_\". Empty field means no "
-           "checks for the output port"},
-          {"waive_ifs_with_conditions", std::string(kDefaultWaiveConditions),
-           "Comma separated list of conditions that will disable the rule "
-           "inside the `if`s they are evaluated in"},
-          {"waive_lhs_regex", std::string(kDefaultWaiveRegex),
-           "Nonblocking assigments whose lhs match the regex will not be "
-           "evaluated"},
+          {.name = "input",
+           .default_value = std::string(kDefaultInputSuffixes),
+           .description =
+               "Comma separated list of allowed suffixes for the input port. "
+               "Suffixes should not include the preceding \"_\". Empty field "
+               "means no checks for the input port"},
+          {.name = "output",
+           .default_value = std::string(kDefaultOutputSuffixes),
+           .description =
+               "Comma separated list of allowed suffixes for the output port. "
+               "Should not include the preceding \"_\". Empty field means no "
+               "checks for the output port"},
+          {.name = "waive_ifs_with_conditions",
+           .default_value = std::string(kDefaultWaiveConditions),
+           .description =
+               "Comma separated list of conditions that will disable the rule "
+               "inside the `if`s they are evaluated in"},
+          {.name = "waive_lhs_regex",
+           .default_value = std::string(kDefaultWaiveRegex),
+           .description =
+               "Nonblocking assigments whose lhs match the regex will not be "
+               "evaluated"},
       }};
   return d;
 }
@@ -334,11 +342,12 @@ absl::Status DffNameStyleRule::Configure(std::string_view configuration) {
 
   absl::Status status = verible::ParseNameValues(
       configuration,
-      {{"output", SetString(&output)},
-       {"input", SetString(&input)},
-       {"waive_lhs_regex", verible::config::SetRegex(&waive_lhs_regex)},
-       {"waive_ifs_with_conditions",
-        SetString(&waive_ifs_with_conditions_str)}});
+      {{.name = "output", .set_value = SetString(&output)},
+       {.name = "input", .set_value = SetString(&input)},
+       {.name = "waive_lhs_regex",
+        .set_value = verible::config::SetRegex(&waive_lhs_regex)},
+       {.name = "waive_ifs_with_conditions",
+        .set_value = SetString(&waive_ifs_with_conditions_str)}});
 
   if (!status.ok()) return status;
 

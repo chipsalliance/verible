@@ -207,7 +207,8 @@ TEST_F(TokenRangeTest, CalculateFirstTokensPerLineTest) {
 
 TEST_F(TokenRangeTest, GetRangeOfTokenVerifyAllRangesExclusive) {
   // Bulk testing: let's see that we constantly progress in emitted ranges.
-  LineColumnRange previous{{0, 0}, {0, 0}};
+  LineColumnRange previous{.start = {.line = 0, .column = 0},
+                           .end = {.line = 0, .column = 0}};
   for (const TokenInfo &token : data_.TokenStream()) {
     LineColumnRange token_range = data_.GetRangeForToken(token);
     EXPECT_EQ(token_range.start, previous.end);
@@ -225,7 +226,7 @@ TEST_F(TokenRangeTest, GetRangeOfTokenEofTokenAcceptedUniversally) {
 }
 
 TEST_F(TokenRangeTest, GetRangeForTokenOrText) {
-  const TokenInfo &token = data_.FindTokenAt({0, 7});
+  const TokenInfo &token = data_.FindTokenAt({.line = 0, .column = 7});
   EXPECT_EQ(token.text(), "world");
   {  // Extract from token
     const LineColumnRange range = data_.GetRangeForToken(token);
@@ -248,7 +249,7 @@ TEST_F(TokenRangeTest, GetRangeForTokenOrText) {
 }
 
 TEST_F(TokenRangeTest, CheckContainsText) {
-  const TokenInfo &token = data_.FindTokenAt({0, 7});
+  const TokenInfo &token = data_.FindTokenAt({.line = 0, .column = 7});
   const std::string_view other_string = "other_string";
   EXPECT_TRUE(data_.ContainsText(token.text()));
   EXPECT_FALSE(data_.ContainsText(other_string));
@@ -286,20 +287,59 @@ struct TokenRangeTestCase {
 // Checks that token ranges span the given offsets.
 TEST_F(TokenRangeTest, TokenRangeSpanningOffsetsNonEmpty) {
   const TokenRangeTestCase test_cases[] = {
-      {0, 1, 0, 1},      // noformat
-      {0, 5, 0, 1},      // noformat
-      {0, 6, 0, 2},      // noformat
-      {0, 14, 0, 6},     // noformat
-      {0, 15, 0, 7},     // noformat
-      {0, 27, 0, 11},    // noformat
-      {1, 27, 1, 11},    // noformat
-      {5, 27, 1, 11},    // noformat
-      {6, 27, 2, 11},    // noformat
-      {21, 27, 9, 11},   // noformat
-      {22, 27, 10, 11},  // noformat
-      {26, 27, 10, 11},  // noformat
-      {9, 12, 4, 4},     // empty, does not span a whole token
-      {9, 19, 4, 7},
+      {.left_offset = 0,
+       .right_offset = 1,
+       .left_index = 0,
+       .right_index = 1},  // noformat
+      {.left_offset = 0,
+       .right_offset = 5,
+       .left_index = 0,
+       .right_index = 1},  // noformat
+      {.left_offset = 0,
+       .right_offset = 6,
+       .left_index = 0,
+       .right_index = 2},  // noformat
+      {.left_offset = 0,
+       .right_offset = 14,
+       .left_index = 0,
+       .right_index = 6},  // noformat
+      {.left_offset = 0,
+       .right_offset = 15,
+       .left_index = 0,
+       .right_index = 7},  // noformat
+      {.left_offset = 0,
+       .right_offset = 27,
+       .left_index = 0,
+       .right_index = 11},  // noformat
+      {.left_offset = 1,
+       .right_offset = 27,
+       .left_index = 1,
+       .right_index = 11},  // noformat
+      {.left_offset = 5,
+       .right_offset = 27,
+       .left_index = 1,
+       .right_index = 11},  // noformat
+      {.left_offset = 6,
+       .right_offset = 27,
+       .left_index = 2,
+       .right_index = 11},  // noformat
+      {.left_offset = 21,
+       .right_offset = 27,
+       .left_index = 9,
+       .right_index = 11},  // noformat
+      {.left_offset = 22,
+       .right_offset = 27,
+       .left_index = 10,
+       .right_index = 11},  // noformat
+      {.left_offset = 26,
+       .right_offset = 27,
+       .left_index = 10,
+       .right_index = 11},  // noformat
+      {.left_offset = 9,
+       .right_offset = 12,
+       .left_index = 4,
+       .right_index = 4},  // empty, does not span a whole token
+      {.left_offset = 9, .right_offset = 19, .left_index = 4, .right_index = 7},
   };
   for (const auto &test_case : test_cases) {
     const auto token_range = data_.TokenRangeSpanningOffsets(
@@ -319,10 +359,18 @@ struct TokenLineTestCase {
 // Verify the ranges of tokens spanned per line, and that they end with '\n'.
 TEST_F(TokenRangeTest, TokenRangeOnLine) {
   const TokenLineTestCase test_cases[] = {
-      {0, 0, 5},  // The first entry always points to the first token at [0].
-      {1, 5, 6},  // empty line that only contains newline
-      {2, 6, 11},
-      {3, 11, 11},  // There is no line[3], this represents an empty range.
+      {.lineno = 0,
+       .left_index = 0,
+       .right_index =
+           5},  // The first entry always points to the first token at [0].
+      {.lineno = 1,
+       .left_index = 5,
+       .right_index = 6},  // empty line that only contains newline
+      {.lineno = 2, .left_index = 6, .right_index = 11},
+      {.lineno = 3,
+       .left_index = 11,
+       .right_index =
+           11},  // There is no line[3], this represents an empty range.
   };
   for (const auto &test_case : test_cases) {
     const auto token_range = data_.TokenRangeOnLine(test_case.lineno);
@@ -489,8 +537,9 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesOneLeaf) {
   FakeParseToken(&subanalysis->MutableData(), divide, new_node_tag);
   auto &replacement_node =
       down_cast<SyntaxTreeNode *>(syntax_tree_.get())->front();
-  TextStructureView::DeferredExpansion expansion{&replacement_node,
-                                                 std::move(subanalysis)};
+  TextStructureView::DeferredExpansion expansion{
+      .expansion_point = &replacement_node,
+      .subanalysis = std::move(subanalysis)};
   // Expect tree must be built using substrings of contents_.
   // Build the expect tree first because it references text using
   // pre-mutation indices.
@@ -522,8 +571,9 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
     FakeParseToken(&subanalysis->MutableData(), divide1, new_node_tag1);
     auto &replacement_node =
         down_cast<SyntaxTreeNode *>(syntax_tree_.get())->front();
-    TextStructureView::DeferredExpansion expansion{&replacement_node,
-                                                   std::move(subanalysis)};
+    TextStructureView::DeferredExpansion expansion{
+        .expansion_point = &replacement_node,
+        .subanalysis = std::move(subanalysis)};
     expansion_map[tokens_[0].left(contents_)] = std::move(expansion);
   }
   {
@@ -533,8 +583,9 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
     FakeParseToken(&subanalysis->MutableData(), divide2, new_node_tag2);
     auto &replacement_node =
         down_cast<SyntaxTreeNode *>(syntax_tree_.get())->back();
-    TextStructureView::DeferredExpansion expansion{&replacement_node,
-                                                   std::move(subanalysis)};
+    TextStructureView::DeferredExpansion expansion{
+        .expansion_point = &replacement_node,
+        .subanalysis = std::move(subanalysis)};
     expansion_map[offset2] = std::move(expansion);
   }
   // Expect tree must be built using substrings of contents_.

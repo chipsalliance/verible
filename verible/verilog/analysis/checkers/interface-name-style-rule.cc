@@ -64,8 +64,9 @@ const LintRuleDescriptor &InterfaceNameStyleRule::GetDescriptor() {
           "\"lower_snake_case\" with a \"_if\" or \"_e\" suffix. Refer to "
           "https://github.com/chipsalliance/verible/tree/master/verilog/tools/"
           "lint#readme for more detail on regex patterns.",
-      .param = {{"style_regex", std::string(kDefaultStyleRegex),
-                 "A regex used to check interface name style."}},
+      .param = {{.name = "style_regex",
+                 .default_value = std::string(kDefaultStyleRegex),
+                 .description = "A regex used to check interface name style."}},
   };
   return d;
 }
@@ -98,7 +99,8 @@ void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
 absl::Status InterfaceNameStyleRule::Configure(std::string_view configuration) {
   using verible::config::SetRegex;
   absl::Status s = verible::ParseNameValues(
-      configuration, {{"style_regex", SetRegex(&style_regex_)}});
+      configuration,
+      {{.name = "style_regex", .set_value = SetRegex(&style_regex_)}});
   return s;
 }
 

@@ -64,18 +64,20 @@ TEST(SuspiciousSemicolon, ShouldNotComplain) {
 TEST(SuspiciousSemicolon, ApplyAutoFix) {
   const std::initializer_list<verible::AutoFixInOut>
       kSuspiciousSemicolonTestCases = {
-          {"module m; initial begin if(x); end endmodule",
-           "module m; initial begin if(x) end endmodule"},
-          {"module m; initial begin if(x) x; else; y; end endmodule",
-           "module m; initial begin if(x) x; else y; end endmodule"},
-          {"module m; initial begin while(x); end endmodule",
-           "module m; initial begin while(x) end endmodule"},
-          {"module m; initial begin forever; end endmodule",
-           "module m; initial begin forever end endmodule"},
-          {"module m; always_ff @(posedge clk); endmodule",
-           "module m; always_ff @(posedge clk) endmodule"},
-          {"module m; initial begin foreach (array[i]); end endmodule",
-           "module m; initial begin foreach (array[i]) end endmodule"},
+          {.code = "module m; initial begin if(x); end endmodule",
+           .expected_output = "module m; initial begin if(x) end endmodule"},
+          {.code = "module m; initial begin if(x) x; else; y; end endmodule",
+           .expected_output =
+               "module m; initial begin if(x) x; else y; end endmodule"},
+          {.code = "module m; initial begin while(x); end endmodule",
+           .expected_output = "module m; initial begin while(x) end endmodule"},
+          {.code = "module m; initial begin forever; end endmodule",
+           .expected_output = "module m; initial begin forever end endmodule"},
+          {.code = "module m; always_ff @(posedge clk); endmodule",
+           .expected_output = "module m; always_ff @(posedge clk) endmodule"},
+          {.code = "module m; initial begin foreach (array[i]); end endmodule",
+           .expected_output =
+               "module m; initial begin foreach (array[i]) end endmodule"},
       };
 
   verible::RunApplyFixCases<VerilogAnalyzer, SuspiciousSemicolon>(

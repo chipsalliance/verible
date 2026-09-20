@@ -55,7 +55,7 @@ ByteOffsetSet DisableFormattingRanges(std::string_view text,
   int begin_disable_offset = kNullOffset;
   ByteOffsetSet disable_set;
   for (const auto &token : tokens) {
-    VLOG(2) << verible::TokenWithContext{token, context};
+    VLOG(2) << verible::TokenWithContext{.token = token, .context = context};
     const auto vtoken_enum = verilog_tokentype(token.token_enum());
     if (IsComment(vtoken_enum)) {
       // Focus on the space-delimited tokens in the comment text.

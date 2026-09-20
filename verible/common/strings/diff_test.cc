@@ -63,49 +63,54 @@ struct DiffTestCase {
 
 TEST(LineDiffsTest, Various) {
   constexpr DiffTestCase kTestCases[] = {
-      {"", "", ""},
-      {"", " ", "+ \n"},
-      {" ", "", "- \n"},
-      {" ", " ", "  \n"},
-      {"", "\n", "+\n"},
-      {"\n", "", "-\n"},
-      {"\n", "\n", " \n"},
-      {"\n\n", "\n", " \n-\n"},
-      {"\n", "\n\n", " \n+\n"},
-      {"foo\nbar", "foo\nBar",  // missing end \n
-       " foo\n"
-       "-bar\n"
-       "+Bar\n"},
-      {"foo\nbar\n", "foo\nBar\n",  // with end \n
-       " foo\n"
-       "-bar\n"
-       "+Bar\n"},
-      {"foo\nbar\n", "Foo\nbar\n",  // with end \n
-       "-foo\n"
-       "+Foo\n"
-       " bar\n"},
-      {"foo\nbar\n", "Foo\nBar\n",  // both lines changed
-       "-foo\n"
-       "-bar\n"
-       "+Foo\n"
-       "+Bar\n"},
-      {"foo\nbar", "foo\nbar\n",  // end \n added
-       " foo\n"
-       "-bar\n"
-       "+bar\n"},
-      {"frodo\nsam\nmerry\npippin\n",  //
-       "frodo\nmerry\npippin\n",       //
-       " frodo\n"
-       "-sam\n"
-       " merry\n"
-       " pippin\n"},
-      {"frodo\nsam\nmerry\npippin\n",      //
-       "frodo\nmerry\ngandalf\npippin\n",  //
-       " frodo\n"
-       "-sam\n"
-       " merry\n"
-       "+gandalf\n"
-       " pippin\n"},
+      {.before = "", .after = "", .expected = ""},
+      {.before = "", .after = " ", .expected = "+ \n"},
+      {.before = " ", .after = "", .expected = "- \n"},
+      {.before = " ", .after = " ", .expected = "  \n"},
+      {.before = "", .after = "\n", .expected = "+\n"},
+      {.before = "\n", .after = "", .expected = "-\n"},
+      {.before = "\n", .after = "\n", .expected = " \n"},
+      {.before = "\n\n", .after = "\n", .expected = " \n-\n"},
+      {.before = "\n", .after = "\n\n", .expected = " \n+\n"},
+      {.before = "foo\nbar",
+       .after = "foo\nBar",  // missing end \n
+       .expected = " foo\n"
+                   "-bar\n"
+                   "+Bar\n"},
+      {.before = "foo\nbar\n",
+       .after = "foo\nBar\n",  // with end \n
+       .expected = " foo\n"
+                   "-bar\n"
+                   "+Bar\n"},
+      {.before = "foo\nbar\n",
+       .after = "Foo\nbar\n",  // with end \n
+       .expected = "-foo\n"
+                   "+Foo\n"
+                   " bar\n"},
+      {.before = "foo\nbar\n",
+       .after = "Foo\nBar\n",  // both lines changed
+       .expected = "-foo\n"
+                   "-bar\n"
+                   "+Foo\n"
+                   "+Bar\n"},
+      {.before = "foo\nbar",
+       .after = "foo\nbar\n",  // end \n added
+       .expected = " foo\n"
+                   "-bar\n"
+                   "+bar\n"},
+      {.before = "frodo\nsam\nmerry\npippin\n",  //
+       .after = "frodo\nmerry\npippin\n",        //
+       .expected = " frodo\n"
+                   "-sam\n"
+                   " merry\n"
+                   " pippin\n"},
+      {.before = "frodo\nsam\nmerry\npippin\n",     //
+       .after = "frodo\nmerry\ngandalf\npippin\n",  //
+       .expected = " frodo\n"
+                   "-sam\n"
+                   " merry\n"
+                   "+gandalf\n"
+                   " pippin\n"},
   };
   for (const auto &test : kTestCases) {
     const LineDiffs line_diffs(test.before, test.after);
@@ -125,25 +130,25 @@ struct AddedLineNumbersTestCase {
 
 TEST(DiffEditsToAddedLineNumbersTest, Various) {
   const AddedLineNumbersTestCase kTestCases[] = {
-      {{},  //
-       {}},
-      {{{Operation::DELETE, 0, 3}},  //
-       {}},
-      {{{Operation::EQUALS, 1, 4}},  //
-       {}},
-      {{{Operation::INSERT, 2, 5}},  //
-       {{3, 6}}},
-      {{{Operation::EQUALS, 0, 2},   //
-        {Operation::DELETE, 2, 7},   //
-        {Operation::INSERT, 2, 4},   //
-        {Operation::EQUALS, 7, 9}},  //
-       {{3, 5}}},
-      {{{Operation::EQUALS, 0, 2},    //
-        {Operation::DELETE, 2, 7},    //
-        {Operation::INSERT, 2, 4},    //
-        {Operation::EQUALS, 7, 9},    //
-        {Operation::INSERT, 6, 11}},  //
-       {{3, 5}, {7, 12}}},
+      {.edits = {},  //
+       .expected_line_numbers = {}},
+      {.edits = {{.operation = Operation::DELETE, .start = 0, .end = 3}},  //
+       .expected_line_numbers = {}},
+      {.edits = {{.operation = Operation::EQUALS, .start = 1, .end = 4}},  //
+       .expected_line_numbers = {}},
+      {.edits = {{.operation = Operation::INSERT, .start = 2, .end = 5}},  //
+       .expected_line_numbers = {{3, 6}}},
+      {.edits = {{.operation = Operation::EQUALS, .start = 0, .end = 2},   //
+                 {.operation = Operation::DELETE, .start = 2, .end = 7},   //
+                 {.operation = Operation::INSERT, .start = 2, .end = 4},   //
+                 {.operation = Operation::EQUALS, .start = 7, .end = 9}},  //
+       .expected_line_numbers = {{3, 5}}},
+      {.edits = {{.operation = Operation::EQUALS, .start = 0, .end = 2},    //
+                 {.operation = Operation::DELETE, .start = 2, .end = 7},    //
+                 {.operation = Operation::INSERT, .start = 2, .end = 4},    //
+                 {.operation = Operation::EQUALS, .start = 7, .end = 9},    //
+                 {.operation = Operation::INSERT, .start = 6, .end = 11}},  //
+       .expected_line_numbers = {{3, 5}, {7, 12}}},
   };
   for (const auto &test : kTestCases) {
     EXPECT_EQ(DiffEditsToAddedLineNumbers(test.edits),
@@ -192,20 +197,23 @@ diff::Edits MakeDiffEdits(const std::vector<RelativeEdit> &relative_edits,
     switch (edit.operation) {
       case Operation::EQUALS: {
         const int64_t old_end = old_index + edit.size;
-        edits.push_back(diff::Edit{edit.operation, old_index, old_end});
+        edits.push_back(diff::Edit{
+            .operation = edit.operation, .start = old_index, .end = old_end});
         old_index = old_end;
         new_index += edit.size;
         break;
       }
       case Operation::INSERT: {
         const int64_t new_end = new_index + edit.size;
-        edits.push_back(diff::Edit{edit.operation, new_index, new_end});
+        edits.push_back(diff::Edit{
+            .operation = edit.operation, .start = new_index, .end = new_end});
         new_index = new_end;
         break;
       }
       case Operation::DELETE: {
         const int64_t old_end = old_index + edit.size;
-        edits.push_back(diff::Edit{edit.operation, old_index, old_end});
+        edits.push_back(diff::Edit{
+            .operation = edit.operation, .start = old_index, .end = old_end});
         old_index = old_end;
         break;
       }
@@ -221,116 +229,142 @@ struct MakeDiffEditsTestCase {
 
 TEST(MakeDiffEditsTest, Various) {
   const MakeDiffEditsTestCase kTestCases[] = {
-      {{}, {}},
+      {.rel_edits = {}, .expected_edits = {}},
       // Single edit operations:
-      {{
-           {Operation::EQUALS, 10},
-       },
-       {
-           {Operation::EQUALS, 0, 10},
-       }},
-      {{
-           {Operation::DELETE, 8},
-       },
-       {
-           {Operation::DELETE, 0, 8},
-       }},
-      {{
-           {Operation::INSERT, 7},
-       },
-       {
-           {Operation::INSERT, 0, 7},
-       }},
+      {.rel_edits =
+           {
+               {.operation = Operation::EQUALS, .size = 10},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::EQUALS, .start = 0, .end = 10},
+           }},
+      {.rel_edits =
+           {
+               {.operation = Operation::DELETE, .size = 8},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::DELETE, .start = 0, .end = 8},
+           }},
+      {.rel_edits =
+           {
+               {.operation = Operation::INSERT, .size = 7},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::INSERT, .start = 0, .end = 7},
+           }},
       // Repeated edit operations:
-      {{
-           {Operation::EQUALS, 4},
-           {Operation::EQUALS, 6},
-       },
-       {
-           {Operation::EQUALS, 0, 10},
-       }},
-      {{
-           {Operation::DELETE, 5},
-           {Operation::DELETE, 3},
-       },
-       {
-           {Operation::DELETE, 0, 8},
-       }},
-      {{
-           {Operation::INSERT, 2},
-           {Operation::INSERT, 5},
-       },
-       {
-           {Operation::INSERT, 0, 7},
-       }},
+      {.rel_edits =
+           {
+               {.operation = Operation::EQUALS, .size = 4},
+               {.operation = Operation::EQUALS, .size = 6},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::EQUALS, .start = 0, .end = 10},
+           }},
+      {.rel_edits =
+           {
+               {.operation = Operation::DELETE, .size = 5},
+               {.operation = Operation::DELETE, .size = 3},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::DELETE, .start = 0, .end = 8},
+           }},
+      {.rel_edits =
+           {
+               {.operation = Operation::INSERT, .size = 2},
+               {.operation = Operation::INSERT, .size = 5},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::INSERT, .start = 0, .end = 7},
+           }},
       // Cover each edit transition:
-      {{
-           {Operation::EQUALS, 2},
-           {Operation::DELETE, 3},
-       },
-       {
-           {Operation::EQUALS, 0, 2},
-           {Operation::DELETE, 2, 5},
-       }},
-      {{
-           {Operation::EQUALS, 4},
-           {Operation::INSERT, 5},
-       },
-       {
-           {Operation::EQUALS, 0, 4},
-           {Operation::INSERT, 4, 9},
-       }},
-      {{
-           {Operation::DELETE, 3},
-           {Operation::EQUALS, 2},
-       },
-       {
-           {Operation::DELETE, 0, 3},
-           {Operation::EQUALS, 3, 5},
-       }},
-      {{
-           {Operation::DELETE, 3},
-           {Operation::INSERT, 6},
-       },
-       {
-           {Operation::DELETE, 0, 3},
-           {Operation::INSERT, 0, 6},
-       }},
-      {{
-           {Operation::INSERT, 7},
-           {Operation::EQUALS, 4},
-       },
-       {
-           {Operation::INSERT, 0, 7},
-           {Operation::EQUALS, 0, 4},
-       }},
-      {{
-           {Operation::INSERT, 7},
-           {Operation::DELETE, 3},
-       },
-       {
-           {Operation::INSERT, 0, 7},
-           {Operation::DELETE, 0, 3},
-       }},
-      {{
-           // covers one of each transition
-           {Operation::EQUALS, 2},
-           {Operation::DELETE, 3},
-           {Operation::INSERT, 4},
-           {Operation::EQUALS, 5},
-           {Operation::INSERT, 6},
-           {Operation::DELETE, 7},
-           {Operation::EQUALS, 8},
-       },
-       {
-           {Operation::EQUALS, 0, 2},
-           {Operation::DELETE, 2, 5},
-           {Operation::INSERT, 2, 6},
-           {Operation::EQUALS, 5, 10},
-           {Operation::INSERT, 11, 17},
-           {Operation::DELETE, 10, 17},
-           {Operation::EQUALS, 17, 25},
-       }},
+      {.rel_edits =
+           {
+               {.operation = Operation::EQUALS, .size = 2},
+               {.operation = Operation::DELETE, .size = 3},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::EQUALS, .start = 0, .end = 2},
+               {.operation = Operation::DELETE, .start = 2, .end = 5},
+           }},
+      {.rel_edits =
+           {
+               {.operation = Operation::EQUALS, .size = 4},
+               {.operation = Operation::INSERT, .size = 5},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::EQUALS, .start = 0, .end = 4},
+               {.operation = Operation::INSERT, .start = 4, .end = 9},
+           }},
+      {.rel_edits =
+           {
+               {.operation = Operation::DELETE, .size = 3},
+               {.operation = Operation::EQUALS, .size = 2},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::DELETE, .start = 0, .end = 3},
+               {.operation = Operation::EQUALS, .start = 3, .end = 5},
+           }},
+      {.rel_edits =
+           {
+               {.operation = Operation::DELETE, .size = 3},
+               {.operation = Operation::INSERT, .size = 6},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::DELETE, .start = 0, .end = 3},
+               {.operation = Operation::INSERT, .start = 0, .end = 6},
+           }},
+      {.rel_edits =
+           {
+               {.operation = Operation::INSERT, .size = 7},
+               {.operation = Operation::EQUALS, .size = 4},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::INSERT, .start = 0, .end = 7},
+               {.operation = Operation::EQUALS, .start = 0, .end = 4},
+           }},
+      {.rel_edits =
+           {
+               {.operation = Operation::INSERT, .size = 7},
+               {.operation = Operation::DELETE, .size = 3},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::INSERT, .start = 0, .end = 7},
+               {.operation = Operation::DELETE, .start = 0, .end = 3},
+           }},
+      {.rel_edits =
+           {
+               // covers one of each transition
+               {.operation = Operation::EQUALS, .size = 2},
+               {.operation = Operation::DELETE, .size = 3},
+               {.operation = Operation::INSERT, .size = 4},
+               {.operation = Operation::EQUALS, .size = 5},
+               {.operation = Operation::INSERT, .size = 6},
+               {.operation = Operation::DELETE, .size = 7},
+               {.operation = Operation::EQUALS, .size = 8},
+           },
+       .expected_edits =
+           {
+               {.operation = Operation::EQUALS, .start = 0, .end = 2},
+               {.operation = Operation::DELETE, .start = 2, .end = 5},
+               {.operation = Operation::INSERT, .start = 2, .end = 6},
+               {.operation = Operation::EQUALS, .start = 5, .end = 10},
+               {.operation = Operation::INSERT, .start = 11, .end = 17},
+               {.operation = Operation::DELETE, .start = 10, .end = 17},
+               {.operation = Operation::EQUALS, .start = 17, .end = 25},
+           }},
   };
   for (const auto &test : kTestCases) {
     EXPECT_THAT(MakeDiffEdits(test.rel_edits),
@@ -348,141 +382,149 @@ TEST(DiffEditsToPatchHunksTest, Various) {
   using RelEdits = std::initializer_list<RelativeEdit>;
   const DiffEditsToPatchHunksTestCase kTestCases[] = {
       {
-          .whole_edits = MakeDiffEdits(RelEdits{{Operation::EQUALS, 2}}),
+          .whole_edits = MakeDiffEdits(
+              RelEdits{{.operation = Operation::EQUALS, .size = 2}}),
           .common_context = 1,
           .expected_hunks = {}  // empty because no-change hunk was removed
       },
       {
-          .whole_edits = MakeDiffEdits(RelEdits{{Operation::EQUALS, 200}}),
+          .whole_edits = MakeDiffEdits(
+              RelEdits{{.operation = Operation::EQUALS, .size = 200}}),
           .common_context = 1,
           .expected_hunks = {}  // empty because no-change hunk was removed
       },
-      {.whole_edits = MakeDiffEdits(RelEdits{{Operation::INSERT, 3}}),
+      {.whole_edits =
+           MakeDiffEdits(RelEdits{{.operation = Operation::INSERT, .size = 3}}),
        .common_context = 1,
        .expected_hunks =
            {
-               MakeDiffEdits(RelEdits{{Operation::INSERT, 3}}),
+               MakeDiffEdits(
+                   RelEdits{{.operation = Operation::INSERT, .size = 3}}),
            }},
-      {.whole_edits = MakeDiffEdits(RelEdits{{Operation::DELETE, 4}}),
+      {.whole_edits =
+           MakeDiffEdits(RelEdits{{.operation = Operation::DELETE, .size = 4}}),
        .common_context = 1,
        .expected_hunks =
            {
-               MakeDiffEdits(RelEdits{{Operation::DELETE, 4}}),
+               MakeDiffEdits(
+                   RelEdits{{.operation = Operation::DELETE, .size = 4}}),
            }},
       {.whole_edits = MakeDiffEdits(RelEdits{
-           {Operation::EQUALS, 3},
-           {Operation::DELETE, 1},
+           {.operation = Operation::EQUALS, .size = 3},
+           {.operation = Operation::DELETE, .size = 1},
        }),
        .common_context = 2,  // first hunk should start at line[3-2]
        .expected_hunks =
            {
                MakeDiffEdits(
                    RelEdits{
-                       {Operation::EQUALS, 2},
-                       {Operation::DELETE, 1},
+                       {.operation = Operation::EQUALS, .size = 2},
+                       {.operation = Operation::DELETE, .size = 1},
                    },
                    1, 1),
            }},
       {.whole_edits = MakeDiffEdits(RelEdits{
-           {Operation::DELETE, 1},
-           {Operation::EQUALS, 3},
+           {.operation = Operation::DELETE, .size = 1},
+           {.operation = Operation::EQUALS, .size = 3},
        }),
        .common_context = 2,  // last EQUALS edit should be no larger than this
        .expected_hunks =
            {
                MakeDiffEdits(
                    RelEdits{
-                       {Operation::DELETE, 1},
-                       {Operation::EQUALS, 2},
+                       {.operation = Operation::DELETE, .size = 1},
+                       {.operation = Operation::EQUALS, .size = 2},
                    },
                    0, 0),
            }},
       {.whole_edits = MakeDiffEdits(RelEdits{
-           {Operation::EQUALS, 3},
-           {Operation::DELETE, 1},
-           {Operation::EQUALS, 3},
+           {.operation = Operation::EQUALS, .size = 3},
+           {.operation = Operation::DELETE, .size = 1},
+           {.operation = Operation::EQUALS, .size = 3},
        }),
        .common_context = 2,  // first hunk should start at line[3-2]
        .expected_hunks =
            {
                MakeDiffEdits(
                    RelEdits{
-                       {Operation::EQUALS, 2},
-                       {Operation::DELETE, 1},
-                       {Operation::EQUALS, 2},
+                       {.operation = Operation::EQUALS, .size = 2},
+                       {.operation = Operation::DELETE, .size = 1},
+                       {.operation = Operation::EQUALS, .size = 2},
                    },
                    1, 1),
            }},
       {.whole_edits = MakeDiffEdits(RelEdits{
-           {Operation::EQUALS, 3},
-           {Operation::INSERT, 1},
+           {.operation = Operation::EQUALS, .size = 3},
+           {.operation = Operation::INSERT, .size = 1},
        }),
        .common_context = 2,  // first hunk should start at line[3-2]
        .expected_hunks =
            {
                MakeDiffEdits(
                    RelEdits{
-                       {Operation::EQUALS, 2},
-                       {Operation::INSERT, 1},
+                       {.operation = Operation::EQUALS, .size = 2},
+                       {.operation = Operation::INSERT, .size = 1},
                    },
                    1, 1),
            }},
       {.whole_edits = MakeDiffEdits(RelEdits{
-           {Operation::INSERT, 1},
-           {Operation::EQUALS, 3},
+           {.operation = Operation::INSERT, .size = 1},
+           {.operation = Operation::EQUALS, .size = 3},
        }),
        .common_context = 2,  // last EQUALS edit should be no larger than this
        .expected_hunks =
            {
                MakeDiffEdits(
                    RelEdits{
-                       {Operation::INSERT, 1},
-                       {Operation::EQUALS, 2},
+                       {.operation = Operation::INSERT, .size = 1},
+                       {.operation = Operation::EQUALS, .size = 2},
                    },
                    0, 0),
            }},
       {.whole_edits = MakeDiffEdits(RelEdits{
-           {Operation::EQUALS, 3},
-           {Operation::INSERT, 1},
-           {Operation::EQUALS, 3},
+           {.operation = Operation::EQUALS, .size = 3},
+           {.operation = Operation::INSERT, .size = 1},
+           {.operation = Operation::EQUALS, .size = 3},
        }),
        .common_context = 2,  // first hunk should start at line[3-2]
        .expected_hunks =
            {
                MakeDiffEdits(
                    RelEdits{
-                       {Operation::EQUALS, 2},
-                       {Operation::INSERT, 1},
-                       {Operation::EQUALS, 2},
+                       {.operation = Operation::EQUALS, .size = 2},
+                       {.operation = Operation::INSERT, .size = 1},
+                       {.operation = Operation::EQUALS, .size = 2},
                    },
                    1, 1),
            }},
       {.whole_edits = MakeDiffEdits(RelEdits{
-           {Operation::DELETE, 2},
-           {Operation::INSERT, 1},
-           {Operation::EQUALS, 4},  // expect to remain in one piece
-           {Operation::DELETE, 1},
-           {Operation::INSERT, 2},
+           {.operation = Operation::DELETE, .size = 2},
+           {.operation = Operation::INSERT, .size = 1},
+           {.operation = Operation::EQUALS,
+            .size = 4},  // expect to remain in one piece
+           {.operation = Operation::DELETE, .size = 1},
+           {.operation = Operation::INSERT, .size = 2},
        }),
        .common_context = 2,
        .expected_hunks =
            {
                MakeDiffEdits(
                    RelEdits{
-                       {Operation::DELETE, 2},
-                       {Operation::INSERT, 1},
-                       {Operation::EQUALS, 4},  // remain in one piece
-                       {Operation::DELETE, 1},
-                       {Operation::INSERT, 2},
+                       {.operation = Operation::DELETE, .size = 2},
+                       {.operation = Operation::INSERT, .size = 1},
+                       {.operation = Operation::EQUALS,
+                        .size = 4},  // remain in one piece
+                       {.operation = Operation::DELETE, .size = 1},
+                       {.operation = Operation::INSERT, .size = 2},
                    },
                    0, 0),
            }},
       {.whole_edits = MakeDiffEdits(RelEdits{
-           {Operation::DELETE, 2},
-           {Operation::INSERT, 1},
-           {Operation::EQUALS, 5},  // expect to split here
-           {Operation::DELETE, 1},
-           {Operation::INSERT, 2},
+           {.operation = Operation::DELETE, .size = 2},
+           {.operation = Operation::INSERT, .size = 1},
+           {.operation = Operation::EQUALS, .size = 5},  // expect to split here
+           {.operation = Operation::DELETE, .size = 1},
+           {.operation = Operation::INSERT, .size = 2},
        }),
        .common_context = 2,
        .expected_hunks =
@@ -490,17 +532,17 @@ TEST(DiffEditsToPatchHunksTest, Various) {
                // expect two hunks
                MakeDiffEdits(
                    RelEdits{
-                       {Operation::DELETE, 2},
-                       {Operation::INSERT, 1},
-                       {Operation::EQUALS, 2},
+                       {.operation = Operation::DELETE, .size = 2},
+                       {.operation = Operation::INSERT, .size = 1},
+                       {.operation = Operation::EQUALS, .size = 2},
                    },
                    0, 0),
                // one line of EQUALS in the new gap
                MakeDiffEdits(
                    RelEdits{
-                       {Operation::EQUALS, 2},
-                       {Operation::DELETE, 1},
-                       {Operation::INSERT, 2},
+                       {.operation = Operation::EQUALS, .size = 2},
+                       {.operation = Operation::DELETE, .size = 1},
+                       {.operation = Operation::INSERT, .size = 2},
                    },
                    5, 4),
            }},
@@ -524,274 +566,275 @@ TEST(LineDiffsToUnifiedDiffTest, Various) {
   const LineDiffsToUnifiedDiffTestCase kTestCases[] = {
       // No changes
       {
-          "a\nb\nc\n",
-          "a\nb\nc\n",
-          {},
-          {},
-          1,
-          "",
+          .before_text = "a\nb\nc\n",
+          .after_text = "a\nb\nc\n",
+          .file_a = {},
+          .file_b = {},
+          .common_context = 1,
+          .expected_diff_text = "",
       },
       {
-          "a\nb\nc\n",
-          "a\nb\nc\n",
-          "file.txt",
-          {},
-          1,
-          "",
+          .before_text = "a\nb\nc\n",
+          .after_text = "a\nb\nc\n",
+          .file_a = "file.txt",
+          .file_b = {},
+          .common_context = 1,
+          .expected_diff_text = "",
       },
       {
-          "a\nb\nc\n",
-          "a\nb\nc\n",
-          "old_file.txt",
-          "new_file.txt",
-          1,
-          "",
+          .before_text = "a\nb\nc\n",
+          .after_text = "a\nb\nc\n",
+          .file_a = "old_file.txt",
+          .file_b = "new_file.txt",
+          .common_context = 1,
+          .expected_diff_text = "",
       },
       // Single change
       {
-          "a\nb\nc\n",
-          "a\nb\nC\n",
-          {},
-          {},
-          1,
-          "@@ -2,2 +2,2 @@\n"
-          " b\n"
-          "-c\n"
-          "+C\n",
+          .before_text = "a\nb\nc\n",
+          .after_text = "a\nb\nC\n",
+          .file_a = {},
+          .file_b = {},
+          .common_context = 1,
+          .expected_diff_text = "@@ -2,2 +2,2 @@\n"
+                                " b\n"
+                                "-c\n"
+                                "+C\n",
       },
       {
-          "a\nb\nc\n",
-          "a\nb\nC\n",
-          "file.txt",
-          {},
-          1,
-          "--- a/file.txt\n"
-          "+++ b/file.txt\n"
-          "@@ -2,2 +2,2 @@\n"
-          " b\n"
-          "-c\n"
-          "+C\n",
+          .before_text = "a\nb\nc\n",
+          .after_text = "a\nb\nC\n",
+          .file_a = "file.txt",
+          .file_b = {},
+          .common_context = 1,
+          .expected_diff_text = "--- a/file.txt\n"
+                                "+++ b/file.txt\n"
+                                "@@ -2,2 +2,2 @@\n"
+                                " b\n"
+                                "-c\n"
+                                "+C\n",
       },
       {
-          "a\nb\nc\n",
-          "a\nb\nC\n",
-          "old_file.txt",
-          "new_file.txt",
-          1,
-          "--- old_file.txt\n"
-          "+++ new_file.txt\n"
-          "@@ -2,2 +2,2 @@\n"
-          " b\n"
-          "-c\n"
-          "+C\n",
+          .before_text = "a\nb\nc\n",
+          .after_text = "a\nb\nC\n",
+          .file_a = "old_file.txt",
+          .file_b = "new_file.txt",
+          .common_context = 1,
+          .expected_diff_text = "--- old_file.txt\n"
+                                "+++ new_file.txt\n"
+                                "@@ -2,2 +2,2 @@\n"
+                                " b\n"
+                                "-c\n"
+                                "+C\n",
       },
       // Multiple chunks
       {
-          "a\nb\nc\nd\ne\nf\nh\n",
-          "A\nb\nc\nd\ne\nf\ng\nh\n",
-          {},
-          {},
-          1,
-          "@@ -1,2 +1,2 @@\n"
-          "-a\n"
-          "+A\n"
-          " b\n"
-          "@@ -6,2 +6,3 @@\n"
-          " f\n"
-          "+g\n"
-          " h\n",
+          .before_text = "a\nb\nc\nd\ne\nf\nh\n",
+          .after_text = "A\nb\nc\nd\ne\nf\ng\nh\n",
+          .file_a = {},
+          .file_b = {},
+          .common_context = 1,
+          .expected_diff_text = "@@ -1,2 +1,2 @@\n"
+                                "-a\n"
+                                "+A\n"
+                                " b\n"
+                                "@@ -6,2 +6,3 @@\n"
+                                " f\n"
+                                "+g\n"
+                                " h\n",
       },
       {
-          "a\nb\nc\nd\ne\nf\nh\n",
-          "A\nb\nc\nd\ne\nf\ng\nh\n",
-          "file.txt",
-          {},
-          1,
-          "--- a/file.txt\n"
-          "+++ b/file.txt\n"
-          "@@ -1,2 +1,2 @@\n"
-          "-a\n"
-          "+A\n"
-          " b\n"
-          "@@ -6,2 +6,3 @@\n"
-          " f\n"
-          "+g\n"
-          " h\n",
+          .before_text = "a\nb\nc\nd\ne\nf\nh\n",
+          .after_text = "A\nb\nc\nd\ne\nf\ng\nh\n",
+          .file_a = "file.txt",
+          .file_b = {},
+          .common_context = 1,
+          .expected_diff_text = "--- a/file.txt\n"
+                                "+++ b/file.txt\n"
+                                "@@ -1,2 +1,2 @@\n"
+                                "-a\n"
+                                "+A\n"
+                                " b\n"
+                                "@@ -6,2 +6,3 @@\n"
+                                " f\n"
+                                "+g\n"
+                                " h\n",
       },
       {
-          "a\nb\nc\nd\ne\nf\nh\n",
-          "A\nb\nc\nd\ne\nf\ng\nh\n",
-          "old_file.txt",
-          "new_file.txt",
-          1,
-          "--- old_file.txt\n"
-          "+++ new_file.txt\n"
-          "@@ -1,2 +1,2 @@\n"
-          "-a\n"
-          "+A\n"
-          " b\n"
-          "@@ -6,2 +6,3 @@\n"
-          " f\n"
-          "+g\n"
-          " h\n",
+          .before_text = "a\nb\nc\nd\ne\nf\nh\n",
+          .after_text = "A\nb\nc\nd\ne\nf\ng\nh\n",
+          .file_a = "old_file.txt",
+          .file_b = "new_file.txt",
+          .common_context = 1,
+          .expected_diff_text = "--- old_file.txt\n"
+                                "+++ new_file.txt\n"
+                                "@@ -1,2 +1,2 @@\n"
+                                "-a\n"
+                                "+A\n"
+                                " b\n"
+                                "@@ -6,2 +6,3 @@\n"
+                                " f\n"
+                                "+g\n"
+                                " h\n",
       },
       // Large context
       {
-          "a\nb\nc\nd\ne\nf\nh\n",
-          "A\nb\nc\nd\ne\nf\ng\nh\n",
-          "file.txt",
-          {},
-          99,
-          "--- a/file.txt\n"
-          "+++ b/file.txt\n"
-          "@@ -1,7 +1,8 @@\n"
-          "-a\n"
-          "+A\n"
-          " b\n"
-          " c\n"
-          " d\n"
-          " e\n"
-          " f\n"
-          "+g\n"
-          " h\n",
+          .before_text = "a\nb\nc\nd\ne\nf\nh\n",
+          .after_text = "A\nb\nc\nd\ne\nf\ng\nh\n",
+          .file_a = "file.txt",
+          .file_b = {},
+          .common_context = 99,
+          .expected_diff_text = "--- a/file.txt\n"
+                                "+++ b/file.txt\n"
+                                "@@ -1,7 +1,8 @@\n"
+                                "-a\n"
+                                "+A\n"
+                                " b\n"
+                                " c\n"
+                                " d\n"
+                                " e\n"
+                                " f\n"
+                                "+g\n"
+                                " h\n",
       },
       // No context
       {
-          "a\nb\nc\nd\ne\nf\nh\n",
-          "A\nb\nc\nd\ne\nf\ng\nh\n",
-          "file.txt",
-          {},
-          0,
-          "--- a/file.txt\n"
-          "+++ b/file.txt\n"
-          "@@ -1 +1 @@\n"
-          "-a\n"
-          "+A\n"
-          "@@ -7 +7 @@\n"
-          "+g\n",
+          .before_text = "a\nb\nc\nd\ne\nf\nh\n",
+          .after_text = "A\nb\nc\nd\ne\nf\ng\nh\n",
+          .file_a = "file.txt",
+          .file_b = {},
+          .common_context = 0,
+          .expected_diff_text = "--- a/file.txt\n"
+                                "+++ b/file.txt\n"
+                                "@@ -1 +1 @@\n"
+                                "-a\n"
+                                "+A\n"
+                                "@@ -7 +7 @@\n"
+                                "+g\n",
       },
       // Multiple inserts and deletions
       {
-          "a\nb\nc\nh\ni\nj\nk\nm\nn\no\np\nq\nx\ny\nz\nr\ns\n",
-          "a\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\n",
-          "file.txt",
-          {},
-          1,
-          "--- a/file.txt\n"
-          "+++ b/file.txt\n"
-          "@@ -3,2 +3,6 @@\n"
-          " c\n"
-          "+d\n"
-          "+e\n"
-          "+f\n"
-          "+g\n"
-          " h\n"
-          "@@ -7,2 +11,3 @@\n"
-          " k\n"
-          "+l\n"
-          " m\n"
-          "@@ -12,5 +17,2 @@\n"
-          " q\n"
-          "-x\n"
-          "-y\n"
-          "-z\n"
-          " r\n",
+          .before_text = "a\nb\nc\nh\ni\nj\nk\nm\nn\no\np\nq\nx\ny\nz\nr\ns\n",
+          .after_text =
+              "a\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\n",
+          .file_a = "file.txt",
+          .file_b = {},
+          .common_context = 1,
+          .expected_diff_text = "--- a/file.txt\n"
+                                "+++ b/file.txt\n"
+                                "@@ -3,2 +3,6 @@\n"
+                                " c\n"
+                                "+d\n"
+                                "+e\n"
+                                "+f\n"
+                                "+g\n"
+                                " h\n"
+                                "@@ -7,2 +11,3 @@\n"
+                                " k\n"
+                                "+l\n"
+                                " m\n"
+                                "@@ -12,5 +17,2 @@\n"
+                                " q\n"
+                                "-x\n"
+                                "-y\n"
+                                "-z\n"
+                                " r\n",
       },
       // Missing \n in the last line of "before" text
       {
-          "a\nb\nc\nd\ne\nf\nh",
-          "A\nb\nc\nd\ne\nf\ng\nh\n",
-          "file.txt",
-          {},
-          1,
-          "--- a/file.txt\n"
-          "+++ b/file.txt\n"
-          "@@ -1,2 +1,2 @@\n"
-          "-a\n"
-          "+A\n"
-          " b\n"
-          "@@ -6,2 +6,3 @@\n"
-          " f\n"
-          "+g\n"
-          "-h\n"
-          "\\ No newline at end of file\n"
-          "+h\n",
+          .before_text = "a\nb\nc\nd\ne\nf\nh",
+          .after_text = "A\nb\nc\nd\ne\nf\ng\nh\n",
+          .file_a = "file.txt",
+          .file_b = {},
+          .common_context = 1,
+          .expected_diff_text = "--- a/file.txt\n"
+                                "+++ b/file.txt\n"
+                                "@@ -1,2 +1,2 @@\n"
+                                "-a\n"
+                                "+A\n"
+                                " b\n"
+                                "@@ -6,2 +6,3 @@\n"
+                                " f\n"
+                                "+g\n"
+                                "-h\n"
+                                "\\ No newline at end of file\n"
+                                "+h\n",
       },
       // Missing \n in the last line of "after" text
       {
-          "a\nb\nc\nd\ne\nf\nh\n",
-          "A\nb\nc\nd\ne\nf\ng\nh",
-          "file.txt",
-          {},
-          1,
-          "--- a/file.txt\n"
-          "+++ b/file.txt\n"
-          "@@ -1,2 +1,2 @@\n"
-          "-a\n"
-          "+A\n"
-          " b\n"
-          "@@ -6,2 +6,3 @@\n"
-          " f\n"
-          "+g\n"
-          "-h\n"
-          "+h\n"
-          "\\ No newline at end of file\n",
+          .before_text = "a\nb\nc\nd\ne\nf\nh\n",
+          .after_text = "A\nb\nc\nd\ne\nf\ng\nh",
+          .file_a = "file.txt",
+          .file_b = {},
+          .common_context = 1,
+          .expected_diff_text = "--- a/file.txt\n"
+                                "+++ b/file.txt\n"
+                                "@@ -1,2 +1,2 @@\n"
+                                "-a\n"
+                                "+A\n"
+                                " b\n"
+                                "@@ -6,2 +6,3 @@\n"
+                                " f\n"
+                                "+g\n"
+                                "-h\n"
+                                "+h\n"
+                                "\\ No newline at end of file\n",
       },
       // Missing \n in the last lines of both texts
       {
-          "a\nb\nc\nd\ne\nf\nh",
-          "A\nb\nc\nd\ne\nf\ng\nh",
-          "file.txt",
-          {},
-          1,
-          "--- a/file.txt\n"
-          "+++ b/file.txt\n"
-          "@@ -1,2 +1,2 @@\n"
-          "-a\n"
-          "+A\n"
-          " b\n"
-          "@@ -6,2 +6,3 @@\n"
-          " f\n"
-          "+g\n"
-          " h\n"
-          "\\ No newline at end of file\n",
+          .before_text = "a\nb\nc\nd\ne\nf\nh",
+          .after_text = "A\nb\nc\nd\ne\nf\ng\nh",
+          .file_a = "file.txt",
+          .file_b = {},
+          .common_context = 1,
+          .expected_diff_text = "--- a/file.txt\n"
+                                "+++ b/file.txt\n"
+                                "@@ -1,2 +1,2 @@\n"
+                                "-a\n"
+                                "+A\n"
+                                " b\n"
+                                "@@ -6,2 +6,3 @@\n"
+                                " f\n"
+                                "+g\n"
+                                " h\n"
+                                "\\ No newline at end of file\n",
       },
       // File created
       {
-          "",
-          "A\nb\nc\nd\ne\nf\ng\nh\n",
-          "/dev/null",
-          "file.txt",
-          1,
-          "--- /dev/null\n"
-          "+++ file.txt\n"
-          "@@ -1 +1,8 @@\n"
-          "+A\n"
-          "+b\n"
-          "+c\n"
-          "+d\n"
-          "+e\n"
-          "+f\n"
-          "+g\n"
-          "+h\n",
+          .before_text = "",
+          .after_text = "A\nb\nc\nd\ne\nf\ng\nh\n",
+          .file_a = "/dev/null",
+          .file_b = "file.txt",
+          .common_context = 1,
+          .expected_diff_text = "--- /dev/null\n"
+                                "+++ file.txt\n"
+                                "@@ -1 +1,8 @@\n"
+                                "+A\n"
+                                "+b\n"
+                                "+c\n"
+                                "+d\n"
+                                "+e\n"
+                                "+f\n"
+                                "+g\n"
+                                "+h\n",
       },
       // File removed
       {
-          "a\nb\nc\nd\ne\nf\nh\n",
-          "",
-          "file.txt",
-          "/dev/null",
-          1,
-          "--- file.txt\n"
-          "+++ /dev/null\n"
-          "@@ -1,7 +1 @@\n"
-          "-a\n"
-          "-b\n"
-          "-c\n"
-          "-d\n"
-          "-e\n"
-          "-f\n"
-          "-h\n",
+          .before_text = "a\nb\nc\nd\ne\nf\nh\n",
+          .after_text = "",
+          .file_a = "file.txt",
+          .file_b = "/dev/null",
+          .common_context = 1,
+          .expected_diff_text = "--- file.txt\n"
+                                "+++ /dev/null\n"
+                                "@@ -1,7 +1 @@\n"
+                                "-a\n"
+                                "-b\n"
+                                "-c\n"
+                                "-d\n"
+                                "-e\n"
+                                "-f\n"
+                                "-h\n",
       },
   };
 

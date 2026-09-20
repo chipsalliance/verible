@@ -57,9 +57,12 @@ const LintRuleDescriptor &StructUnionNameStyleRule::GetDescriptor() {
       .desc =
           "Checks that `struct` and `union` names use lower_snake_case "
           "naming convention and end with '_t'.",
-      .param = {{"exceptions", "",
-                 "Comma separated list of allowed upper-case elements, such as "
-                 "unit-names"}},
+      .param =
+          {{.name = "exceptions",
+            .default_value = "",
+            .description =
+                "Comma separated list of allowed upper-case elements, such as "
+                "unit-names"}},
   };
   return d;
 }
@@ -129,7 +132,8 @@ absl::Status StructUnionNameStyleRule::Configure(
   using verible::config::SetString;
   std::string raw_tokens;
   auto status = verible::ParseNameValues(
-      configuration, {{"exceptions", SetString(&raw_tokens)}});
+      configuration,
+      {{.name = "exceptions", .set_value = SetString(&raw_tokens)}});
   if (!status.ok()) return status;
 
   if (!raw_tokens.empty()) {

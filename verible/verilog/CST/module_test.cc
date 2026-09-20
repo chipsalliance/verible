@@ -118,7 +118,8 @@ TEST(GetModuleNameTokenTest, ValidModule) {
           std::vector<TreeSearchMatch> names;
           for (const auto &instance : programs) {
             const auto *name = GetModuleName(*instance.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -142,7 +143,8 @@ TEST(GetModuleNameTokenTest, ValidInterface) {
           std::vector<TreeSearchMatch> names;
           for (const auto &instance : programs) {
             const auto *name = GetModuleName(*instance.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -166,7 +168,8 @@ TEST(GetModuleNameTokenTest, ValidProgram) {
           std::vector<TreeSearchMatch> names;
           for (const auto &instance : programs) {
             const auto *name = GetModuleName(*instance.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -200,8 +203,8 @@ TEST(GetModulePortDeclarationListTest, ModulePorts) {
             if (group == nullptr) {
               continue;
             }
-            groups.emplace_back(
-                TreeSearchMatch{group, {/* ignored context */}});
+            groups.emplace_back(TreeSearchMatch{
+                .match = group, .context = {/* ignored context */}});
           }
           return groups;
         });
@@ -235,7 +238,8 @@ TEST(FindAllModuleDeclarationTest, FindModuleParameters) {
             if (decl == nullptr) {
               continue;
             }
-            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+            params.emplace_back(TreeSearchMatch{
+                .match = decl, .context = {/* ignored context */}});
           }
           return params;
         });
@@ -269,7 +273,8 @@ TEST(FindAllInterfaceDeclarationTest, FindInterfaceParameters) {
             if (decl == nullptr) {
               continue;
             }
-            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+            params.emplace_back(TreeSearchMatch{
+                .match = decl, .context = {/* ignored context */}});
           }
           return params;
         });
@@ -297,7 +302,8 @@ TEST(GetModulePortDeclarationListTest, ModulePortList) {
             if (list == nullptr) {
               continue;
             }
-            lists.emplace_back(TreeSearchMatch{list, {/* ignored context */}});
+            lists.emplace_back(TreeSearchMatch{
+                .match = list, .context = {/* ignored context */}});
           }
           return lists;
         });
@@ -325,7 +331,8 @@ TEST(GetInterfacePortDeclarationListTest, InterfacePortList) {
             if (list == nullptr) {
               continue;
             }
-            lists.emplace_back(TreeSearchMatch{list, {/* ignored context */}});
+            lists.emplace_back(TreeSearchMatch{
+                .match = list, .context = {/* ignored context */}});
           }
           return lists;
         });
@@ -353,7 +360,8 @@ TEST(GetProgramPortDeclarationListTest, ProgramPortList) {
             if (list == nullptr) {
               continue;
             }
-            lists.emplace_back(TreeSearchMatch{list, {/* ignored context */}});
+            lists.emplace_back(TreeSearchMatch{
+                .match = list, .context = {/* ignored context */}});
           }
           return lists;
         });
@@ -384,8 +392,8 @@ TEST(FindModuleEndTest, ModuleEndName) {
             if (label == nullptr) {
               continue;
             }
-            labels.emplace_back(
-                TreeSearchMatch{label, {/* ignored context */}});
+            labels.emplace_back(TreeSearchMatch{
+                .match = label, .context = {/* ignored context */}});
           }
           return labels;
         });
@@ -416,8 +424,8 @@ TEST(FindInterfaceEndTest, InterfaceEndName) {
             if (label == nullptr) {
               continue;
             }
-            labels.emplace_back(
-                TreeSearchMatch{label, {/* ignored context */}});
+            labels.emplace_back(TreeSearchMatch{
+                .match = label, .context = {/* ignored context */}});
           }
           return labels;
         });
@@ -448,8 +456,8 @@ TEST(FindProgramEndTest, ProgramEndName) {
             if (label == nullptr) {
               continue;
             }
-            labels.emplace_back(
-                TreeSearchMatch{label, {/* ignored context */}});
+            labels.emplace_back(TreeSearchMatch{
+                .match = label, .context = {/* ignored context */}});
           }
           return labels;
         });

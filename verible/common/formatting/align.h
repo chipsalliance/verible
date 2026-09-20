@@ -86,7 +86,10 @@ std::ostream &operator<<(std::ostream &, const ColumnPositionTree &);
 class ColumnSchemaScanner : public TreeContextPathVisitor {
  public:
   ColumnSchemaScanner()
-      : sparse_columns_(ColumnPositionTree({{}, TokenInfo::EOFToken(), {}})) {}
+      : sparse_columns_(
+            ColumnPositionTree({.path = {},
+                                .starting_token = TokenInfo::EOFToken(),
+                                .properties = {}})) {}
 
   // Returns the collection of column position entries.
   const ColumnPositionTree &SparseColumns() const { return sparse_columns_; }

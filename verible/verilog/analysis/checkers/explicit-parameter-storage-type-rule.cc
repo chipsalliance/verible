@@ -58,7 +58,9 @@ const LintRuleDescriptor &ExplicitParameterStorageTypeRule::GetDescriptor() {
       .desc =
           "Checks that every `parameter` and `localparam` "
           "is declared with an explicit storage type.",
-      .param = {{"exempt_type", "", "Set to `string` to exempt string types"}},
+      .param = {{.name = "exempt_type",
+                 .default_value = "",
+                 .description = "Set to `string` to exempt string types"}},
   };
   return d;
 }
@@ -105,7 +107,8 @@ absl::Status ExplicitParameterStorageTypeRule::Configure(
   using verible::config::SetStringOneOf;
   std::string value;
   auto s = verible::ParseNameValues(
-      configuration, {{"exempt_type", SetStringOneOf(&value, allowed)}});
+      configuration,
+      {{.name = "exempt_type", .set_value = SetStringOneOf(&value, allowed)}});
   if (!s.ok()) return s;
   exempt_string_ = (value == "string");
   return absl::OkStatus();

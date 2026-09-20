@@ -168,8 +168,10 @@ void LintStatusFormatter::FormatViolation(std::ostream *stream,
   // TODO(fangism): Use the context member to print which named construct or
   // design element the violation appears in (or full stack thereof).
   const verible::LineColumnRange range{
-      line_column_map_.GetLineColAtOffset(base, violation.token.left(base)),
-      line_column_map_.GetLineColAtOffset(base, violation.token.right(base))};
+      .start =
+          line_column_map_.GetLineColAtOffset(base, violation.token.left(base)),
+      .end = line_column_map_.GetLineColAtOffset(base,
+                                                 violation.token.right(base))};
 
   (*stream) << path << ':' << range << " "
             << FormatWithRelatedTokens(violation.related_tokens,
@@ -183,8 +185,10 @@ void LintStatusFormatter::FormatViolationWaiver(
     std::ostream *stream, const LintViolation &violation, std::string_view base,
     std::string_view path, std::string_view rule_name) const {
   const verible::LineColumnRange range{
-      line_column_map_.GetLineColAtOffset(base, violation.token.left(base)),
-      line_column_map_.GetLineColAtOffset(base, violation.token.right(base))};
+      .start =
+          line_column_map_.GetLineColAtOffset(base, violation.token.left(base)),
+      .end = line_column_map_.GetLineColAtOffset(base,
+                                                 violation.token.right(base))};
 
   (*stream) << "waive" << ' ' << "--rule=" << rule_name << ' '
             << "--line=" << range.start.line + 1 << ' ' << "--location="

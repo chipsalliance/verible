@@ -32,9 +32,9 @@ namespace {
 
 TEST(RejectedTokenStreamTest, StringRepresentation) {
   const RejectedToken reject{
-      TokenInfo(77, "foobar"),
-      AnalysisPhase::kParsePhase,
-      "bad syntax",
+      .token_info = TokenInfo(77, "foobar"),
+      .phase = AnalysisPhase::kParsePhase,
+      .explanation = "bad syntax",
   };
   std::ostringstream stream;
   stream << reject;
@@ -66,14 +66,15 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLine) {
   {
     constexpr bool with_diagnostic_context = false;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
+        with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
         message, "hello.txt:2:5-9: syntax error at token \"w0rld\""))
         << message;
   }
   {
     analyzer.ExtractLinterTokenErrorDetail(
-        {error_token, AnalysisPhase::kParsePhase},
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
         [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
            std::string_view token_text, std::string_view context_line,
@@ -101,7 +102,8 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLineWithContext) {
   {
     constexpr bool with_diagnostic_context = true;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
+        with_diagnostic_context);
     EXPECT_TRUE(
         absl::StrContains(message,
                           "hello.txt:2:5-9: syntax error at token \"w0rld\"\n"
@@ -111,7 +113,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLineWithContext) {
   }
   {
     analyzer.ExtractLinterTokenErrorDetail(
-        {error_token, AnalysisPhase::kParsePhase},
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
         [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
            std::string_view token_text, std::string_view context_line,
@@ -141,13 +143,14 @@ TEST(FileAnalyzerTest, TokenErrorMessageOneChar) {
   {
     constexpr bool with_diagnostic_context = false;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
+        with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
         message, "hello.txt:1:6: syntax error at token \",\""));
   }
   {
     analyzer.ExtractLinterTokenErrorDetail(
-        {error_token, AnalysisPhase::kParsePhase},
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
         [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
            std::string_view token_text, std::string_view context_line,
@@ -176,7 +179,8 @@ TEST(FileAnalyzerTest, TokenErrorMessageOneCharWithContext) {
   {
     constexpr bool with_diagnostic_context = true;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
+        with_diagnostic_context);
     // The tab character is replaced with a space for the arrow to align
     EXPECT_TRUE(absl::StrContains(message,
                                   "hello.txt:1:7: syntax error at token \",\"\n"
@@ -198,13 +202,14 @@ TEST(FileAnalyzerTest, TokenErrorMessageDifferentLine) {
   {
     constexpr bool with_diagnostic_context = false;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
+        with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
         message, "hello.txt:1:8:2:3: syntax error at token \"world\nbye\""));
   }
   {
     analyzer.ExtractLinterTokenErrorDetail(
-        {error_token, AnalysisPhase::kParsePhase},
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
         [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
            std::string_view token_text, std::string_view context_line,
@@ -233,7 +238,8 @@ TEST(FileAnalyzerTest, TokenErrorMessageDifferentLineWithContext) {
   {
     constexpr bool with_diagnostic_context = true;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
+        with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
         message,
         "hello.txt:1:8:2:3: syntax error at token \"world\nbye\"\n"
@@ -256,7 +262,8 @@ TEST(FileAnalyzerTest, TokenErrorMessageEOF) {
   {
     constexpr bool with_diagnostic_context = false;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
+        with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
         message, "unbalanced.txt:3:1: syntax error (unexpected EOF)"));
   }
@@ -275,14 +282,15 @@ TEST(FileAnalyzerTest, TokenErrorMessageEOFWithContext) {
   {
     constexpr bool with_diagnostic_context = true;
     const auto message = analyzer.LinterTokenErrorMessage(
-        {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
+        with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
         message, "unbalanced.txt:3:8: syntax error (unexpected EOF)"))
         << message;
   }
   {
     analyzer.ExtractLinterTokenErrorDetail(
-        {error_token, AnalysisPhase::kParsePhase},
+        {.token_info = error_token, .phase = AnalysisPhase::kParsePhase},
         [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
            std::string_view token_text, std::string_view context_line,

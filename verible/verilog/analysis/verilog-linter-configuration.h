@@ -189,11 +189,11 @@ class LinterConfiguration {
   LinterConfiguration() = default;
 
   void TurnOn(const analysis::LintRuleId &rule) {
-    configuration_[rule] = {true, ""};
+    configuration_[rule] = {.enabled = true, .configuration = ""};
   }
 
   void TurnOff(const analysis::LintRuleId &rule) {
-    configuration_[rule] = {false, ""};
+    configuration_[rule] = {.enabled = false, .configuration = ""};
   }
 
   bool RuleIsOn(const analysis::LintRuleId &rule) const;

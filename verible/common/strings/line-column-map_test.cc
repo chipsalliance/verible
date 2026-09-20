@@ -51,32 +51,75 @@ struct LineColumnMapTestData {
 // Raw line and column are 0-indexed.
 const LineColumnMapTestData map_test_data[] = {
     // Also testing beyond the end of the file - it should return last position
-    {"", {0}, {{0, {0, 0}}, {1, {0, 0}}, {100, {0, 0}}}},  // empty file
-    {"_", {0}, {{0, {0, 0}}, {1, {0, 1}}}},                // no \n before EOF
-    {"abc", {0}, {{0, {0, 0}}, {2, {0, 2}}, {3, {0, 3}}}},
-    {"\n", {0, 1}, {{0, {0, 0}}, {1, {1, 0}}}},  // one empty line
-    {"\n\n", {0, 1, 2}, {{0, {0, 0}}, {1, {1, 0}}, {2, {2, 0}}}},
-    {"ab\nc", {0, 3}, {{0, {0, 0}}, {2, {0, 2}}, {3, {1, 0}}, {4, {1, 1}}}},
-    {"_\n_\n", {0, 2, 4}, {{0, {0, 0}}, {1, {0, 1}}, {2, {1, 0}}, {3, {1, 1}}}},
-    {"\nxx\n", {0, 1, 4}, {{0, {0, 0}}, {1, {1, 0}}, {2, {1, 1}}, {3, {1, 2}}}},
-    {"hello\ndarkness\nmy old friend\n",
-     {0, 6, 15, 29},
-     {{0, {0, 0}}, {10, {1, 4}}, {15, {2, 0}}, {20, {2, 5}}}},
+    {.text = "",
+     .expected_offsets = {0},
+     .queries = {{.offset = 0, .line_col = {.line = 0, .column = 0}},
+                 {.offset = 1, .line_col = {.line = 0, .column = 0}},
+                 {.offset = 100,
+                  .line_col = {.line = 0, .column = 0}}}},  // empty file
+    {.text = "_",
+     .expected_offsets = {0},
+     .queries = {{.offset = 0, .line_col = {.line = 0, .column = 0}},
+                 {.offset = 1,
+                  .line_col = {.line = 0, .column = 1}}}},  // no \n before EOF
+    {.text = "abc",
+     .expected_offsets = {0},
+     .queries = {{.offset = 0, .line_col = {.line = 0, .column = 0}},
+                 {.offset = 2, .line_col = {.line = 0, .column = 2}},
+                 {.offset = 3, .line_col = {.line = 0, .column = 3}}}},
+    {.text = "\n",
+     .expected_offsets = {0, 1},
+     .queries = {{.offset = 0, .line_col = {.line = 0, .column = 0}},
+                 {.offset = 1,
+                  .line_col = {.line = 1, .column = 0}}}},  // one empty line
+    {.text = "\n\n",
+     .expected_offsets = {0, 1, 2},
+     .queries = {{.offset = 0, .line_col = {.line = 0, .column = 0}},
+                 {.offset = 1, .line_col = {.line = 1, .column = 0}},
+                 {.offset = 2, .line_col = {.line = 2, .column = 0}}}},
+    {.text = "ab\nc",
+     .expected_offsets = {0, 3},
+     .queries = {{.offset = 0, .line_col = {.line = 0, .column = 0}},
+                 {.offset = 2, .line_col = {.line = 0, .column = 2}},
+                 {.offset = 3, .line_col = {.line = 1, .column = 0}},
+                 {.offset = 4, .line_col = {.line = 1, .column = 1}}}},
+    {.text = "_\n_\n",
+     .expected_offsets = {0, 2, 4},
+     .queries = {{.offset = 0, .line_col = {.line = 0, .column = 0}},
+                 {.offset = 1, .line_col = {.line = 0, .column = 1}},
+                 {.offset = 2, .line_col = {.line = 1, .column = 0}},
+                 {.offset = 3, .line_col = {.line = 1, .column = 1}}}},
+    {.text = "\nxx\n",
+     .expected_offsets = {0, 1, 4},
+     .queries = {{.offset = 0, .line_col = {.line = 0, .column = 0}},
+                 {.offset = 1, .line_col = {.line = 1, .column = 0}},
+                 {.offset = 2, .line_col = {.line = 1, .column = 1}},
+                 {.offset = 3, .line_col = {.line = 1, .column = 2}}}},
+    {.text = "hello\ndarkness\nmy old friend\n",
+     .expected_offsets = {0, 6, 15, 29},
+     .queries = {{.offset = 0, .line_col = {.line = 0, .column = 0}},
+                 {.offset = 10, .line_col = {.line = 1, .column = 4}},
+                 {.offset = 15, .line_col = {.line = 2, .column = 0}},
+                 {.offset = 20, .line_col = {.line = 2, .column = 5}}}},
     // Multi-byte characters. Let's use strlen() to count the bytes, the
     // column should accurately point to the character.
-    {"😀😀😀", {0}, {{static_cast<int>(2 * strlen("😀")), {0, 2}}}},
-    {"Heizölrückstoßabdämpfung",
-     {0},
-     {{static_cast<int>(strlen("Heizölrückstoß")), {0, 14}}}},
+    {.text = "😀😀😀",
+     .expected_offsets = {0},
+     .queries = {{.offset = static_cast<int>(2 * strlen("😀")),
+                  .line_col = {.line = 0, .column = 2}}}},
+    {.text = "Heizölrückstoßabdämpfung",
+     .expected_offsets = {0},
+     .queries = {{.offset = static_cast<int>(strlen("Heizölrückstoß")),
+                  .line_col = {.line = 0, .column = 14}}}},
 };
 
 // Test test verifies that line-column offset appear to the user correctly.
 TEST(LineColumnTextTest, PrintLineColumn) {
   static constexpr LineColumnTestData text_test_data[] = {
-      {{0, 0}, "1:1"},
-      {{0, 1}, "1:2"},
-      {{1, 0}, "2:1"},
-      {{10, 8}, "11:9"},
+      {.line_col = {.line = 0, .column = 0}, .text = "1:1"},
+      {.line_col = {.line = 0, .column = 1}, .text = "1:2"},
+      {.line_col = {.line = 1, .column = 0}, .text = "2:1"},
+      {.line_col = {.line = 10, .column = 8}, .text = "11:9"},
   };
   for (const auto &test_case : text_test_data) {
     std::ostringstream oss;
@@ -87,12 +130,24 @@ TEST(LineColumnTextTest, PrintLineColumn) {
 
 TEST(LineColumnTextTest, PrintLineColumnRange) {
   static constexpr LineColumnRangeTestData text_test_data[] = {
-      {{{0, 0}, {0, 7}}, "1:1-7:"},  // Same line, multiple columns
-      {{{0, 1}, {0, 3}}, "1:2-3:"},
-      {{{1, 0}, {2, 14}}, "2:1:3:14:"},  // start/end different lines
-      {{{10, 8}, {11, 2}}, "11:9:12:2:"},
-      {{{10, 8}, {10, 9}}, "11:9:"},  // Single character range
-      {{{10, 8}, {10, 8}}, "11:9:"},  // Empty range.
+      {.range = {.start = {.line = 0, .column = 0},
+                 .end = {.line = 0, .column = 7}},
+       .text = "1:1-7:"},  // Same line, multiple columns
+      {.range = {.start = {.line = 0, .column = 1},
+                 .end = {.line = 0, .column = 3}},
+       .text = "1:2-3:"},
+      {.range = {.start = {.line = 1, .column = 0},
+                 .end = {.line = 2, .column = 14}},
+       .text = "2:1:3:14:"},  // start/end different lines
+      {.range = {.start = {.line = 10, .column = 8},
+                 .end = {.line = 11, .column = 2}},
+       .text = "11:9:12:2:"},
+      {.range = {.start = {.line = 10, .column = 8},
+                 .end = {.line = 10, .column = 9}},
+       .text = "11:9:"},  // Single character range
+      {.range = {.start = {.line = 10, .column = 8},
+                 .end = {.line = 10, .column = 8}},
+       .text = "11:9:"},  // Empty range.
   };
   for (const auto &test_case : text_test_data) {
     std::ostringstream oss;
@@ -146,13 +201,13 @@ struct EndOffsetTestCase {
 
 TEST(LineColumnMapTest, EndOffsetVarious) {
   const EndOffsetTestCase kTestCases[] = {
-      {"", 0},             // empty text
-      {"aaaa", 0},         // missing EOL
-      {"aaaa\nbbb", 5},    // missing EOL
-      {"\n", 1},           //
-      {"aaaa\n", 5},       //
-      {"aaaa\nbbb\n", 9},  //
-      {"\n\n", 2},
+      {.text = "", .expected_offset = 0},             // empty text
+      {.text = "aaaa", .expected_offset = 0},         // missing EOL
+      {.text = "aaaa\nbbb", .expected_offset = 5},    // missing EOL
+      {.text = "\n", .expected_offset = 1},           //
+      {.text = "aaaa\n", .expected_offset = 5},       //
+      {.text = "aaaa\nbbb\n", .expected_offset = 9},  //
+      {.text = "\n\n", .expected_offset = 2},
   };
   for (const auto &test : kTestCases) {
     const LineColumnMap map(test.text);
@@ -188,8 +243,8 @@ TEST(LineColumnTest, LineColumnComparison) {
 }
 
 TEST(LineColumnTest, LineColumnRangeComparison) {
-  constexpr LineColumnRange range{{.line = 42, .column = 17},
-                                  {.line = 42, .column = 22}};
+  constexpr LineColumnRange range{.start = {.line = 42, .column = 17},
+                                  .end = {.line = 42, .column = 22}};
 
   constexpr LineColumn before{.line = 42, .column = 16};
   constexpr LineColumn inside_start{.line = 42, .column = 17};

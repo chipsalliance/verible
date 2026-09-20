@@ -82,7 +82,9 @@ void UnwrappedLine::SetIndentationSpaces(int spaces) {
 void UnwrappedLine::DefaultOriginPrinter(std::ostream &stream,
                                          const verible::Symbol *symbol) {
   static constexpr int kContextLimit = 25;
-  stream << '"' << AutoTruncate{StringSpanOfSymbol(*symbol), kContextLimit}
+  stream << '"'
+         << AutoTruncate{.text = StringSpanOfSymbol(*symbol),
+                         .max_chars = kContextLimit}
          << '"';
 }
 

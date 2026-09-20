@@ -398,7 +398,7 @@ void TreeUnwrapper::AdvanceLastVisitedLeaf() {
 
 verible::TokenWithContext TreeUnwrapper::VerboseToken(
     const TokenInfo &token) const {
-  return TokenWithContext{token, token_context_};
+  return TokenWithContext{.token = token, .context = token_context_};
 }
 
 static void VerilogOriginPrinter(
@@ -503,7 +503,8 @@ static verible::TokenSequence::const_iterator StopAtLastNewlineBeforeTreeLeaf(
   // Find next syntax tree token or EOF.
   bool break_while = false;
   while (!token_iter->isEOF() && !break_while) {
-    VLOG(4) << "scan: " << TokenWithContext{*token_iter, context};
+    VLOG(4) << "scan: "
+            << TokenWithContext{.token = *token_iter, .context = context};
     switch (token_iter->token_enum()) {
       // TODO(b/144653479): this token-case logic is redundant with other
       // places; plumb that through to here instead of replicating it.

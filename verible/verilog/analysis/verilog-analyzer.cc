@@ -263,8 +263,9 @@ absl::Status VerilogAnalyzer::Analyze() {
     if (!preprocessor_data_.errors.empty()) {
       for (const auto &error : preprocessor_data_.errors) {
         rejected_tokens_.push_back(verible::RejectedToken{
-            error.token_info, verible::AnalysisPhase::kPreprocessPhase,
-            error.error_message});
+            .token_info = error.token_info,
+            .phase = verible::AnalysisPhase::kPreprocessPhase,
+            .explanation = error.error_message});
       }
       parse_status_ = absl::InvalidArgumentError("Preprocessor error.");
       return parse_status_;
@@ -272,8 +273,10 @@ absl::Status VerilogAnalyzer::Analyze() {
 
     for (const auto &warning : preprocessor_data_.warnings) {
       const verible::RejectedToken warn_token{
-          warning.token_info, verible::AnalysisPhase::kPreprocessPhase,
-          warning.error_message, verible::ErrorSeverity::kWarning};
+          .token_info = warning.token_info,
+          .phase = verible::AnalysisPhase::kPreprocessPhase,
+          .explanation = warning.error_message,
+          .severity = verible::ErrorSeverity::kWarning};
       if (preprocess_config_.filter_branches) {
         // Only if we properly filter out branches, warning about double
         // defined macros make sense. So in this case, include them in the
@@ -355,7 +358,8 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
         if (VLOG_IS_ON(4)) {
           LOG(INFO) << "macro call-arg's lexed tokens: ";
           for (const auto &t : token_sequence) {
-            LOG(INFO) << verible::TokenWithContext{t, token_context};
+            LOG(INFO) << verible::TokenWithContext{.token = t,
+                                                   .context = token_context};
           }
         }
         CHECK_EQ(token_sequence.back().right(expr_analyzer->Data().Contents()),

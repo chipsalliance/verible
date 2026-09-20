@@ -61,9 +61,12 @@ const LintRuleDescriptor &ModuleFilenameRule::GetDescriptor() {
           "the first dot-delimited component of the file name. Depending on "
           "configuration, it is also allowed to replace underscore with dashes "
           "in filenames.",
-      .param = {{"allow-dash-for-underscore", "false",
-                 "Allow dashes in the filename where there are dashes in the "
-                 "module name"}},
+      .param =
+          {{.name = "allow-dash-for-underscore",
+            .default_value = "false",
+            .description =
+                "Allow dashes in the filename where there are dashes in the "
+                "module name"}},
   };
   return d;
 }
@@ -152,8 +155,8 @@ LintRuleStatus ModuleFilenameRule::Report() const {
 absl::Status ModuleFilenameRule::Configure(std::string_view configuration) {
   using verible::config::SetBool;
   return verible::ParseNameValues(
-      configuration,
-      {{"allow-dash-for-underscore", SetBool(&allow_dash_for_underscore_)}});
+      configuration, {{.name = "allow-dash-for-underscore",
+                       .set_value = SetBool(&allow_dash_for_underscore_)}});
 }
 }  // namespace analysis
 }  // namespace verilog

@@ -171,13 +171,62 @@ TEST(ProjectPolicyTest, MatchesAnyPath) {
     const char *expected_match;
   };
   const TestCase kTestCases[] = {
-      {{"policyX", {}, {}, {}, {}, {}}, "filename", nullptr},
-      {{"policyX", {"file"}, {}, {}, {}, {}}, "filename", "file"},
-      {{"policyX", {"not-a-match"}, {}, {}, {}, {}}, "filename", nullptr},
-      {{"policyX", {"xxxx", "yyyy"}, {}, {}, {}, {}}, "file/name.txt", nullptr},
-      {{"policyX", {"xxxx", "name"}, {}, {}, {}, {}}, "file/name.txt", "name"},
-      {{"policyX", {"xxxx", "file"}, {}, {}, {}, {}}, "file/name.txt", "file"},
-      {{"policyX", {"name", "file"}, {}, {}, {}, {}}, "file/name.txt", "name"},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {},
+                  .path_exclusions = {},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "filename",
+       .expected_match = nullptr},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {"file"},
+                  .path_exclusions = {},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "filename",
+       .expected_match = "file"},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {"not-a-match"},
+                  .path_exclusions = {},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "filename",
+       .expected_match = nullptr},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {"xxxx", "yyyy"},
+                  .path_exclusions = {},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "file/name.txt",
+       .expected_match = nullptr},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {"xxxx", "name"},
+                  .path_exclusions = {},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "file/name.txt",
+       .expected_match = "name"},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {"xxxx", "file"},
+                  .path_exclusions = {},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "file/name.txt",
+       .expected_match = "file"},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {"name", "file"},
+                  .path_exclusions = {},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "file/name.txt",
+       .expected_match = "name"},
   };
   for (const auto &test : kTestCases) {
     const char *match = test.policy.MatchesAnyPath(test.filename);
@@ -196,13 +245,62 @@ TEST(ProjectPolicyTest, MatchesAnyExclusions) {
     const char *expected_match;
   };
   const TestCase kTestCases[] = {
-      {{"policyX", {}, {}, {}, {}, {}}, "filename", nullptr},
-      {{"policyX", {}, {"file"}, {}, {}, {}}, "filename", "file"},
-      {{"policyX", {}, {"not-a-match"}, {}, {}, {}}, "filename", nullptr},
-      {{"policyX", {}, {"xxxx", "yyyy"}, {}, {}, {}}, "file/name.txt", nullptr},
-      {{"policyX", {}, {"xxxx", "name"}, {}, {}, {}}, "file/name.txt", "name"},
-      {{"policyX", {}, {"xxxx", "file"}, {}, {}, {}}, "file/name.txt", "file"},
-      {{"policyX", {}, {"name", "file"}, {}, {}, {}}, "file/name.txt", "name"},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {},
+                  .path_exclusions = {},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "filename",
+       .expected_match = nullptr},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {},
+                  .path_exclusions = {"file"},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "filename",
+       .expected_match = "file"},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {},
+                  .path_exclusions = {"not-a-match"},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "filename",
+       .expected_match = nullptr},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {},
+                  .path_exclusions = {"xxxx", "yyyy"},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "file/name.txt",
+       .expected_match = nullptr},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {},
+                  .path_exclusions = {"xxxx", "name"},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "file/name.txt",
+       .expected_match = "name"},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {},
+                  .path_exclusions = {"xxxx", "file"},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "file/name.txt",
+       .expected_match = "file"},
+      {.policy = {.name = "policyX",
+                  .path_substrings = {},
+                  .path_exclusions = {"name", "file"},
+                  .owners = {},
+                  .disabled_rules = {},
+                  .enabled_rules = {}},
+       .filename = "file/name.txt",
+       .expected_match = "name"},
   };
   for (const auto &test : kTestCases) {
     const char *match = test.policy.MatchesAnyExclusions(test.filename);
@@ -216,25 +314,54 @@ TEST(ProjectPolicyTest, MatchesAnyExclusions) {
 
 TEST(ProjectPolicyTest, IsValid) {
   const std::pair<ProjectPolicy, bool> kTestCases[] = {
-      {{"policyX", {"path"}, {}, {"owner"}, {"test-rule-1"}, {}}, true},
-      {{"policyX", {"path"}, {}, {"owner"}, {}, {"test-rule-1"}}, true},
-      {{"policyX", {"path"}, {}, {"owner"}, {"test-rule-1"}, {"test-rule-2"}},
+      {{.name = "policyX",
+        .path_substrings = {"path"},
+        .path_exclusions = {},
+        .owners = {"owner"},
+        .disabled_rules = {"test-rule-1"},
+        .enabled_rules = {}},
        true},
-      {{"policyX", {"path"}, {}, {"owner"}, {"not-a-test-rule"}, {}}, false},
-      {{"policyX", {"path"}, {}, {"owner"}, {}, {"not-a-test-rule"}}, false},
-      {{"policyX",
-        {"path"},
-        {},
-        {"owner"},
-        {"test-rule-1", "not-a-test-rule"},
-        {}},
+      {{.name = "policyX",
+        .path_substrings = {"path"},
+        .path_exclusions = {},
+        .owners = {"owner"},
+        .disabled_rules = {},
+        .enabled_rules = {"test-rule-1"}},
+       true},
+      {{.name = "policyX",
+        .path_substrings = {"path"},
+        .path_exclusions = {},
+        .owners = {"owner"},
+        .disabled_rules = {"test-rule-1"},
+        .enabled_rules = {"test-rule-2"}},
+       true},
+      {{.name = "policyX",
+        .path_substrings = {"path"},
+        .path_exclusions = {},
+        .owners = {"owner"},
+        .disabled_rules = {"not-a-test-rule"},
+        .enabled_rules = {}},
        false},
-      {{"policyX",
-        {"path"},
-        {},
-        {"owner"},
-        {},
-        {"not-a-test-rule", "test-rule-1"}},
+      {{.name = "policyX",
+        .path_substrings = {"path"},
+        .path_exclusions = {},
+        .owners = {"owner"},
+        .disabled_rules = {},
+        .enabled_rules = {"not-a-test-rule"}},
+       false},
+      {{.name = "policyX",
+        .path_substrings = {"path"},
+        .path_exclusions = {},
+        .owners = {"owner"},
+        .disabled_rules = {"test-rule-1", "not-a-test-rule"},
+        .enabled_rules = {}},
+       false},
+      {{.name = "policyX",
+        .path_substrings = {"path"},
+        .path_exclusions = {},
+        .owners = {"owner"},
+        .disabled_rules = {},
+        .enabled_rules = {"not-a-test-rule", "test-rule-1"}},
        false},
   };
   for (const auto &test : kTestCases) {
@@ -244,10 +371,33 @@ TEST(ProjectPolicyTest, IsValid) {
 
 TEST(ProjectPolicyTest, ListPathGlobs) {
   const std::pair<ProjectPolicy, std::string_view> kTestCases[] = {
-      {{"policyX", {}, {}, {}, {}, {}}, ""},
-      {{"policyX", {"path"}, {}, {}, {}, {}}, "*path*"},
-      {{"policyX", {"path1", "path2"}, {}, {}, {}, {}}, "*path1* | *path2*"},
-      {{"policyX", {"pa/th1", "pa/th2"}, {}, {}, {}, {}},
+      {{.name = "policyX",
+        .path_substrings = {},
+        .path_exclusions = {},
+        .owners = {},
+        .disabled_rules = {},
+        .enabled_rules = {}},
+       ""},
+      {{.name = "policyX",
+        .path_substrings = {"path"},
+        .path_exclusions = {},
+        .owners = {},
+        .disabled_rules = {},
+        .enabled_rules = {}},
+       "*path*"},
+      {{.name = "policyX",
+        .path_substrings = {"path1", "path2"},
+        .path_exclusions = {},
+        .owners = {},
+        .disabled_rules = {},
+        .enabled_rules = {}},
+       "*path1* | *path2*"},
+      {{.name = "policyX",
+        .path_substrings = {"pa/th1", "pa/th2"},
+        .path_exclusions = {},
+        .owners = {},
+        .disabled_rules = {},
+        .enabled_rules = {}},
        "*pa/th1* | *pa/th2*"},
   };
   for (const auto &test : kTestCases) {
@@ -497,7 +647,12 @@ TEST(LinterConfigurationUseProjectPolicyTest, BlankPolicyBlankFilename) {
 // Test single rule can be enabled with path matching.
 TEST(LinterConfigurationUseProjectPolicyTest, EnableRule) {
   LinterConfiguration config;
-  ProjectPolicy policy{"policyX", {"path"}, {}, {"owner"}, {}, {"wanted-rule"}};
+  ProjectPolicy policy{.name = "policyX",
+                       .path_substrings = {"path"},
+                       .path_exclusions = {},
+                       .owners = {"owner"},
+                       .disabled_rules = {},
+                       .enabled_rules = {"wanted-rule"}};
   EXPECT_FALSE(config.RuleIsOn("wanted-rule"));
   config.UseProjectPolicy(policy, "some/path/foo");
   EXPECT_TRUE(config.RuleIsOn("wanted-rule"));
@@ -506,8 +661,12 @@ TEST(LinterConfigurationUseProjectPolicyTest, EnableRule) {
 // Test that rule is not enabled because path does not match.
 TEST(LinterConfigurationUseProjectPolicyTest, EnableFilePathNotMatched) {
   LinterConfiguration config;
-  ProjectPolicy policy{"policyX", {"not-gonna-match"}, {}, {"owner"},
-                       {},        {"wanted-rule"}};
+  ProjectPolicy policy{.name = "policyX",
+                       .path_substrings = {"not-gonna-match"},
+                       .path_exclusions = {},
+                       .owners = {"owner"},
+                       .disabled_rules = {},
+                       .enabled_rules = {"wanted-rule"}};
   EXPECT_FALSE(config.RuleIsOn("wanted-rule"));
   config.UseProjectPolicy(policy, "some/path/foo");
   EXPECT_FALSE(config.RuleIsOn("wanted-rule"));
@@ -517,8 +676,12 @@ TEST(LinterConfigurationUseProjectPolicyTest, EnableFilePathNotMatched) {
 TEST(LinterConfigurationUseProjectPolicyTest, DisableRule) {
   LinterConfiguration config;
   config.TurnOn("unwanted-rule");
-  ProjectPolicy policy{"policyX", {"path"},          {},
-                       {"owner"}, {"unwanted-rule"}, {}};
+  ProjectPolicy policy{.name = "policyX",
+                       .path_substrings = {"path"},
+                       .path_exclusions = {},
+                       .owners = {"owner"},
+                       .disabled_rules = {"unwanted-rule"},
+                       .enabled_rules = {}};
   EXPECT_TRUE(config.RuleIsOn("unwanted-rule"));
   config.UseProjectPolicy(policy, "some/path/foo");
   EXPECT_FALSE(config.RuleIsOn("unwanted-rule"));
@@ -528,8 +691,12 @@ TEST(LinterConfigurationUseProjectPolicyTest, DisableRule) {
 TEST(LinterConfigurationUseProjectPolicyTest, DisableRulePathNotMatched) {
   LinterConfiguration config;
   config.TurnOn("unwanted-rule");
-  ProjectPolicy policy{"policyX", {"does-not-match"}, {},
-                       {"owner"}, {"unwanted-rule"},  {}};
+  ProjectPolicy policy{.name = "policyX",
+                       .path_substrings = {"does-not-match"},
+                       .path_exclusions = {},
+                       .owners = {"owner"},
+                       .disabled_rules = {"unwanted-rule"},
+                       .enabled_rules = {}};
   EXPECT_TRUE(config.RuleIsOn("unwanted-rule"));
   config.UseProjectPolicy(policy, "some/path/foo");
   EXPECT_TRUE(config.RuleIsOn("unwanted-rule"));
@@ -539,8 +706,12 @@ TEST(LinterConfigurationUseProjectPolicyTest, DisableRulePathNotMatched) {
 TEST(LinterConfigurationUseProjectPolicyTest, EnableRuleWins) {
   LinterConfiguration config;
   // Same rule is disabled and enabled.
-  ProjectPolicy policy{"policyX", {"path"},        {},
-                       {"owner"}, {"wanted-rule"}, {"wanted-rule"}};
+  ProjectPolicy policy{.name = "policyX",
+                       .path_substrings = {"path"},
+                       .path_exclusions = {},
+                       .owners = {"owner"},
+                       .disabled_rules = {"wanted-rule"},
+                       .enabled_rules = {"wanted-rule"}};
   EXPECT_FALSE(config.RuleIsOn("wanted-rule"));
   config.UseProjectPolicy(policy, "some/path/foo");
   EXPECT_TRUE(config.RuleIsOn("wanted-rule"));
@@ -598,7 +769,8 @@ TEST(RuleSetTest, UnparseRuleSetSuccess) {
 // Tests for parse / unparse on RuleBundle
 //
 TEST(RuleBundleTest, UnparseRuleBundleSeveral) {
-  RuleBundle bundle = {{{"flag1", {true, ""}}, {"flag2", {true, ""}}}};
+  RuleBundle bundle = {{{"flag1", {.enabled = true, .configuration = ""}},
+                        {"flag2", {.enabled = true, .configuration = ""}}}};
   std::string expected_comma = "flag2,flag1";
   std::string expected_newline = "flag2\nflag1";
 
@@ -610,7 +782,8 @@ TEST(RuleBundleTest, UnparseRuleBundleSeveral) {
 }
 
 TEST(RuleBundleTest, UnparseRuleBundleSeveralTurnOff) {
-  RuleBundle bundle = {{{"flag1", {false, ""}}, {"flag2", {true, ""}}}};
+  RuleBundle bundle = {{{"flag1", {.enabled = false, .configuration = ""}},
+                        {"flag2", {.enabled = true, .configuration = ""}}}};
   std::string expected_comma = "flag2,-flag1";
   std::string expected_newline = "flag2\n-flag1";
 
@@ -622,7 +795,8 @@ TEST(RuleBundleTest, UnparseRuleBundleSeveralTurnOff) {
 }
 
 TEST(RuleBundleTest, UnparseRuleBundleSeveralConfiguration) {
-  RuleBundle bundle = {{{"flag1", {false, "foo"}}, {"flag2", {true, "bar"}}}};
+  RuleBundle bundle = {{{"flag1", {.enabled = false, .configuration = "foo"}},
+                        {"flag2", {.enabled = true, .configuration = "bar"}}}};
   std::string expected_comma = "flag2=bar,-flag1=foo";
   std::string expected_newline = "flag2=bar\n-flag1=foo";
 
@@ -929,8 +1103,8 @@ TEST(ConfigureFromOptionsTest, RulesNumber) {
 TEST(ConfigureFromOptionsTest, RulesSelective) {
   LinterConfiguration config;
 
-  RuleBundle bundle = {
-      {{analysis::RegisteredSyntaxTreeRulesNames()[0], {false, ""}}}};
+  RuleBundle bundle = {{{analysis::RegisteredSyntaxTreeRulesNames()[0],
+                         {.enabled = false, .configuration = ""}}}};
 
   LinterOptions options = {.ruleset = RuleSet::kAll,
                            .rules = bundle,

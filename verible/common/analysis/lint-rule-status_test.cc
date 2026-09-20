@@ -124,15 +124,20 @@ TEST(LintRuleStatusFormatterTest, SimpleOutput) {
       "It is nice code, make no mistake\n"
       "Very nice");
   LintStatusTest test = {
-      "test-rule",
-      "http://foobar",
-      "some/path/to/somewhere.fvg",
-      text,
-      {{"reason1", TokenInfo(dont_care_tag, text.substr(0, 5)),
-        "some/path/to/somewhere.fvg:1:1-5: reason1 http://foobar [test-rule]"},
-       {"reason2", TokenInfo(dont_care_tag, text.substr(21, 4)),
-        "some/path/to/somewhere.fvg:2:4-7: reason2 http://foobar "
-        "[test-rule]"}}};
+      .rule_name = "test-rule",
+      .url = "http://foobar",
+      .path = "some/path/to/somewhere.fvg",
+      .text = text,
+      .violations = {
+          {.reason = "reason1",
+           .token = TokenInfo(dont_care_tag, text.substr(0, 5)),
+           .expected_output = "some/path/to/somewhere.fvg:1:1-5: reason1 "
+                              "http://foobar [test-rule]"},
+          {.reason = "reason2",
+           .token = TokenInfo(dont_care_tag, text.substr(21, 4)),
+           .expected_output =
+               "some/path/to/somewhere.fvg:2:4-7: reason2 http://foobar "
+               "[test-rule]"}}};
 
   RunLintStatusTest(test);
 }
@@ -146,48 +151,56 @@ TEST(LintRuleStatusFormatterTest, HelperTokensReplacmentWithTokensLocation) {
       "It is nice code, make no mistake\n"
       "Very nice");
   LintStatusTest test = {
-      "test-rule",
-      "http://foobar",
-      "some/path/to/somewhere.fvg",
-      text,
-      {{"reason1 @",
-        TokenInfo(dont_care_tag, text.substr(0, 5)),
-        "some/path/to/somewhere.fvg:1:1-5: reason1 @ http://foobar [test-rule]",
-        {}},
-       {"reason2",
-        TokenInfo(dont_care_tag, text.substr(6, 2)),
-        "some/path/to/somewhere.fvg:1:7-8: reason2 http://foobar [test-rule]",
-        {TokenInfo(dont_care_tag, text.substr(0, 5))}},
-       {"reason3 \\@",
-        TokenInfo(dont_care_tag, text.substr(8, 2)),
-        "some/path/to/somewhere.fvg:1:9-10: reason3 @ http://foobar "
-        "[test-rule]",
-        {TokenInfo(dont_care_tag, text.substr(0, 5))}},
-       {"reason4 @",
-        TokenInfo(dont_care_tag, text.substr(15, 4)),
-        "some/path/to/somewhere.fvg:1:16:2:1: reason4 "
-        "some/path/to/somewhere.fvg:1:1 http://foobar [test-rule]",
-        {TokenInfo(dont_care_tag, text.substr(0, 5))}},
-       {"@ reason5 @",
-        TokenInfo(dont_care_tag, text.substr(21, 4)),
-        "some/path/to/somewhere.fvg:2:4-7: some/path/to/somewhere.fvg:1:10 "
-        "reason5 some/path/to/somewhere.fvg:2:4 http://foobar [test-rule]",
-        {TokenInfo(dont_care_tag, text.substr(9, 4)),
-         TokenInfo(dont_care_tag, text.substr(21, 4))}}}};
+      .rule_name = "test-rule",
+      .url = "http://foobar",
+      .path = "some/path/to/somewhere.fvg",
+      .text = text,
+      .violations = {
+          {.reason = "reason1 @",
+           .token = TokenInfo(dont_care_tag, text.substr(0, 5)),
+           .expected_output = "some/path/to/somewhere.fvg:1:1-5: reason1 @ "
+                              "http://foobar [test-rule]",
+           .related_tokens = {}},
+          {.reason = "reason2",
+           .token = TokenInfo(dont_care_tag, text.substr(6, 2)),
+           .expected_output = "some/path/to/somewhere.fvg:1:7-8: reason2 "
+                              "http://foobar [test-rule]",
+           .related_tokens = {TokenInfo(dont_care_tag, text.substr(0, 5))}},
+          {.reason = "reason3 \\@",
+           .token = TokenInfo(dont_care_tag, text.substr(8, 2)),
+           .expected_output =
+               "some/path/to/somewhere.fvg:1:9-10: reason3 @ http://foobar "
+               "[test-rule]",
+           .related_tokens = {TokenInfo(dont_care_tag, text.substr(0, 5))}},
+          {.reason = "reason4 @",
+           .token = TokenInfo(dont_care_tag, text.substr(15, 4)),
+           .expected_output =
+               "some/path/to/somewhere.fvg:1:16:2:1: reason4 "
+               "some/path/to/somewhere.fvg:1:1 http://foobar [test-rule]",
+           .related_tokens = {TokenInfo(dont_care_tag, text.substr(0, 5))}},
+          {.reason = "@ reason5 @",
+           .token = TokenInfo(dont_care_tag, text.substr(21, 4)),
+           .expected_output = "some/path/to/somewhere.fvg:2:4-7: "
+                              "some/path/to/somewhere.fvg:1:10 "
+                              "reason5 some/path/to/somewhere.fvg:2:4 "
+                              "http://foobar [test-rule]",
+           .related_tokens = {TokenInfo(dont_care_tag, text.substr(9, 4)),
+                              TokenInfo(dont_care_tag, text.substr(21, 4))}}}};
 
   RunLintStatusTest(test);
 }
 
 TEST(LintRuleStatusFormatterTest, NoOutput) {
   SymbolPtr root = Node();
-  LintStatusTest test = {"cool-rule",
-                         "http://example.com/svstyle",
-                         "some/path/to/somewhere.fvg",
-                         "This is some code\n"
-                         "That you are looking at right now\n"
-                         "It is nice code, make no mistake\n"
-                         "Very nice",
-                         {}};
+  LintStatusTest test = {.rule_name = "cool-rule",
+                         .url = "http://example.com/svstyle",
+                         .path = "some/path/to/somewhere.fvg",
+                         .text =
+                             "This is some code\n"
+                             "That you are looking at right now\n"
+                             "It is nice code, make no mistake\n"
+                             "Very nice",
+                         .violations = {}};
 
   RunLintStatusTest(test);
 }
@@ -252,15 +265,20 @@ TEST(LintRuleStatusFormatterTest, MultipleStatusesSimpleOutput) {
       "It is nice code, make no mistake\n"
       "Very nice");
   LintStatusTest test = {
-      "test-rule",
-      "http://foobar",
-      "some/path/to/somewhere.fvg",
-      text,
-      {{"reason1", TokenInfo(dont_care_tag, text.substr(0, 5)),
-        "some/path/to/somewhere.fvg:1:1-5: reason1 http://foobar [test-rule]"},
-       {"reason2", TokenInfo(dont_care_tag, text.substr(21, 4)),
-        "some/path/to/somewhere.fvg:2:4-7: reason2 http://foobar "
-        "[test-rule]"}}};
+      .rule_name = "test-rule",
+      .url = "http://foobar",
+      .path = "some/path/to/somewhere.fvg",
+      .text = text,
+      .violations = {
+          {.reason = "reason1",
+           .token = TokenInfo(dont_care_tag, text.substr(0, 5)),
+           .expected_output = "some/path/to/somewhere.fvg:1:1-5: reason1 "
+                              "http://foobar [test-rule]"},
+          {.reason = "reason2",
+           .token = TokenInfo(dont_care_tag, text.substr(21, 4)),
+           .expected_output =
+               "some/path/to/somewhere.fvg:2:4-7: reason2 http://foobar "
+               "[test-rule]"}}};
 
   RunLintStatusesTest(test, false);
 }
@@ -274,16 +292,21 @@ TEST(LintRuleStatusFormatterTestWithContext, MultipleStatusesSimpleOutput) {
       "It is nice code, make no mistake\n"
       "Very nice");
   LintStatusTest test = {
-      "test-rule",
-      "http://foobar",
-      "some/path/to/somewhere.fvg",
-      text,
-      {{"reason1", TokenInfo(dont_care_tag, text.substr(0, 5)),
-        "some/path/to/somewhere.fvg:1:1-5: reason1 http://foobar "
-        "[test-rule]\nThis is some code\n"},
-       {"reason2", TokenInfo(dont_care_tag, text.substr(21, 4)),
-        "some/path/to/somewhere.fvg:2:4-7: reason2 http://foobar "
-        "[test-rule]\nThat you are looking at right now\n   "}}};
+      .rule_name = "test-rule",
+      .url = "http://foobar",
+      .path = "some/path/to/somewhere.fvg",
+      .text = text,
+      .violations = {
+          {.reason = "reason1",
+           .token = TokenInfo(dont_care_tag, text.substr(0, 5)),
+           .expected_output =
+               "some/path/to/somewhere.fvg:1:1-5: reason1 http://foobar "
+               "[test-rule]\nThis is some code\n"},
+          {.reason = "reason2",
+           .token = TokenInfo(dont_care_tag, text.substr(21, 4)),
+           .expected_output =
+               "some/path/to/somewhere.fvg:2:4-7: reason2 http://foobar "
+               "[test-rule]\nThat you are looking at right now\n   "}}};
   RunLintStatusesTest(test, true);
 }
 
@@ -293,16 +316,19 @@ TEST(LintRuleStatusFormatterTestWithContext, PointToCorrectUtf8Char) {
   constexpr std::string_view text("äöüß\n");
   //                                ^ä^ü
   LintStatusTest test = {
-      "rule",
-      "URL",
-      "some/file.sv",
-      text,
-      {{"reason1", TokenInfo(dont_care_tag, text.substr(0, 2)),
-        "some/file.sv:1:1: reason1 URL "
-        "[rule]\näöüß\n"},
-       {"reason2", TokenInfo(dont_care_tag, text.substr(strlen("äö"), 2)),
-        "some/file.sv:1:3: reason2 URL "
-        "[rule]\näöüß\n  "}}};
+      .rule_name = "rule",
+      .url = "URL",
+      .path = "some/file.sv",
+      .text = text,
+      .violations = {
+          {.reason = "reason1",
+           .token = TokenInfo(dont_care_tag, text.substr(0, 2)),
+           .expected_output = "some/file.sv:1:1: reason1 URL "
+                              "[rule]\näöüß\n"},
+          {.reason = "reason2",
+           .token = TokenInfo(dont_care_tag, text.substr(strlen("äö"), 2)),
+           .expected_output = "some/file.sv:1:3: reason2 URL "
+                              "[rule]\näöüß\n  "}}};
   RunLintStatusesTest(test, true);
 }
 

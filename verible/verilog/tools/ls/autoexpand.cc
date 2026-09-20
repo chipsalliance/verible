@@ -476,11 +476,13 @@ class AutoExpander {
 };
 
 const LazyRE2 AutoExpander::auto_re_{
-    R"(/\*\s*(AUTOARG|AUTOINST|AUTOINPUT|AUTOINOUT|AUTOOUTPUT|AUTOWIRE|AUTOREG)\s*\*/)"};
+    .pattern_ =
+        R"(/\*\s*(AUTOARG|AUTOINST|AUTOINPUT|AUTOINOUT|AUTOOUTPUT|AUTOWIRE|AUTOREG)\s*\*/)"};
 
-const LazyRE2 AutoExpander::autoarg_re_{R"((/\*\s*AUTOARG\s*\*/))"};
+const LazyRE2 AutoExpander::autoarg_re_{.pattern_ = R"((/\*\s*AUTOARG\s*\*/))"};
 
-const LazyRE2 AutoExpander::autoinst_re_{R"((/\*\s*AUTOINST\s*\*/))"};
+const LazyRE2 AutoExpander::autoinst_re_{.pattern_ =
+                                             R"((/\*\s*AUTOINST\s*\*/))"};
 
 // AUTO_TEMPLATE regex breakdown:
 // The entire expression is wrapped in () so the first capturing group is the
@@ -493,10 +495,12 @@ const LazyRE2 AutoExpander::autoinst_re_{R"((/\*\s*AUTOINST\s*\*/))"};
 // \s*\(?:[\s\S]*?\);                – parens with port connections
 // \s*\*/                            – end of comment
 const LazyRE2 AutoExpander::autotemplate_re_{
-    R"((/\*(?:\s*\S+\s+AUTO_TEMPLATE\s*\n)*\s*\S+\s+AUTO_TEMPLATE\s*(?:"([^"]*)\")?\s*\([\s\S]*?\);\s*\*/))"};
+    .pattern_ =
+        R"((/\*(?:\s*\S+\s+AUTO_TEMPLATE\s*\n)*\s*\S+\s+AUTO_TEMPLATE\s*(?:"([^"]*)\")?\s*\([\s\S]*?\);\s*\*/))"};
 
 // AUTO_TEMPLATE type regex: the first capturing group is the instance type
-const LazyRE2 AutoExpander::autotemplate_type_re_{R"((\S+)\s+AUTO_TEMPLATE)"};
+const LazyRE2 AutoExpander::autotemplate_type_re_{
+    .pattern_ = R"((\S+)\s+AUTO_TEMPLATE)"};
 
 // AUTO_TEMPLATE connection regex breakdown:
 // \.\s*      – starts with a dot
@@ -507,7 +511,7 @@ const LazyRE2 AutoExpander::autotemplate_type_re_{R"((\S+)\s+AUTO_TEMPLATE)"};
 // \s*(\[\])? – optional third group, capturing '[]'
 // \s*\)*     – optional whitespace, closing paren
 const LazyRE2 AutoExpander::autotemplate_conn_re_{
-    R"(\.\s*([^\s(]+?)\s*\(\s*([^\s(]+?)\s*(\[\])?\s*\))"};
+    .pattern_ = R"(\.\s*([^\s(]+?)\s*\(\s*([^\s(]+?)\s*(\[\])?\s*\))"};
 
 // AUTOINPUT/OUTPUT/INOUT/WIRE/REG regex breakdown:
 // The entire expression is wrapped in () so the first capturing group is the
@@ -523,11 +527,15 @@ const LazyRE2 AutoExpander::autotemplate_conn_re_{
 #define MAKE_AUTODECL_REGEX(decl_kind) \
   R"(((/\*\s*AUTO)" decl_kind          \
   R"(\s*\*/\s*?)(?:\s*//.*)?(?:[\s\S]*?[^\S\r\n]*// End of automatics.*)?))"
-const LazyRE2 AutoExpander::autoinput_re_{MAKE_AUTODECL_REGEX("INPUT")};
-const LazyRE2 AutoExpander::autoinout_re_{MAKE_AUTODECL_REGEX("INOUT")};
-const LazyRE2 AutoExpander::autooutput_re_{MAKE_AUTODECL_REGEX("OUTPUT")};
-const LazyRE2 AutoExpander::autowire_re_{MAKE_AUTODECL_REGEX("WIRE")};
-const LazyRE2 AutoExpander::autoreg_re_{MAKE_AUTODECL_REGEX("REG")};
+const LazyRE2 AutoExpander::autoinput_re_{.pattern_ =
+                                              MAKE_AUTODECL_REGEX("INPUT")};
+const LazyRE2 AutoExpander::autoinout_re_{.pattern_ =
+                                              MAKE_AUTODECL_REGEX("INOUT")};
+const LazyRE2 AutoExpander::autooutput_re_{.pattern_ =
+                                               MAKE_AUTODECL_REGEX("OUTPUT")};
+const LazyRE2 AutoExpander::autowire_re_{.pattern_ =
+                                             MAKE_AUTODECL_REGEX("WIRE")};
+const LazyRE2 AutoExpander::autoreg_re_{.pattern_ = MAKE_AUTODECL_REGEX("REG")};
 
 using Dimension = AutoExpander::Dimension;
 using DimensionRange = AutoExpander::DimensionRange;
@@ -842,7 +850,10 @@ void AutoExpander::Module::AddGeneratedConnection(
   }
   // There are no wires or ports of the given name. Just make a new port.
   ports_.push_back({
-      {port_name, {connected}, packed_dimensions, unpacked_dimensions},
+      {.name = port_name,
+       .conn_inst = {connected},
+       .packed_dimensions = packed_dimensions,
+       .unpacked_dimensions = unpacked_dimensions},
       direction,
       Port::Declaration::kUndeclared,
       {},
@@ -1039,10 +1050,10 @@ void AutoExpander::Module::PutDeclaredPort(const SyntaxTreeNode &port_node) {
 
   ports_.push_back({
       {
-          name,
-          {},
-          std::move(packed_dimensions),
-          std::move(unpacked_dimensions),
+          .name = name,
+          .conn_inst = {},
+          .packed_dimensions = std::move(packed_dimensions),
+          .unpacked_dimensions = std::move(unpacked_dimensions),
       },
       direction,
       Port::Declaration::kDeclared,

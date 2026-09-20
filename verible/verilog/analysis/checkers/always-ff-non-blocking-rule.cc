@@ -60,8 +60,9 @@ const LintRuleDescriptor &AlwaysFFNonBlockingRule::GetDescriptor() {
       .desc =
           "Checks that blocking assignments are, at most, targeting "
           "locals in sequential logic.",
-      .param = {{"catch_modifying_assignments", "false"},
-                {"waive_for_locals", "false"}},
+      .param = {{.name = "catch_modifying_assignments",
+                 .default_value = "false"},
+                {.name = "waive_for_locals", .default_value = "false"}},
   };
   return d;
 }
@@ -76,9 +77,10 @@ absl::Status AlwaysFFNonBlockingRule::Configure(
   using verible::config::SetBool;
   return verible::ParseNameValues(
       configuration, {
-                         {"catch_modifying_assignments",
-                          SetBool(&catch_modifying_assignments_)},
-                         {"waive_for_locals", SetBool(&waive_for_locals_)},
+                         {.name = "catch_modifying_assignments",
+                          .set_value = SetBool(&catch_modifying_assignments_)},
+                         {.name = "waive_for_locals",
+                          .set_value = SetBool(&waive_for_locals_)},
                      });
 }
 
@@ -189,7 +191,8 @@ bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol,
   if (block_matcher.Matches(symbol, &symbol_man)) {
     VLOG(4) << "PUSHing scope: DEPTH=" << depth
             << "; #locals_ inherited=" << locals_.size() << std::endl;
-    scopes_.emplace(Scope{depth, locals_.size()});
+    scopes_.emplace(Scope{.syntax_tree_depth = depth,
+                          .inherited_local_count = locals_.size()});
     return false;
   }
 

@@ -141,43 +141,51 @@ TEST(MatcherBuildersTest, UnlessSimple) {
 TEST(CoreMatchers, AnyOfManyTests) {
   const MatcherTestCase test_cases[] = {
       // Only first inner matcher should Bind
-      {Node5(AnyOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
-       TNode(5, TNode(1), XLeaf(1)),
-       true,
-       {{"Node", NodeTag(1)}}},
-      {Node5(AnyOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
-       TNode(5, TNode(1), XLeaf(1)),
-       true,
-       {{"XLeaf", LeafTag(1)}}},
+      {.matcher =
+           Node5(AnyOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
+       .root = TNode(5, TNode(1), XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node", NodeTag(1)}}},
+      {.matcher =
+           Node5(AnyOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
+       .root = TNode(5, TNode(1), XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"XLeaf", LeafTag(1)}}},
 
       // Unmatched inner matchers should not bind
-      {Node5(AnyOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
-       TNode(5, XLeaf(1)),
-       true,
-       {{"XLeaf", LeafTag(1)}}},
-      {Node5(AnyOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
-       TNode(5, TNode(1)),
-       true,
-       {{"Node", NodeTag(1)}}},
+      {.matcher =
+           Node5(AnyOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
+       .root = TNode(5, XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"XLeaf", LeafTag(1)}}},
+      {.matcher =
+           Node5(AnyOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
+       .root = TNode(5, TNode(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node", NodeTag(1)}}},
 
       // Unmatched inner matchers should not prevent binds elsewhere in bode
-      {Node5(Node5().Bind("first"),
-             AnyOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
-       TNode(5, XLeaf(1)),
-       true,
-       {{"XLeaf", LeafTag(1)}, {"first", NodeTag(5)}}},
-      {Node5(Node5().Bind("first"),
-             AnyOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node")))
-           .Bind("outer"),
-       TNode(5, TNode(1)),
-       true,
-       {{"Node", NodeTag(1)}, {"first", NodeTag(5)}, {"outer", NodeTag(5)}}},
+      {.matcher =
+           Node5(Node5().Bind("first"),
+                 AnyOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
+       .root = TNode(5, XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"XLeaf", LeafTag(1)}, {"first", NodeTag(5)}}},
+      {.matcher = Node5(Node5().Bind("first"), AnyOf(PathLeaf1().Bind("XLeaf"),
+                                                     PathNode1().Bind("Node")))
+                      .Bind("outer"),
+       .root = TNode(5, TNode(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node", NodeTag(1)},
+                                {"first", NodeTag(5)},
+                                {"outer", NodeTag(5)}}},
 
       // AnyOf should fail when all inner matchers fail
-      {Node5(AnyOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
-       TNode(5, TNode(5), XLeaf(5)),
-       false,
-       {}},
+      {.matcher =
+           Node5(AnyOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
+       .root = TNode(5, TNode(5), XLeaf(5)),
+       .expected_result = false,
+       .expected_bound_nodes = {}},
   };
 
   for (const auto &test_case : test_cases) {
@@ -188,44 +196,51 @@ TEST(CoreMatchers, AnyOfManyTests) {
 TEST(CoreMatchers, EachOfManyTests) {
   const MatcherTestCase test_cases[] = {
       // All passing matchers should bind
-      {Node5(EachOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
-       TNode(5, TNode(1), XLeaf(1)),
-       true,
-       {{"Node", NodeTag(1)}, {"XLeaf", LeafTag(1)}}},
+      {.matcher =
+           Node5(EachOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
+       .root = TNode(5, TNode(1), XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node", NodeTag(1)}, {"XLeaf", LeafTag(1)}}},
       // Unmatched inner matchers should not bind
-      {Node5(EachOf(PathNode2().Bind("node2"), PathLeaf1().Bind("XLeaf"),
-                    PathLeaf2().Bind("leaf2"), PathNode1().Bind("Node"))),
-       TNode(5, TNode(1), XLeaf(1)),
-       true,
-       {{"Node", NodeTag(1)}, {"XLeaf", LeafTag(1)}}},
+      {.matcher =
+           Node5(EachOf(PathNode2().Bind("node2"), PathLeaf1().Bind("XLeaf"),
+                        PathLeaf2().Bind("leaf2"), PathNode1().Bind("Node"))),
+       .root = TNode(5, TNode(1), XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node", NodeTag(1)}, {"XLeaf", LeafTag(1)}}},
       // Inner matchers of EachOf's inner matchers that pass should bind
-      {Node5(EachOf(PathNode1(Node1().Bind("InnerNode")).Bind("Node"),
-                    PathLeaf1(Leaf1().Bind("InnerLeaf")).Bind("XLeaf"))),
-       TNode(5, TNode(1), XLeaf(1)),
-       true,
-       {{"Node", NodeTag(1)},
-        {"XLeaf", LeafTag(1)},
-        {"InnerNode", NodeTag(1)},
-        {"InnerLeaf", LeafTag(1)}}},
+      {.matcher =
+           Node5(EachOf(PathNode1(Node1().Bind("InnerNode")).Bind("Node"),
+                        PathLeaf1(Leaf1().Bind("InnerLeaf")).Bind("XLeaf"))),
+       .root = TNode(5, TNode(1), XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node", NodeTag(1)},
+                                {"XLeaf", LeafTag(1)},
+                                {"InnerNode", NodeTag(1)},
+                                {"InnerLeaf", LeafTag(1)}}},
 
       // Unmatched inner matchers should not prevent binds elsewhere
-      {Node5(Node5().Bind("first"),
-             EachOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
-       TNode(5, XLeaf(1)),
-       true,
-       {{"XLeaf", LeafTag(1)}, {"first", NodeTag(5)}}},
-      {Node5(Node5().Bind("first"),
-             EachOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node")))
-           .Bind("outer"),
-       TNode(5, TNode(1)),
-       true,
-       {{"Node", NodeTag(1)}, {"first", NodeTag(5)}, {"outer", NodeTag(5)}}},
+      {.matcher =
+           Node5(Node5().Bind("first"),
+                 EachOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
+       .root = TNode(5, XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"XLeaf", LeafTag(1)}, {"first", NodeTag(5)}}},
+      {.matcher = Node5(Node5().Bind("first"), EachOf(PathLeaf1().Bind("XLeaf"),
+                                                      PathNode1().Bind("Node")))
+                      .Bind("outer"),
+       .root = TNode(5, TNode(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node", NodeTag(1)},
+                                {"first", NodeTag(5)},
+                                {"outer", NodeTag(5)}}},
 
       // EachOf should fail when all inner matchers fail
-      {Node5(EachOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
-       TNode(5, TNode(5), XLeaf(5)),
-       false,
-       {}},
+      {.matcher =
+           Node5(EachOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
+       .root = TNode(5, TNode(5), XLeaf(5)),
+       .expected_result = false,
+       .expected_bound_nodes = {}},
   };
 
   for (const auto &test_case : test_cases) {
@@ -237,31 +252,36 @@ TEST(CoreMatchers, AllOfManyTests) {
   const MatcherTestCase test_cases[] = {
       // All inner matchers must match for AllOf to match.
       // Each passing matcher should bind.
-      {Node5(AllOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
-       TNode(5, TNode(1), XLeaf(1)),
-       true,
-       {{"Node", NodeTag(1)}, {"XLeaf", LeafTag(1)}}},
+      {.matcher =
+           Node5(AllOf(PathNode1().Bind("Node"), PathLeaf1().Bind("XLeaf"))),
+       .root = TNode(5, TNode(1), XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node", NodeTag(1)}, {"XLeaf", LeafTag(1)}}},
 
       // One inner matcher failing should cause AllOf to fail.
       // No matchers should bind in this case.
-      {Node5(AllOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
-       TNode(5, XLeaf(1)),
-       false,
-       {}},
-      {Node5(AllOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
-       TNode(5, TNode(1)),
-       false,
-       {}},
-      {Node5(AllOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node")))
-           .Bind("outer"),
-       TNode(5, XLeaf(1)),
-       false,
-       {}},
-      {Node5(AllOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node")))
-           .Bind("outer"),
-       TNode(5, TNode(1)),
-       false,
-       {}},
+      {.matcher =
+           Node5(AllOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
+       .root = TNode(5, XLeaf(1)),
+       .expected_result = false,
+       .expected_bound_nodes = {}},
+      {.matcher =
+           Node5(AllOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node"))),
+       .root = TNode(5, TNode(1)),
+       .expected_result = false,
+       .expected_bound_nodes = {}},
+      {.matcher =
+           Node5(AllOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node")))
+               .Bind("outer"),
+       .root = TNode(5, XLeaf(1)),
+       .expected_result = false,
+       .expected_bound_nodes = {}},
+      {.matcher =
+           Node5(AllOf(PathLeaf1().Bind("XLeaf"), PathNode1().Bind("Node")))
+               .Bind("outer"),
+       .root = TNode(5, TNode(1)),
+       .expected_result = false,
+       .expected_bound_nodes = {}},
   };
 
   for (const auto &test_case : test_cases) {
@@ -272,26 +292,40 @@ TEST(CoreMatchers, AllOfManyTests) {
 TEST(CoreMatchers, UnlessManyTests) {
   const MatcherTestCase test_cases[] = {
       // Unless should match if its inner matcher does not match
-      {Node5(Unless(PathNode1())), TNode(5, XLeaf(1)), true, {}},
+      {.matcher = Node5(Unless(PathNode1())),
+       .root = TNode(5, XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {}},
       // Unless matching should not result in any Binds from its inner matcher
-      {Node5(Unless(PathNode1().Bind("inner"))), TNode(5, XLeaf(1)), true, {}},
+      {.matcher = Node5(Unless(PathNode1().Bind("inner"))),
+       .root = TNode(5, XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {}},
       // Unless matching should not prevent parent/sibling matchers from binding
-      {Node5(Node5().Bind("sibling"), Unless(PathNode1().Bind("inner")))
-           .Bind("outer"),
-       TNode(5, XLeaf(1)),
-       true,
-       {{"sibling", NodeTag(5)}, {"outer", NodeTag(5)}}},
+      {.matcher =
+           Node5(Node5().Bind("sibling"), Unless(PathNode1().Bind("inner")))
+               .Bind("outer"),
+       .root = TNode(5, XLeaf(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"sibling", NodeTag(5)},
+                                {"outer", NodeTag(5)}}},
 
       // Unless should not match if its inner matcher does match
-      {Node5(Unless(PathNode1())), TNode(5, TNode(1)), false, {}},
+      {.matcher = Node5(Unless(PathNode1())),
+       .root = TNode(5, TNode(1)),
+       .expected_result = false,
+       .expected_bound_nodes = {}},
       // Unless failing should not result in any Binds from its inner matcher
-      {Node5(Unless(PathNode1().Bind("inner"))), TNode(5, TNode(1)), false, {}},
+      {.matcher = Node5(Unless(PathNode1().Bind("inner"))),
+       .root = TNode(5, TNode(1)),
+       .expected_result = false,
+       .expected_bound_nodes = {}},
 
       // Unless should negate itself, but should still not result in any binds
-      {Node5(Unless(Unless(PathNode1().Bind("inner")))),
-       TNode(5, TNode(1)),
-       true,
-       {}},
+      {.matcher = Node5(Unless(Unless(PathNode1().Bind("inner")))),
+       .root = TNode(5, TNode(1)),
+       .expected_result = true,
+       .expected_bound_nodes = {}},
   };
 
   for (const auto &test_case : test_cases) {
@@ -302,48 +336,48 @@ TEST(CoreMatchers, UnlessManyTests) {
 TEST(CoreMatchers, AllOfAnyOfManyTests) {
   const MatcherTestCase test_cases[] = {
       // Nesting AllOf inside of AnyOf should work as expected
-      {Node5(
+      {.matcher = Node5(
            AnyOf(AllOf(PathNode1().Bind("Node1"), PathLeaf1().Bind("Leaf1")),
                  AllOf(PathNode2().Bind("Node2"), PathLeaf2().Bind("Leaf2")))),
-       TNode(5, TNode(1), TNode(2), XLeaf(2)),
-       true,
-       {{"Node2", NodeTag(2)}, {"Leaf2", LeafTag(2)}}},
+       .root = TNode(5, TNode(1), TNode(2), XLeaf(2)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node2", NodeTag(2)}, {"Leaf2", LeafTag(2)}}},
       // Only one of two matching AllOf should match
-      {Node5(
+      {.matcher = Node5(
            AnyOf(AllOf(PathNode1().Bind("Node1"), PathLeaf1().Bind("Leaf1")),
                  AllOf(PathNode2().Bind("Node2"), PathLeaf2().Bind("Leaf2")))),
-       TNode(5, TNode(1), XLeaf(1), TNode(2), XLeaf(2)),
-       true,
-       {{"Node1", NodeTag(1)}, {"Leaf1", LeafTag(1)}}},
+       .root = TNode(5, TNode(1), XLeaf(1), TNode(2), XLeaf(2)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node1", NodeTag(1)}, {"Leaf1", LeafTag(1)}}},
       // It should fail even when parts of both AllOf match
-      {Node5(
+      {.matcher = Node5(
            AnyOf(AllOf(PathNode1().Bind("Node1"), PathLeaf1().Bind("Leaf1")),
                  AllOf(PathNode2().Bind("Node2"), PathLeaf2().Bind("Leaf2")))),
-       TNode(5, TNode(1), XLeaf(2)),
-       false,
-       {}},
+       .root = TNode(5, TNode(1), XLeaf(2)),
+       .expected_result = false,
+       .expected_bound_nodes = {}},
 
       // Nesting AnyOf inside of AllOf should work as expected
-      {Node5(
+      {.matcher = Node5(
            AllOf(AnyOf(PathNode1().Bind("Node1"), PathLeaf1().Bind("Leaf1")),
                  AnyOf(PathNode2().Bind("Node2"), PathLeaf2().Bind("Leaf2")))),
-       TNode(5, TNode(1), XLeaf(2)),
-       true,
-       {{"Node1", NodeTag(1)}, {"Leaf2", LeafTag(2)}}},
+       .root = TNode(5, TNode(1), XLeaf(2)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node1", NodeTag(1)}, {"Leaf2", LeafTag(2)}}},
       // Inner AnyOfs should still only bind once each
-      {Node5(
+      {.matcher = Node5(
            AllOf(AnyOf(PathNode1().Bind("Node1"), PathLeaf1().Bind("Leaf1")),
                  AnyOf(PathNode2().Bind("Node2"), PathLeaf2().Bind("Leaf2")))),
-       TNode(5, TNode(1), XLeaf(1), TNode(2), XLeaf(2)),
-       true,
-       {{"Node1", NodeTag(1)}, {"Node2", NodeTag(2)}}},
+       .root = TNode(5, TNode(1), XLeaf(1), TNode(2), XLeaf(2)),
+       .expected_result = true,
+       .expected_bound_nodes = {{"Node1", NodeTag(1)}, {"Node2", NodeTag(2)}}},
       // It should still fail when only one of inner AnyOf's match
-      {Node5(
+      {.matcher = Node5(
            AllOf(AnyOf(PathNode1().Bind("Node1"), PathLeaf1().Bind("Leaf1")),
                  AnyOf(PathNode2().Bind("Node2"), PathLeaf2().Bind("Leaf2")))),
-       TNode(5, TNode(1)),
-       false,
-       {}},
+       .root = TNode(5, TNode(1)),
+       .expected_result = false,
+       .expected_bound_nodes = {}},
   };
 
   for (const auto &test_case : test_cases) {

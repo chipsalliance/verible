@@ -6096,217 +6096,224 @@ using verible::LeafTag;
 // syntax trees that can still be analyzed.
 static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
     // module_item error tests
-    {"module foo;\n"
-     "wire 123;\n"  // rejects '123'
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration)}},
-    {"module foo;\n"
-     "wire abc;\n"
-     "wire 123;\n"  // rejects '123'
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
-      NodeTag(kNetDeclaration)}},
-    {"module foo;\n"
-     "wire 123;\n"  // rejects '123'
-     "wire abc;\n"
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
-      NodeTag(kNetDeclaration)}},
-    {"module foo;\n"
-     "wire wire;\n"  // rejects second 'wire'
-     "initial begin\n"
-     "  x <= y;\n"
-     "end\n"
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
-      NodeTag(kInitialStatement)}},
-    {"module foo;\n"
-     "`ifdef ERROR\n"  // inside conditional block
-     "wire 123;\n"     // rejects '123'
-     "`endif  // ERROR\n"
-     "wire abc;\n"
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
-      NodeTag(kNetDeclaration)}},
+    {.code = "module foo;\n"
+             "wire 123;\n"  // rejects '123'
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration)}},
+    {.code = "module foo;\n"
+             "wire abc;\n"
+             "wire 123;\n"  // rejects '123'
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+                   NodeTag(kNetDeclaration)}},
+    {.code = "module foo;\n"
+             "wire 123;\n"  // rejects '123'
+             "wire abc;\n"
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+                   NodeTag(kNetDeclaration)}},
+    {.code = "module foo;\n"
+             "wire wire;\n"  // rejects second 'wire'
+             "initial begin\n"
+             "  x <= y;\n"
+             "end\n"
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+                   NodeTag(kInitialStatement)}},
+    {.code = "module foo;\n"
+             "`ifdef ERROR\n"  // inside conditional block
+             "wire 123;\n"     // rejects '123'
+             "`endif  // ERROR\n"
+             "wire abc;\n"
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+                   NodeTag(kNetDeclaration)}},
     // generate_item error tests
-    {"module foo;\n"
-     "generate\n"
-     "  123 foo;\n"  // rejects '123'
-     "endgenerate\n"
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
-      NodeTag(kGenerateRegion), NodeTag(kGenerateItemList)}},
-    {"module foo;\n"
-     "generate\n"
-     "  class class;\n"  // rejects 'class'
-     "endgenerate\n"
-     "wire xx;\n"
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
-      NodeTag(kNetDeclaration)}},
-    {"module foo;\n"
-     "wire x;\n"
-     "generate\n"
-     "if (a & b) begin\n"
-     "  123 b(q);\n"  // rejects '123'
-     "end\n"
-     "endgenerate\n"
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
-      NodeTag(kGenerateRegion), NodeTag(kGenerateItemList),
-      NodeTag(kConditionalGenerateConstruct), NodeTag(kGenerateIfClause),
-      NodeTag(kGenerateIfBody)}},
+    {.code = "module foo;\n"
+             "generate\n"
+             "  123 foo;\n"  // rejects '123'
+             "endgenerate\n"
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+                   NodeTag(kGenerateRegion), NodeTag(kGenerateItemList)}},
+    {.code = "module foo;\n"
+             "generate\n"
+             "  class class;\n"  // rejects 'class'
+             "endgenerate\n"
+             "wire xx;\n"
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+                   NodeTag(kNetDeclaration)}},
+    {.code = "module foo;\n"
+             "wire x;\n"
+             "generate\n"
+             "if (a & b) begin\n"
+             "  123 b(q);\n"  // rejects '123'
+             "end\n"
+             "endgenerate\n"
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+                   NodeTag(kGenerateRegion), NodeTag(kGenerateItemList),
+                   NodeTag(kConditionalGenerateConstruct),
+                   NodeTag(kGenerateIfClause), NodeTag(kGenerateIfBody)}},
     // function/task statement_item error tests
-    {"function void foobar(int a, int b);\n"
-     "  8 9;\n"  // expression error
-     "  return a -b;\n"
-     "endfunction\n",
-     {NodeTag(kFunctionDeclaration), NodeTag(kBlockItemStatementList),
-      NodeTag(kJumpStatement)}},
-    {"task automatic barfoo;\n"
-     "  $display(\"moo\");;\n"
-     "  5+5;\n"  // statement error
-     "  c <= d;\n"
-     "endtask\n",
-     {NodeTag(kTaskDeclaration), NodeTag(kStatementList),
-      NodeTag(kNonblockingAssignmentStatement)}},
-    {"module bar;\n"
-     "task automatic barfoo;\n"
-     "  $display(\"moo\");;\n"
-     "  5+4;\n"  // statement error
-     "  c <= d;\n"
-     "endtask\n"
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
-      NodeTag(kTaskDeclaration), NodeTag(kStatementList),
-      NodeTag(kNonblockingAssignmentStatement)}},
+    {.code = "function void foobar(int a, int b);\n"
+             "  8 9;\n"  // expression error
+             "  return a -b;\n"
+             "endfunction\n",
+     .tree_path = {NodeTag(kFunctionDeclaration),
+                   NodeTag(kBlockItemStatementList), NodeTag(kJumpStatement)}},
+    {.code = "task automatic barfoo;\n"
+             "  $display(\"moo\");;\n"
+             "  5+5;\n"  // statement error
+             "  c <= d;\n"
+             "endtask\n",
+     .tree_path = {NodeTag(kTaskDeclaration), NodeTag(kStatementList),
+                   NodeTag(kNonblockingAssignmentStatement)}},
+    {.code = "module bar;\n"
+             "task automatic barfoo;\n"
+             "  $display(\"moo\");;\n"
+             "  5+4;\n"  // statement error
+             "  c <= d;\n"
+             "endtask\n"
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+                   NodeTag(kTaskDeclaration), NodeTag(kStatementList),
+                   NodeTag(kNonblockingAssignmentStatement)}},
     // class_item errors
-    {"class asdf;\n"
-     "wire foo;\n"  // error on 'wire'
-     "task blah;\n"
-     "endtask\n"
-     "endclass\n",
-     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
-      NodeTag(kTaskDeclaration)}},
-    {"class asdf;\n"
-     "foo var;\n"  // error on 'var'
-     "function automatic void blah;\n"
-     "endfunction\n"
-     "endclass\n",
-     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
-      NodeTag(kFunctionDeclaration)}},
-    {"class asdf;\n"
-     "`ifdef VARRRR\n"  // error inside conditional block
-     "foo var;\n"       // error on 'var'
-     "`endif\n"
-     "function automatic void blah;\n"
-     "endfunction\n"
-     "endclass\n",
-     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
-      NodeTag(kFunctionDeclaration)}},
+    {.code = "class asdf;\n"
+             "wire foo;\n"  // error on 'wire'
+             "task blah;\n"
+             "endtask\n"
+             "endclass\n",
+     .tree_path = {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+                   NodeTag(kTaskDeclaration)}},
+    {.code = "class asdf;\n"
+             "foo var;\n"  // error on 'var'
+             "function automatic void blah;\n"
+             "endfunction\n"
+             "endclass\n",
+     .tree_path = {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+                   NodeTag(kFunctionDeclaration)}},
+    {.code = "class asdf;\n"
+             "`ifdef VARRRR\n"  // error inside conditional block
+             "foo var;\n"       // error on 'var'
+             "`endif\n"
+             "function automatic void blah;\n"
+             "endfunction\n"
+             "endclass\n",
+     .tree_path = {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+                   NodeTag(kFunctionDeclaration)}},
     // package_item errors
-    {"package fedex;\n"
-     "11 22 33;\n"
-     "class qwer;\n"
-     "endclass\n"
-     "endpackage\n",
-     {NodeTag(kPackageDeclaration), NodeTag(kPackageItemList),
-      NodeTag(kClassDeclaration)}},
-    {"package fedex;\n"
-     "`ifndef FAIL_INSIDE\n"
-     "11 22 33;\n"  // error inside conditional block
-     "`endif\n"
-     "class qwer;\n"
-     "endclass\n"
-     "endpackage\n",
-     {NodeTag(kPackageDeclaration), NodeTag(kPackageItemList),
-      NodeTag(kClassDeclaration)}},
-    {"11 22 33;\n"
-     "class qwer;\n"
-     "endclass\n",
-     {NodeTag(kClassDeclaration), NodeTag(kClassHeader),
-      LeafTag(SymbolIdentifier)}},
-    {"task t;\n"
-     "if (;c());\n"  // error on the first ';'
-     "endtask\n",
-     {NodeTag(kTaskDeclaration), NodeTag(kStatementList),
-      NodeTag(kConditionalStatement), NodeTag(kIfClause), NodeTag(kIfHeader)}},
-    {"module m;\n"
-     "if (a+);\n"
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
-      NodeTag(kConditionalGenerateConstruct), NodeTag(kGenerateIfClause),
-      NodeTag(kGenerateIfHeader)}},
-    {"class c;\n"
-     "  `BAD function new();\n"  // real problem here is the macro,
-     // but 'function' keyword gets rejected because it is only then that
-     // there is conclusively an error.
-     // From error-recovery, this entire function/constructor declaration will
-     // be dropped.
-     "  endfunction\n"
-     // recovered from here onward
-     "  int count;\n"  // this data declaration will be recovered and saved
-     "endclass\n",
-     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
-      NodeTag(kDataDeclaration)}},
-    {"class c;\n"
-     "  `BAD task rabbit();\n"  // real problem here is the macro,
-     // but 'task' keyword gets rejected because it is only then that
-     // there is conclusively an error.
-     // From error-recovery, this entire function/constructor declaration will
-     // be dropped.
-     "  endtask\n"
-     // recovered from here onward
-     "  int count;\n"  // this data declaration will be recovered and saved
-     "endclass\n",
-     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
-      NodeTag(kDataDeclaration)}},
-    {"class c;\n"
-     "  `BAD task rabbit();\n"  // real problem here is the macro
-     "  endtask\n"
-     // recovered from here onward
-     "    static function bit r();\n"
-     "    if (m == null) m = new();\n"
-     "    uvm_resource#(T)::m_set_converter(m_singleton);\n"
-     "  endfunction\n"
-     "endclass\n",
-     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
-      NodeTag(kFunctionDeclaration), NodeTag(kBlockItemStatementList),
-      NodeTag(kConditionalStatement), NodeTag(kIfClause)}},
-    {"class c;\n"
-     "  `BAD covergroup cg;\n"  // real problem here is the macro
-     "  endgroup\n"             // this covergroup will be lost
-     // recovered from here onward
-     "  int count;\n"  // this data declaration will be recovered and saved
-     "endclass\n",
-     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
-      NodeTag(kDataDeclaration)}},
-    {"class c;\n"
-     "  covergroup cg;\n"
-     "    cp: coverpoint foo.bar {\n"
-     "      123;\n"  // syntax error here
-     // recovered from here onward
-     "    }\n"
-     "  endgroup\n"
-     "endclass\n",
-     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
-      NodeTag(kCovergroupDeclaration)}},
-    {"class c;\n"
-     "  covergroup cg;\n"
-     "    cp: coverpoint foo.bar {\n"
-     "      --\n"  // syntax error here
-     // recovered from here onward
-     "    }\n"
-     "  endgroup\n"
-     "endclass\n",
-     {NodeTag(kClassDeclaration), NodeTag(kClassItems),
-      NodeTag(kCovergroupDeclaration)}},
-    {"module m;\n"
-     "  foo;\n"  // invalid syntax, recover from here
-     "  wire w;\n"
-     "endmodule\n",
-     {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
-      NodeTag(kNetDeclaration)}},
+    {.code = "package fedex;\n"
+             "11 22 33;\n"
+             "class qwer;\n"
+             "endclass\n"
+             "endpackage\n",
+     .tree_path = {NodeTag(kPackageDeclaration), NodeTag(kPackageItemList),
+                   NodeTag(kClassDeclaration)}},
+    {.code = "package fedex;\n"
+             "`ifndef FAIL_INSIDE\n"
+             "11 22 33;\n"  // error inside conditional block
+             "`endif\n"
+             "class qwer;\n"
+             "endclass\n"
+             "endpackage\n",
+     .tree_path = {NodeTag(kPackageDeclaration), NodeTag(kPackageItemList),
+                   NodeTag(kClassDeclaration)}},
+    {.code = "11 22 33;\n"
+             "class qwer;\n"
+             "endclass\n",
+     .tree_path = {NodeTag(kClassDeclaration), NodeTag(kClassHeader),
+                   LeafTag(SymbolIdentifier)}},
+    {.code = "task t;\n"
+             "if (;c());\n"  // error on the first ';'
+             "endtask\n",
+     .tree_path = {NodeTag(kTaskDeclaration), NodeTag(kStatementList),
+                   NodeTag(kConditionalStatement), NodeTag(kIfClause),
+                   NodeTag(kIfHeader)}},
+    {.code = "module m;\n"
+             "if (a+);\n"
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+                   NodeTag(kConditionalGenerateConstruct),
+                   NodeTag(kGenerateIfClause), NodeTag(kGenerateIfHeader)}},
+    {.code =
+         "class c;\n"
+         "  `BAD function new();\n"  // real problem here is the macro,
+         // but 'function' keyword gets rejected because it is only then that
+         // there is conclusively an error.
+         // From error-recovery, this entire function/constructor declaration
+         // will
+         // be dropped.
+         "  endfunction\n"
+         // recovered from here onward
+         "  int count;\n"  // this data declaration will be recovered and saved
+         "endclass\n",
+     .tree_path = {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+                   NodeTag(kDataDeclaration)}},
+    {.code =
+         "class c;\n"
+         "  `BAD task rabbit();\n"  // real problem here is the macro,
+         // but 'task' keyword gets rejected because it is only then that
+         // there is conclusively an error.
+         // From error-recovery, this entire function/constructor declaration
+         // will
+         // be dropped.
+         "  endtask\n"
+         // recovered from here onward
+         "  int count;\n"  // this data declaration will be recovered and saved
+         "endclass\n",
+     .tree_path = {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+                   NodeTag(kDataDeclaration)}},
+    {.code = "class c;\n"
+             "  `BAD task rabbit();\n"  // real problem here is the macro
+             "  endtask\n"
+             // recovered from here onward
+             "    static function bit r();\n"
+             "    if (m == null) m = new();\n"
+             "    uvm_resource#(T)::m_set_converter(m_singleton);\n"
+             "  endfunction\n"
+             "endclass\n",
+     .tree_path = {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+                   NodeTag(kFunctionDeclaration),
+                   NodeTag(kBlockItemStatementList),
+                   NodeTag(kConditionalStatement), NodeTag(kIfClause)}},
+    {.code =
+         "class c;\n"
+         "  `BAD covergroup cg;\n"  // real problem here is the macro
+         "  endgroup\n"             // this covergroup will be lost
+         // recovered from here onward
+         "  int count;\n"  // this data declaration will be recovered and saved
+         "endclass\n",
+     .tree_path = {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+                   NodeTag(kDataDeclaration)}},
+    {.code = "class c;\n"
+             "  covergroup cg;\n"
+             "    cp: coverpoint foo.bar {\n"
+             "      123;\n"  // syntax error here
+             // recovered from here onward
+             "    }\n"
+             "  endgroup\n"
+             "endclass\n",
+     .tree_path = {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+                   NodeTag(kCovergroupDeclaration)}},
+    {.code = "class c;\n"
+             "  covergroup cg;\n"
+             "    cp: coverpoint foo.bar {\n"
+             "      --\n"  // syntax error here
+             // recovered from here onward
+             "    }\n"
+             "  endgroup\n"
+             "endclass\n",
+     .tree_path = {NodeTag(kClassDeclaration), NodeTag(kClassItems),
+                   NodeTag(kCovergroupDeclaration)}},
+    {.code = "module m;\n"
+             "  foo;\n"  // invalid syntax, recover from here
+             "  wire w;\n"
+             "endmodule\n",
+     .tree_path = {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),
+                   NodeTag(kNetDeclaration)}},
 };
 #undef NodeTag
 

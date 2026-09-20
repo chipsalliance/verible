@@ -23,14 +23,16 @@ namespace {
 static WithReason<const char *> FizzBuzzer(int i) {
   if (i % 3 == 0) {
     if (i % 5 == 0) {
-      return {"fizzbuzz", "value is divisible by 3 and 5."};
+      return {.value = "fizzbuzz", .reason = "value is divisible by 3 and 5."};
     }
-    return {"fizz", "value is only divisible by 3."};
+    return {.value = "fizz", .reason = "value is only divisible by 3."};
   }
 
-  if (i % 5 == 0) return {"buzz", "value is only divisible by 5."};
+  if (i % 5 == 0) {
+    return {.value = "buzz", .reason = "value is only divisible by 5."};
+  }
 
-  return {".", "value is neither divisible by 3 nor 5."};
+  return {.value = ".", .reason = "value is neither divisible by 3 nor 5."};
 }
 
 TEST(WithReason, Fizz) {

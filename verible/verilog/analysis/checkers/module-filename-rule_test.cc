@@ -183,17 +183,22 @@ TEST(ModuleFilenameRuleTest, NoModuleMatchesFilenameRelPath) {
 
 TEST(ModuleFilenameRuleTest, AutoFixModuleFilenameRule) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"module a;\n\nendmodule", "module r;\n\nendmodule"},
-      {"module some_name1;\n\nendmodule", "module r;\n\nendmodule"},
-      {"module some_name2();\n\nendmodule", "module r();\n\nendmodule"},
-      {"module some_name3#()();\n\nendmodule", "module r#()();\n\nendmodule"},
-      {"module a;\n\nendmodule : a", "module r;\n\nendmodule : r"},
-      {"module some_name1;\n\nendmodule: some_name1",
-       "module r;\n\nendmodule: r"},
-      {"module some_name2();\n\nendmodule :some_name2",
-       "module r();\n\nendmodule :r"},
-      {"module some_name3#()();\n\nendmodule:some_name3",
-       "module r#()();\n\nendmodule:r"},
+      {.code = "module a;\n\nendmodule",
+       .expected_output = "module r;\n\nendmodule"},
+      {.code = "module some_name1;\n\nendmodule",
+       .expected_output = "module r;\n\nendmodule"},
+      {.code = "module some_name2();\n\nendmodule",
+       .expected_output = "module r();\n\nendmodule"},
+      {.code = "module some_name3#()();\n\nendmodule",
+       .expected_output = "module r#()();\n\nendmodule"},
+      {.code = "module a;\n\nendmodule : a",
+       .expected_output = "module r;\n\nendmodule : r"},
+      {.code = "module some_name1;\n\nendmodule: some_name1",
+       .expected_output = "module r;\n\nendmodule: r"},
+      {.code = "module some_name2();\n\nendmodule :some_name2",
+       .expected_output = "module r();\n\nendmodule :r"},
+      {.code = "module some_name3#()();\n\nendmodule:some_name3",
+       .expected_output = "module r#()();\n\nendmodule:r"},
 
   };
   const std::string filename = "path/to/r.sv";
@@ -203,21 +208,26 @@ TEST(ModuleFilenameRuleTest, AutoFixModuleFilenameRule) {
 
 TEST(ModuleFilenameRuleTest, AutoFixModuleFilenameRuleWithDashes) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"module a;\n\nendmodule", "module file_with_dashes;\n\nendmodule"},
-      {"module some_name1;\n\nendmodule",
-       "module file_with_dashes;\n\nendmodule"},
-      {"module some_name2();\n\nendmodule",
-       "module file_with_dashes();\n\nendmodule"},
-      {"module some_name3#()();\n\nendmodule",
-       "module file_with_dashes#()();\n\nendmodule"},
-      {"module a;\n\nendmodule : a",
-       "module file_with_dashes;\n\nendmodule : file_with_dashes"},
-      {"module some_name1;\n\nendmodule :some_name1",
-       "module file_with_dashes;\n\nendmodule :file_with_dashes"},
-      {"module some_name2();\n\nendmodule: some_name2",
-       "module file_with_dashes();\n\nendmodule: file_with_dashes"},
-      {"module some_name3#()();\n\nendmodule:some_name3",
-       "module file_with_dashes#()();\n\nendmodule:file_with_dashes"},
+      {.code = "module a;\n\nendmodule",
+       .expected_output = "module file_with_dashes;\n\nendmodule"},
+      {.code = "module some_name1;\n\nendmodule",
+       .expected_output = "module file_with_dashes;\n\nendmodule"},
+      {.code = "module some_name2();\n\nendmodule",
+       .expected_output = "module file_with_dashes();\n\nendmodule"},
+      {.code = "module some_name3#()();\n\nendmodule",
+       .expected_output = "module file_with_dashes#()();\n\nendmodule"},
+      {.code = "module a;\n\nendmodule : a",
+       .expected_output =
+           "module file_with_dashes;\n\nendmodule : file_with_dashes"},
+      {.code = "module some_name1;\n\nendmodule :some_name1",
+       .expected_output =
+           "module file_with_dashes;\n\nendmodule :file_with_dashes"},
+      {.code = "module some_name2();\n\nendmodule: some_name2",
+       .expected_output =
+           "module file_with_dashes();\n\nendmodule: file_with_dashes"},
+      {.code = "module some_name3#()();\n\nendmodule:some_name3",
+       .expected_output =
+           "module file_with_dashes#()();\n\nendmodule:file_with_dashes"},
   };
   const std::string filename = "path/to/file-with-dashes.sv";
   RunApplyFixCases<VerilogAnalyzer, ModuleFilenameRule>(
@@ -226,21 +236,26 @@ TEST(ModuleFilenameRuleTest, AutoFixModuleFilenameRuleWithDashes) {
 
 TEST(ModuleFilenameRuleTest, AutoFixModuleFilenameRuleWithUnderscore) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"module a;\n\nendmodule", "module file_no_dashes;\n\nendmodule"},
-      {"module some_name1;\n\nendmodule",
-       "module file_no_dashes;\n\nendmodule"},
-      {"module some_name2();\n\nendmodule",
-       "module file_no_dashes();\n\nendmodule"},
-      {"module some_name3#()();\n\nendmodule",
-       "module file_no_dashes#()();\n\nendmodule"},
-      {"module a;\n\nendmodule : a",
-       "module file_no_dashes;\n\nendmodule : file_no_dashes"},
-      {"module some_name1;\n\nendmodule :some_name1",
-       "module file_no_dashes;\n\nendmodule :file_no_dashes"},
-      {"module some_name2();\n\nendmodule: some_name2",
-       "module file_no_dashes();\n\nendmodule: file_no_dashes"},
-      {"module some_name3#()();\n\nendmodule:some_name3",
-       "module file_no_dashes#()();\n\nendmodule:file_no_dashes"},
+      {.code = "module a;\n\nendmodule",
+       .expected_output = "module file_no_dashes;\n\nendmodule"},
+      {.code = "module some_name1;\n\nendmodule",
+       .expected_output = "module file_no_dashes;\n\nendmodule"},
+      {.code = "module some_name2();\n\nendmodule",
+       .expected_output = "module file_no_dashes();\n\nendmodule"},
+      {.code = "module some_name3#()();\n\nendmodule",
+       .expected_output = "module file_no_dashes#()();\n\nendmodule"},
+      {.code = "module a;\n\nendmodule : a",
+       .expected_output =
+           "module file_no_dashes;\n\nendmodule : file_no_dashes"},
+      {.code = "module some_name1;\n\nendmodule :some_name1",
+       .expected_output =
+           "module file_no_dashes;\n\nendmodule :file_no_dashes"},
+      {.code = "module some_name2();\n\nendmodule: some_name2",
+       .expected_output =
+           "module file_no_dashes();\n\nendmodule: file_no_dashes"},
+      {.code = "module some_name3#()();\n\nendmodule:some_name3",
+       .expected_output =
+           "module file_no_dashes#()();\n\nendmodule:file_no_dashes"},
   };
   const std::string filename = "path/to/file_no_dashes.sv";
   RunApplyFixCases<VerilogAnalyzer, ModuleFilenameRule>(

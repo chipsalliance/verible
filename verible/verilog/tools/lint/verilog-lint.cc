@@ -170,7 +170,8 @@ int main(int argc, char **argv) {
   const verible::ViolationFixer::AnswerChooser applyAllFixes =
       [](const verible::LintViolation &,
          std::string_view) -> verible::ViolationFixer::Answer {
-    return {verible::ViolationFixer::AnswerChoice::kApplyAll, 0};
+    return {.choice = verible::ViolationFixer::AnswerChoice::kApplyAll,
+            .alternative = 0};
   };
 
   std::unique_ptr<verible::ViolationHandler> violation_handler;

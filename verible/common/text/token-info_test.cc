@@ -209,7 +209,7 @@ TEST(TokenWithContextTest, StreamOutput) {
   const TokenInfo::Context context(base, TokenTranslator);
   TokenInfo token_info(7, base.substr(9, 3));
   std::ostringstream stream;
-  stream << TokenWithContext{token_info, context};
+  stream << TokenWithContext{.token = token_info, .context = context};
   EXPECT_EQ(stream.str(), "(#lucky-seven @9-12: \"cat\")");
 }
 

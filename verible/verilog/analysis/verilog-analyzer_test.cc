@@ -576,16 +576,16 @@ struct TestCase {
 // Tests that various invalid input does not crash.
 TEST(AnalyzeVerilogAutomaticMode, InvalidInputs) {
   constexpr TestCase test_cases[] = {
-      {"`s(\n", false},
-      {"`s(}\n", false},
-      {"`s(};\n", false},
-      {"`s(};if\n", false},
-      {"`s(};if(\n", false},
-      {"`s(};if(k\n", false},
-      {"`s(};if(k)\n",
+      {.code = "`s(\n", .valid = false},
+      {.code = "`s(}\n", .valid = false},
+      {.code = "`s(};\n", .valid = false},
+      {.code = "`s(};if\n", .valid = false},
+      {.code = "`s(};if(\n", .valid = false},
+      {.code = "`s(};if(k\n", .valid = false},
+      {.code = "`s(};if(k)\n",
        // valid because it is macro call is un-expanded, closed at ')'
-       true},
-      {"`s(};if(k);\n", true},
+       .valid = true},
+      {.code = "`s(};if(k);\n", .valid = true},
   };
   for (const auto &test : test_cases) {
     std::unique_ptr<VerilogAnalyzer> analyzer_ptr =

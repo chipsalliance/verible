@@ -57,445 +57,445 @@ TEST(GetAnyControlStatementBodyTest, Various) {
   constexpr int kTag = 1;  // value doesn't matter
   const ControlStatementTestData kTestCases[] = {
       // each of these test cases should match exactly one statement body
-      {NodeEnum::kGenerateIfClause,
-       {"module m;\n"
-        "  if (expr)\n",
-        {kTag, ";"},  // null generate item
-        "\n"
-        "  else \n"
-        "   bar foo;\n"
-        "endmodule\n"}},
-      {NodeEnum::kGenerateIfClause,
-       {"module m;\n"
-        "  if (expr)\n"
-        "   ",
-        {kTag, "foo bar;"},
-        "\n"
-        "  else \n"
-        "   bar foo;\n"
-        "endmodule\n"}},
-      {NodeEnum::kGenerateIfClause,
-       {"module m;\n"
-        "  if (expr)\n"
-        "   ",
-        {kTag, "begin\nfoo bar;end"},
-        "\n"
-        "  else \n"
-        "   bar foo;\n"
-        "endmodule\n"}},
+      {.expected_construct = NodeEnum::kGenerateIfClause,
+       .token_data = {"module m;\n"
+                      "  if (expr)\n",
+                      {kTag, ";"},  // null generate item
+                      "\n"
+                      "  else \n"
+                      "   bar foo;\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kGenerateIfClause,
+       .token_data = {"module m;\n"
+                      "  if (expr)\n"
+                      "   ",
+                      {kTag, "foo bar;"},
+                      "\n"
+                      "  else \n"
+                      "   bar foo;\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kGenerateIfClause,
+       .token_data = {"module m;\n"
+                      "  if (expr)\n"
+                      "   ",
+                      {kTag, "begin\nfoo bar;end"},
+                      "\n"
+                      "  else \n"
+                      "   bar foo;\n"
+                      "endmodule\n"}},
 
-      {NodeEnum::kGenerateElseClause,
-       {"module m;\n"
-        "  if (expr)\n"
-        "   foo bar;\n"
-        "  else \n",
-        {kTag, ";"},  // null generate item
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kGenerateElseClause,
-       {"module m;\n"
-        "  if (expr)\n"
-        "   foo bar;\n"
-        "  else \n",
-        {kTag, "bar#(1)   foo;"},
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kGenerateElseClause,
-       {"module m;\n"
-        "  if (expr)\n"
-        "   foo bar;\n"
-        "  else \n",
-        {kTag, "begin \nbar#(1)   foo; baz bam();\nend"},
-        "\n"
-        "endmodule\n"}},
+      {.expected_construct = NodeEnum::kGenerateElseClause,
+       .token_data = {"module m;\n"
+                      "  if (expr)\n"
+                      "   foo bar;\n"
+                      "  else \n",
+                      {kTag, ";"},  // null generate item
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kGenerateElseClause,
+       .token_data = {"module m;\n"
+                      "  if (expr)\n"
+                      "   foo bar;\n"
+                      "  else \n",
+                      {kTag, "bar#(1)   foo;"},
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kGenerateElseClause,
+       .token_data = {"module m;\n"
+                      "  if (expr)\n"
+                      "   foo bar;\n"
+                      "  else \n",
+                      {kTag, "begin \nbar#(1)   foo; baz bam();\nend"},
+                      "\n"
+                      "endmodule\n"}},
 
-      {NodeEnum::kLoopGenerateConstruct,
-       {"module m;\n"
-        "  for (genvar i=0; i<N; ++i)\n"
-        "   ",
-        {kTag, ";"},  // null generate item
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kLoopGenerateConstruct,
-       {"module m;\n"
-        "  for (genvar i=0; i<N; ++i)\n"
-        "   ",
-        {kTag, "foo#(.N(i)) bar;"},
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kLoopGenerateConstruct,
-       {"module m;\n"
-        "  for (genvar i=0; i<N; ++i)\n"
-        "   ",
-        {kTag, "begin:l1\n      foo#(.N(i)) bar;\n  end : l1"},
-        "\n"
-        "endmodule\n"}},
+      {.expected_construct = NodeEnum::kLoopGenerateConstruct,
+       .token_data = {"module m;\n"
+                      "  for (genvar i=0; i<N; ++i)\n"
+                      "   ",
+                      {kTag, ";"},  // null generate item
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kLoopGenerateConstruct,
+       .token_data = {"module m;\n"
+                      "  for (genvar i=0; i<N; ++i)\n"
+                      "   ",
+                      {kTag, "foo#(.N(i)) bar;"},
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kLoopGenerateConstruct,
+       .token_data = {"module m;\n"
+                      "  for (genvar i=0; i<N; ++i)\n"
+                      "   ",
+                      {kTag, "begin:l1\n      foo#(.N(i)) bar;\n  end : l1"},
+                      "\n"
+                      "endmodule\n"}},
 
-      {NodeEnum::kIfClause,
-       {"function f;\n"
-        "  if (expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endfunction\n"}},
-      {NodeEnum::kIfClause,
-       {"function f;\n"
-        "  if (expr)\n"
-        "   ",
-        {kTag, "foo=bar;"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endfunction\n"}},
-      {NodeEnum::kIfClause,
-       {"task t;\n"
-        "  if (expr)\n"
-        "   ",
-        {kTag, "begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kIfClause,
+       .token_data = {"function f;\n"
+                      "  if (expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kIfClause,
+       .token_data = {"function f;\n"
+                      "  if (expr)\n"
+                      "   ",
+                      {kTag, "foo=bar;"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kIfClause,
+       .token_data = {"task t;\n"
+                      "  if (expr)\n"
+                      "   ",
+                      {kTag, "begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kElseClause,
-       {"task t;\n"
-        "  if (expr)\n"
-        "   foo =bar;\n"
-        "\n"
-        "  else\n",
-        {kTag, "bar=foo;"},
-        "endtask\n"}},
-      {NodeEnum::kElseClause,
-       {"task t;\n"
-        "  if (expr)\n"
-        "   foo =bar;\n"
-        "\n"
-        "  else\n",
-        {kTag, ";"},  // null statement
-        "endtask\n"}},
-      {NodeEnum::kElseClause,
-       {"function f;\n"
-        "  if (expr)\n"
-        "   foo =bar;\n"
-        "  else\n",
-        {kTag, "begin:bb bar=foo(baz);\n\nend :\nbb"},
-        "\nendfunction\n"}},
+      {.expected_construct = NodeEnum::kElseClause,
+       .token_data = {"task t;\n"
+                      "  if (expr)\n"
+                      "   foo =bar;\n"
+                      "\n"
+                      "  else\n",
+                      {kTag, "bar=foo;"},
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kElseClause,
+       .token_data = {"task t;\n"
+                      "  if (expr)\n"
+                      "   foo =bar;\n"
+                      "\n"
+                      "  else\n",
+                      {kTag, ";"},  // null statement
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kElseClause,
+       .token_data = {"function f;\n"
+                      "  if (expr)\n"
+                      "   foo =bar;\n"
+                      "  else\n",
+                      {kTag, "begin:bb bar=foo(baz);\n\nend :\nbb"},
+                      "\nendfunction\n"}},
 
-      {NodeEnum::kForLoopStatement,
-       {"function f;\n"
-        "  for (int j=N; expr; --j)\n"
-        "   ",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kForLoopStatement,
-       {"function f;\n"
-        "  for (int j=N; expr; --j)\n"
-        "   ",
-        {kTag, "foo=bar;"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kForLoopStatement,
-       {"task t;\n"
-        "  for (int j=N; expr; --j)\n"
-        "   ",
-        {kTag, "begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kForLoopStatement,
+       .token_data = {"function f;\n"
+                      "  for (int j=N; expr; --j)\n"
+                      "   ",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kForLoopStatement,
+       .token_data = {"function f;\n"
+                      "  for (int j=N; expr; --j)\n"
+                      "   ",
+                      {kTag, "foo=bar;"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kForLoopStatement,
+       .token_data = {"task t;\n"
+                      "  for (int j=N; expr; --j)\n"
+                      "   ",
+                      {kTag, "begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kDoWhileLoopStatement,
-       {"function f;\n"
-        "   do\n",
-        {kTag, ";"},  // null statement
-        "  while (expr);\n"
-        "endfunction\n"}},
-      {NodeEnum::kDoWhileLoopStatement,
-       {"function f;\n"
-        "   do\n",
-        {kTag, "foo=bar;"},
-        "  while (expr);\n"
-        "endfunction\n"}},
-      {NodeEnum::kDoWhileLoopStatement,
-       {"task t;\n"
-        "  do ",
-        {kTag, "begin\nfoo=bar; bar=1;\nend"},
-        "  while (expr);\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kDoWhileLoopStatement,
+       .token_data = {"function f;\n"
+                      "   do\n",
+                      {kTag, ";"},  // null statement
+                      "  while (expr);\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kDoWhileLoopStatement,
+       .token_data = {"function f;\n"
+                      "   do\n",
+                      {kTag, "foo=bar;"},
+                      "  while (expr);\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kDoWhileLoopStatement,
+       .token_data = {"task t;\n"
+                      "  do ",
+                      {kTag, "begin\nfoo=bar; bar=1;\nend"},
+                      "  while (expr);\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kForeverLoopStatement,
-       {"function f;\n"
-        "  forever\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kForeverLoopStatement,
-       {"function f;\n"
-        "  forever\n"
-        "   ",
-        {kTag, "foo=bar;"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kForeverLoopStatement,
-       {"task t;\n"
-        "  forever\n"
-        "   ",
-        {kTag, "begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kForeverLoopStatement,
+       .token_data = {"function f;\n"
+                      "  forever\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kForeverLoopStatement,
+       .token_data = {"function f;\n"
+                      "  forever\n"
+                      "   ",
+                      {kTag, "foo=bar;"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kForeverLoopStatement,
+       .token_data = {"task t;\n"
+                      "  forever\n"
+                      "   ",
+                      {kTag, "begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kForeachLoopStatement,
-       {"function f;\n"
-        "  foreach (x[i])\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kForeachLoopStatement,
-       {"function f;\n"
-        "  foreach (x[i])\n"
-        "   ",
-        {kTag, "foo=bar;"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kForeachLoopStatement,
-       {"task t;\n"
-        "  foreach (x[i])\n"
-        "   ",
-        {kTag, "begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kForeachLoopStatement,
+       .token_data = {"function f;\n"
+                      "  foreach (x[i])\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kForeachLoopStatement,
+       .token_data = {"function f;\n"
+                      "  foreach (x[i])\n"
+                      "   ",
+                      {kTag, "foo=bar;"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kForeachLoopStatement,
+       .token_data = {"task t;\n"
+                      "  foreach (x[i])\n"
+                      "   ",
+                      {kTag, "begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kRepeatLoopStatement,
-       {"function f;\n"
-        "  repeat (8)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kRepeatLoopStatement,
-       {"function f;\n"
-        "  repeat (8)\n"
-        "   ",
-        {kTag, "foo=bar;"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kRepeatLoopStatement,
-       {"task t;\n"
-        "  repeat (9)\n"
-        "   ",
-        {kTag, "begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kRepeatLoopStatement,
+       .token_data = {"function f;\n"
+                      "  repeat (8)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kRepeatLoopStatement,
+       .token_data = {"function f;\n"
+                      "  repeat (8)\n"
+                      "   ",
+                      {kTag, "foo=bar;"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kRepeatLoopStatement,
+       .token_data = {"task t;\n"
+                      "  repeat (9)\n"
+                      "   ",
+                      {kTag, "begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kWhileLoopStatement,
-       {"function f;\n"
-        "  while (expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kWhileLoopStatement,
-       {"function f;\n"
-        "  while (expr)\n"
-        "   ",
-        {kTag, "foo=bar;"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kWhileLoopStatement,
-       {"task t;\n"
-        "  while (expr)\n"
-        "   ",
-        {kTag, "begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kWhileLoopStatement,
+       .token_data = {"function f;\n"
+                      "  while (expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kWhileLoopStatement,
+       .token_data = {"function f;\n"
+                      "  while (expr)\n"
+                      "   ",
+                      {kTag, "foo=bar;"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kWhileLoopStatement,
+       .token_data = {"task t;\n"
+                      "  while (expr)\n"
+                      "   ",
+                      {kTag, "begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kProceduralTimingControlStatement,
-       {"module  m;\n"
-        "  always @(negedge c)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kProceduralTimingControlStatement,
-       {"module  m;\n"
-        "  always @(negedge c)\n",
-        {kTag, "foo=bar;"},
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kProceduralTimingControlStatement,
-       {"module  m;\n"
-        "  always @(negedge c)\n",
-        {kTag, "begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "endmodule\n"}},
+      {.expected_construct = NodeEnum::kProceduralTimingControlStatement,
+       .token_data = {"module  m;\n"
+                      "  always @(negedge c)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kProceduralTimingControlStatement,
+       .token_data = {"module  m;\n"
+                      "  always @(negedge c)\n",
+                      {kTag, "foo=bar;"},
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kProceduralTimingControlStatement,
+       .token_data = {"module  m;\n"
+                      "  always @(negedge c)\n",
+                      {kTag, "begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "endmodule\n"}},
 
-      {NodeEnum::kAssertionClause,
-       {"task  t;\n"
-        "  assert (expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertionClause,
-       {"task  t;\n"
-        "  assert (expr)\n",
-        {kTag, "action();"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertionClause,
-       {"task  t;\n"
-        "  assert (expr)\n",
-        {kTag, "begin action(); end"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionClause,
+       .token_data = {"task  t;\n"
+                      "  assert (expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionClause,
+       .token_data = {"task  t;\n"
+                      "  assert (expr)\n",
+                      {kTag, "action();"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionClause,
+       .token_data = {"task  t;\n"
+                      "  assert (expr)\n",
+                      {kTag, "begin action(); end"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssumeClause,
-       {"task  t;\n"
-        "  assume (expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumeClause,
-       {"task  t;\n"
-        "  assume (expr)\n",
-        {kTag, "action();"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumeClause,
-       {"task  t;\n"
-        "  assume (expr)\n",
-        {kTag, "begin action(); end"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeClause,
+       .token_data = {"task  t;\n"
+                      "  assume (expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeClause,
+       .token_data = {"task  t;\n"
+                      "  assume (expr)\n",
+                      {kTag, "action();"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeClause,
+       .token_data = {"task  t;\n"
+                      "  assume (expr)\n",
+                      {kTag, "begin action(); end"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kWaitStatement,
-       {"task  t;\n"
-        "  wait (expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kWaitStatement,
-       {"task  t;\n"
-        "  wait (expr)\n",
-        {kTag, "snooze();"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kWaitStatement,
-       {"task  t;\n"
-        "  wait (expr)\n",
-        {kTag, "begin snooze(); end"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kWaitStatement,
+       .token_data = {"task  t;\n"
+                      "  wait (expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kWaitStatement,
+       .token_data = {"task  t;\n"
+                      "  wait (expr)\n",
+                      {kTag, "snooze();"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kWaitStatement,
+       .token_data = {"task  t;\n"
+                      "  wait (expr)\n",
+                      {kTag, "begin snooze(); end"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kCoverStatement,
-       {"task  t;\n"
-        "  cover (expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kCoverStatement,
-       {"task  t;\n"
-        "  cover (expr)\n",
-        {kTag, "snooze();"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kCoverStatement,
-       {"task  t;\n"
-        "  cover (expr)\n",
-        {kTag, "begin snooze(); end"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kCoverStatement,
+       .token_data = {"task  t;\n"
+                      "  cover (expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kCoverStatement,
+       .token_data = {"task  t;\n"
+                      "  cover (expr)\n",
+                      {kTag, "snooze();"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kCoverStatement,
+       .token_data = {"task  t;\n"
+                      "  cover (expr)\n",
+                      {kTag, "begin snooze(); end"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssertPropertyClause,
-       {"task  t;\n"
-        "  assert property (p_expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertPropertyClause,
-       {"task  t;\n"
-        "  assert property (p_expr)\n",
-        {kTag, "action();"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertPropertyClause,
-       {"task  t;\n"
-        "  assert property (p_expr)\n",
-        {kTag, "begin action(); end"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyClause,
+       .token_data = {"task  t;\n"
+                      "  assert property (p_expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyClause,
+       .token_data = {"task  t;\n"
+                      "  assert property (p_expr)\n",
+                      {kTag, "action();"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyClause,
+       .token_data = {"task  t;\n"
+                      "  assert property (p_expr)\n",
+                      {kTag, "begin action(); end"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssumePropertyClause,
-       {"task  t;\n"
-        "  assume property (p_expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumePropertyClause,
-       {"task  t;\n"
-        "  assume property (p_expr)\n",
-        {kTag, "action();"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumePropertyClause,
-       {"task  t;\n"
-        "  assume property (p_expr)\n",
-        {kTag, "begin action(); end"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyClause,
+       .token_data = {"task  t;\n"
+                      "  assume property (p_expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyClause,
+       .token_data = {"task  t;\n"
+                      "  assume property (p_expr)\n",
+                      {kTag, "action();"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyClause,
+       .token_data = {"task  t;\n"
+                      "  assume property (p_expr)\n",
+                      {kTag, "begin action(); end"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kExpectPropertyClause,
-       {"task  t;\n"
-        "  expect (p_expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kExpectPropertyClause,
-       {"task  t;\n"
-        "  expect (p_expr)\n",
-        {kTag, "action();"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kExpectPropertyClause,
-       {"task  t;\n"
-        "  expect (p_expr)\n",
-        {kTag, "begin action(); end"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyClause,
+       .token_data = {"task  t;\n"
+                      "  expect (p_expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyClause,
+       .token_data = {"task  t;\n"
+                      "  expect (p_expr)\n",
+                      {kTag, "action();"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyClause,
+       .token_data = {"task  t;\n"
+                      "  expect (p_expr)\n",
+                      {kTag, "begin action(); end"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kCoverPropertyStatement,
-       {"task  t;\n"
-        "  cover property (p_expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kCoverPropertyStatement,
-       {"task  t;\n"
-        "  cover property (p_expr)\n",
-        {kTag, "action();"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kCoverPropertyStatement,
-       {"task  t;\n"
-        "  cover property (p_expr)\n",
-        {kTag, "begin action(); end"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kCoverPropertyStatement,
+       .token_data = {"task  t;\n"
+                      "  cover property (p_expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kCoverPropertyStatement,
+       .token_data = {"task  t;\n"
+                      "  cover property (p_expr)\n",
+                      {kTag, "action();"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kCoverPropertyStatement,
+       .token_data = {"task  t;\n"
+                      "  cover property (p_expr)\n",
+                      {kTag, "begin action(); end"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kCoverSequenceStatement,
-       {"task  t;\n"
-        "  cover sequence (s_expr)\n",
-        {kTag, ";"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kCoverSequenceStatement,
-       {"task  t;\n"
-        "  cover sequence (s_expr)\n",
-        {kTag, "action();"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kCoverSequenceStatement,
-       {"task  t;\n"
-        "  cover sequence (s_expr)\n",
-        {kTag, "begin action(); end"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kCoverSequenceStatement,
+       .token_data = {"task  t;\n"
+                      "  cover sequence (s_expr)\n",
+                      {kTag, ";"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kCoverSequenceStatement,
+       .token_data = {"task  t;\n"
+                      "  cover sequence (s_expr)\n",
+                      {kTag, "action();"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kCoverSequenceStatement,
+       .token_data = {"task  t;\n"
+                      "  cover sequence (s_expr)\n",
+                      {kTag, "begin action(); end"},
+                      "\n"
+                      "endtask\n"}},
   };
   for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
@@ -506,15 +506,16 @@ TEST(GetAnyControlStatementBodyTest, Various) {
           // Grab outer statement constructs.
           const auto statements = verible::SearchSyntaxTree(
               *ABSL_DIE_IF_NULL(root),
-              verible::matcher::DynamicTagMatchBuilder(
-                  SymbolTag{SymbolKind::kNode,
-                            static_cast<int>(test.expected_construct)})());
+              verible::matcher::DynamicTagMatchBuilder(SymbolTag{
+                  .kind = SymbolKind::kNode,
+                  .tag = static_cast<int>(test.expected_construct)})());
 
           // Extract subtree of interest.
           std::vector<TreeSearchMatch> bodies;
           for (const auto &statement : statements) {
             const auto *body = GetAnyControlStatementBody(*statement.match);
-            bodies.push_back(TreeSearchMatch{body, {/* ignored context */}});
+            bodies.push_back(TreeSearchMatch{
+                .match = body, .context = {/* ignored context */}});
           }
           return bodies;
         });
@@ -524,199 +525,207 @@ TEST(GetAnyControlStatementBodyTest, Various) {
 TEST(GetAnyConditionalIfClauseTest, Various) {
   const ControlStatementTestData kTestCases[] = {
       // each of these test cases should match exactly one statement body
-      {NodeEnum::kConditionalGenerateConstruct,
-       {"module m;\n",
-        {static_cast<int>(NodeEnum::kGenerateIfClause), "if (expr);"},
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kConditionalGenerateConstruct,
-       {"module m;\n",
-        {static_cast<int>(NodeEnum::kGenerateIfClause), "if (expr) foo bar;"},
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kConditionalGenerateConstruct,
-       {"module m;\n",
-        {static_cast<int>(NodeEnum::kGenerateIfClause), "if (expr) foo bar;"},
-        "\n"
-        "  else \n"
-        "   bar foo;\n"
-        "endmodule\n"}},
-      {NodeEnum::kConditionalGenerateConstruct,
-       {"module m;\n",
-        {static_cast<int>(NodeEnum::kGenerateIfClause),
-         "if (expr) begin\nfoo bar;end"},
-        "\n"
-        "  else \n"
-        "   bar foo;\n"
-        "endmodule\n"}},
+      {.expected_construct = NodeEnum::kConditionalGenerateConstruct,
+       .token_data = {"module m;\n",
+                      {static_cast<int>(NodeEnum::kGenerateIfClause),
+                       "if (expr);"},
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kConditionalGenerateConstruct,
+       .token_data = {"module m;\n",
+                      {static_cast<int>(NodeEnum::kGenerateIfClause),
+                       "if (expr) foo bar;"},
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kConditionalGenerateConstruct,
+       .token_data = {"module m;\n",
+                      {static_cast<int>(NodeEnum::kGenerateIfClause),
+                       "if (expr) foo bar;"},
+                      "\n"
+                      "  else \n"
+                      "   bar foo;\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kConditionalGenerateConstruct,
+       .token_data = {"module m;\n",
+                      {static_cast<int>(NodeEnum::kGenerateIfClause),
+                       "if (expr) begin\nfoo bar;end"},
+                      "\n"
+                      "  else \n"
+                      "   bar foo;\n"
+                      "endmodule\n"}},
 
-      {NodeEnum::kConditionalStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kIfClause), "if ( expr );"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kConditionalStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kIfClause), "if ( expr ) foo=bar;"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kConditionalStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kIfClause), "if ( expr ) foo=bar;"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endfunction\n"}},
-      {NodeEnum::kConditionalStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kIfClause),
-         "if  (expr)begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kConditionalStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kIfClause), "if ( expr );"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kConditionalStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kIfClause),
+                       "if ( expr ) foo=bar;"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kConditionalStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kIfClause),
+                       "if ( expr ) foo=bar;"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kConditionalStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kIfClause),
+                       "if  (expr)begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssertionStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kAssertionClause),
-         "assert ( expr );"},  // null statement
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kAssertionStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kAssertionClause),
-         "assert ( expr ) foo=bar;"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kAssertionStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kAssertionClause),
-         "assert ( expr ) foo=bar;"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endfunction\n"}},
-      {NodeEnum::kAssertionStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssertionClause),
-         "assert  (expr)begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kAssertionClause),
+                       "assert ( expr );"},  // null statement
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kAssertionClause),
+                       "assert ( expr ) foo=bar;"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kAssertionClause),
+                       "assert ( expr ) foo=bar;"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssertionClause),
+                       "assert  (expr)begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssumeStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kAssumeClause), "assume ( expr );"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kAssumeStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kAssumeClause), "assume ( expr ) foo=bar;"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kAssumeStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kAssumeClause), "assume ( expr ) foo=bar;"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endfunction\n"}},
-      {NodeEnum::kAssumeStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssumeClause),
-         "assume  (expr)begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kAssumeClause),
+                       "assume ( expr );"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kAssumeClause),
+                       "assume ( expr ) foo=bar;"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kAssumeClause),
+                       "assume ( expr ) foo=bar;"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssumeClause),
+                       "assume  (expr)begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssertPropertyClause),
-         "assert property ( p_expr );"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssertPropertyClause),
-         "assert property ( p_expr ) foo=bar;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssertPropertyClause),
-         "assert property ( p_expr ) foo=bar;"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssertPropertyClause),
-         "assert property  (p_expr)begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssertPropertyClause),
+                       "assert property ( p_expr );"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssertPropertyClause),
+                       "assert property ( p_expr ) foo=bar;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssertPropertyClause),
+                       "assert property ( p_expr ) foo=bar;"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssertPropertyClause),
+                       "assert property  (p_expr)begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssumePropertyClause),
-         "assume property ( p_expr );"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssumePropertyClause),
-         "assume property ( p_expr ) foo=bar;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssumePropertyClause),
-         "assume property ( p_expr ) foo=bar;"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssumePropertyClause),
-         "assume property  (p_expr)begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssumePropertyClause),
+                       "assume property ( p_expr );"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssumePropertyClause),
+                       "assume property ( p_expr ) foo=bar;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssumePropertyClause),
+                       "assume property ( p_expr ) foo=bar;"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssumePropertyClause),
+                       "assume property  (p_expr)begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kExpectPropertyClause),
-         "expect ( p_expr );"},  // null statement
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kExpectPropertyClause),
-         "expect ( p_expr ) foo=bar;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kExpectPropertyClause),
-         "expect ( p_expr ) foo=bar;"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endtask\n"}},
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kExpectPropertyClause),
-         "expect (p_expr)begin\nfoo=bar; bar=1;\nend"},
-        "\n"
-        "  else \n"
-        "   bar=foo;\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kExpectPropertyClause),
+                       "expect ( p_expr );"},  // null statement
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kExpectPropertyClause),
+                       "expect ( p_expr ) foo=bar;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kExpectPropertyClause),
+                       "expect ( p_expr ) foo=bar;"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kExpectPropertyClause),
+                       "expect (p_expr)begin\nfoo=bar; bar=1;\nend"},
+                      "\n"
+                      "  else \n"
+                      "   bar=foo;\n"
+                      "endtask\n"}},
   };
   for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
@@ -727,15 +736,16 @@ TEST(GetAnyConditionalIfClauseTest, Various) {
           // Grab outer statement constructs.
           const auto statements = verible::SearchSyntaxTree(
               *ABSL_DIE_IF_NULL(root),
-              verible::matcher::DynamicTagMatchBuilder(
-                  SymbolTag{SymbolKind::kNode,
-                            static_cast<int>(test.expected_construct)})());
+              verible::matcher::DynamicTagMatchBuilder(SymbolTag{
+                  .kind = SymbolKind::kNode,
+                  .tag = static_cast<int>(test.expected_construct)})());
 
           // Extract subtree of interest.
           std::vector<TreeSearchMatch> bodies;
           for (const auto &statement : statements) {
             const auto *clause = GetAnyConditionalIfClause(*statement.match);
-            bodies.push_back(TreeSearchMatch{clause, {/* ignored context */}});
+            bodies.push_back(TreeSearchMatch{
+                .match = clause, .context = {/* ignored context */}});
           }
           return bodies;
         });
@@ -745,88 +755,95 @@ TEST(GetAnyConditionalIfClauseTest, Various) {
 TEST(GetAnyConditionalElseClauseTest, NoElseClause) {
   const ControlStatementTestData kTestCases[] = {
       // each of these test cases should match exactly one statement body
-      {NodeEnum::kConditionalGenerateConstruct,
-       {"module m;\n",
-        {static_cast<int>(NodeEnum::kGenerateIfClause), "if (expr);"},
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kConditionalGenerateConstruct,
-       {"module m;\n",
-        {static_cast<int>(NodeEnum::kGenerateIfClause), "if (expr) foo bar;"},
-        "\n"
-        "endmodule\n"}},
+      {.expected_construct = NodeEnum::kConditionalGenerateConstruct,
+       .token_data = {"module m;\n",
+                      {static_cast<int>(NodeEnum::kGenerateIfClause),
+                       "if (expr);"},
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kConditionalGenerateConstruct,
+       .token_data = {"module m;\n",
+                      {static_cast<int>(NodeEnum::kGenerateIfClause),
+                       "if (expr) foo bar;"},
+                      "\n"
+                      "endmodule\n"}},
 
-      {NodeEnum::kConditionalStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kIfClause), "if ( expr );"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kConditionalStatement,
-       {"function f;\n",
-        {static_cast<int>(NodeEnum::kIfClause), "if ( expr ) foo=bar;"},
-        "\n"
-        "endfunction\n"}},
+      {.expected_construct = NodeEnum::kConditionalStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kIfClause), "if ( expr );"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kConditionalStatement,
+       .token_data = {"function f;\n",
+                      {static_cast<int>(NodeEnum::kIfClause),
+                       "if ( expr ) foo=bar;"},
+                      "\n"
+                      "endfunction\n"}},
 
-      {NodeEnum::kAssertionStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssertionClause), "assert ( expr );"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertionStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssertionClause),
-         "assert ( expr ) foo=bar;"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssertionClause),
+                       "assert ( expr );"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssertionClause),
+                       "assert ( expr ) foo=bar;"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssumeStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssumeClause), "assume ( expr );"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumeStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssumeClause), "assume ( expr ) foo=bar;"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssumeClause),
+                       "assume ( expr );"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssumeClause),
+                       "assume ( expr ) foo=bar;"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssertPropertyClause),
-         "assert property( expr );"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssertPropertyClause),
-         "assert property ( expr ) foo=bar;"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssertPropertyClause),
+                       "assert property( expr );"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssertPropertyClause),
+                       "assert property ( expr ) foo=bar;"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssumePropertyClause),
-         "assume property( expr );"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kAssumePropertyClause),
-         "assume property ( expr ) foo=bar;"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssumePropertyClause),
+                       "assume property( expr );"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kAssumePropertyClause),
+                       "assume property ( expr ) foo=bar;"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kExpectPropertyClause), "expect( expr );"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        {static_cast<int>(NodeEnum::kExpectPropertyClause),
-         "expect ( expr ) foo=bar;"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kExpectPropertyClause),
+                       "expect( expr );"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      {static_cast<int>(NodeEnum::kExpectPropertyClause),
+                       "expect ( expr ) foo=bar;"},
+                      "\n"
+                      "endtask\n"}},
   };
   for (const auto &test : kTestCases) {
     const std::string_view code(test.token_data.code);
@@ -836,8 +853,9 @@ TEST(GetAnyConditionalElseClauseTest, NoElseClause) {
 
     const auto statements = verible::SearchSyntaxTree(
         *ABSL_DIE_IF_NULL(root),
-        verible::matcher::DynamicTagMatchBuilder(SymbolTag{
-            SymbolKind::kNode, static_cast<int>(test.expected_construct)})());
+        verible::matcher::DynamicTagMatchBuilder(
+            SymbolTag{.kind = SymbolKind::kNode,
+                      .tag = static_cast<int>(test.expected_construct)})());
     ASSERT_EQ(statements.size(), 1);
     const auto &statement = *statements.front().match;
     const auto *clause = GetAnyConditionalElseClause(statement);
@@ -848,276 +866,276 @@ TEST(GetAnyConditionalElseClauseTest, NoElseClause) {
 TEST(GetAnyConditionalElseClauseTest, HaveElseClause) {
   const ControlStatementTestData kTestCases[] = {
       // each of these test cases should match exactly one statement body
-      {NodeEnum::kConditionalGenerateConstruct,
-       {"module m;\n",
-        "if (expr);\n",
-        {static_cast<int>(NodeEnum::kGenerateElseClause),
-         "else \n"
-         "   ;"},  // null else body
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kConditionalGenerateConstruct,
-       {"module m;\n",
-        "if (expr);\n",
-        {static_cast<int>(NodeEnum::kGenerateElseClause),
-         "else \n"
-         "   bar foo;"},
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kConditionalGenerateConstruct,
-       {"module m;\n",
-        "if (expr) foo bar;\n",
-        {static_cast<int>(NodeEnum::kGenerateElseClause),
-         "else \n"
-         "   bar foo;"},
-        "\n"
-        "endmodule\n"}},
-      {NodeEnum::kConditionalGenerateConstruct,
-       {"module m;\n",
-        "if (expr) foo bar;\n",
-        {static_cast<int>(NodeEnum::kGenerateElseClause),
-         "else \n"
-         "   begin bar foo;\nend"},
-        "\n"
-        "endmodule\n"}},
+      {.expected_construct = NodeEnum::kConditionalGenerateConstruct,
+       .token_data = {"module m;\n",
+                      "if (expr);\n",
+                      {static_cast<int>(NodeEnum::kGenerateElseClause),
+                       "else \n"
+                       "   ;"},  // null else body
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kConditionalGenerateConstruct,
+       .token_data = {"module m;\n",
+                      "if (expr);\n",
+                      {static_cast<int>(NodeEnum::kGenerateElseClause),
+                       "else \n"
+                       "   bar foo;"},
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kConditionalGenerateConstruct,
+       .token_data = {"module m;\n",
+                      "if (expr) foo bar;\n",
+                      {static_cast<int>(NodeEnum::kGenerateElseClause),
+                       "else \n"
+                       "   bar foo;"},
+                      "\n"
+                      "endmodule\n"}},
+      {.expected_construct = NodeEnum::kConditionalGenerateConstruct,
+       .token_data = {"module m;\n",
+                      "if (expr) foo bar;\n",
+                      {static_cast<int>(NodeEnum::kGenerateElseClause),
+                       "else \n"
+                       "   begin bar foo;\nend"},
+                      "\n"
+                      "endmodule\n"}},
 
-      {NodeEnum::kConditionalStatement,
-       {"function f;\n",
-        "if ( expr );\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   ;"},  // null else body
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kConditionalStatement,
-       {"function f;\n",
-        "if ( expr );\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kConditionalStatement,
-       {"function f;\n",
-        "if ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endfunction\n"}},
-      {NodeEnum::kConditionalStatement,
-       {"function f;\n",
-        "if ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   begin\nbar=foo;\nend"},
-        "\n"
-        "endfunction\n"}},
+      {.expected_construct = NodeEnum::kConditionalStatement,
+       .token_data = {"function f;\n",
+                      "if ( expr );\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   ;"},  // null else body
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kConditionalStatement,
+       .token_data = {"function f;\n",
+                      "if ( expr );\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kConditionalStatement,
+       .token_data = {"function f;\n",
+                      "if ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endfunction\n"}},
+      {.expected_construct = NodeEnum::kConditionalStatement,
+       .token_data = {"function f;\n",
+                      "if ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   begin\nbar=foo;\nend"},
+                      "\n"
+                      "endfunction\n"}},
 
-      {NodeEnum::kAssertionStatement,
-       {"task t;\n",
-        "assert ( expr )\n",  // no statement
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertionStatement,
-       {"task t;\n",
-        "assert ( expr );\n",  // null statement
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertionStatement,
-       {"task t;\n",
-        "assert ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   ;"},  // null else body
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertionStatement,
-       {"task t;\n",
-        "assert ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertionStatement,
-       {"task t;\n",
-        "assert ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   begin\nbar=foo;\nend"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"task t;\n",
+                      "assert ( expr )\n",  // no statement
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"task t;\n",
+                      "assert ( expr );\n",  // null statement
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"task t;\n",
+                      "assert ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   ;"},  // null else body
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"task t;\n",
+                      "assert ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertionStatement,
+       .token_data = {"task t;\n",
+                      "assert ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   begin\nbar=foo;\nend"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssumeStatement,
-       {"task t;\n",
-        "assume ( expr )\n",  // no statement
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumeStatement,
-       {"task t;\n",
-        "assume ( expr );\n",  // null statement
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumeStatement,
-       {"task t;\n",
-        "assume ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumeStatement,
-       {"task t;\n",
-        "assume ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   ;"},  // null else body
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumeStatement,
-       {"task t;\n",
-        "assume ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   begin\nbar=foo;\nend"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"task t;\n",
+                      "assume ( expr )\n",  // no statement
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"task t;\n",
+                      "assume ( expr );\n",  // null statement
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"task t;\n",
+                      "assume ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"task t;\n",
+                      "assume ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   ;"},  // null else body
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumeStatement,
+       .token_data = {"task t;\n",
+                      "assume ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   begin\nbar=foo;\nend"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        "assert property ( expr )\n",  // no statement
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        "assert property ( expr );\n",  // null statement
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        "assert property ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   ;"},  // null else body
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        "assert property ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssertPropertyStatement,
-       {"task t;\n",
-        "assert property ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   begin\nbar=foo;\nend"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      "assert property ( expr )\n",  // no statement
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      "assert property ( expr );\n",  // null statement
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      "assert property ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   ;"},  // null else body
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      "assert property ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssertPropertyStatement,
+       .token_data = {"task t;\n",
+                      "assert property ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   begin\nbar=foo;\nend"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        "assume property ( expr )\n",  // no statement
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        "assume property ( expr );\n",  // null statement
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        "assume property ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   ;"},  // null else body
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        "assume property ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kAssumePropertyStatement,
-       {"task t;\n",
-        "assume property ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   begin\nbar=foo;\nend"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      "assume property ( expr )\n",  // no statement
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      "assume property ( expr );\n",  // null statement
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      "assume property ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   ;"},  // null else body
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      "assume property ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kAssumePropertyStatement,
+       .token_data = {"task t;\n",
+                      "assume property ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   begin\nbar=foo;\nend"},
+                      "\n"
+                      "endtask\n"}},
 
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        "expect ( expr )\n",  // no statement
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        "expect ( expr );\n",  // null statement
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        "expect ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   ;"},  // null else body
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        "expect ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   bar=foo;"},
-        "\n"
-        "endtask\n"}},
-      {NodeEnum::kExpectPropertyStatement,
-       {"task t;\n",
-        "expect ( expr ) foo=bar;\n",
-        {static_cast<int>(NodeEnum::kElseClause),
-         "else \n"
-         "   begin\nbar=foo;\nend"},
-        "\n"
-        "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      "expect ( expr )\n",  // no statement
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      "expect ( expr );\n",  // null statement
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      "expect ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   ;"},  // null else body
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      "expect ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   bar=foo;"},
+                      "\n"
+                      "endtask\n"}},
+      {.expected_construct = NodeEnum::kExpectPropertyStatement,
+       .token_data = {"task t;\n",
+                      "expect ( expr ) foo=bar;\n",
+                      {static_cast<int>(NodeEnum::kElseClause),
+                       "else \n"
+                       "   begin\nbar=foo;\nend"},
+                      "\n"
+                      "endtask\n"}},
   };
   for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
@@ -1128,15 +1146,16 @@ TEST(GetAnyConditionalElseClauseTest, HaveElseClause) {
           // Grab outer statement constructs.
           const auto statements = verible::SearchSyntaxTree(
               *ABSL_DIE_IF_NULL(root),
-              verible::matcher::DynamicTagMatchBuilder(
-                  SymbolTag{SymbolKind::kNode,
-                            static_cast<int>(test.expected_construct)})());
+              verible::matcher::DynamicTagMatchBuilder(SymbolTag{
+                  .kind = SymbolKind::kNode,
+                  .tag = static_cast<int>(test.expected_construct)})());
 
           // Extract subtree of interest.
           std::vector<TreeSearchMatch> bodies;
           for (const auto &statement : statements) {
             const auto *clause = GetAnyConditionalElseClause(*statement.match);
-            bodies.push_back(TreeSearchMatch{clause, {/* ignored context */}});
+            bodies.push_back(TreeSearchMatch{
+                .match = clause, .context = {/* ignored context */}});
           }
           return bodies;
         });
@@ -1172,8 +1191,8 @@ TEST(FindAllForLoopsInitializations, FindForInitializationNames) {
           for (const auto &instance : instances) {
             const auto *variable_name =
                 GetVariableNameFromForInitialization(*instance.match);
-            names.emplace_back(
-                TreeSearchMatch{variable_name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = variable_name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -1213,7 +1232,8 @@ TEST(FindAllForLoopsInitializations, FindForInitializationDataTypes) {
             if (type == nullptr) {
               continue;
             }
-            types.emplace_back(TreeSearchMatch{type, {/* ignored context */}});
+            types.emplace_back(TreeSearchMatch{
+                .match = type, .context = {/* ignored context */}});
           }
           return types;
         });
@@ -1249,8 +1269,8 @@ TEST(FindAllForLoopsInitializations, FindForInitializationExpressions) {
           for (const auto &instance : instances) {
             const auto *expression =
                 GetExpressionFromForInitialization(*instance.match);
-            expressions.emplace_back(
-                TreeSearchMatch{expression, {/* ignored context */}});
+            expressions.emplace_back(TreeSearchMatch{
+                .match = expression, .context = {/* ignored context */}});
           }
           return expressions;
         });
@@ -1306,8 +1326,8 @@ TEST(GetGenerateBlockBeginTest, Various) {
           std::vector<TreeSearchMatch> begins;
           for (const auto &block : blocks) {
             const auto *begin = GetGenerateBlockBegin(*block.match);
-            begins.emplace_back(
-                TreeSearchMatch{begin, {/* ignored context */}});
+            begins.emplace_back(TreeSearchMatch{
+                .match = begin, .context = {/* ignored context */}});
           }
           return begins;
         });
@@ -1364,7 +1384,8 @@ TEST(GetGenerateBlockEndTest, Various) {
           std::vector<TreeSearchMatch> ends;
           for (const auto &block : blocks) {
             const auto *end = GetGenerateBlockEnd(*block.match);
-            ends.emplace_back(TreeSearchMatch{end, {/* ignored context */}});
+            ends.emplace_back(TreeSearchMatch{
+                .match = end, .context = {/* ignored context */}});
           }
           return ends;
         });
@@ -1449,8 +1470,8 @@ TEST(GetNonBlockingAssignmentRhsTest, Various) {
           for (const auto &assignment : non_blocking_assignments) {
             const auto *rhs = GetNonBlockingAssignmentRhs(
                 verible::SymbolCastToNode(*assignment.match));
-            right_hand_sides.emplace_back(
-                TreeSearchMatch{rhs, {/* ignored context */}});
+            right_hand_sides.emplace_back(TreeSearchMatch{
+                .match = rhs, .context = {/* ignored context */}});
           }
           return right_hand_sides;
         });
@@ -1500,8 +1521,8 @@ TEST(GetNonBlockingAssignmentLhsTest, Various) {
           for (const auto &assignment : non_blocking_assignments) {
             const auto *lhs = GetNonBlockingAssignmentLhs(
                 verible::SymbolCastToNode(*assignment.match));
-            left_hand_sides.emplace_back(
-                TreeSearchMatch{lhs, {/* ignored context */}});
+            left_hand_sides.emplace_back(TreeSearchMatch{
+                .match = lhs, .context = {/* ignored context */}});
           }
           return left_hand_sides;
         });
@@ -1532,8 +1553,8 @@ TEST(GetIfClauseHeaderTest, Various) {
           for (const auto &if_clause : if_clauses) {
             const auto *header =
                 GetIfClauseHeader(verible::SymbolCastToNode(*if_clause.match));
-            if_headers.emplace_back(
-                TreeSearchMatch{header, {/* ignored context */}});
+            if_headers.emplace_back(TreeSearchMatch{
+                .match = header, .context = {/* ignored context */}});
           }
           return if_headers;
         });
@@ -1578,8 +1599,8 @@ TEST(GetIfClauseExpressionTest, Various) {
           for (const auto &if_header : if_headers) {
             const auto *expression = GetIfHeaderExpression(
                 verible::SymbolCastToNode(*if_header.match));
-            if_expressions.emplace_back(
-                TreeSearchMatch{expression, {/* ignored context */}});
+            if_expressions.emplace_back(TreeSearchMatch{
+                .match = expression, .context = {/* ignored context */}});
           }
           return if_expressions;
         });

@@ -51,8 +51,10 @@ const LintRuleDescriptor &ForbiddenAnonymousStructsUnionsRule::GetDescriptor() {
       .desc =
           "Checks that a Verilog `struct` or `union` declaration is "
           "named using `typedef`.",
-      .param = {{"allow_anonymous_nested", "false",
-                 "Allow nested structs/unions to be anonymous."}},
+      .param = {{.name = "allow_anonymous_nested",
+                 .default_value = "false",
+                 .description =
+                     "Allow nested structs/unions to be anonymous."}},
   };
   return d;
 }
@@ -61,8 +63,8 @@ absl::Status ForbiddenAnonymousStructsUnionsRule::Configure(
     std::string_view configuration) {
   using verible::config::SetBool;
   return verible::ParseNameValues(
-      configuration,
-      {{"allow_anonymous_nested", SetBool(&allow_anonymous_nested_type_)}});
+      configuration, {{.name = "allow_anonymous_nested",
+                       .set_value = SetBool(&allow_anonymous_nested_type_)}});
 }
 
 static const Matcher &StructMatcher() {

@@ -52,13 +52,13 @@ TEST(StripCommentTest, NotComment) {
 // Test that endline-style comments are trimmed.
 TEST(StripCommentTest, EndlineComment) {
   constexpr TestData test_cases[] = {
-      {"//", ""},
-      {"//\t", "\t"},
-      {"//  ", "  "},
-      {"/////", ""},
-      {"/// ", " "},
-      {"//foo", "foo"},
-      {"//foo\nabc", "foo\nabc"},
+      {.input = "//", .expect = ""},
+      {.input = "//\t", .expect = "\t"},
+      {.input = "//  ", .expect = "  "},
+      {.input = "/////", .expect = ""},
+      {.input = "/// ", .expect = " "},
+      {.input = "//foo", .expect = "foo"},
+      {.input = "//foo\nabc", .expect = "foo\nabc"},
   };
   for (const auto &data : test_cases) {
     EXPECT_EQ(StripComment(data.input), data.expect)
@@ -70,13 +70,13 @@ TEST(StripCommentTest, EndlineComment) {
 // Test that block-style comments are trimmed
 TEST(StripCommentTest, BlockComment) {
   constexpr TestData test_cases[] = {
-      {"/**/", ""},                  // smallest comment
-      {"/*******/", ""},             // "My god, it's full of stars!"
-      {"/*  */", "  "},              // spaces only
-      {"/*fgh*/", "fgh"},            // text
-      {"/*fgh\nijk*/", "fgh\nijk"},  // text
-      {"/* zzz */", " zzz "},        // keeps spaces
-      {"/**jkl****/", "jkl"},
+      {.input = "/**/", .expect = ""},        // smallest comment
+      {.input = "/*******/", .expect = ""},   // "My god, it's full of stars!"
+      {.input = "/*  */", .expect = "  "},    // spaces only
+      {.input = "/*fgh*/", .expect = "fgh"},  // text
+      {.input = "/*fgh\nijk*/", .expect = "fgh\nijk"},  // text
+      {.input = "/* zzz */", .expect = " zzz "},        // keeps spaces
+      {.input = "/**jkl****/", .expect = "jkl"},
   };
   for (const auto &data : test_cases) {
     EXPECT_EQ(StripComment(data.input), data.expect)
@@ -88,29 +88,29 @@ TEST(StripCommentTest, BlockComment) {
 // Test that leading/trailing spaces inside comments are removed.
 TEST(StripCommentAndSpacePaddingTest, StripsSpaces) {
   constexpr TestData test_cases[] = {
-      {"//", ""},
-      {"//\t", ""},
-      {"//  ", ""},
-      {"/////", ""},
-      {"/// ", ""},
-      {"//foo", "foo"},
-      {"//foo\nabc", "foo\nabc"},
-      {"//  bar", "bar"},
-      {"//  bar  ", "bar"},
-      {"//  foo bar  ", "foo bar"},
-      {"//\t\tbar", "bar"},
-      {"/**/", ""},
-      {"/***/", ""},
-      {"/* */", ""},
-      {"/*\t*/", ""},
-      {"/*\n*/", ""},
-      {"/**qqq**/", "qqq"},
-      {"/**  qqq  **/", "qqq"},
-      {"/**\n\tqqqq\n\t**/", "qqqq"},
-      {"/**  qqq bbb.  **/", "qqq bbb."},
-      {"/**\n\tqqqq\n\t**/", "qqqq"},
-      {"/****qqq bbb.******/", "qqq bbb."},
-      {"/****\n** qqq\n** bbb\n******/", "** qqq\n** bbb"},
+      {.input = "//", .expect = ""},
+      {.input = "//\t", .expect = ""},
+      {.input = "//  ", .expect = ""},
+      {.input = "/////", .expect = ""},
+      {.input = "/// ", .expect = ""},
+      {.input = "//foo", .expect = "foo"},
+      {.input = "//foo\nabc", .expect = "foo\nabc"},
+      {.input = "//  bar", .expect = "bar"},
+      {.input = "//  bar  ", .expect = "bar"},
+      {.input = "//  foo bar  ", .expect = "foo bar"},
+      {.input = "//\t\tbar", .expect = "bar"},
+      {.input = "/**/", .expect = ""},
+      {.input = "/***/", .expect = ""},
+      {.input = "/* */", .expect = ""},
+      {.input = "/*\t*/", .expect = ""},
+      {.input = "/*\n*/", .expect = ""},
+      {.input = "/**qqq**/", .expect = "qqq"},
+      {.input = "/**  qqq  **/", .expect = "qqq"},
+      {.input = "/**\n\tqqqq\n\t**/", .expect = "qqqq"},
+      {.input = "/**  qqq bbb.  **/", .expect = "qqq bbb."},
+      {.input = "/**\n\tqqqq\n\t**/", .expect = "qqqq"},
+      {.input = "/****qqq bbb.******/", .expect = "qqq bbb."},
+      {.input = "/****\n** qqq\n** bbb\n******/", .expect = "** qqq\n** bbb"},
   };
   for (const auto &data : test_cases) {
     EXPECT_EQ(StripCommentAndSpacePadding(data.input), data.expect)

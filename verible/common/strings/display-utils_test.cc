@@ -32,22 +32,32 @@ struct TruncateTestCase {
 
 TEST(AutoTruncateTest, Various) {
   constexpr TruncateTestCase kTestCases[] = {
-      {"abcde", 9, "abcde"},
-      {"abcdef", 9, "abcdef"},
-      {"abcdefg", 9, "abcdefg"},
-      {"abcdefgh", 9, "abcdefgh"},
-      {"abcdefghi", 9, "abcdefghi"},
-      {"abcdefghij", 9, "abc...hij"},
-      {"abcdefghijk", 9, "abc...ijk"},
-      {"abcdefghijk", 10, "abcd...ijk"},  // more head than tail
-      {"123!(@*#&)!#$!@#(*xyz", 9, "123...xyz"},
-      {"123!(@*#&)!#$!@#(*xyz", 10, "123!...xyz"},
-      {"123!(@*#&)!#$!@#(*xyz", 11, "123!...*xyz"},
-      {"123!(@*#&)!#$!@#(*xyz", 12, "123!(...*xyz"},
+      {.input = "abcde", .max_chars = 9, .expected = "abcde"},
+      {.input = "abcdef", .max_chars = 9, .expected = "abcdef"},
+      {.input = "abcdefg", .max_chars = 9, .expected = "abcdefg"},
+      {.input = "abcdefgh", .max_chars = 9, .expected = "abcdefgh"},
+      {.input = "abcdefghi", .max_chars = 9, .expected = "abcdefghi"},
+      {.input = "abcdefghij", .max_chars = 9, .expected = "abc...hij"},
+      {.input = "abcdefghijk", .max_chars = 9, .expected = "abc...ijk"},
+      {.input = "abcdefghijk",
+       .max_chars = 10,
+       .expected = "abcd...ijk"},  // more head than tail
+      {.input = "123!(@*#&)!#$!@#(*xyz",
+       .max_chars = 9,
+       .expected = "123...xyz"},
+      {.input = "123!(@*#&)!#$!@#(*xyz",
+       .max_chars = 10,
+       .expected = "123!...xyz"},
+      {.input = "123!(@*#&)!#$!@#(*xyz",
+       .max_chars = 11,
+       .expected = "123!...*xyz"},
+      {.input = "123!(@*#&)!#$!@#(*xyz",
+       .max_chars = 12,
+       .expected = "123!(...*xyz"},
   };
   for (const auto &test : kTestCases) {
     std::ostringstream stream;
-    stream << AutoTruncate{test.input, test.max_chars};
+    stream << AutoTruncate{.text = test.input, .max_chars = test.max_chars};
     EXPECT_EQ(stream.str(), test.expected);
   }
 }

@@ -36,32 +36,32 @@ namespace {
 // `+\n`MACRO` and `+ `MACRO`.
 TEST(FormatterEndToEndTest, LongMacroSumLocalparamConverges) {
   static constexpr FormatterTestCase kTestCases[] = {
-      {"module m;\n"
-       "  localparam N =\n"
-       "      `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
-       "      + `MACRO_GEN3_SCRAMBLE_REGIN\n"
-       "      + `MACRO_GEN3_SCRAMBLE_REGOUT\n"
-       "      ;\n"
-       "endmodule\n",
-       "module m;\n"
-       "  localparam N =\n"
-       "  `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
-       "  + `MACRO_GEN3_SCRAMBLE_REGIN\n"
-       "  + `MACRO_GEN3_SCRAMBLE_REGOUT;\n"
-       "endmodule\n"},
+      {.input = "module m;\n"
+                "  localparam N =\n"
+                "      `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
+                "      + `MACRO_GEN3_SCRAMBLE_REGIN\n"
+                "      + `MACRO_GEN3_SCRAMBLE_REGOUT\n"
+                "      ;\n"
+                "endmodule\n",
+       .expected = "module m;\n"
+                   "  localparam N =\n"
+                   "  `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
+                   "  + `MACRO_GEN3_SCRAMBLE_REGIN\n"
+                   "  + `MACRO_GEN3_SCRAMBLE_REGOUT;\n"
+                   "endmodule\n"},
       // Already in pass-1 form must stay stable.
-      {"module m;\n"
-       "  localparam N =\n"
-       "  `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
-       "  + `MACRO_GEN3_SCRAMBLE_REGIN\n"
-       "  + `MACRO_GEN3_SCRAMBLE_REGOUT;\n"
-       "endmodule\n",
-       "module m;\n"
-       "  localparam N =\n"
-       "  `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
-       "  + `MACRO_GEN3_SCRAMBLE_REGIN\n"
-       "  + `MACRO_GEN3_SCRAMBLE_REGOUT;\n"
-       "endmodule\n"},
+      {.input = "module m;\n"
+                "  localparam N =\n"
+                "  `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
+                "  + `MACRO_GEN3_SCRAMBLE_REGIN\n"
+                "  + `MACRO_GEN3_SCRAMBLE_REGOUT;\n"
+                "endmodule\n",
+       .expected = "module m;\n"
+                   "  localparam N =\n"
+                   "  `MACRO_GEN3_SCRAMBLE_LFSR_REGOUT\n"
+                   "  + `MACRO_GEN3_SCRAMBLE_REGIN\n"
+                   "  + `MACRO_GEN3_SCRAMBLE_REGOUT;\n"
+                   "endmodule\n"},
   };
   FormatStyle style;  // default column_limit (100)
   for (const auto &test_case : kTestCases) {
@@ -79,12 +79,12 @@ TEST(FormatterEndToEndTest, LongMacroSumLocalparamConverges) {
 // converges.
 TEST(FormatterEndToEndTest, DefineCrlfConverges) {
   static constexpr FormatterTestCase kTestCases[] = {
-      {"`define A x.y\r\n"
-       "module m;\r\n"
-       "endmodule\r\n",
-       "`define A x.y\r\n"
-       "module m;\r\n"
-       "endmodule\r\n"},
+      {.input = "`define A x.y\r\n"
+                "module m;\r\n"
+                "endmodule\r\n",
+       .expected = "`define A x.y\r\n"
+                   "module m;\r\n"
+                   "endmodule\r\n"},
   };
   FormatStyle style;
   style.line_terminator = verible::LineTerminatorOptionStyle::kAuto;
@@ -116,30 +116,30 @@ TEST(FormatterEndToEndTest, MacroBeforeCloseParenFormatEquivalent) {
 TEST(FormatterEndToEndTest, TimescaleCrlfEolComment) {
   static constexpr FormatterTestCase kTestCases[] = {
       // Next-line `//` comment after `timescale (the reduced issue case).
-      {"`timescale 1 ps / 1 ps\r\n"
-       "// hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n",
-       "`timescale 1 ps / 1 ps\r\n"
-       "// hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n"},
+      {.input = "`timescale 1 ps / 1 ps\r\n"
+                "// hello\r\n"
+                "module m;\r\n"
+                "endmodule\r\n",
+       .expected = "`timescale 1 ps / 1 ps\r\n"
+                   "// hello\r\n"
+                   "module m;\r\n"
+                   "endmodule\r\n"},
       // Same-line `//` comment on the `timescale directive.
-      {"`timescale 1 ps / 1 ps // hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n",
-       "`timescale 1 ps / 1 ps  // hello\r\n"
-       "module m;\r\n"
-       "endmodule\r\n"},
+      {.input = "`timescale 1 ps / 1 ps // hello\r\n"
+                "module m;\r\n"
+                "endmodule\r\n",
+       .expected = "`timescale 1 ps / 1 ps  // hello\r\n"
+                   "module m;\r\n"
+                   "endmodule\r\n"},
       // LF control: this path already passed lexical verification.
-      {"`timescale 1 ps / 1 ps\n"
-       "// hello\n"
-       "module m;\n"
-       "endmodule\n",
-       "`timescale 1 ps / 1 ps\n"
-       "// hello\n"
-       "module m;\n"
-       "endmodule\n"},
+      {.input = "`timescale 1 ps / 1 ps\n"
+                "// hello\n"
+                "module m;\n"
+                "endmodule\n",
+       .expected = "`timescale 1 ps / 1 ps\n"
+                   "// hello\n"
+                   "module m;\n"
+                   "endmodule\n"},
   };
   FormatStyle style;
   style.line_terminator = verible::LineTerminatorOptionStyle::kAuto;
@@ -152,32 +152,38 @@ TEST(FormatterEndToEndTest, TimescaleCrlfEolComment) {
 TEST(FormatterEndToEndTest, ContinuationCommentAfterWrappedAssignConverges) {
   static constexpr FormatterTestCase kTestCases[] = {
       {// Comments originally column-aligned after a wrapped assign
-       "module m;\n"
-       "  assign status_ur = !(status_sc || status_ca ||\n"
-       "    status_crs);      // Completions with a Reserved Completion\n"
-       "                      // Status value are treated as UR\n"
-       "endmodule\n",
-       "module m;\n"
-       "  assign status_ur =\n"
-       "      !(status_sc || status_ca || status_crs);  // Completions with a "
-       "Reserved Completion\n"
-       "                                                // Status value are "
-       "treated as UR\n"
-       "endmodule\n"},
+       .input =
+           "module m;\n"
+           "  assign status_ur = !(status_sc || status_ca ||\n"
+           "    status_crs);      // Completions with a Reserved Completion\n"
+           "                      // Status value are treated as UR\n"
+           "endmodule\n",
+       .expected = "module m;\n"
+                   "  assign status_ur =\n"
+                   "      !(status_sc || status_ca || status_crs);  // "
+                   "Completions with a "
+                   "Reserved Completion\n"
+                   "                                                // Status "
+                   "value are "
+                   "treated as UR\n"
+                   "endmodule\n"},
       {// Previously mis-aligned continuation is not treated as a continuation
        // (column delta > 1) and must still converge
-       "module m;\n"
-       "  assign status_ur = !(status_sc || status_ca ||\n"
-       "    status_crs);      // Completions with a Reserved Completion\n"
-       "                                                                       "
-       "// Status value are treated as UR\n"
-       "endmodule\n",
-       "module m;\n"
-       "  assign status_ur =\n"
-       "      !(status_sc || status_ca || status_crs);  // Completions with a "
-       "Reserved Completion\n"
-       "  // Status value are treated as UR\n"
-       "endmodule\n"},
+       .input =
+           "module m;\n"
+           "  assign status_ur = !(status_sc || status_ca ||\n"
+           "    status_crs);      // Completions with a Reserved Completion\n"
+           "                                                                   "
+           "    "
+           "// Status value are treated as UR\n"
+           "endmodule\n",
+       .expected = "module m;\n"
+                   "  assign status_ur =\n"
+                   "      !(status_sc || status_ca || status_crs);  // "
+                   "Completions with a "
+                   "Reserved Completion\n"
+                   "  // Status value are treated as UR\n"
+                   "endmodule\n"},
   };
   FormatStyle style;  // default column_limit (100)
   for (const auto &test_case : kTestCases) {
@@ -196,74 +202,82 @@ TEST(FormatterEndToEndTest, ContinuationCommentAfterWrappedAssignConverges) {
 TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallKeepsPorts) {
   static constexpr FormatterTestCase kTestCases[] = {
       {// Original issue sample (default column_limit 100)
-       "package foo;\n"
-       "  function some_large_return_type "
-       "[$clog2(some_large_contant_name)-1:0] "
-       "f_some_long_function( input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n",
-       "package foo;\n"
-       "  function some_large_return_type "
-       "[$clog2(some_large_contant_name)-1:0] "
-       "f_some_long_function(\n"
-       "      input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n"},
+       .input = "package foo;\n"
+                "  function some_large_return_type "
+                "[$clog2(some_large_contant_name)-1:0] "
+                "f_some_long_function( input int parameter_1, input int "
+                "parameter_2);\n"
+                "    return 1;\n"
+                "  endfunction\n"
+                "endpackage\n",
+       .expected = "package foo;\n"
+                   "  function some_large_return_type "
+                   "[$clog2(some_large_contant_name)-1:0] "
+                   "f_some_long_function(\n"
+                   "      input int parameter_1, input int parameter_2);\n"
+                   "    return 1;\n"
+                   "  endfunction\n"
+                   "endpackage\n"},
       {// Short names still keep ports and stay on one line
-       "package foo;\n"
-       "  function logic [$clog2(N)-1:0] f(input int a, input int b);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n",
-       "package foo;\n"
-       "  function logic [$clog2(N)-1:0] f(input int a, input int b);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n"},
+       .input =
+           "package foo;\n"
+           "  function logic [$clog2(N)-1:0] f(input int a, input int b);\n"
+           "    return 1;\n"
+           "  endfunction\n"
+           "endpackage\n",
+       .expected =
+           "package foo;\n"
+           "  function logic [$clog2(N)-1:0] f(input int a, input int b);\n"
+           "    return 1;\n"
+           "  endfunction\n"
+           "endpackage\n"},
       {// $bits() in packed dimensions
-       "package foo;\n"
-       "  function some_large_return_type [$bits(some_large_contant_name)-1:0] "
-       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n",
-       "package foo;\n"
-       "  function some_large_return_type [$bits(some_large_contant_name)-1:0] "
-       "f_some_long_function(\n"
-       "      input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n"},
+       .input = "package foo;\n"
+                "  function some_large_return_type "
+                "[$bits(some_large_contant_name)-1:0] "
+                "f_some_long_function(input int parameter_1, input int "
+                "parameter_2);\n"
+                "    return 1;\n"
+                "  endfunction\n"
+                "endpackage\n",
+       .expected = "package foo;\n"
+                   "  function some_large_return_type "
+                   "[$bits(some_large_contant_name)-1:0] "
+                   "f_some_long_function(\n"
+                   "      input int parameter_1, input int parameter_2);\n"
+                   "    return 1;\n"
+                   "  endfunction\n"
+                   "endpackage\n"},
       {// Multi-argument system function in packed dimensions
-       "package foo;\n"
-       "  function some_large_return_type "
-       "[$clog2(some_large_contant_name, WIDTH)-1:0] "
-       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n",
-       "package foo;\n"
-       "  function some_large_return_type "
-       "[$clog2(some_large_contant_name, WIDTH)-1:0] "
-       "f_some_long_function(\n"
-       "      input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n"},
+       .input = "package foo;\n"
+                "  function some_large_return_type "
+                "[$clog2(some_large_contant_name, WIDTH)-1:0] "
+                "f_some_long_function(input int parameter_1, input int "
+                "parameter_2);\n"
+                "    return 1;\n"
+                "  endfunction\n"
+                "endpackage\n",
+       .expected = "package foo;\n"
+                   "  function some_large_return_type "
+                   "[$clog2(some_large_contant_name, WIDTH)-1:0] "
+                   "f_some_long_function(\n"
+                   "      input int parameter_1, input int parameter_2);\n"
+                   "    return 1;\n"
+                   "  endfunction\n"
+                   "endpackage\n"},
       {// extern prototype
-       "class c;\n"
-       "  extern function some_large_return_type "
-       "[$clog2(some_large_contant_name)-1:0] "
-       "f_some_long_function(input int parameter_1, input int parameter_2);\n"
-       "endclass\n",
-       "class c;\n"
-       "  extern function some_large_return_type "
-       "[$clog2(some_large_contant_name)-1:0] "
-       "f_some_long_function(\n"
-       "      input int parameter_1, input int parameter_2);\n"
-       "endclass\n"},
+       .input = "class c;\n"
+                "  extern function some_large_return_type "
+                "[$clog2(some_large_contant_name)-1:0] "
+                "f_some_long_function(input int parameter_1, input int "
+                "parameter_2);\n"
+                "endclass\n",
+       .expected = "class c;\n"
+                   "  extern function some_large_return_type "
+                   "[$clog2(some_large_contant_name)-1:0] "
+                   "f_some_long_function(\n"
+                   "      input int parameter_1, input int parameter_2);\n"
+                   "endclass\n"},
   };
   FormatStyle style;  // default column_limit (100)
   RunFormatterTestCases(style, kTestCases);
@@ -273,22 +287,24 @@ TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallWrapsArgs) {
   // Tight column limit still keeps the ports (the original bug dropped them).
   // The header itself is longer than 40 columns, so it wraps.
   static constexpr FormatterTestCase kTestCases[] = {
-      {"package foo;\n"
-       "  function some_large_return_type "
-       "[$clog2(some_large_contant_name)-1:0] "
-       "f_some_long_function( input int parameter_1, input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n",
-       "package foo;\n"
-       "  function\n"
-       "      some_large_return_type [$clog2(some_large_contant_name)-1\n"
-       "      :0] f_some_long_function(\n"
-       "      input int parameter_1,\n"
-       "      input int parameter_2);\n"
-       "    return 1;\n"
-       "  endfunction\n"
-       "endpackage\n"},
+      {.input = "package foo;\n"
+                "  function some_large_return_type "
+                "[$clog2(some_large_contant_name)-1:0] "
+                "f_some_long_function( input int parameter_1, input int "
+                "parameter_2);\n"
+                "    return 1;\n"
+                "  endfunction\n"
+                "endpackage\n",
+       .expected =
+           "package foo;\n"
+           "  function\n"
+           "      some_large_return_type [$clog2(some_large_contant_name)-1\n"
+           "      :0] f_some_long_function(\n"
+           "      input int parameter_1,\n"
+           "      input int parameter_2);\n"
+           "    return 1;\n"
+           "  endfunction\n"
+           "endpackage\n"},
   };
   RunFormatterTestCases40(kTestCases);
 }
@@ -299,60 +315,60 @@ TEST(FormatterEndToEndTest, FunctionHeaderPackedDimSystemCallWrapsArgs) {
 TEST(FormatterEndToEndTest, EndElseIfWithEOLCommentConverges) {
   static constexpr FormatterTestCase kTestCases[] = {
       {// Comment on its own line between end and else if
-       "module m;\n"
-       "  always_comb begin\n"
-       "    case (state)\n"
-       "      STATE_A: begin\n"
-       "        if (cond_aaaa) next_state_value = STATE_B;\n"
-       "        else if (cond_bbbb) begin\n"
-       "          next_state_value = STATE_B;\n"
-       "        end\n"
-       "        // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
-       "        else if (cond_cccc) next_state_value = STATE_C;\n"
-       "      end\n"
-       "    endcase\n"
-       "  end\n"
-       "endmodule\n",
-       "module m;\n"
-       "  always_comb begin\n"
-       "    case (state)\n"
-       "      STATE_A: begin\n"
-       "        if (cond_aaaa) next_state_value = STATE_B;\n"
-       "        else if (cond_bbbb) begin\n"
-       "          next_state_value = STATE_B;\n"
-       "        end  // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
-       "        else if (cond_cccc) next_state_value = STATE_C;\n"
-       "      end\n"
-       "    endcase\n"
-       "  end\n"
-       "endmodule\n"},
+       .input = "module m;\n"
+                "  always_comb begin\n"
+                "    case (state)\n"
+                "      STATE_A: begin\n"
+                "        if (cond_aaaa) next_state_value = STATE_B;\n"
+                "        else if (cond_bbbb) begin\n"
+                "          next_state_value = STATE_B;\n"
+                "        end\n"
+                "        // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
+                "        else if (cond_cccc) next_state_value = STATE_C;\n"
+                "      end\n"
+                "    endcase\n"
+                "  end\n"
+                "endmodule\n",
+       .expected = "module m;\n"
+                   "  always_comb begin\n"
+                   "    case (state)\n"
+                   "      STATE_A: begin\n"
+                   "        if (cond_aaaa) next_state_value = STATE_B;\n"
+                   "        else if (cond_bbbb) begin\n"
+                   "          next_state_value = STATE_B;\n"
+                   "        end  // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
+                   "        else if (cond_cccc) next_state_value = STATE_C;\n"
+                   "      end\n"
+                   "    endcase\n"
+                   "  end\n"
+                   "endmodule\n"},
       {// Same construct with comment already on the end line
-       "module m;\n"
-       "  always_comb begin\n"
-       "    case (state)\n"
-       "      STATE_A: begin\n"
-       "        if (cond_aaaa) next_state_value = STATE_B;\n"
-       "        else if (cond_bbbb) begin\n"
-       "          next_state_value = STATE_B;\n"
-       "        end  // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
-       "        else if (cond_cccc) next_state_value = STATE_C;\n"
-       "      end\n"
-       "    endcase\n"
-       "  end\n"
-       "endmodule\n",
-       "module m;\n"
-       "  always_comb begin\n"
-       "    case (state)\n"
-       "      STATE_A: begin\n"
-       "        if (cond_aaaa) next_state_value = STATE_B;\n"
-       "        else if (cond_bbbb) begin\n"
-       "          next_state_value = STATE_B;\n"
-       "        end  // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
-       "        else if (cond_cccc) next_state_value = STATE_C;\n"
-       "      end\n"
-       "    endcase\n"
-       "  end\n"
-       "endmodule\n"},
+       .input = "module m;\n"
+                "  always_comb begin\n"
+                "    case (state)\n"
+                "      STATE_A: begin\n"
+                "        if (cond_aaaa) next_state_value = STATE_B;\n"
+                "        else if (cond_bbbb) begin\n"
+                "          next_state_value = STATE_B;\n"
+                "        end  // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
+                "        else if (cond_cccc) next_state_value = STATE_C;\n"
+                "      end\n"
+                "    endcase\n"
+                "  end\n"
+                "endmodule\n",
+       .expected = "module m;\n"
+                   "  always_comb begin\n"
+                   "    case (state)\n"
+                   "      STATE_A: begin\n"
+                   "        if (cond_aaaa) next_state_value = STATE_B;\n"
+                   "        else if (cond_bbbb) begin\n"
+                   "          next_state_value = STATE_B;\n"
+                   "        end  // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
+                   "        else if (cond_cccc) next_state_value = STATE_C;\n"
+                   "      end\n"
+                   "    endcase\n"
+                   "  end\n"
+                   "endmodule\n"},
   };
   FormatStyle style;  // default column_limit (100)
   for (const auto &test_case : kTestCases) {
@@ -371,23 +387,24 @@ TEST(FormatterEndToEndTest, EndElseIfWithEOLCommentConverges) {
 TEST(FormatterEndToEndTest, MacroArgPathSeparatorsKeepNoSpace) {
   static constexpr FormatterTestCase kTestCases[] = {
       {// Original issue sample
-       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n",
-       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n"},
+       .input = "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n",
+       .expected = "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n"},
       {// Extra spaces around '/' are removed in macro args
-       "`PROJECT_INCLUDE(`PATH_MY_MODULE / src / config_class.sv)\n",
-       "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n"},
+       .input = "`PROJECT_INCLUDE(`PATH_MY_MODULE / src / config_class.sv)\n",
+       .expected = "`PROJECT_INCLUDE(`PATH_MY_MODULE/src/config_class.sv)\n"},
       {// Nested directories
-       "`INCLUDE(foo/bar/baz.svh)\n", "`INCLUDE(foo/bar/baz.svh)\n"},
+       .input = "`INCLUDE(foo/bar/baz.svh)\n",
+       .expected = "`INCLUDE(foo/bar/baz.svh)\n"},
       {// Path as a later argument
-       "`LOAD(cfg, `ROOT/hw/ip/file.sv)\n",
-       "`LOAD(cfg, `ROOT/hw/ip/file.sv)\n"},
+       .input = "`LOAD(cfg, `ROOT/hw/ip/file.sv)\n",
+       .expected = "`LOAD(cfg, `ROOT/hw/ip/file.sv)\n"},
       {// Division between identifiers outside macros still gets spaces
-       "module m;\n"
-       "  assign x = a/b;\n"
-       "endmodule\n",
-       "module m;\n"
-       "  assign x = a / b;\n"
-       "endmodule\n"},
+       .input = "module m;\n"
+                "  assign x = a/b;\n"
+                "endmodule\n",
+       .expected = "module m;\n"
+                   "  assign x = a / b;\n"
+                   "endmodule\n"},
   };
   FormatStyle style;  // default column_limit (100)
   RunFormatterTestCases(style, kTestCases);
@@ -402,93 +419,93 @@ TEST(FormatterEndToEndTest, MacroArgPathSeparatorsKeepNoSpace) {
 TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
   static constexpr FormatterTestCase kTestCases[] = {
       {// Original issue #2008 sample
-       "module uut( sig1 );\n"
-       "\n"
-       "input wire signed [15:0] sig1;\n"
-       "\n"
-       "endmodule\n",
-       "module uut (\n"
-       "    sig1\n"
-       ");\n"
-       "\n"
-       "  input wire signed [15:0] sig1;\n"
-       "\n"
-       "endmodule\n"},
+       .input = "module uut( sig1 );\n"
+                "\n"
+                "input wire signed [15:0] sig1;\n"
+                "\n"
+                "endmodule\n",
+       .expected = "module uut (\n"
+                   "    sig1\n"
+                   ");\n"
+                   "\n"
+                   "  input wire signed [15:0] sig1;\n"
+                   "\n"
+                   "endmodule\n"},
       {// Issue #2474 sample
-       "module myModule (\n"
-       "    myinput\n"
-       ");\n"
-       "input wire signed [7:0] myInput;\n"
-       "endmodule\n",
-       "module myModule (\n"
-       "    myinput\n"
-       ");\n"
-       "  input wire signed [7:0] myInput;\n"
-       "endmodule\n"},
+       .input = "module myModule (\n"
+                "    myinput\n"
+                ");\n"
+                "input wire signed [7:0] myInput;\n"
+                "endmodule\n",
+       .expected = "module myModule (\n"
+                   "    myinput\n"
+                   ");\n"
+                   "  input wire signed [7:0] myInput;\n"
+                   "endmodule\n"},
       {// Issue #2063 sample: signed wire with no packed dimensions
-       "module top(a);\n"
-       "    input wire signed a;\n"
-       "endmodule\n",
-       "module top (\n"
-       "    a\n"
-       ");\n"
-       "  input wire signed a;\n"
-       "endmodule\n"},
+       .input = "module top(a);\n"
+                "    input wire signed a;\n"
+                "endmodule\n",
+       .expected = "module top (\n"
+                   "    a\n"
+                   ");\n"
+                   "  input wire signed a;\n"
+                   "endmodule\n"},
       {// Same production with logic instead of wire
-       "module uut(sig1);\n"
-       "input logic signed [15:0] sig1;\n"
-       "endmodule\n",
-       "module uut (\n"
-       "    sig1\n"
-       ");\n"
-       "  input logic signed [15:0] sig1;\n"
-       "endmodule\n"},
+       .input = "module uut(sig1);\n"
+                "input logic signed [15:0] sig1;\n"
+                "endmodule\n",
+       .expected = "module uut (\n"
+                   "    sig1\n"
+                   ");\n"
+                   "  input logic signed [15:0] sig1;\n"
+                   "endmodule\n"},
       {// output / inout net types
-       "module uut(sig1, sig2);\n"
-       "output wire signed [15:0] sig1;\n"
-       "inout wire signed [7:0] sig2;\n"
-       "endmodule\n",
-       "module uut (\n"
-       "    sig1,\n"
-       "    sig2\n"
-       ");\n"
-       "  output wire signed [15:0] sig1;\n"
-       "  inout wire signed [7:0] sig2;\n"
-       "endmodule\n"},
+       .input = "module uut(sig1, sig2);\n"
+                "output wire signed [15:0] sig1;\n"
+                "inout wire signed [7:0] sig2;\n"
+                "endmodule\n",
+       .expected = "module uut (\n"
+                   "    sig1,\n"
+                   "    sig2\n"
+                   ");\n"
+                   "  output wire signed [15:0] sig1;\n"
+                   "  inout wire signed [7:0] sig2;\n"
+                   "endmodule\n"},
       {// unsigned is the same production
-       "module uut(sig1);\n"
-       "input wire unsigned [15:0] sig1;\n"
-       "endmodule\n",
-       "module uut (\n"
-       "    sig1\n"
-       ");\n"
-       "  input wire unsigned [15:0] sig1;\n"
-       "endmodule\n"},
+       .input = "module uut(sig1);\n"
+                "input wire unsigned [15:0] sig1;\n"
+                "endmodule\n",
+       .expected = "module uut (\n"
+                   "    sig1\n"
+                   ");\n"
+                   "  input wire unsigned [15:0] sig1;\n"
+                   "endmodule\n"},
       {// ANSI form already worked; keep as a regression
-       "module uut(input wire signed [15:0] sig1);\n"
-       "endmodule\n",
-       "module uut (\n"
-       "    input wire signed [15:0] sig1\n"
-       ");\n"
-       "endmodule\n"},
+       .input = "module uut(input wire signed [15:0] sig1);\n"
+                "endmodule\n",
+       .expected = "module uut (\n"
+                   "    input wire signed [15:0] sig1\n"
+                   ");\n"
+                   "endmodule\n"},
       {// Non-ANSI without signed still works
-       "module uut(sig1);\n"
-       "input wire [15:0] sig1;\n"
-       "endmodule\n",
-       "module uut (\n"
-       "    sig1\n"
-       ");\n"
-       "  input wire [15:0] sig1;\n"
-       "endmodule\n"},
+       .input = "module uut(sig1);\n"
+                "input wire [15:0] sig1;\n"
+                "endmodule\n",
+       .expected = "module uut (\n"
+                   "    sig1\n"
+                   ");\n"
+                   "  input wire [15:0] sig1;\n"
+                   "endmodule\n"},
       {// Non-ANSI signed without net type still works
-       "module uut(sig1);\n"
-       "input signed [15:0] sig1;\n"
-       "endmodule\n",
-       "module uut (\n"
-       "    sig1\n"
-       ");\n"
-       "  input signed [15:0] sig1;\n"
-       "endmodule\n"},
+       .input = "module uut(sig1);\n"
+                "input signed [15:0] sig1;\n"
+                "endmodule\n",
+       .expected = "module uut (\n"
+                   "    sig1\n"
+                   ");\n"
+                   "  input signed [15:0] sig1;\n"
+                   "endmodule\n"},
   };
   FormatStyle style;  // default column_limit (100)
   for (const auto &test_case : kTestCases) {
@@ -506,18 +523,18 @@ TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
 // not abort in align.h, and must keep the comment on its own line.
 TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
   static constexpr FormatterTestCase kTestCases[] = {
-      {"module m (\n"
-       "//\\\n"
-       "input a\n"
-       ",input b\n"
-       ");\n"
-       "endmodule\n",
-       "module m (\n"
-       "    //\\\n"
-       "        input a\n"
-       "    , input b\n"
-       ");\n"
-       "endmodule\n"},
+      {.input = "module m (\n"
+                "//\\\n"
+                "input a\n"
+                ",input b\n"
+                ");\n"
+                "endmodule\n",
+       .expected = "module m (\n"
+                   "    //\\\n"
+                   "        input a\n"
+                   "    , input b\n"
+                   ");\n"
+                   "endmodule\n"},
   };
   FormatStyle style;  // default column_limit (100)
   RunFormatterTestCases(style, kTestCases);

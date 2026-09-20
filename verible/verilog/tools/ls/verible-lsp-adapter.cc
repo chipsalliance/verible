@@ -249,7 +249,8 @@ std::vector<verible::lsp::DocumentHighlight> CreateHighlightRanges(
   if (!tracker) return result;
   const auto current = tracker->current();
   if (!current) return result;
-  const verible::LineColumn cursor{p.position.line, p.position.character};
+  const verible::LineColumn cursor{.line = p.position.line,
+                                   .column = p.position.character};
   const verible::TextStructureView &text = current->parser().Data();
 
   const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);

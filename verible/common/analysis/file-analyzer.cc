@@ -82,8 +82,9 @@ absl::Status FileAnalyzer::Tokenize(Lexer *lexer) {
             VLOG(1) << "Lexical error with token: " << error_token;
             // Save error details in rejected_tokens_.
             rejected_tokens_.push_back(
-                RejectedToken{error_token, AnalysisPhase::kLexPhase,
-                              "" /* no detailed explanation */});
+                RejectedToken{.token_info = error_token,
+                              .phase = AnalysisPhase::kLexPhase,
+                              .explanation = "" /* no detailed explanation */});
           });
       !lex_status.ok()) {
     return lex_status;
@@ -108,8 +109,10 @@ absl::Status FileAnalyzer::Parse(Parser *parser) {
                                      << filename_ << "\", but got none.";
   } else {
     for (const auto &token : parser->RejectedTokens()) {
-      rejected_tokens_.push_back(RejectedToken{
-          token, AnalysisPhase::kParsePhase, "" /* no detailed explanation */});
+      rejected_tokens_.push_back(
+          RejectedToken{.token_info = token,
+                        .phase = AnalysisPhase::kParsePhase,
+                        .explanation = "" /* no detailed explanation */});
     }
   }
   return status;

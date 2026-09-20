@@ -163,26 +163,28 @@ static WithReason<int> SpacesRequiredBetween(
 
   // Preserve space after escaped identifiers.
   if (left.TokenEnum() == EscapedIdentifier) {
-    return {1, "Escaped identifiers must end with whitespace."};
+    return {.value = 1,
+            .reason = "Escaped identifiers must end with whitespace."};
   }
 
   if (right.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
-    return {0, "Add no spaces before \\ line continuation."};
+    return {.value = 0, .reason = "Add no spaces before \\ line continuation."};
   }
   if (left.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
-    return {0, "Add no spaces after \\ line continuation."};
+    return {.value = 0, .reason = "Add no spaces after \\ line continuation."};
   }
 
   if (IsComment(FormatTokenType(right.format_token_enum))) {
-    return {2, "Style: require 2+ spaces before comments"};
+    return {.value = 2, .reason = "Style: require 2+ spaces before comments"};
     // TODO(fangism): Take this from FormatStyle.
   }
 
   if (left.format_token_enum == FormatTokenType::open_group ||
       right.format_token_enum == FormatTokenType::close_group) {
-    return {0,
-            "Prefer \"(foo)\" over \"( foo )\", \"[x]\" over \"[ x ]\", "
-            "and \"{y}\" over \"{ y }\"."};
+    return {.value = 0,
+            .reason =
+                "Prefer \"(foo)\" over \"( foo )\", \"[x]\" over \"[ x ]\", "
+                "and \"{y}\" over \"{ y }\"."};
   }
 
   // Unary operators (context-sensitive)
@@ -192,57 +194,68 @@ static WithReason<int> SpacesRequiredBetween(
     // TODO: There are _some_ unary operators on the right that could
     // be formatted with 0-space, for example:
     // 'a = & ~b'; could be 'a = &~b;'
-    return {0, "Bind unary prefix operator close to its operand."};
+    return {.value = 0,
+            .reason = "Bind unary prefix operator close to its operand."};
   }
 
   if (left.TokenEnum() == TK_SCOPE_RES) {
-    return {0, R"(Prefer "::id" over ":: id", \"::*" over ":: *")"};
+    return {.value = 0,
+            .reason = R"(Prefer "::id" over ":: id", \"::*" over ":: *")"};
   }
 
   // Delimiters, list separators
-  if (right.TokenEnum() == ',') return {0, "No space before comma"};
-  if (left.TokenEnum() == ',') return {1, "Require space after comma"};
+  if (right.TokenEnum() == ',') {
+    return {.value = 0, .reason = "No space before comma"};
+  }
+  if (left.TokenEnum() == ',') {
+    return {.value = 1, .reason = "Require space after comma"};
+  }
 
   if (IsAnySemicolon(right)) {
     if (left.TokenEnum() == ':') {
-      return {1, "Space between semicolon and colon, (e.g. \"default: ;\")"};
+      return {
+          .value = 1,
+          .reason = "Space between semicolon and colon, (e.g. \"default: ;\")"};
     }
-    return {0, "No space before semicolon"};
+    return {.value = 0, .reason = "No space before semicolon"};
   }
   if (IsAnySemicolon(left)) {
-    return {1, "Require space after semicolon"};
+    return {.value = 1, .reason = "Require space after semicolon"};
   }
 
   if (left.TokenEnum() == TK_return) {
-    return {1, "Space between return keyword and return value"};
+    return {.value = 1,
+            .reason = "Space between return keyword and return value"};
   }
 
   if (right_context.IsInsideFirst({NodeEnum::kStreamingConcatenation}, {}) &&
       style.compact_indexing_and_selections) {
     if (left.TokenEnum() == TK_LS || left.TokenEnum() == TK_RS) {
-      return {0, "No space around streaming operators"};
+      return {.value = 0, .reason = "No space around streaming operators"};
     }
     if (left.format_token_enum == FormatTokenType::numeric_literal ||
         left.format_token_enum == FormatTokenType::identifier ||
         left.format_token_enum == FormatTokenType::keyword) {
-      return {0, "No space around streaming operator slice size"};
+      return {.value = 0,
+              .reason = "No space around streaming operator slice size"};
     }
   }
 
   // "@(" vs. "@ (" for event control
   // "@*" vs. "@ *" for event control, '*' is not a binary operator here
   if (left.TokenEnum() == '@') {
-    return {0, "No space after \"@\" in most cases."};
+    return {.value = 0, .reason = "No space after \"@\" in most cases."};
   }
   if (right.TokenEnum() == '@') {
-    return {1, "Space before \"@\" in most cases."};
+    return {.value = 1, .reason = "Space before \"@\" in most cases."};
   }
 
   // Do not force space between '^' and '{' operators
   if (right_context.IsInsideFirst({NodeEnum::kUnaryPrefixExpression}, {})) {
     if (IsUnaryOperator(static_cast<verilog_tokentype>(left.TokenEnum())) &&
         right.TokenEnum() == '{') {
-      return {0, "No space between unary and concatenation operators"};
+      return {.value = 0,
+              .reason = "No space between unary and concatenation operators"};
     }
   }
 
@@ -253,7 +266,9 @@ static WithReason<int> SpacesRequiredBetween(
       right.format_token_enum == FormatTokenType::binary_operator) {
     if (IsPathSeparatorSlashInMacroArg(left, right, left_context,
                                        right_context)) {
-      return {0, "No space around '/' path separators in macro arguments"};
+      return {
+          .value = 0,
+          .reason = "No space around '/' path separators in macro arguments"};
     }
     // Inside [], allows 0 or 1 spaces, and symmetrize.
     // TODO(fangism): make this behavior configurable
@@ -261,28 +276,35 @@ static WithReason<int> SpacesRequiredBetween(
         InRangeLikeContext(right_context)) {
       if (style.compact_indexing_and_selections &&
           !InDeclaredDimensions(right_context)) {
-        return {0,
+        return {
+            .value = 0,
+            .reason =
                 "Compact binary expressions inside indexing / bit selection "
                 "operator []"};
       }
 
       int spaces = right.OriginalLeadingSpaces().length();
       spaces = std::min(spaces, 1);
-      return {spaces, "Limit <= 1 space before binary operator inside []."};
+      return {.value = spaces,
+              .reason = "Limit <= 1 space before binary operator inside []."};
     }
     if (left.format_token_enum == FormatTokenType::binary_operator &&
         InRangeLikeContext(left_context)) {
-      return {left.before.spaces_required,
+      return {
+          .value = left.before.spaces_required,
+          .reason =
               "Symmetrize spaces before and after binary operator inside []."};
     }
-    return {1, "Space around binary and assignment operators"};
+    return {.value = 1,
+            .reason = "Space around binary and assignment operators"};
   }
 
   // If the token on either side is an empty string, do not inject any
   // additional spaces.  This can occur with some lexical tokens like
   // verilog_tokentype::PP_define_body.
   if (left.token->text().empty() || right.token->text().empty()) {
-    return {0, "No additional space around empty-string tokens."};
+    return {.value = 0,
+            .reason = "No additional space around empty-string tokens."};
   }
 
   // A macro definition body that begins with the token-concatenation
@@ -291,19 +313,19 @@ static WithReason<int> SpacesRequiredBetween(
   if (left.TokenEnum() == verilog_tokentype::PP_Identifier &&
       right.TokenEnum() == verilog_tokentype::PP_define_body &&
       right.Text().starts_with("``") && right.OriginalLeadingSpaces().empty()) {
-    return {0, "Preserve spacing in concatenated name"};
+    return {.value = 0, .reason = "Preserve spacing in concatenated name"};
   }
 
   // Remove any extra spaces between numeric literals' width, base and digits.
   // "16'h123, 'h123" instead of "16 'h123", "16'h 123, 'h 123"
   if (IsInsideNumericLiteral(left, right)) {
-    return {0, "No space inside based numeric literals"};
+    return {.value = 0, .reason = "No space inside based numeric literals"};
   }
 
   if (right_context.IsInsideFirst(
           {NodeEnum::kUdpCombEntry, NodeEnum::kUdpSequenceEntry}, {})) {
     // Spacing before ';' is handled above
-    return {1, "One space around UDP entries"};
+    return {.value = 1, .reason = "One space around UDP entries"};
   }
 
   // TODO(fangism): Never insert trailing spaces before a newline.
@@ -311,31 +333,34 @@ static WithReason<int> SpacesRequiredBetween(
   // Modport port name separator, e.g. "input .a("
   if (right.TokenEnum() == '.' &&
       right_context.IsInside(NodeEnum::kModportSimplePort)) {
-    return {1, "Space before modport explicit port name '.'"};
+    return {.value = 1,
+            .reason = "Space before modport explicit port name '.'"};
   }
 
   // Hierarchy examples: "a.b", "a::b"
   if (left.format_token_enum == FormatTokenType::hierarchy ||
       right.format_token_enum == FormatTokenType::hierarchy) {
-    return {0,
-            "No space separating hierarchy components "
-            "(separated by . or ::)"};
+    return {.value = 0,
+            .reason =
+                "No space separating hierarchy components "
+                "(separated by . or ::)"};
   }
   // TODO(fangism): space between numeric literals and '.'
   // Don't want to accidentally form m.d floating-point values.
 
   // cast operator, e.g. "void'(...)"
   if (right.TokenEnum() == '\'' || left.TokenEnum() == '\'') {
-    return {0, "No space around cast operator '\\''"};
+    return {.value = 0, .reason = "No space around cast operator '\\''"};
   }
 
   if (right.TokenEnum() == '(') {
     // "#(" vs. "# (" for parameter formals and arguments
-    if (left.TokenEnum() == '#') return {0, "Fuse \"#(\""};
+    if (left.TokenEnum() == '#') return {.value = 0, .reason = "Fuse \"#(\""};
 
     // ") (" vs. ")(" for between parameter and port formals
     if (left.TokenEnum() == ')') {
-      return {1, "Separate \") (\" between parameters and ports"};
+      return {.value = 1,
+              .reason = "Separate \") (\" between parameters and ports"};
     }
 
     // General handling of ID '(' spacing:
@@ -345,21 +370,27 @@ static WithReason<int> SpacesRequiredBetween(
       // of unintended reach.
       if (right_context.IsInside(NodeEnum::kActualNamedPort) ||
           right_context.IsInside(NodeEnum::kPort)) {
-        return {0, "Named port: no space between ID and '('"};
+        return {.value = 0,
+                .reason = "Named port: no space between ID and '('"};
       }
       if (right_context.IsInside(NodeEnum::kPrimitiveGateInstance)) {
-        return {1, "Primitive instance: want space between ID and '('"};
+        return {.value = 1,
+                .reason = "Primitive instance: want space between ID and '('"};
       }
       if (left_context.DirectParentIs(NodeEnum::kGateInstance) &&
           right_context.IsInside(NodeEnum::kGateInstance)) {
-        return {1, "Module declarations: want space between ID and '('"};
+        return {.value = 1,
+                .reason = "Module declarations: want space between ID and '('"};
       }
       if (left_context.DirectParentIs(NodeEnum::kModuleHeader)) {
-        return {1,
+        return {
+            .value = 1,
+            .reason =
                 "Module/interface declarations: want space between ID and '('"};
       }
       // Default: This case intended to cover function/task/macro calls:
-      return {0, "Function/constructor calls: no space before ("};
+      return {.value = 0,
+              .reason = "Function/constructor calls: no space before ("};
     }
   }
 
@@ -367,40 +398,51 @@ static WithReason<int> SpacesRequiredBetween(
     // Spacing in ranges
     if (InRangeLikeContext(right_context)) {
       // Take advantage here that the left token was already annotated (above)
-      return {left.before.spaces_required,
-              "Symmetrize spaces before and after ':' in bit slice"};
+      return {.value = left.before.spaces_required,
+              .reason = "Symmetrize spaces before and after ':' in bit slice"};
     }
     // Most contexts want a space after ':'.
-    return {1, "Default to 1 space after ':'"};
+    return {.value = 1, .reason = "Default to 1 space after ':'"};
   }
 
   if (left.TokenEnum() == '}') {
     // e.g. typedef struct { ... } foo_t;
-    return {1, "Space after '}' in most other cases."};
+    return {.value = 1, .reason = "Space after '}' in most other cases."};
   }
   if (right.TokenEnum() == '{') {
     if (left.format_token_enum == FormatTokenType::keyword) {
-      return {1, "Space between keyword and '{'."};
+      return {.value = 1, .reason = "Space between keyword and '{'."};
     }
     if (right_context.DirectParentsAre(
             {NodeEnum::kBraceGroup, NodeEnum::kConstraintDeclaration})) {
-      return {1, "Space before '{' when opening a constraint definition body."};
+      return {
+          .value = 1,
+          .reason =
+              "Space before '{' when opening a constraint definition body."};
     }
     if (right_context.DirectParentsAre(
             {NodeEnum::kBraceGroup, NodeEnum::kCoverPoint})) {
-      return {1, "Space before '{' when opening a coverpoint body."};
+      return {.value = 1,
+              .reason = "Space before '{' when opening a coverpoint body."};
     }
     if (right_context.DirectParentsAre(
             {NodeEnum::kBraceGroup, NodeEnum::kEnumType})) {
-      return {1, "Space before '{' when opening an enum type."};
+      return {.value = 1,
+              .reason = "Space before '{' when opening an enum type."};
     }
     if (left.TokenEnum() == ')') {
-      return {1, "Space betwen ')' and '{', e.g. conditional constraint."};
+      return {
+          .value = 1,
+          .reason = "Space betwen ')' and '{', e.g. conditional constraint."};
     }
     if (left.TokenEnum() == ']' && InDeclaredDimensions(left_context)) {
-      return {1, "Space between declared array type and '{' (e.g. in typedef)"};
+      return {
+          .value = 1,
+          .reason =
+              "Space between declared array type and '{' (e.g. in typedef)"};
     }
-    return {0, "No space before '{' in most other contexts."};
+    return {.value = 0,
+            .reason = "No space before '{' in most other contexts."};
   }
 
   // Handle padding around packed array dimensions like "type [N] id;"
@@ -411,10 +453,11 @@ static WithReason<int> SpacesRequiredBetween(
                                     {NodeEnum::kExpression})) {
       // "type [packed...]" (space between type and packed dimensions)
       // avoid touching any expressions inside the packed dimensions
-      return {1, "spacing before [packed dimensions] of declarations"};
+      return {.value = 1,
+              .reason = "spacing before [packed dimensions] of declarations"};
     }
     // All other contexts, such as "a[i]" indices, no space.
-    return {0, "All other cases of \".*[\", no space"};
+    return {.value = 0, .reason = "All other cases of \".*[\", no space"};
   }
   if (left.TokenEnum() == ']' &&
       right.format_token_enum == FormatTokenType::identifier) {
@@ -422,32 +465,35 @@ static WithReason<int> SpacesRequiredBetween(
             {NodeEnum::kUnqualifiedId,
              NodeEnum::kDataTypeImplicitBasicIdDimensions})) {
       // "[packed...] id" (space between packed dimensions and id)
-      return {1, "spacing after [packed dimensions] of declarations"};
+      return {.value = 1,
+              .reason = "spacing after [packed dimensions] of declarations"};
     }
     // Not sure if "] id" appears in any other context, so leave it unhandled.
   }
 
   // Cannot merge tokens that would result in a different token.
   if (PairwiseNonmergeable(left) && PairwiseNonmergeable(right)) {
-    return {1, "Cannot pair {number, identifier, keyword} without space."};
+    return {
+        .value = 1,
+        .reason = "Cannot pair {number, identifier, keyword} without space."};
   }
 
   if (right.TokenEnum() == ':') {
     if (left.TokenEnum() == TK_default) {
-      return {0, "No space inside \"default:\""};
+      return {.value = 0, .reason = "No space inside \"default:\""};
     }
     if (right_context.DirectParentIsOneOf(
             {NodeEnum::kCaseItem, NodeEnum::kCaseInsideItem,
              NodeEnum::kCasePatternItem, NodeEnum::kGenerateCaseItem,
              NodeEnum::kPropertyCaseItem, NodeEnum::kRandSequenceCaseItem,
              NodeEnum::kCoverPoint})) {
-      return {0, "Case-like items, no space before ':'"};
+      return {.value = 0, .reason = "Case-like items, no space before ':'"};
     }
 
     // Everything that resembles an end-label should have 1 space
     //   example nodes: kLabel, kEndNew, kFunctionEndLabel
     if (IsEndKeyword(verilog_tokentype(left.TokenEnum()))) {
-      return {1, "Want 1 space between end-keyword and ':'"};
+      return {.value = 1, .reason = "Want 1 space between end-keyword and ':'"};
     }
 
     // Spacing between 'begin' and ':' is already covered
@@ -458,12 +504,14 @@ static WithReason<int> SpacesRequiredBetween(
     if (right_context.DirectParentIsOneOf({NodeEnum::kBlockIdentifier,
                                            NodeEnum::kLabeledStatement,
                                            NodeEnum::kGenerateBlock})) {
-      return {1, "1 space before ':' in prefix block labels"};
+      return {.value = 1,
+              .reason = "1 space before ':' in prefix block labels"};
     }
 
     // kConditionExpression should have 1 space
     if (right_context.DirectParentIs(NodeEnum::kConditionExpression)) {
-      return {1, "condition ?: expression wants 1 space around ':'"};
+      return {.value = 1,
+              .reason = "condition ?: expression wants 1 space around ':'"};
     }
 
     // Spacing in ranges
@@ -474,10 +522,11 @@ static WithReason<int> SpacesRequiredBetween(
         // counting indentation as spaces
         spaces = right.ExcessSpaces() ? 1 : 0;
       }
-      return {spaces, "Limit spaces before ':' in bit slice to 0 or 1"};
+      return {.value = spaces,
+              .reason = "Limit spaces before ':' in bit slice to 0 or 1"};
     }
     if (right_context.DirectParentIs(NodeEnum::kValueRange)) {
-      return {1, "Spaces around ':' in value ranges."};
+      return {.value = 1, .reason = "Spaces around ':' in value ranges."};
     }
 
     // TODO(fangism): Everything that resembles a range (in index, dimensions)
@@ -502,34 +551,36 @@ static WithReason<int> SpacesRequiredBetween(
   // "case ...", "return ..."
   if (left.format_token_enum == FormatTokenType::keyword) {
     // TODO(b/144605476): function-like keywords, however, do not get a space.
-    return {1, "Space between flow control keywords and ("};
+    return {.value = 1, .reason = "Space between flow control keywords and ("};
   }
 
   if (left.TokenEnum() == verilog_tokentype::TK_TimeLiteral) {
     if (right.TokenEnum() == ';') {
-      return {0, "No space between time literal and ';'."};
+      return {.value = 0, .reason = "No space between time literal and ';'."};
     }
-    return {1, "Space after time literals in most other cases."};
+    return {.value = 1,
+            .reason = "Space after time literals in most other cases."};
   }
 
   if (right.TokenEnum() == TK_POUNDPOUND) {
-    return {1, "Space before ## (delay) operator"};
+    return {.value = 1, .reason = "Space before ## (delay) operator"};
   }
   if ((right.TokenEnum() == verilog_tokentype::TK_INCR ||
        right.TokenEnum() == verilog_tokentype::TK_DECR) &&
       right_context.IsInside(NodeEnum::kIncrementDecrementExpression) &&
       !left_context.IsInside(NodeEnum::kIncrementDecrementExpression)) {
-    return {1, "Space before prefix '++'/'--'."};
+    return {.value = 1, .reason = "Space before prefix '++'/'--'."};
   }
   if (right.TokenEnum() == verilog_tokentype::TK_TRIGGER ||
       right.TokenEnum() == verilog_tokentype::TK_NONBLOCKING_TRIGGER) {
-    return {1, "Space before event trigger '->'/'->>' statement."};
+    return {.value = 1,
+            .reason = "Space before event trigger '->'/'->>' statement."};
   }
   if (left.format_token_enum == FormatTokenType::unary_operator) {
-    return {0, "++i over ++ i"};  // "++i" instead of "++ i"
+    return {.value = 0, .reason = "++i over ++ i"};  // "++i" instead of "++ i"
   }
   if (right.format_token_enum == FormatTokenType::unary_operator) {
-    return {0, "i++ over i ++"};  // "i++" instead of "i ++"
+    return {.value = 0, .reason = "i++ over i ++"};  // "i++" instead of "i ++"
   }
 
   // TODO(fangism): handle ranges [ ... : ... ]
@@ -537,16 +588,19 @@ static WithReason<int> SpacesRequiredBetween(
   if (left.TokenEnum() == TK_DecNumber &&
       right.TokenEnum() == TK_UnBasedNumber) {
     // e.g. 1'b1, 16'hbabe
-    return {0, "No space between numeric width and un-based number"};
+    return {.value = 0,
+            .reason = "No space between numeric width and un-based number"};
   }
 
   // Brackets in multi-dimensional arrays/indices.
   if (left.TokenEnum() == ']' && right.TokenEnum() == '[') {
-    return {0, "No spaces separating multidimensional arrays/indices"};
+    return {.value = 0,
+            .reason = "No spaces separating multidimensional arrays/indices"};
   }
 
   if (left.TokenEnum() == '#') {
-    return {0, "No spaces after # (delay expressions, parameters)."};
+    return {.value = 0,
+            .reason = "No spaces after # (delay expressions, parameters)."};
   }
   if (right.TokenEnum() == '#') {
     // This may be controversial or context-dependent, as parameterized
@@ -571,13 +625,15 @@ static WithReason<int> SpacesRequiredBetween(
              NodeEnum::kExtendsList, NodeEnum::kBraceGroup},
             {}) &&
         !inside_unqualified_typedef) {
-      return {0, "No space before # when direct parent is kUnqualifiedId."};
+      return {
+          .value = 0,
+          .reason = "No space before # when direct parent is kUnqualifiedId."};
     }
-    return {1, "Spaces before # in most other contexts."};
+    return {.value = 1, .reason = "Spaces before # in most other contexts."};
   }
 
   if (right.format_token_enum == FormatTokenType::keyword) {
-    return {1, "Space before keywords in most other cases."};
+    return {.value = 1, .reason = "Space before keywords in most other cases."};
   }
 
   // e.g. always_ff @(posedge clk) begin ...
@@ -585,38 +641,46 @@ static WithReason<int> SpacesRequiredBetween(
   if (left.TokenEnum() == ')') {
     switch (right.TokenEnum()) {
       case ':':
-        return {0, "No space between ')' and ':'."};
+        return {.value = 0, .reason = "No space between ')' and ':'."};
       default:
         break;
     }
-    return {1, "Space between ')' and most other tokens"};
+    return {.value = 1, .reason = "Space between ')' and most other tokens"};
   }
   if (left.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine) {
     if (IsAnySemicolon(right)) {
-      return {0, "No space between macro-closing ')' and ';'"};
+      return {.value = 0,
+              .reason = "No space between macro-closing ')' and ';'"};
     }
     // Really only expect comments to follow macro-closing ')'
-    return {1, "Space between macro-closing ')' and most other tokens"};
+    return {.value = 1,
+            .reason = "Space between macro-closing ')' and most other tokens"};
   }
   if (left.TokenEnum() == ']') {
-    return {1, "Space between ']' and most other tokens"};
+    return {.value = 1, .reason = "Space between ']' and most other tokens"};
   }
 
   if (IsPreprocessorKeyword(
           static_cast<verilog_tokentype>(right.TokenEnum()))) {
     // most of these should start on their own line anyway
-    return {1, "Preprocessor keywords should be separated from token on left."};
+    return {
+        .value = 1,
+        .reason =
+            "Preprocessor keywords should be separated from token on left."};
   }
 
   if (IsComment(FormatTokenType(left.format_token_enum))) {
     // Nothing should ever be to the right of an EOL comment.
     // But we have to explicitly handle these cases to prevent them from
     // unintentionally preserving spacing after comments.
-    return {1, "Handle left=comment to avoid preserving unwanted spaces."};
+    return {
+        .value = 1,
+        .reason = "Handle left=comment to avoid preserving unwanted spaces."};
   }
 
   // Case was not explicitly handled.
-  return {kUnhandledSpacesRequired, "Default: spacing not explicitly handled"};
+  return {.value = kUnhandledSpacesRequired,
+          .reason = "Default: spacing not explicitly handled"};
 }
 
 struct SpacePolicy {
@@ -639,10 +703,12 @@ static SpacePolicy SpacesRequiredBetween(
             << verilog_symbol_name(left.TokenEnum()) << " and "
             << verilog_symbol_name(right.TokenEnum()) << ", defaulting to "
             << kUnhandledSpacesDefault;
-    return SpacePolicy{kUnhandledSpacesDefault, true};
+    return SpacePolicy{.spaces_required = kUnhandledSpacesDefault,
+                       .force_preserve_spaces = true};
   }
   // else spacing was explicitly handled in a case
-  return SpacePolicy{spaces.value, false};
+  return SpacePolicy{.spaces_required = spaces.value,
+                     .force_preserve_spaces = false};
 }
 
 // Context-independent break penalty factor.
@@ -651,28 +717,36 @@ static WithReason<int> BreakPenaltyBetweenTokens(
   // Higher precedence rules should be handled earlier in this function.
   if (left.format_token_enum == FormatTokenType::identifier &&
       right.format_token_enum == FormatTokenType::open_group) {
-    return {20, "identifier, open-group"};
+    return {.value = 20, .reason = "identifier, open-group"};
   }
   // Hierarchy examples: "a.b", "a::b"
   // TODO(fangism): '.' is not always hierarchy, differentiate by context.
   // slightly prefer to break on the left: "a .b" better than "a. b"
   if (left.format_token_enum == FormatTokenType::hierarchy) {
-    return {50, "hierarchy separator on left"};
+    return {.value = 50, .reason = "hierarchy separator on left"};
   }
   if (right.format_token_enum == FormatTokenType::hierarchy) {
-    return {45, "hierarchy separator on right"};
+    return {.value = 45, .reason = "hierarchy separator on right"};
   }
 
   // Prefer to split after commas rather than before them.
-  if (right.TokenEnum() == ',') return {10, "avoid breaking before ','"};
-  if (right.TokenEnum() == ';') return {10, "avoid breaking before ';'"};
+  if (right.TokenEnum() == ',') {
+    return {.value = 10, .reason = "avoid breaking before ','"};
+  }
+  if (right.TokenEnum() == ';') {
+    return {.value = 10, .reason = "avoid breaking before ';'"};
+  }
 
-  if (left.TokenEnum() == ',') return {-5, "encourage breaking after ','"};
-  if (left.TokenEnum() == ';') return {-5, "encourage breaking after ';'"};
+  if (left.TokenEnum() == ',') {
+    return {.value = -5, .reason = "encourage breaking after ','"};
+  }
+  if (left.TokenEnum() == ';') {
+    return {.value = -5, .reason = "encourage breaking after ';'"};
+  }
 
   // Prefer to split after an assignment operator, rather than before.
   // TODO(fangism): use context to cover all assignment-like cases
-  if (right.TokenEnum() == '=') return {8, "right is '='"};
+  if (right.TokenEnum() == '=') return {.value = 8, .reason = "right is '='"};
 
   if ((left.format_token_enum != FormatTokenType::binary_operator ||
        left.TokenEnum() == '=') &&
@@ -680,22 +754,22 @@ static WithReason<int> BreakPenaltyBetweenTokens(
     // Prefer to keep '(' with a token on the left, as long as it is not binary
     // operator other than '='
     // TODO(fangism): ... except when () is used as precedence.
-    return {5, "right is open-group"};
+    return {.value = 5, .reason = "right is open-group"};
   }
   // Prefer to keep ')' with whatever is on the left.
   if (right.format_token_enum == FormatTokenType::close_group ||
       right.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine) {
-    return {10, "right is close-group"};
+    return {.value = 10, .reason = "right is close-group"};
   }
 
   if (left.TokenEnum() == TK_DecNumber &&
       right.TokenEnum() == TK_UnBasedNumber) {
     // e.g. 1'b1, 16'hbabe
     // doesn't really matter, because we never break here
-    return {90, "numeric width, base"};
+    return {.value = 90, .reason = "numeric width, base"};
   }
 
-  return {0, "no further adjustment (default)"};
+  return {.value = 0, .reason = "no further adjustment (default)"};
 }
 
 static int CommonAncestors(const SyntaxTreeContext &left,
@@ -742,23 +816,27 @@ static WithReason<int> TokensWithContextBreakPenalty(
       static_cast<verilog_tokentype>(right.TokenEnum());
   if (right_context.DirectParentIs(NodeEnum::kConditionExpression) &&
       IsTernaryOperator(right_type)) {
-    return {10, "Prefer to split after ternary operators (+10 on left)."};
+    return {.value = 10,
+            .reason = "Prefer to split after ternary operators (+10 on left)."};
   }
   if (left_context.DirectParentIs(NodeEnum::kConditionExpression) &&
       IsTernaryOperator(left_type)) {
-    return {-5, "Prefer to split after ternary operators (-5 on right)."};
+    return {.value = -5,
+            .reason = "Prefer to split after ternary operators (-5 on right)."};
   }
   if (right_context.DirectParentIs(NodeEnum::kBinaryExpression) &&
       right.format_token_enum == FormatTokenType::binary_operator) {
     // This value should be kept small so that binding affinity still honors
     // operator precedence which is currently reflected in syntax tree depth.
-    return {8, "Prefer to split after binary operators (+8 on left)."};
+    return {.value = 8,
+            .reason = "Prefer to split after binary operators (+8 on left)."};
   }
   if (left_context.DirectParentIs(NodeEnum::kBinaryExpression) &&
       left.format_token_enum == FormatTokenType::binary_operator) {
-    return {-5, "Prefer to split after binary operators (-5 on right)."};
+    return {.value = -5,
+            .reason = "Prefer to split after binary operators (-5 on right)."};
   }
-  return {0, "No adjustment."};
+  return {.value = 0, .reason = "No adjustment."};
 }
 
 // Returns the split penalty for line-breaking before the right token.
@@ -791,7 +869,7 @@ static WithReason<int> BreakPenaltyBetween(
                kMinPenalty);
 
   VLOG(3) << "total break penalty: " << total_penalty;
-  return {total_penalty, inter_token_penalty.reason};
+  return {.value = total_penalty, .reason = inter_token_penalty.reason};
 }
 
 // Returns decision whether to break, not break, or evaluate both choices.
@@ -806,43 +884,48 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     if (left.TokenEnum() != '[' && left.TokenEnum() != ']' &&
         right.TokenEnum() != '[' && right.TokenEnum() != ']' &&
         left.TokenEnum() != ':' && right.TokenEnum() != ':') {
-      return {SpacingOptions::kPreserve,
-              "For now, leave spaces inside [] untouched."};
+      return {.value = SpacingOptions::kPreserve,
+              .reason = "For now, leave spaces inside [] untouched."};
     }
   }
 
   if (right.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
-    return {SpacingOptions::kMustAppend,
-            "Keep \\ line continuation attached to its left neighbor."};
+    return {
+        .value = SpacingOptions::kMustAppend,
+        .reason = "Keep \\ line continuation attached to its left neighbor."};
   }
 
   if (left.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
-    return {SpacingOptions::kMustWrap,
-            "Keep \\ line continuation is always followed by \\n."};
+    return {.value = SpacingOptions::kMustWrap,
+            .reason = "Keep \\ line continuation is always followed by \\n."};
   }
 
   if (left.TokenEnum() == PP_define) {
-    return {SpacingOptions::kMustAppend,
-            "Keep `define and macro name together."};
+    return {.value = SpacingOptions::kMustAppend,
+            .reason = "Keep `define and macro name together."};
   }
   if (right.TokenEnum() == PP_define_body) {
     // TODO(b/141517267): reflow macro definition text with flexible
     // line-continuations.
     const std::string_view text = right.Text();
     if (std::count(text.begin(), text.end(), '\n') >= 2) {
-      return {SpacingOptions::kPreserve,
+      return {
+          .value = SpacingOptions::kPreserve,
+          .reason =
               "Preserve spacing before a multi-line macro definition body."};
     }
-    return {SpacingOptions::kMustAppend,
-            "Macro definition body must start on same line (but may be "
-            "line-continued)."};
+    return {.value = SpacingOptions::kMustAppend,
+            .reason =
+                "Macro definition body must start on same line (but may be "
+                "line-continued)."};
   }
 
   // Check for mandatory line breaks.
   if (left.format_token_enum == FTT::eol_comment ||
       left.TokenEnum() == PP_define_body  // definition excludes trailing '\n'
   ) {
-    return {SpacingOptions::kMustWrap, "Token must be newline-terminated"};
+    return {.value = SpacingOptions::kMustWrap,
+            .reason = "Token must be newline-terminated"};
   }
 
   if (right.format_token_enum == FTT::eol_comment) {
@@ -855,9 +938,10 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     auto pos = preceding_whitespace.find_first_of('\n', 0);
     if (pos == std::string_view::npos) {
       // There are other tokens on this line
-      return {SpacingOptions::kMustAppend,
-              "EOL comment cannot break from "
-              "tokens to the left on its line"};
+      return {.value = SpacingOptions::kMustAppend,
+              .reason =
+                  "EOL comment cannot break from "
+                  "tokens to the left on its line"};
     }
   }
 
@@ -873,8 +957,8 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
       // Add support for "Preserve" in Layout Optimizer.
       // Correctly split partitions before tokens with "Preserve" decision in
       // Tree Unwrapper.
-      return {SpacingOptions::kMustWrap,
-              "Force-preserve line break around block comment"};
+      return {.value = SpacingOptions::kMustWrap,
+              .reason = "Force-preserve line break around block comment"};
     }
   }
 
@@ -885,59 +969,64 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   // Unary operators (context-sensitive)
   // For now, never separate unary prefix operators from their operands.
   if (IsUnaryPrefixExpressionOperand(left, right_context)) {
-    return {SpacingOptions::kMustAppend,
-            "Never separate unary prefix operator from its operand"};
+    return {.value = SpacingOptions::kMustAppend,
+            .reason = "Never separate unary prefix operator from its operand"};
   }
 
   if (IsInsideNumericLiteral(left, right)) {
-    return {SpacingOptions::kMustAppend,
-            "Never separate numeric width, base, and digits"};
+    return {.value = SpacingOptions::kMustAppend,
+            .reason = "Never separate numeric width, base, and digits"};
   }
 
   // Preprocessor macro definitions with args: no space between ID and '('.
   if (left.TokenEnum() == PP_Identifier && right.TokenEnum() == '(') {
-    return {SpacingOptions::kMustAppend,
-            "No space between macro call id and ("};
+    return {.value = SpacingOptions::kMustAppend,
+            .reason = "No space between macro call id and ("};
   }
 
   // TODO(fangism): No break between `define and PP_Identifier.
 
   if (IsEndKeyword(verilog_tokentype(right.TokenEnum()))) {
-    return {SpacingOptions::kMustWrap, "end* keywords should start own lines"};
+    return {.value = SpacingOptions::kMustWrap,
+            .reason = "end* keywords should start own lines"};
   }
 
   if (right.TokenEnum() == TK_else) {
     // TODO(fangism): feels like this should be the responsibility of
     // tree_unwrapper, handled by kElseClause, kGenerateElseClause, etc.
     if (left.TokenEnum() == TK_end && !style.wrap_end_else_clauses) {
-      return {SpacingOptions::kMustAppend,
-              "'end'-'else' and should be together on one line."};
+      return {.value = SpacingOptions::kMustAppend,
+              .reason = "'end'-'else' and should be together on one line."};
     }
     if (left.TokenEnum() == TK_end && style.wrap_end_else_clauses) {
-      return {SpacingOptions::kMustWrap, "'end'-'else' Should be split."};
+      return {.value = SpacingOptions::kMustWrap,
+              .reason = "'end'-'else' Should be split."};
     }
     if (left.TokenEnum() == '}') {
-      return {SpacingOptions::kMustAppend,
-              "'}'-'else' and should be together on one line."};
+      return {.value = SpacingOptions::kMustAppend,
+              .reason = "'}'-'else' and should be together on one line."};
     }
     // TODO(fangism): Some styles prefer to start with 'else' on its own line.
-    return {SpacingOptions::kMustWrap, "'else' starts its own line."};
+    return {.value = SpacingOptions::kMustWrap,
+            .reason = "'else' starts its own line."};
   }
 
   if ((left.TokenEnum() == TK_else) && (right.TokenEnum() == TK_begin)) {
-    return {SpacingOptions::kMustAppend,
-            "'else'-'begin' tokens should be together on one line."};
+    return {.value = SpacingOptions::kMustAppend,
+            .reason = "'else'-'begin' tokens should be together on one line."};
   }
 
   if ((left.TokenEnum() == ')') && (right.TokenEnum() == TK_begin)) {
-    return {SpacingOptions::kMustAppend,
-            "')'-'begin' tokens should be together on one line."};
+    return {.value = SpacingOptions::kMustAppend,
+            .reason = "')'-'begin' tokens should be together on one line."};
   }
 
   if (left.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine) {
     if (!IsComment(FormatTokenType(right.format_token_enum)) &&
         !IsAnySemicolon(right) && !InRangeLikeContext(left_context)) {
-      return {SpacingOptions::kMustWrap,
+      return {
+          .value = SpacingOptions::kMustWrap,
+          .reason =
               "Macro-closing ')' should end its own line except for comments "
               "nad ';'."};
     }
@@ -945,27 +1034,31 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
 
   if (left.TokenEnum() == PP_else || left.TokenEnum() == PP_endif) {
     if (IsComment(FormatTokenType(right.format_token_enum))) {
-      return {SpacingOptions::kUndecided, "Comment may follow `else and `end"};
+      return {.value = SpacingOptions::kUndecided,
+              .reason = "Comment may follow `else and `end"};
     }
-    return {SpacingOptions::kMustWrap,
+    return {
+        .value = SpacingOptions::kMustWrap,
+        .reason =
             "`end and `else should be on their own line except for comments."};
   }
 
   if (IsPreprocessorKeyword(
           static_cast<verilog_tokentype>(right.TokenEnum()))) {
     // The tree unwrapper should make sure these start their own partition.
-    return {SpacingOptions::kMustWrap,
-            "Preprocessor directives should start their own line."};
+    return {.value = SpacingOptions::kMustWrap,
+            .reason = "Preprocessor directives should start their own line."};
   }
 
   if (left.TokenEnum() == '#') {
-    return {SpacingOptions::kMustAppend,
-            "Never separate # from whatever follows (delay expressions)."};
+    return {.value = SpacingOptions::kMustAppend,
+            .reason =
+                "Never separate # from whatever follows (delay expressions)."};
   }
   if (left.TokenEnum() == verilog_tokentype::TK_TimeLiteral) {
     if (right.TokenEnum() == ';') {
-      return {SpacingOptions::kMustAppend,
-              "Keep delay statements together, like \"#1ps;\"."};
+      return {.value = SpacingOptions::kMustAppend,
+              .reason = "Keep delay statements together, like \"#1ps;\"."};
     }
   }
 
@@ -973,14 +1066,16 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
       right.TokenEnum() == verilog_tokentype::MacroArg) {
     const std::string_view text(right.Text());
     if (std::find(text.begin(), text.end(), '\n') != text.end()) {
-      return {SpacingOptions::kMustWrap,
+      return {
+          .value = SpacingOptions::kMustWrap,
+          .reason =
               "Multi-line unlexed macro arguments start on their own line."};
     }
   }
 
   // By default, leave undecided for penalty minimization.
-  return {SpacingOptions::kUndecided,
-          "Default: leave wrap decision to algorithm"};
+  return {.value = SpacingOptions::kUndecided,
+          .reason = "Default: leave wrap decision to algorithm"};
 }
 
 // Extern linkage for sake of direct testing, though not exposed in public

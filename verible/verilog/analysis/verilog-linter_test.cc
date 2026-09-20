@@ -639,7 +639,7 @@ class ViolationFixerTest : public testing::Test {
 TEST_F(ViolationFixerTest, ApplyAll) {
   DoFixerTest(
       {
-          {ViolationFixer::AnswerChoice::kApplyAll, 0},
+          {.choice = ViolationFixer::AnswerChoice::kApplyAll, .alternative = 0},
       },
       {
           "module Autofix;\n"
@@ -661,7 +661,8 @@ TEST_F(ViolationFixerTest, ApplyAll) {
 TEST_F(ViolationFixerTest, RejectAll) {
   DoFixerTest(
       {
-          {ViolationFixer::AnswerChoice::kRejectAll, 0},
+          {.choice = ViolationFixer::AnswerChoice::kRejectAll,
+           .alternative = 0},
       },
       {
           "module Autofix;    \n"
@@ -683,8 +684,8 @@ TEST_F(ViolationFixerTest, RejectAll) {
 TEST_F(ViolationFixerTest, Reject) {
   DoFixerTest(
       {
-          {ViolationFixer::AnswerChoice::kReject, 0},
-          {ViolationFixer::AnswerChoice::kApplyAll, 0},
+          {.choice = ViolationFixer::AnswerChoice::kReject, .alternative = 0},
+          {.choice = ViolationFixer::AnswerChoice::kApplyAll, .alternative = 0},
       },
       {
           "module Autofix;    \n"
@@ -706,8 +707,9 @@ TEST_F(ViolationFixerTest, Reject) {
 TEST_F(ViolationFixerTest, Apply) {
   DoFixerTest(
       {
-          {ViolationFixer::AnswerChoice::kApply, 0},
-          {ViolationFixer::AnswerChoice::kRejectAll, 0},
+          {.choice = ViolationFixer::AnswerChoice::kApply, .alternative = 0},
+          {.choice = ViolationFixer::AnswerChoice::kRejectAll,
+           .alternative = 0},
       },
       {
           "module Autofix;\n"
@@ -731,24 +733,24 @@ TEST_F(ViolationFixerTest, ApplyAllForRule) {
       {
           // Input source 0:
           // :2:10: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kApplyAllForRule},
+          {.choice = ViolationFixer::AnswerChoice::kApplyAllForRule},
           // :3:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
           // :4:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
           // :4:11: no-trailing-spaces
           // AUTOMATICALLY APPLIED due to kApplyAllForRule
           // :5:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
           // :6:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
           // :7:10: no-trailing-spaces
           // AUTOMATICALLY APPLIED due to kApplyAllForRule
           // :7:14: posix-eof
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
           // Input source 2:
           // :1:21: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
           // :2:10: no-trailing-spaces
           // AUTOMATICALLY APPLIED due to kApplyAllForRule
       },
@@ -774,24 +776,24 @@ TEST_F(ViolationFixerTest, RejectAllForRule) {
       {
           // Input source 0:
           // :2:10: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kRejectAllForRule},
+          {.choice = ViolationFixer::AnswerChoice::kRejectAllForRule},
           // :3:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
           // :4:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
           // :4:11: no-trailing-spaces
           // AUTOMATICALLY REJECTED due to kApplyAllForRule
           // :5:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
           // :6:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
           // :7:10: no-trailing-spaces
           // AUTOMATICALLY REJECTED due to kApplyAllForRule
           // :7:14: posix-eof
-          {ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
           // Input source 2:
           // :1:21: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
           // :2:10: no-trailing-spaces
           // AUTOMATICALLY REJECTED due to kApplyAllForRule
       },
@@ -817,9 +819,9 @@ TEST_F(ViolationFixerTest, RejectAllForRuleApplyAllForRule) {
       {
           // Input source 0:
           // :2:10: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kRejectAllForRule},
+          {.choice = ViolationFixer::AnswerChoice::kRejectAllForRule},
           // :3:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApplyAllForRule},
+          {.choice = ViolationFixer::AnswerChoice::kApplyAllForRule},
           // :4:10: forbid-consecutive-null-statements
           // AUTOMATICALLY APPLIED due to kApplyAllForRule
           // :4:11: no-trailing-spaces
@@ -831,7 +833,7 @@ TEST_F(ViolationFixerTest, RejectAllForRuleApplyAllForRule) {
           // :7:10: no-trailing-spaces
           // AUTOMATICALLY REJECTED due to kApplyAllForRule
           // :7:14: posix-eof
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
           // Input source 2:
           // :1:21: forbid-consecutive-null-statements
           // AUTOMATICALLY APPLIED due to kApplyAllForRule
@@ -861,34 +863,34 @@ TEST_F(ViolationFixerTest, PrintFix) {
       {
           // Input source 0:
           // :2:10: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kApply},
-          {ViolationFixer::AnswerChoice::kPrintFix},
-          {ViolationFixer::AnswerChoice::kPrintFix},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kPrintFix},
+          {.choice = ViolationFixer::AnswerChoice::kPrintFix},
           // :3:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
           // :4:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kReject},
-          {ViolationFixer::AnswerChoice::kPrintFix},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kPrintFix},
           // :4:11: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kApply},
-          {ViolationFixer::AnswerChoice::kPrintFix},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kPrintFix},
           // :5:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
           // :6:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
-          {ViolationFixer::AnswerChoice::kPrintFix},
-          {ViolationFixer::AnswerChoice::kPrintFix},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kPrintFix},
+          {.choice = ViolationFixer::AnswerChoice::kPrintFix},
           // :7:10: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
           // :7:14: posix-eof
-          {ViolationFixer::AnswerChoice::kReject},
-          {ViolationFixer::AnswerChoice::kPrintFix},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kPrintFix},
           // Input source 2:
           // :1:21: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
-          {ViolationFixer::AnswerChoice::kPrintFix},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kPrintFix},
           // :2:10: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
       },
       {
           "module Autofix;\n"
@@ -913,34 +915,34 @@ TEST_F(ViolationFixerTest, PrintAppliedFixes) {
       {
           // Input source 0:
           // :2:10: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kApply},
-          {ViolationFixer::AnswerChoice::kPrintAppliedFixes},
-          {ViolationFixer::AnswerChoice::kPrintAppliedFixes},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kPrintAppliedFixes},
+          {.choice = ViolationFixer::AnswerChoice::kPrintAppliedFixes},
           // :3:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
           // :4:10: forbid-consecutive-null-staments
-          {ViolationFixer::AnswerChoice::kReject},
-          {ViolationFixer::AnswerChoice::kPrintAppliedFixes},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kPrintAppliedFixes},
           // :4:11: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kApply},
-          {ViolationFixer::AnswerChoice::kPrintAppliedFixes},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kPrintAppliedFixes},
           // :5:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
           // :6:10: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
-          {ViolationFixer::AnswerChoice::kPrintAppliedFixes},
-          {ViolationFixer::AnswerChoice::kPrintAppliedFixes},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kPrintAppliedFixes},
+          {.choice = ViolationFixer::AnswerChoice::kPrintAppliedFixes},
           // :7:10: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
           // :7:14: posix-eof
-          {ViolationFixer::AnswerChoice::kReject},
-          {ViolationFixer::AnswerChoice::kPrintAppliedFixes},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kPrintAppliedFixes},
           // Input source 2:
           // :1:21: forbid-consecutive-null-statements
-          {ViolationFixer::AnswerChoice::kApply},
-          {ViolationFixer::AnswerChoice::kPrintAppliedFixes},
+          {.choice = ViolationFixer::AnswerChoice::kApply},
+          {.choice = ViolationFixer::AnswerChoice::kPrintAppliedFixes},
           // :2:10: no-trailing-spaces
-          {ViolationFixer::AnswerChoice::kReject},
+          {.choice = ViolationFixer::AnswerChoice::kReject},
       },
       {
           "module Autofix;\n"

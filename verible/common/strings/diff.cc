@@ -108,8 +108,9 @@ std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits &edits,
         // common_context, not split_threshold.
         if (edit_size > common_context) {
           // Add the tail end of this edit.
-          current_hunk.push_back(
-              diff::Edit{edit.operation, edit.end - common_context, edit.end});
+          current_hunk.push_back(diff::Edit{.operation = edit.operation,
+                                            .start = edit.end - common_context,
+                                            .end = edit.end});
         } else {
           // Add the whole edit.
           current_hunk.push_back(edit);
@@ -120,11 +121,15 @@ std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits &edits,
         // position.
         if (edit_size > split_threshold) {
           // Close off the current hunk.
-          current_hunk.push_back(diff::Edit{edit.operation, edit.start,
-                                            edit.start + common_context});
+          current_hunk.push_back(
+              diff::Edit{.operation = edit.operation,
+                         .start = edit.start,
+                         .end = edit.start + common_context});
           // Start the next hunk.
-          hunks.push_back(diff::Edits{
-              diff::Edit{edit.operation, edit.end - common_context, edit.end}});
+          hunks.push_back(
+              diff::Edits{diff::Edit{.operation = edit.operation,
+                                     .start = edit.end - common_context,
+                                     .end = edit.end}});
         } else {
           // Add the whole edit.
           current_hunk.push_back(edit);

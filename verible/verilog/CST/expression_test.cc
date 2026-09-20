@@ -242,8 +242,8 @@ TEST(GetConditionExpressionPredicateTest, Various) {
             const auto *predicate =
                 GetConditionExpressionPredicate(*expr.match);
             if (predicate != nullptr) {
-              predicates.push_back(
-                  TreeSearchMatch{predicate, {/* ignored context */}});
+              predicates.push_back(TreeSearchMatch{
+                  .match = predicate, .context = {/* ignored context */}});
             } else {
               EXPECT_NE(predicate, nullptr)
                   << "predicate:\n"
@@ -328,8 +328,8 @@ TEST(GetConditionExpressionTrueCaseTest, Various) {
           for (const auto &expr : exprs) {
             const auto *predicate = GetConditionExpressionTrueCase(*expr.match);
             if (predicate != nullptr) {
-              predicates.push_back(
-                  TreeSearchMatch{predicate, {/* ignored context */}});
+              predicates.push_back(TreeSearchMatch{
+                  .match = predicate, .context = {/* ignored context */}});
             } else {
               EXPECT_NE(predicate, nullptr)
                   << "predicate:\n"
@@ -415,8 +415,8 @@ TEST(GetConditionExpressionFalseCaseTest, Various) {
             const auto *predicate =
                 GetConditionExpressionFalseCase(*expr.match);
             if (predicate != nullptr) {
-              predicates.push_back(
-                  TreeSearchMatch{predicate, {/* ignored context */}});
+              predicates.push_back(TreeSearchMatch{
+                  .match = predicate, .context = {/* ignored context */}});
             } else {
               EXPECT_NE(predicate, nullptr)
                   << "predicate:\n"
@@ -731,8 +731,8 @@ TEST(GetIncrementDecrementOperatorTest, Various) {
           std::vector<TreeSearchMatch> operators;
           for (const auto &expr : exprs) {
             const auto *operator_ = GetIncrementDecrementOperator(*expr.match);
-            operators.push_back(
-                TreeSearchMatch{operator_, {/* ignored context */}});
+            operators.push_back(TreeSearchMatch{
+                .match = operator_, .context = {/* ignored context */}});
           }
           return operators;
         });
@@ -777,8 +777,8 @@ TEST(GetIncrementDecrementOperandTest, Various) {
           std::vector<TreeSearchMatch> operands;
           for (const auto &expr : exprs) {
             const auto *operand = GetIncrementDecrementOperand(*expr.match);
-            operands.push_back(
-                TreeSearchMatch{operand, {/* ignored context */}});
+            operands.push_back(TreeSearchMatch{
+                .match = operand, .context = {/* ignored context */}});
           }
           return operands;
         });

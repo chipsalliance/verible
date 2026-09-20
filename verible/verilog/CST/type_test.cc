@@ -279,7 +279,7 @@ TEST(GetIdentifierFromTypeDeclarationTest, TypedefNames) {
           ids.reserve(type_declarations.size());
           for (const auto &decl : type_declarations) {
             ids.push_back(TreeSearchMatch{
-                GetIdentifierFromTypeDeclaration(*decl.match),
+                .match = GetIdentifierFromTypeDeclaration(*decl.match),
                 /* no context */});
           }
           return ids;
@@ -340,8 +340,8 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
                 GetPackedDimensionFromDataDeclaration(*decl.match);
             if (packed_dimension == nullptr) continue;
             if (packed_dimension->empty()) continue;
-            packed_dimensions.emplace_back(
-                TreeSearchMatch{packed_dimension, {/* ignored context */}});
+            packed_dimensions.emplace_back(TreeSearchMatch{
+                .match = packed_dimension, .context = {/* ignored context */}});
           }
           return packed_dimensions;
         });
@@ -382,7 +382,8 @@ TEST(GetType, GetStructOrUnionOrEnumType) {
           for (const auto &decl : types) {
             const auto *name = GetReferencedTypeOfTypeDeclaration(*decl.match);
             if (name == nullptr) continue;
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -409,7 +410,8 @@ TEST(GetTypeIdentifier, GetNameOfDataType) {
             if (name == nullptr) {
               continue;
             }
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -441,8 +443,8 @@ TEST(GetDataImplicitIdDimensions, GetTypeOfDataImplicitIdDimensions) {
             if (inner_type == nullptr) {
               continue;
             }
-            inner_types.emplace_back(
-                TreeSearchMatch{inner_type, {/* ignored context */}});
+            inner_types.emplace_back(TreeSearchMatch{
+                .match = inner_type, .context = {/* ignored context */}});
           }
           return inner_types;
         });
@@ -494,8 +496,8 @@ TEST(GetDataImplicitIdDimensions, GetNameOfDataImplicitIdDimensions) {
             const auto name =
                 GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
                     *decl.match);
-            names.emplace_back(
-                TreeSearchMatch{name.first, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name.first, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -537,7 +539,8 @@ TEST(GetEnumName, GetEnumNameIdentifier) {
           std::vector<TreeSearchMatch> names;
           for (const auto &decl : instances) {
             const auto *name = GetSymbolIdentifierFromEnumName(*decl.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -562,7 +565,8 @@ TEST(GetIdentifiersFromDataType, GetIdentifier) {
           std::vector<TreeSearchMatch> names;
           for (const auto &decl : instances) {
             const auto *name = GetIdentifiersFromDataType(*decl.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -588,8 +592,8 @@ TEST(GetLocalRootFromReference, GetLocalRoot) {
           for (const auto &decl : instances) {
             if (ReferenceIsSimpleIdentifier(*decl.match)) {
               const auto *name = GetLocalRootFromReference(*decl.match);
-              names.emplace_back(
-                  TreeSearchMatch{name, {/* ignored context */}});
+              names.emplace_back(TreeSearchMatch{
+                  .match = name, .context = {/* ignored context */}});
             }
           }
           return names;

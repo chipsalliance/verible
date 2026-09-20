@@ -722,19 +722,26 @@ WithReason<bool> LexicalContext::ExpectingBodyItemStart() const {
   // Usually false inside header sections of most declarations.
   // Usually false inside any () [] or {}
   // Usually true immediately after a ';' or end-like tokens.
-  if (InFlowControlHeader()) return {false, "in flow control header"};
-  if (InAnyDeclarationHeader()) return {false, "in other declaration header"};
-  if (!balance_stack_.empty()) return {false, "balance stack not empty"};
+  if (InFlowControlHeader()) {
+    return {.value = false, .reason = "in flow control header"};
+  }
+  if (InAnyDeclarationHeader()) {
+    return {.value = false, .reason = "in other declaration header"};
+  }
+  if (!balance_stack_.empty()) {
+    return {.value = false, .reason = "balance stack not empty"};
+  }
   if (previous_token_ == nullptr) {
     // First token should be start of a description/package item.
-    return {true, "first token"};
+    return {.value = true, .reason = "first token"};
   }
   if (InAnyDeclaration() && previous_token_finished_header_) {
-    return {true, "inside declaration, and reached end of header"};
+    return {.value = true,
+            .reason = "inside declaration, and reached end of header"};
   }
   switch (previous_token_->token_enum()) {
     case ';':
-      return {true, "immediately following ';'"};
+      return {.value = true, .reason = "immediately following ';'"};
     // Procedural control blocks:
     case TK_initial:       // fall-through
     case TK_always:        // fall-through
@@ -742,20 +749,22 @@ WithReason<bool> LexicalContext::ExpectingBodyItemStart() const {
     case TK_always_ff:     // fall-through
     case TK_always_latch:  // fall-through
     case TK_final:
-      return {true, "immediately following 'always/initial/final'"};
+      return {.value = true,
+              .reason = "immediately following 'always/initial/final'"};
     default:
       break;
   }
   // if (InStatementContext()) {
   if (keyword_label_tracker_.ItemMayStart()) {
-    return {true, "item may start"};
+    return {.value = true, .reason = "item may start"};
   }
   // return {true, "inside 'always/initial/final'"};
   // }
   if (seen_delay_value_in_initial_always_final_construct_context_) {
-    return {true, "seen a delay value, expecting another statement"};
+    return {.value = true,
+            .reason = "seen a delay value, expecting another statement"};
   }
-  return {false, "all other cases (default)"};
+  return {.value = false, .reason = "all other cases (default)"};
 }
 
 }  // namespace verilog

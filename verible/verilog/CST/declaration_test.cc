@@ -221,8 +221,8 @@ TEST(FindAllGateInstancesTest, FindArgumentListOfGateInstance) {
           for (const auto &decl : instances) {
             const auto *paren_group =
                 GetParenGroupFromModuleInstantiation(*decl.match);
-            paren_groups.emplace_back(
-                TreeSearchMatch{paren_group, {/* ignored context */}});
+            paren_groups.emplace_back(TreeSearchMatch{
+                .match = paren_group, .context = {/* ignored context */}});
           }
           return paren_groups;
         });
@@ -347,7 +347,8 @@ TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
           for (const auto &decl : decls) {
             const auto *type =
                 GetInstantiationTypeOfDataDeclaration(*decl.match);
-            types.emplace_back(TreeSearchMatch{type, {/* ignored context */}});
+            types.emplace_back(TreeSearchMatch{
+                .match = type, .context = {/* ignored context */}});
           }
           return types;
         });
@@ -412,7 +413,8 @@ TEST(GetQualifiersOfDataDeclarationTest, SomeQualifiers) {
           for (const auto &decl : decls) {
             const auto *qual = GetQualifiersOfDataDeclaration(*decl.match);
             if (qual != nullptr) {
-              quals.push_back(TreeSearchMatch{qual, {/* ignored context */}});
+              quals.push_back(TreeSearchMatch{
+                  .match = qual, .context = {/* ignored context */}});
             } else {
               EXPECT_NE(qual, nullptr) << "decl:\n"
                                        << verible::RawTreePrinter(*decl.match);
@@ -496,8 +498,8 @@ TEST(GetInstanceListFromDataDeclarationTest, InstanceLists) {
           std::vector<TreeSearchMatch> inst_lists;
           for (const auto &decl : decls) {
             const auto &insts = GetInstanceListFromDataDeclaration(*decl.match);
-            inst_lists.push_back(
-                TreeSearchMatch{insts, {/* ignored context */}});
+            inst_lists.push_back(TreeSearchMatch{
+                .match = insts, .context = {/* ignored context */}});
           }
 
           return inst_lists;
@@ -558,7 +560,8 @@ TEST(GetVariableDeclarationAssign, VariableName) {
           for (const auto &decl : decls) {
             const auto *name =
                 GetUnqualifiedIdFromVariableDeclarationAssignment(*decl.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -589,7 +592,8 @@ TEST(GetTypeFromDeclaration, GetTypeName) {
           for (const auto &decl : instances) {
             const auto *name =
                 GetTypeIdentifierFromDataDeclaration(*decl.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -631,7 +635,8 @@ TEST(GetStructTypeFromDeclaration, GetStructOrUnionOrEnumType) {
             if (type == nullptr) {
               continue;
             }
-            types.emplace_back(TreeSearchMatch{type, {/* ignored context */}});
+            types.emplace_back(TreeSearchMatch{
+                .match = type, .context = {/* ignored context */}});
           }
           return types;
         });
@@ -671,8 +676,8 @@ TEST(GetVariableDeclarationAssign,
           for (const auto &decl : instances) {
             const auto *paren_group =
                 GetTrailingExpressionFromVariableDeclarationAssign(*decl.match);
-            paren_groups.emplace_back(
-                TreeSearchMatch{paren_group, {/* ignored context */}});
+            paren_groups.emplace_back(TreeSearchMatch{
+                .match = paren_group, .context = {/* ignored context */}});
           }
           return paren_groups;
         });
@@ -720,8 +725,8 @@ TEST(FindAllRegisterVariablesTest, FindTrailingAssignOfRegisterVariable) {
           for (const auto &decl : instances) {
             const auto *paren_group =
                 GetTrailingExpressionFromRegisterVariable(*decl.match);
-            paren_groups.emplace_back(
-                TreeSearchMatch{paren_group, {/* ignored context */}});
+            paren_groups.emplace_back(TreeSearchMatch{
+                .match = paren_group, .context = {/* ignored context */}});
           }
           return paren_groups;
         });
@@ -757,8 +762,8 @@ TEST(FindAllDataDeclarationTest, FindDataDeclarationParameters) {
             if (param_list == nullptr) {
               continue;
             }
-            params.emplace_back(
-                TreeSearchMatch{param_list, {/* ignored context */}});
+            params.emplace_back(TreeSearchMatch{
+                .match = param_list, .context = {/* ignored context */}});
           }
           return params;
         });
@@ -799,7 +804,8 @@ TEST(GetVariableDeclarationAssign,
             const auto *unpacked_dimension =
                 GetUnpackedDimensionFromVariableDeclarationAssign(*decl.match);
             unpacked_dimensions.emplace_back(
-                TreeSearchMatch{unpacked_dimension, {/* ignored context */}});
+                TreeSearchMatch{.match = unpacked_dimension,
+                                .context = {/* ignored context */}});
           }
           return unpacked_dimensions;
         });
@@ -859,7 +865,8 @@ TEST(FindAllRegisterVariablesTest, FindUnpackedDimensionOfRegisterVariable) {
             const auto *unpacked_dimension =
                 GetUnpackedDimensionFromRegisterVariable(*decl.match);
             unpacked_dimensions.emplace_back(
-                TreeSearchMatch{unpacked_dimension, {/* ignored context */}});
+                TreeSearchMatch{.match = unpacked_dimension,
+                                .context = {/* ignored context */}});
           }
           return unpacked_dimensions;
         });
@@ -937,8 +944,8 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
             if (packed_dimension == nullptr) {
               continue;
             }
-            packed_dimensions.emplace_back(
-                TreeSearchMatch{packed_dimension, {/* ignored context */}});
+            packed_dimensions.emplace_back(TreeSearchMatch{
+                .match = packed_dimension, .context = {/* ignored context */}});
           }
           return packed_dimensions;
         });

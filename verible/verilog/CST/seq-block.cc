@@ -37,7 +37,7 @@ static const verible::SyntaxTreeLeaf &GetLabelLeafText(const Symbol &label) {
   const auto &node = CheckSymbolAsNode(label, NodeEnum::kLabel);
   CHECK_EQ(node.size(), 2);
   if (node.front()->Tag() ==
-      verible::SymbolTag{verible::SymbolKind::kLeaf, ':'}) {
+      verible::SymbolTag{.kind = verible::SymbolKind::kLeaf, .tag = ':'}) {
     return verible::SymbolCastToLeaf(*node.back());
   }
   CHECK((node.back()->Tag() ==
@@ -55,8 +55,9 @@ static const verible::SyntaxTreeLeaf &GetLabelLeafText(const Symbol &label) {
 static const SyntaxTreeNode *GetBeginLabel(const Symbol &begin) {
   const auto &node = CheckSymbolAsNode(begin, NodeEnum::kBegin);
   CHECK_EQ(node.size(), 2);
-  if (node.front()->Tag() == verible::SymbolTag{verible::SymbolKind::kLeaf,
-                                                verilog_tokentype::TK_begin}) {
+  if (node.front()->Tag() ==
+      verible::SymbolTag{.kind = verible::SymbolKind::kLeaf,
+                         .tag = verilog_tokentype::TK_begin}) {
     return verible::CheckOptionalSymbolAsNode(node.back().get(),
                                               NodeEnum::kLabel);
   }

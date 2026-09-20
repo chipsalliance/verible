@@ -50,23 +50,28 @@ struct FindAllTestCase {
 
 TEST(FindAllMacroCallsTest, Various) {
   const FindAllTestCase kTestCases[] = {
-      {"", 0},
-      {"module m; endmodule\n", 0},
-      {"`FOO;\n", 0},
-      {"`FOO()\n", 1},
-      {"// `FOO()\n", 0},
-      {"/* `FOO() */\n", 0},
-      {"`FOO()\n`BAR()\n", 2},
-      {"`FOO();\n", 1},
-      {"`FOO();\n`BAR();\n", 2},
-      {"`FOO(`BAR());\n", 2},  // nested
-      {"`FOO(bar);\n", 1},
-      {"`FOO(bar, 77);\n", 1},
-      {"function f;\nf = foo(`FOO);\nendfunction\n", 0},
-      {"function f;\nf = foo(`FOO());\nendfunction\n", 1},
-      {"function f;\nf = `BAR(`FOO);\nendfunction\n", 1},
-      {"function f;\nf = `BAR(`FOO());\nendfunction\n", 2},
-      {"function f;\nf = `BAR() * `FOO();\nendfunction\n", 2},
+      {.code = "", .expected_matches = 0},
+      {.code = "module m; endmodule\n", .expected_matches = 0},
+      {.code = "`FOO;\n", .expected_matches = 0},
+      {.code = "`FOO()\n", .expected_matches = 1},
+      {.code = "// `FOO()\n", .expected_matches = 0},
+      {.code = "/* `FOO() */\n", .expected_matches = 0},
+      {.code = "`FOO()\n`BAR()\n", .expected_matches = 2},
+      {.code = "`FOO();\n", .expected_matches = 1},
+      {.code = "`FOO();\n`BAR();\n", .expected_matches = 2},
+      {.code = "`FOO(`BAR());\n", .expected_matches = 2},  // nested
+      {.code = "`FOO(bar);\n", .expected_matches = 1},
+      {.code = "`FOO(bar, 77);\n", .expected_matches = 1},
+      {.code = "function f;\nf = foo(`FOO);\nendfunction\n",
+       .expected_matches = 0},
+      {.code = "function f;\nf = foo(`FOO());\nendfunction\n",
+       .expected_matches = 1},
+      {.code = "function f;\nf = `BAR(`FOO);\nendfunction\n",
+       .expected_matches = 1},
+      {.code = "function f;\nf = `BAR(`FOO());\nendfunction\n",
+       .expected_matches = 2},
+      {.code = "function f;\nf = `BAR() * `FOO();\nendfunction\n",
+       .expected_matches = 2},
   };
   for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
@@ -86,17 +91,21 @@ struct MatchIdTestCase {
 
 TEST(GetMacroCallIdsTest, Various) {
   const MatchIdTestCase kTestCases[] = {
-      {"`FOO1()\n", {"`FOO1"}},
-      {"`FOO2()\n`BAR2()\n", {"`FOO2", "`BAR2"}},
-      {"`FOO3();\n", {"`FOO3"}},
-      {"`FOO4();\n`BAR4();\n", {"`FOO4", "`BAR4"}},
-      {"`FOO5(`BAR5());\n", {"`FOO5", "`BAR5"}},  // nested
-      {"`FOO6(bar);\n", {"`FOO6"}},
-      {"function f;\nf = foo(`FOO7());\nendfunction\n", {"`FOO7"}},
-      {"function f;\nf = `BAR8(`FOO);\nendfunction\n", {"`BAR8"}},
-      {"function f;\nf = `BAR9(`FOO9());\nendfunction\n", {"`BAR9", "`FOO9"}},
-      {"function f;\nf = `BAR10() * `FOO10();\nendfunction\n",
-       {"`BAR10", "`FOO10"}},
+      {.code = "`FOO1()\n", .expected_names = {"`FOO1"}},
+      {.code = "`FOO2()\n`BAR2()\n", .expected_names = {"`FOO2", "`BAR2"}},
+      {.code = "`FOO3();\n", .expected_names = {"`FOO3"}},
+      {.code = "`FOO4();\n`BAR4();\n", .expected_names = {"`FOO4", "`BAR4"}},
+      {.code = "`FOO5(`BAR5());\n",
+       .expected_names = {"`FOO5", "`BAR5"}},  // nested
+      {.code = "`FOO6(bar);\n", .expected_names = {"`FOO6"}},
+      {.code = "function f;\nf = foo(`FOO7());\nendfunction\n",
+       .expected_names = {"`FOO7"}},
+      {.code = "function f;\nf = `BAR8(`FOO);\nendfunction\n",
+       .expected_names = {"`BAR8"}},
+      {.code = "function f;\nf = `BAR9(`FOO9());\nendfunction\n",
+       .expected_names = {"`BAR9", "`FOO9"}},
+      {.code = "function f;\nf = `BAR10() * `FOO10();\nendfunction\n",
+       .expected_names = {"`BAR10", "`FOO10"}},
   };
   for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
@@ -123,15 +132,19 @@ struct CallArgsTestCase {
 TEST(MacroCallArgsTest, Emptiness) {
   const CallArgsTestCase kTestCases[] = {
       // checks the number of call args of the first found macro call
-      {"`FOO()\n", true},
-      {"`FOO();\n", true},
-      {"`FOO(`BAR());\n", false},  // nested
-      {"`FOO(bar);\n", false},
-      {"`FOO(bar, 77);\n", false},
-      {"function f;\nf = foo(`FOO());\nendfunction\n", true},
-      {"function f;\nf = `BAR(`FOO);\nendfunction\n", false},
-      {"function f;\nf = `BAR(`FOO());\nendfunction\n", false},
-      {"function f;\nf = `BAR() * `FOO();\nendfunction\n", true},
+      {.code = "`FOO()\n", .expect_empty = true},
+      {.code = "`FOO();\n", .expect_empty = true},
+      {.code = "`FOO(`BAR());\n", .expect_empty = false},  // nested
+      {.code = "`FOO(bar);\n", .expect_empty = false},
+      {.code = "`FOO(bar, 77);\n", .expect_empty = false},
+      {.code = "function f;\nf = foo(`FOO());\nendfunction\n",
+       .expect_empty = true},
+      {.code = "function f;\nf = `BAR(`FOO);\nendfunction\n",
+       .expect_empty = false},
+      {.code = "function f;\nf = `BAR(`FOO());\nendfunction\n",
+       .expect_empty = false},
+      {.code = "function f;\nf = `BAR() * `FOO();\nendfunction\n",
+       .expect_empty = true},
   };
   for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
@@ -225,7 +238,8 @@ TEST(FindAllMacroDefinitions, MacroName) {
           std::vector<TreeSearchMatch> names;
           for (const auto &decl : decls) {
             const auto *type = GetMacroName(*decl.match);
-            names.push_back(TreeSearchMatch{type, {/* ignored context */}});
+            names.push_back(TreeSearchMatch{
+                .match = type, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -277,7 +291,8 @@ TEST(FindAllMacroDefinitions, MacroArgsName) {
             const auto &args = FindAllMacroDefinitionsArgs(*decl.match);
             for (const auto &arg : args) {
               const auto *name = GetMacroArgName(*arg.match);
-              names.push_back(TreeSearchMatch{name, {/* ignored context */}});
+              names.push_back(TreeSearchMatch{
+                  .match = name, .context = {/* ignored context */}});
             }
           }
           return names;
@@ -309,8 +324,8 @@ TEST(FindAllPreprocessorInclude, IncludedFileName) {
             if (filename == nullptr) {
               continue;
             }
-            names.emplace_back(
-                TreeSearchMatch{filename, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = filename, .context = {/* ignored context */}});
           }
           return names;
         });

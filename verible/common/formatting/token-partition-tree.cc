@@ -262,7 +262,7 @@ bool AnyPartitionSubRangeIsDisabled(TokenPartitionRange range,
                                     const ByteOffsetSet &disabled_byte_ranges) {
   if (range.empty()) return false;
   const std::string_view span = StringSpanOfPartitionRange(range);
-  VLOG(4) << "text spanned: " << AutoTruncate{span, 40};
+  VLOG(4) << "text spanned: " << AutoTruncate{.text = span, .max_chars = 40};
   const std::pair<int, int> span_offsets = SubstringOffsets(span, full_text);
   ByteOffsetSet diff(disabled_byte_ranges);  // copy
   diff.Complement(span_offsets);             // enabled range(s)
@@ -760,7 +760,8 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     longest_line_len = std::max(longest_line_len, fit_result.final_column);
   }
 
-  return {wrapped_first_subpartition, longest_line_len};
+  return {.wrapped = wrapped_first_subpartition,
+          .longest_line_len = longest_line_len};
 }
 
 // Reshapes the tree pointed to by `node` using `AppendFittingSubpartitions()`

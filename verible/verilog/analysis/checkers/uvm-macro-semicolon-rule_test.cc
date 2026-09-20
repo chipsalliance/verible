@@ -331,7 +331,7 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
 
 TEST(UvmMacroSemicolonRuleTest, ApplyAutoFix) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"`uvm_foo(abc);\n", "`uvm_foo(abc)\n"},
+      {.code = "`uvm_foo(abc);\n", .expected_output = "`uvm_foo(abc)\n"},
   };
   RunApplyFixCases<VerilogAnalyzer, UvmMacroSemicolonRule>(kTestCases, "");
 }

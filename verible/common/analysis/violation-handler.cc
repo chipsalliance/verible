@@ -160,10 +160,11 @@ void ViolationFixer::HandleViolation(
 
     switch (answer.choice) {
       case AnswerChoice::kApplyAll:
-        ultimate_answer_ = {AnswerChoice::kApply};
+        ultimate_answer_ = {.choice = AnswerChoice::kApply};
         [[fallthrough]];
       case AnswerChoice::kApplyAllForRule:
-        rule_answers_[rule_name] = {AnswerChoice::kApply, answer.alternative};
+        rule_answers_[rule_name] = {.choice = AnswerChoice::kApply,
+                                    .alternative = answer.alternative};
         [[fallthrough]];
       case AnswerChoice::kApply:  // Apply fix chosen in the alternatative
         if (answer.alternative >= violation.autofixes.size()) {
@@ -174,10 +175,10 @@ void ViolationFixer::HandleViolation(
         }
         break;
       case AnswerChoice::kRejectAll:
-        ultimate_answer_ = {AnswerChoice::kReject};
+        ultimate_answer_ = {.choice = AnswerChoice::kReject};
         [[fallthrough]];
       case AnswerChoice::kRejectAllForRule:
-        rule_answers_[rule_name] = {AnswerChoice::kReject};
+        rule_answers_[rule_name] = {.choice = AnswerChoice::kReject};
         [[fallthrough]];
       case AnswerChoice::kReject:
         return;
@@ -232,38 +233,39 @@ ViolationFixer::Answer ViolationFixer::InteractiveAnswerChooser(
     // Single character digit chooses the available alternative.
     if (c >= '1' && c <= '9' &&
         c < static_cast<char>('1' + violation.autofixes.size())) {
-      return {AnswerChoice::kApply, static_cast<size_t>(c - '1')};
+      return {.choice = AnswerChoice::kApply,
+              .alternative = static_cast<size_t>(c - '1')};
     }
 
     switch (c) {
       case 'y':
-        return {AnswerChoice::kApply, 0};
+        return {.choice = AnswerChoice::kApply, .alternative = 0};
 
         // TODO(hzeller): Should we provide a way to choose 'all for rule'
         // including an alternative ? Maybe with a two-letter response
         // such as 1a, 2a, 3a ? Current assumption of interaction is
         // single character.
       case 'a':
-        return {AnswerChoice::kApplyAllForRule};
+        return {.choice = AnswerChoice::kApplyAllForRule};
       case 'A':
-        return {AnswerChoice::kApplyAll};  // No alternatives
+        return {.choice = AnswerChoice::kApplyAll};  // No alternatives
       case 'n':
-        return {AnswerChoice::kReject};
+        return {.choice = AnswerChoice::kReject};
       case 'd':
-        return {AnswerChoice::kRejectAllForRule};
+        return {.choice = AnswerChoice::kRejectAllForRule};
       case 'D':
-        return {AnswerChoice::kRejectAll};
+        return {.choice = AnswerChoice::kRejectAll};
 
       case '\0':
         // EOF: received when too few "answers" have been piped to stdin.
         std::cerr << "Received EOF while there are questions left. "
                   << "Rejecting all remaining fixes." << std::endl;
-        return {AnswerChoice::kRejectAll};
+        return {.choice = AnswerChoice::kRejectAll};
 
       case 'p':
-        return {AnswerChoice::kPrintFix};
+        return {.choice = AnswerChoice::kPrintFix};
       case 'P':
-        return {AnswerChoice::kPrintAppliedFixes};
+        return {.choice = AnswerChoice::kPrintAppliedFixes};
 
       case '\n':
         continue;

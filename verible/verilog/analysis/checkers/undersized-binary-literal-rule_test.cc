@@ -171,12 +171,18 @@ TEST(UndersizedBinaryLiteralTest, DecimalNumbersNeverCare) {
 
 TEST(UndersizedBinaryLiteralTest, ApplyAutoFix) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"localparam x = 32'hAB;", "localparam x = 32'h000000AB;"},
-      {"localparam x = 16'hAB;", "localparam x = 16'h00AB;"},
-      {"localparam x = 9'hAB;", "localparam x = 9'h0AB;"},
-      {"localparam x = 8'b101;", "localparam x = 8'b00000101;"},
-      {"localparam x = 9'o7;", "localparam x = 9'o007;"},
-      {"localparam x = 8'o7;", "localparam x = 8'o007;"},
+      {.code = "localparam x = 32'hAB;",
+       .expected_output = "localparam x = 32'h000000AB;"},
+      {.code = "localparam x = 16'hAB;",
+       .expected_output = "localparam x = 16'h00AB;"},
+      {.code = "localparam x = 9'hAB;",
+       .expected_output = "localparam x = 9'h0AB;"},
+      {.code = "localparam x = 8'b101;",
+       .expected_output = "localparam x = 8'b00000101;"},
+      {.code = "localparam x = 9'o7;",
+       .expected_output = "localparam x = 9'o007;"},
+      {.code = "localparam x = 8'o7;",
+       .expected_output = "localparam x = 8'o007;"},
   };
   RunApplyFixCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
       kTestCases, "bin:true;hex:true;oct:true;autofix:true");
@@ -193,16 +199,24 @@ TEST(UndersizedBinaryLiteralRule, AutoFixDigitZeroProvideUnsizedAlternative) {
 
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
       // First suggested alternative: replace just with simple '0
-      {"localparam x = 32'h0;", "localparam x = '0;", kFirstFix},
+      {.code = "localparam x = 32'h0;",
+       .expected_output = "localparam x = '0;",
+       .fix_alternative = kFirstFix},
       // We only apply this for unsigned values
-      {"localparam x = 32'sh0;", "localparam x = 32'sh00000000;", kFirstFix},
+      {.code = "localparam x = 32'sh0;",
+       .expected_output = "localparam x = 32'sh00000000;",
+       .fix_alternative = kFirstFix},
 
       // Next alternative is the standard expansion
-      {"localparam x = 32'h0;", "localparam x = 32'h00000000;", kSecondFix},
+      {.code = "localparam x = 32'h0;",
+       .expected_output = "localparam x = 32'h00000000;",
+       .fix_alternative = kSecondFix},
 
       // Third alternative would be what we anyway would do with single digit
       // suggestions: convert to decimal.
-      {"localparam x = 32'h0;", "localparam x = 32'd0;", kThirdFix},
+      {.code = "localparam x = 32'h0;",
+       .expected_output = "localparam x = 32'd0;",
+       .fix_alternative = kThirdFix},
   };
   RunApplyFixCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
       kTestCases,
@@ -216,16 +230,32 @@ TEST(UndersizedBinaryLiteralRule, AutoFixSingleDigitProvideDecimalAlternative) {
   constexpr int kSecondFix = 1;
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
       // First choice: zero expand
-      {"localparam x = 32'h1;", "localparam x = 32'h00000001;", kFirstFix},
-      {"localparam x = 32'sh1;", "localparam x = 32'sh00000001;", kFirstFix},
-      {"localparam x = 32'h9;", "localparam x = 32'h00000009;", kFirstFix},
-      {"localparam x = 32'sh9;", "localparam x = 32'sh00000009;", kFirstFix},
+      {.code = "localparam x = 32'h1;",
+       .expected_output = "localparam x = 32'h00000001;",
+       .fix_alternative = kFirstFix},
+      {.code = "localparam x = 32'sh1;",
+       .expected_output = "localparam x = 32'sh00000001;",
+       .fix_alternative = kFirstFix},
+      {.code = "localparam x = 32'h9;",
+       .expected_output = "localparam x = 32'h00000009;",
+       .fix_alternative = kFirstFix},
+      {.code = "localparam x = 32'sh9;",
+       .expected_output = "localparam x = 32'sh00000009;",
+       .fix_alternative = kFirstFix},
 
       // Second choice: convert to decimal
-      {"localparam x = 32'h1;", "localparam x = 32'd1;", kSecondFix},
-      {"localparam x = 32'sh1;", "localparam x = 32'sd1;", kSecondFix},
-      {"localparam x = 32'h9;", "localparam x = 32'd9;", kSecondFix},
-      {"localparam x = 32'sh9;", "localparam x = 32'sd9;", kSecondFix},
+      {.code = "localparam x = 32'h1;",
+       .expected_output = "localparam x = 32'd1;",
+       .fix_alternative = kSecondFix},
+      {.code = "localparam x = 32'sh1;",
+       .expected_output = "localparam x = 32'sd1;",
+       .fix_alternative = kSecondFix},
+      {.code = "localparam x = 32'h9;",
+       .expected_output = "localparam x = 32'd9;",
+       .fix_alternative = kSecondFix},
+      {.code = "localparam x = 32'sh9;",
+       .expected_output = "localparam x = 32'sd9;",
+       .fix_alternative = kSecondFix},
   };
   RunApplyFixCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
       kTestCases,
@@ -239,14 +269,26 @@ TEST(UndersizedBinaryLiteralRule, AutoFixProvideInferredSize) {
   constexpr int kSecondFix = 1;
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
       // First choice: zero expand
-      {"localparam x = 32'h10;", "localparam x = 32'h00000010;", kFirstFix},
-      {"localparam x = 3'b01;", "localparam x = 3'b001;", kFirstFix},
-      {"localparam x = 8'o77;", "localparam x = 8'o077;", kFirstFix},
+      {.code = "localparam x = 32'h10;",
+       .expected_output = "localparam x = 32'h00000010;",
+       .fix_alternative = kFirstFix},
+      {.code = "localparam x = 3'b01;",
+       .expected_output = "localparam x = 3'b001;",
+       .fix_alternative = kFirstFix},
+      {.code = "localparam x = 8'o77;",
+       .expected_output = "localparam x = 8'o077;",
+       .fix_alternative = kFirstFix},
 
       // Second choice: Adjust size to inferred size
-      {"localparam x = 32'h10;", "localparam x = 8'h10;", kSecondFix},
-      {"localparam x = 3'b01;", "localparam x = 2'b01;", kSecondFix},
-      {"localparam x = 8'o77;", "localparam x = 6'o77;", kSecondFix},
+      {.code = "localparam x = 32'h10;",
+       .expected_output = "localparam x = 8'h10;",
+       .fix_alternative = kSecondFix},
+      {.code = "localparam x = 3'b01;",
+       .expected_output = "localparam x = 2'b01;",
+       .fix_alternative = kSecondFix},
+      {.code = "localparam x = 8'o77;",
+       .expected_output = "localparam x = 6'o77;",
+       .fix_alternative = kSecondFix},
   };
   RunApplyFixCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
       kTestCases,

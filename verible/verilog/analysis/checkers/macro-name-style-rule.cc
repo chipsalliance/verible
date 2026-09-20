@@ -70,8 +70,9 @@ const LintRuleDescriptor &MacroNameStyleRule::GetDescriptor() {
           "and \"UPPER_SNAKE_CASE\" naming conventions respectively. Refer to "
           "https://github.com/chipsalliance/verible/tree/master/verilog/tools/"
           "lint#readme for more detail on verible regex patterns.",
-      .param = {{"style_regex", std::string(kUpperSnakeCaseRegex),
-                 "A regex used to check macro names style."}},
+      .param = {{.name = "style_regex",
+                 .default_value = std::string(kUpperSnakeCaseRegex),
+                 .description = "A regex used to check macro names style."}},
   };
   return d;
 }
@@ -139,7 +140,8 @@ void MacroNameStyleRule::HandleToken(const TokenInfo &token) {
 absl::Status MacroNameStyleRule::Configure(std::string_view configuration) {
   using verible::config::SetRegex;
   absl::Status s = verible::ParseNameValues(
-      configuration, {{"style_regex", SetRegex(&style_regex_)}});
+      configuration,
+      {{.name = "style_regex", .set_value = SetRegex(&style_regex_)}});
   return s;
 }
 

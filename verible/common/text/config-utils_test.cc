@@ -32,44 +32,51 @@ namespace config {
 TEST(ConfigUtilsTest, ComplainInvalidParameter) {
   absl::Status s;
   // singular ...
-  s = ParseNameValues("baz:123", {{"foo", nullptr}});
+  s = ParseNameValues("baz:123", {{.name = "foo", .set_value = nullptr}});
   EXPECT_FALSE(s.ok());
   EXPECT_EQ(s.message(),
             "baz: unknown parameter; supported "
             "parameter is 'foo'");
 
   // plural.
-  s = ParseNameValues("baz:123", {{"foo", nullptr}, {"bar", nullptr}});
+  s = ParseNameValues("baz:123", {{.name = "foo", .set_value = nullptr},
+                                  {.name = "bar", .set_value = nullptr}});
   EXPECT_FALSE(s.ok());
   EXPECT_EQ(s.message(),
             "baz: unknown parameter; supported "
             "parameters are 'foo', 'bar'");
 
-  s = ParseNameValues("foo:123", {{"foo", nullptr}, {"bar", nullptr}});
+  s = ParseNameValues("foo:123", {{.name = "foo", .set_value = nullptr},
+                                  {.name = "bar", .set_value = nullptr}});
   EXPECT_TRUE(s.ok());
 }
 
 TEST(ConfigUtilsTest, ParseInteger) {
   absl::Status s;
   int value = -1;
-  s = ParseNameValues("baz:42", {{"baz", SetInt(&value, 0, 100)}});
+  s = ParseNameValues("baz:42",
+                      {{.name = "baz", .set_value = SetInt(&value, 0, 100)}});
   EXPECT_TRUE(s.ok());
   EXPECT_EQ(value, 42);
 
-  s = ParseNameValues("baz:fourtytwo", {{"baz", SetInt(&value, 0, 100)}});
+  s = ParseNameValues("baz:fourtytwo",
+                      {{.name = "baz", .set_value = SetInt(&value, 0, 100)}});
   EXPECT_FALSE(s.ok());
   // would be cool though :)
   EXPECT_EQ(s.message(), "baz: 'fourtytwo': Cannot parse integer");
 
-  s = ParseNameValues("baz:142", {{"baz", SetInt(&value, 0, 100)}});
+  s = ParseNameValues("baz:142",
+                      {{.name = "baz", .set_value = SetInt(&value, 0, 100)}});
   EXPECT_FALSE(s.ok());
   EXPECT_EQ(s.message(), "baz: 142 out of range [0...100]");
 
-  s = ParseNameValues("baz:-1", {{"baz", SetInt(&value, 0, 100)}});
+  s = ParseNameValues("baz:-1",
+                      {{.name = "baz", .set_value = SetInt(&value, 0, 100)}});
   EXPECT_FALSE(s.ok());
   EXPECT_EQ(s.message(), "baz: -1 out of range [0...100]");
 
-  s = ParseNameValues("baz:-12345", {{"baz", SetInt(&value)}});
+  s = ParseNameValues("baz:-12345",
+                      {{.name = "baz", .set_value = SetInt(&value)}});
   EXPECT_TRUE(s.ok());
   EXPECT_EQ(value, -12345);
 }
@@ -78,18 +85,21 @@ TEST(ConfigUtilsTest, ParseBool) {
   absl::Status s;
   bool value = false;
   for (auto config : {"baz", "baz:TrUe", "baz:on", "baz:1"}) {
-    s = ParseNameValues(config, {{"baz", SetBool(&value)}});
+    s = ParseNameValues(config,
+                        {{.name = "baz", .set_value = SetBool(&value)}});
     EXPECT_TRUE(s.ok());
     EXPECT_TRUE(value);
   }
 
   for (auto config : {"baz:fAlse", "baz:off", "baz:0"}) {
-    s = ParseNameValues(config, {{"baz", SetBool(&value)}});
+    s = ParseNameValues(config,
+                        {{.name = "baz", .set_value = SetBool(&value)}});
     EXPECT_TRUE(s.ok());
     EXPECT_FALSE(value);
   }
 
-  s = ParseNameValues("baz:foobar", {{"baz", SetBool(&value)}});
+  s = ParseNameValues("baz:foobar",
+                      {{.name = "baz", .set_value = SetBool(&value)}});
   EXPECT_FALSE(s.ok());
   EXPECT_TRUE(
       absl::StartsWith(s.message(), "baz: Boolean value should be one of"));
@@ -98,11 +108,13 @@ TEST(ConfigUtilsTest, ParseBool) {
 TEST(ConfigUtilsTest, ParseRegex) {
   absl::Status s;
   std::unique_ptr<re2::RE2> regex;
-  s = ParseNameValues("regex:[a-b0-9_]", {{"regex", SetRegex(&regex)}});
+  s = ParseNameValues("regex:[a-b0-9_]",
+                      {{.name = "regex", .set_value = SetRegex(&regex)}});
   EXPECT_TRUE(s.ok());
   EXPECT_EQ(regex->pattern(), "[a-b0-9_]");
 
-  s = ParseNameValues("regex:[a-b0-9_", {{"regex", SetRegex(&regex)}});
+  s = ParseNameValues("regex:[a-b0-9_",
+                      {{.name = "regex", .set_value = SetRegex(&regex)}});
   EXPECT_FALSE(s.ok());
   EXPECT_EQ(s.message(),
             "regex: Failed to parse regular expression: missing ]: [a-b0-9_");
@@ -111,26 +123,30 @@ TEST(ConfigUtilsTest, ParseRegex) {
 TEST(ConfigUtilsTest, ParseString) {
   absl::Status s;
   std::string str;
-  s = ParseNameValues("baz:hello", {{"baz", SetString(&str)}});
+  s = ParseNameValues("baz:hello",
+                      {{.name = "baz", .set_value = SetString(&str)}});
   EXPECT_TRUE(s.ok());
   EXPECT_EQ(str, "hello");
 
-  s = ParseNameValues("baz:hello",
-                      {{"baz", SetStringOneOf(&str, {"hello", "world"})}});
+  s = ParseNameValues(
+      "baz:hello",
+      {{.name = "baz", .set_value = SetStringOneOf(&str, {"hello", "world"})}});
   EXPECT_TRUE(s.ok());
   EXPECT_EQ(str, "hello");
 
   // Selection from multiple strings
-  s = ParseNameValues("baz:greetings",
-                      {{"baz", SetStringOneOf(&str, {"hello", "world"})}});
+  s = ParseNameValues(
+      "baz:greetings",
+      {{.name = "baz", .set_value = SetStringOneOf(&str, {"hello", "world"})}});
   EXPECT_FALSE(s.ok());
   EXPECT_EQ(s.message(),
             "baz: Value can only be one of ['hello', 'world']; "
             "got 'greetings'");
 
   // Selection from one string
-  s = ParseNameValues("baz:greetings",
-                      {{"baz", SetStringOneOf(&str, {"hello"})}});
+  s = ParseNameValues(
+      "baz:greetings",
+      {{.name = "baz", .set_value = SetStringOneOf(&str, {"hello"})}});
   EXPECT_FALSE(s.ok());
   EXPECT_EQ(s.message(), "baz: Value can only be 'hello'; got 'greetings'");
 }
@@ -152,16 +168,18 @@ TEST(ConfigUtilsTest, ParseNamedBitmap) {
   absl::Status s;
   for (const auto &testcase : kTestCases) {
     uint32_t bitmap = 0x12345678;
-    s = ParseNameValues(testcase.first,
-                        {{"baz", SetNamedBits(&bitmap, kBitNames)}});
+    s = ParseNameValues(
+        testcase.first,
+        {{.name = "baz", .set_value = SetNamedBits(&bitmap, kBitNames)}});
     EXPECT_TRUE(s.ok()) << "case: '" << testcase.first << "' ->" << s.message();
     EXPECT_EQ(bitmap, testcase.second);
   }
 
   {
     uint32_t bitmap = 0x12345678;
-    s = ParseNameValues("baz:ONE|invalid",
-                        {{"baz", SetNamedBits(&bitmap, kBitNames)}});
+    s = ParseNameValues(
+        "baz:ONE|invalid",
+        {{.name = "baz", .set_value = SetNamedBits(&bitmap, kBitNames)}});
     EXPECT_FALSE(s.ok());
     EXPECT_EQ(s.message(),
               "baz: 'invalid' is not in the available "
@@ -174,14 +192,16 @@ TEST(ConfigUtilsTest, ParseMultipleParameters) {
   absl::Status s;
   int answer;
   bool panic;
-  s = ParseNameValues("answer:42;panic:off", {{"answer", SetInt(&answer)},
-                                              {"panic", SetBool(&panic)}});
+  s = ParseNameValues("answer:42;panic:off",
+                      {{.name = "answer", .set_value = SetInt(&answer)},
+                       {.name = "panic", .set_value = SetBool(&panic)}});
   EXPECT_TRUE(s.ok());
   EXPECT_FALSE(panic);
   EXPECT_EQ(answer, 42);
 
-  s = ParseNameValues("answer:43;panic:on", {{"answer", SetInt(&answer)},
-                                             {"panic", SetBool(&panic)}});
+  s = ParseNameValues("answer:43;panic:on",
+                      {{.name = "answer", .set_value = SetInt(&answer)},
+                       {.name = "panic", .set_value = SetBool(&panic)}});
   EXPECT_TRUE(s.ok()) << s.message();
   EXPECT_TRUE(panic);
   EXPECT_EQ(answer, 43);
@@ -189,14 +209,16 @@ TEST(ConfigUtilsTest, ParseMultipleParameters) {
   std::string str1;
   std::string str2;
   s = ParseNameValues("baz:hello world;fry:multiple spaces in this one",
-                      {{"baz", SetString(&str1)}, {"fry", SetString(&str2)}});
+                      {{.name = "baz", .set_value = SetString(&str1)},
+                       {.name = "fry", .set_value = SetString(&str2)}});
   EXPECT_TRUE(s.ok());
   EXPECT_EQ(str1, "hello world");
   EXPECT_EQ(str2, "multiple spaces in this one");
 
   std::unique_ptr<re2::RE2> regex;
   s = ParseNameValues("baz:some text string;regex:[A-B0-9_]",
-                      {{"baz", SetString(&str1)}, {"regex", SetRegex(&regex)}});
+                      {{.name = "baz", .set_value = SetString(&str1)},
+                       {.name = "regex", .set_value = SetRegex(&regex)}});
   EXPECT_TRUE(s.ok());
   EXPECT_EQ(str1, "some text string");
   EXPECT_EQ(regex->pattern(), "[A-B0-9_]");
@@ -206,20 +228,23 @@ TEST(ConfigUtilsTest, AllowTrailingOrLeadingSemicolons) {
   absl::Status s;
   int answer;
   bool panic;
-  s = ParseNameValues("answer:42;panic:off;", {{"answer", SetInt(&answer)},
-                                               {"panic", SetBool(&panic)}});
+  s = ParseNameValues("answer:42;panic:off;",
+                      {{.name = "answer", .set_value = SetInt(&answer)},
+                       {.name = "panic", .set_value = SetBool(&panic)}});
   EXPECT_TRUE(s.ok());
   EXPECT_FALSE(panic);
   EXPECT_EQ(answer, 42);
 
-  s = ParseNameValues(";answer:43;panic:on", {{"answer", SetInt(&answer)},
-                                              {"panic", SetBool(&panic)}});
+  s = ParseNameValues(";answer:43;panic:on",
+                      {{.name = "answer", .set_value = SetInt(&answer)},
+                       {.name = "panic", .set_value = SetBool(&panic)}});
   EXPECT_TRUE(s.ok()) << s.message();
   EXPECT_TRUE(panic);
   EXPECT_EQ(answer, 43);
 
-  s = ParseNameValues(";answer:44;panic:on;", {{"answer", SetInt(&answer)},
-                                               {"panic", SetBool(&panic)}});
+  s = ParseNameValues(";answer:44;panic:on;",
+                      {{.name = "answer", .set_value = SetInt(&answer)},
+                       {.name = "panic", .set_value = SetBool(&panic)}});
   EXPECT_TRUE(s.ok()) << s.message();
   EXPECT_TRUE(panic);
   EXPECT_EQ(answer, 44);

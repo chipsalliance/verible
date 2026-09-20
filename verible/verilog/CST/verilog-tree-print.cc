@@ -43,7 +43,9 @@ VerilogPrettyPrinter::VerilogPrettyPrinter(std::ostream *output_stream,
 
 void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeLeaf &leaf) {
   auto_indent() << "Leaf @" << child_rank_ << ' '
-                << verible::TokenWithContext{leaf.get(), context_} << std::endl;
+                << verible::TokenWithContext{.token = leaf.get(),
+                                             .context = context_}
+                << std::endl;
 }
 
 void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeNode &node) {

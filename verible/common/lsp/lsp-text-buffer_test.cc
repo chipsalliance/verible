@@ -95,8 +95,8 @@ TEST(TextBufferTest, ChangeApplySingleLine_Insert) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 6},
-              .end = {0, 6},
+              .start = {.line = 0, .character = 6},
+              .end = {.line = 0, .character = 6},
           },
       .has_range = true,
       .text = "brave ",
@@ -113,8 +113,8 @@ TEST(TextBufferTest, ChangeApplySingleLineWithUTF8Characters_Insert) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 6},
-              .end = {0, 6},
+              .start = {.line = 0, .character = 6},
+              .end = {.line = 0, .character = 6},
           },
       .has_range = true,
       .text = "brave ",
@@ -131,8 +131,8 @@ TEST(TextBufferTest, ChangeApplySingleLine_InsertFromEmptyFile) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 0},
-              .end = {0, 0},
+              .start = {.line = 0, .character = 0},
+              .end = {.line = 0, .character = 0},
           },
       .has_range = true,
       .text = "New File!",
@@ -148,8 +148,8 @@ TEST(TextBufferTest, ChangeApplySingleLine_Replace) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 6},
-              .end = {0, 11},
+              .start = {.line = 0, .character = 6},
+              .end = {.line = 0, .character = 11},
           },
       .has_range = true,
       .text = "Planet",
@@ -164,8 +164,8 @@ TEST(TextBufferTest, ChangeApplySingleLineWihtUTF8Characters_Replace) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 6},
-              .end = {0, 14},
+              .start = {.line = 0, .character = 6},
+              .end = {.line = 0, .character = 14},
           },
       .has_range = true,
       .text = "brandgefahr",
@@ -182,8 +182,8 @@ TEST(TextBufferTest, ChangeApplySingleLine_ReplaceNotFirstLine) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {1, 0},
-              .end = {1, 3},
+              .start = {.line = 1, .character = 0},
+              .end = {.line = 1, .character = 3},
           },
       .has_range = true,
       .text = "Bar",
@@ -199,8 +199,8 @@ TEST(TextBufferTest, ChangeApplySingleLine_Erase) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 5},
-              .end = {0, 11},
+              .start = {.line = 0, .character = 5},
+              .end = {.line = 0, .character = 11},
           },
       .has_range = true,
       .text = "",
@@ -216,7 +216,9 @@ TEST(TextBufferTest, ChangeApplySingleLine_ReplaceCorrectOverlongEnd) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 6}, .end = {0, 42},  // Too long end shall be trimmed
+              .start = {.line = 0, .character = 6},
+              .end = {.line = 0,
+                      .character = 42},  // Too long end shall be trimmed
           },
       .has_range = true,
       .text = "Planet",
@@ -243,8 +245,8 @@ TEST(TextBufferTest, ChangeApplyMultiLine_EraseBetweenLines) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 2},  // From here to end of line
-              .end = {1, 0},
+              .start = {.line = 0, .character = 2},  // From here to end of line
+              .end = {.line = 1, .character = 0},
           },
       .has_range = true,
       .text = "y ",
@@ -261,8 +263,8 @@ TEST(TextBufferTest, ChangeApplyMultiLineWithUTF8Characters_Modify) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 6},  // From here to end of line
-              .end = {1, 4},
+              .start = {.line = 0, .character = 6},  // From here to end of line
+              .end = {.line = 1, .character = 4},
           },
       .has_range = true,
       .text = "brand-\ngefahr",
@@ -278,8 +280,8 @@ TEST(TextBufferTest, ChangeApplyMultiLine_InsertMoreLines) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 2},  // From here to end of line
-              .end = {1, 5},
+              .start = {.line = 0, .character = 2},  // From here to end of line
+              .end = {.line = 1, .character = 5},
           },
       .has_range = true,
       .text = "y!\nThis will be a new line\nand more in this",
@@ -300,8 +302,8 @@ TEST(TextBufferTest, ChangeApplyMultiLine_InsertFromStart) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {0, 0},
-              .end = {0, 0},
+              .start = {.line = 0, .character = 0},
+              .end = {.line = 0, .character = 0},
           },
       .has_range = true,
       .text = "This is now\na multiline\nfile\n",
@@ -320,8 +322,8 @@ TEST(TextBufferTest, ChangeApplyMultiLine_RemoveLines) {
   const TextDocumentContentChangeEvent change = {
       .range =
           {
-              .start = {1, 0},
-              .end = {3, 0},
+              .start = {.line = 1, .character = 0},
+              .end = {.line = 3, .character = 0},
           },
       .has_range = true,
       .text = "",

@@ -103,11 +103,12 @@ absl::Status ProperParameterDeclarationRule::Configure(
     std::string_view configuration) {
   using verible::config::SetBool;
   auto status = verible::ParseNameValues(
-      configuration,
-      {
-          {"package_allow_parameter", SetBool(&package_allow_parameter_)},
-          {"package_allow_localparam", SetBool(&package_allow_localparam_)},
-      });
+      configuration, {
+                         {.name = "package_allow_parameter",
+                          .set_value = SetBool(&package_allow_parameter_)},
+                         {.name = "package_allow_localparam",
+                          .set_value = SetBool(&package_allow_localparam_)},
+                     });
 
   ChooseMessagesForConfiguration();
   return status;

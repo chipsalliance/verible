@@ -290,8 +290,8 @@ SymbolTableHandler::GetTokenInfoAtTextDocumentPosition(
             << params.textDocument.uri;
     return {};
   }
-  const verible::LineColumn cursor{params.position.line,
-                                   params.position.character};
+  const verible::LineColumn cursor{.line = params.position.line,
+                                   .column = params.position.character};
   const verible::TextStructureView &text = parsedbuffer->parser().Data();
   const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
   return cursor_token;
@@ -313,8 +313,8 @@ SymbolTableHandler::GetTokenAtTextDocumentPosition(
             << params.textDocument.uri;
     return {};
   }
-  const verible::LineColumn cursor{params.position.line,
-                                   params.position.character};
+  const verible::LineColumn cursor{.line = params.position.line,
+                                   .column = params.position.character};
   const verible::TextStructureView &text = parsedbuffer->parser().Data();
 
   return text.FindTokenAt(cursor);
@@ -337,8 +337,9 @@ SymbolTableHandler::GetTokenRangeAtTextDocumentPosition(
             << document_cursor.textDocument.uri;
     return {};
   }
-  const verible::LineColumn cursor{document_cursor.position.line,
-                                   document_cursor.position.character};
+  const verible::LineColumn cursor{
+      .line = document_cursor.position.line,
+      .column = document_cursor.position.character};
   const verible::TextStructureView &text = parsedbuffer->parser().Data();
 
   const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);

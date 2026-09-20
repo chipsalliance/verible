@@ -162,7 +162,8 @@ TEST(FindAllFunctionPrototypesTest, Various) {
           headers.reserve(protos.size());
           for (const auto &proto : protos) {
             headers.push_back(TreeSearchMatch{
-                GetFunctionPrototypeHeader(*proto.match), /* no context */});
+                .match = GetFunctionPrototypeHeader(*proto.match),
+                /* no context */});
           }
           return headers;
         });
@@ -206,7 +207,8 @@ TEST(FunctionPrototypesReturnTypesTest, Various) {
                 *GetFunctionPrototypeHeader(*proto.match));
             if (return_type == nullptr) continue;
             if (verible::StringSpanOfSymbol(*return_type).empty()) continue;
-            returns.push_back(TreeSearchMatch{return_type, /* no context */});
+            returns.push_back(
+                TreeSearchMatch{.match = return_type, /* no context */});
           }
           return returns;
         });
@@ -254,7 +256,7 @@ TEST(FunctionPrototypesIdsTest, Various) {
                 GetFunctionHeaderId(*GetFunctionPrototypeHeader(*proto.match));
             if (id == nullptr) continue;
             if (verible::StringSpanOfSymbol(*id).empty()) continue;
-            ids.push_back(TreeSearchMatch{id, /* no context */});
+            ids.push_back(TreeSearchMatch{.match = id, /* no context */});
           }
           return ids;
         });
@@ -346,8 +348,9 @@ TEST(GetFunctionHeaderTest, DeclarationHeader) {
           std::vector<TreeSearchMatch> headers;
           for (const auto &decl : function_declarations) {
             const auto &function_node = SymbolCastToNode(*decl.match);
-            headers.push_back(TreeSearchMatch{GetFunctionHeader(function_node),
-                                              /* no context */});
+            headers.push_back(TreeSearchMatch{
+                .match = GetFunctionHeader(function_node),
+                /* no context */});
           }
           return headers;
         });
@@ -416,7 +419,8 @@ TEST(GetFunctionIdTest, UnqualifiedIds) {
             const auto *function_id = GetFunctionId(function_node);
             for (const auto &id : FindAllUnqualifiedIds(*function_id)) {
               const verible::SyntaxTreeLeaf *base = GetIdentifier(*id.match);
-              got_ids.push_back(TreeSearchMatch{base, /* empty context */});
+              got_ids.push_back(
+                  TreeSearchMatch{.match = base, /* empty context */});
             }
           }
           return got_ids;
@@ -488,7 +492,8 @@ TEST(GetFunctionReturnTypeTest, VariousReturnTypes) {
             const auto return_type_span =
                 verible::StringSpanOfSymbol(*return_type);
             if (!return_type_span.empty()) {
-              returns.push_back(TreeSearchMatch{return_type, /* no context */});
+              returns.push_back(
+                  TreeSearchMatch{.match = return_type, /* no context */});
             }
           }
           return returns;
@@ -530,7 +535,8 @@ TEST(GetFunctionFormalPortsGroupTest, MixedFormalPorts) {
             const auto port_formals_span =
                 verible::StringSpanOfSymbol(*port_formals);
             if (port_formals_span.empty()) continue;
-            ports.push_back(TreeSearchMatch{port_formals, /* no context */});
+            ports.push_back(
+                TreeSearchMatch{.match = port_formals, /* no context */});
           }
           return ports;
         });
@@ -586,7 +592,8 @@ TEST(GetFunctionHeaderTest, GetFunctionName) {
           std::vector<TreeSearchMatch> types;
           for (const auto &decl : decls) {
             const auto *type = GetFunctionName(*decl.match);
-            types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+            types.push_back(TreeSearchMatch{
+                .match = type, .context = {/* ignored context */}});
           }
           return types;
         });
@@ -617,7 +624,8 @@ TEST(GetFunctionHeaderTest, GetFunctionClassCallName) {
           for (const auto &Call : calls) {
             const auto *name =
                 GetFunctionCallNameFromCallExtension(*Call.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -664,8 +672,8 @@ TEST(GetFunctionBlockStatement, GetFunctionBody) {
           std::vector<TreeSearchMatch> functions_body;
           for (const auto &decl : decls) {
             const auto &body = GetFunctionBlockStatementList(*decl.match);
-            functions_body.push_back(
-                TreeSearchMatch{body, {/* ignored context */}});
+            functions_body.push_back(TreeSearchMatch{
+                .match = body, .context = {/* ignored context */}});
           }
           return functions_body;
         });
@@ -699,8 +707,8 @@ TEST(FunctionCallTest, GetFunctionCallName) {
             if (identifier == nullptr) {
               continue;
             }
-            identifiers.emplace_back(
-                TreeSearchMatch{identifier, {/* ignored context */}});
+            identifiers.emplace_back(TreeSearchMatch{
+                .match = identifier, .context = {/* ignored context */}});
           }
           return identifiers;
         });
@@ -750,8 +758,8 @@ TEST(FunctionCallTest, GetFunctionCallArguments) {
           std::vector<TreeSearchMatch> paren_groups;
           for (const auto &decl : instances) {
             const auto *paren_group = GetParenGroupFromCall(*decl.match);
-            paren_groups.emplace_back(
-                TreeSearchMatch{paren_group, {/* ignored context */}});
+            paren_groups.emplace_back(TreeSearchMatch{
+                .match = paren_group, .context = {/* ignored context */}});
           }
           return paren_groups;
         });
@@ -783,8 +791,8 @@ TEST(FunctionCallTest, GetFunctionCallExtensionArguments) {
           for (const auto &decl : instances) {
             const auto *paren_group =
                 GetParenGroupFromCallExtension(*decl.match);
-            paren_groups.emplace_back(
-                TreeSearchMatch{paren_group, {/* ignored context */}});
+            paren_groups.emplace_back(TreeSearchMatch{
+                .match = paren_group, .context = {/* ignored context */}});
           }
           return paren_groups;
         });
@@ -831,8 +839,8 @@ TEST(FunctionCallTest, GetConstructorNewKeyword) {
           for (const auto &decl : ctors) {
             const auto *paren_group =
                 GetConstructorPrototypeNewKeyword(*decl.match);
-            new_tokens.emplace_back(
-                TreeSearchMatch{paren_group, {/* ignored context */}});
+            new_tokens.emplace_back(TreeSearchMatch{
+                .match = paren_group, .context = {/* ignored context */}});
           }
           return new_tokens;
         });

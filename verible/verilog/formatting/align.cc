@@ -683,7 +683,7 @@ static AlignedPartitionClassification AlignClassify(
   if (match == AlignmentGroupAction::kMatch) {
     CHECK(subtype != AlignableSyntaxSubtype::kDontCare);
   }
-  return {match, static_cast<int>(subtype)};
+  return {.action = match, .match_subtype = static_cast<int>(subtype)};
 }
 
 static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
@@ -697,9 +697,9 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
         if (origin == nullptr) {
           if (SeparatorCommentsBreakGroups(boundary) &&
               IsSeparatorComment(partition)) {
-            return {AlignmentGroupAction::kNoMatch};
+            return {.action = AlignmentGroupAction::kNoMatch};
           }
-          return {AlignmentGroupAction::kIgnore};
+          return {.action = AlignmentGroupAction::kIgnore};
         }
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
@@ -738,13 +738,13 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
         if (origin == nullptr) {
           if (SeparatorCommentsBreakGroups(boundary) &&
               IsSeparatorComment(partition)) {
-            return {AlignmentGroupAction::kNoMatch};
+            return {.action = AlignmentGroupAction::kNoMatch};
           }
-          return {AlignmentGroupAction::kIgnore};
+          return {.action = AlignmentGroupAction::kIgnore};
         }
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
-          return {AlignmentGroupAction::kIgnore};
+          return {.action = AlignmentGroupAction::kIgnore};
         }
         const SyntaxTreeNode &node = verible::SymbolCastToNode(*origin);
         // Align class member variables.
@@ -766,9 +766,9 @@ static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
         if (origin == nullptr) {
           if (SeparatorCommentsBreakGroups(boundary) &&
               IsSeparatorComment(partition)) {
-            return {AlignmentGroupAction::kNoMatch};
+            return {.action = AlignmentGroupAction::kNoMatch};
           }
-          return {AlignmentGroupAction::kIgnore};
+          return {.action = AlignmentGroupAction::kIgnore};
         }
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
@@ -1437,7 +1437,9 @@ static void non_tree_column_scanner(
 
   if (!leading_tokens.empty()) {
     column_entries->Children().emplace_back(verible::ColumnPositionEntry{
-        kLeadingTokensPath, *leading_tokens.front().token, FlushLeft});
+        .path = kLeadingTokensPath,
+        .starting_token = *leading_tokens.front().token,
+        .properties = FlushLeft});
   }
 
   if (trailing_tokens.empty()) return;
@@ -1453,8 +1455,10 @@ static void non_tree_column_scanner(
   if (separator_it != trailing_tokens.end()) {
     AlignmentColumnProperties prop;
     prop.contains_delimiter = true;
-    const verible::ColumnPositionEntry column{kTrailingCommaPath,
-                                              *separator_it->token, prop};
+    const verible::ColumnPositionEntry column{
+        .path = kTrailingCommaPath,
+        .starting_token = *separator_it->token,
+        .properties = prop};
     column_entries->Children().emplace_back(column);
 
     comment_it = separator_it + 1;
@@ -1462,8 +1466,10 @@ static void non_tree_column_scanner(
   if (comment_it != trailing_tokens.end() &&
       (comment_it->token->token_enum() == TK_COMMENT_BLOCK ||
        comment_it->token->token_enum() == TK_EOL_COMMENT)) {
-    const verible::ColumnPositionEntry column{kTrailingCommentPath,
-                                              *comment_it->token, FlushLeft};
+    const verible::ColumnPositionEntry column{
+        .path = kTrailingCommentPath,
+        .starting_token = *comment_it->token,
+        .properties = FlushLeft};
     column_entries->Children().emplace_back(column);
   }
 }
@@ -1475,67 +1481,74 @@ static void non_tree_column_scanner(
 static const AlignmentHandlerMapType &AlignmentHandlerLibrary() {
   static const auto *handler_map = new AlignmentHandlerMapType{
       {AlignableSyntaxSubtype::kDataDeclaration,
-       {UnstyledAlignmentCellScannerGenerator<
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
             DataDeclarationColumnSchemaScanner>(),
-        function_from_pointer_to_member(
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::module_net_variable_alignment)}},
       {AlignableSyntaxSubtype::kNamedActualParameters,
-       {UnstyledAlignmentCellScannerGenerator<
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
             ActualNamedParameterColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::named_parameter_alignment)}},
       {AlignableSyntaxSubtype::kNamedActualPorts,
-       {UnstyledAlignmentCellScannerGenerator<
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
             ActualNamedPortColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(&FormatStyle::named_port_alignment)}},
+        .policy_func = function_from_pointer_to_member(
+            &FormatStyle::named_port_alignment)}},
       {AlignableSyntaxSubtype::kParameterDeclaration,
-       {UnstyledAlignmentCellScannerGenerator<
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
             ParameterDeclarationColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::formal_parameters_alignment)}},
       {AlignableSyntaxSubtype::kBodyParameterDeclaration,
-       {UnstyledAlignmentCellScannerGenerator<
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
             ParameterDeclarationColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::parameter_declaration_alignment)}},
       {AlignableSyntaxSubtype::kPortDeclaration,
-       {UnstyledAlignmentCellScannerGenerator<
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
             PortDeclarationColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::port_declarations_alignment)}},
       {AlignableSyntaxSubtype::kStructUnionMember,
-       {UnstyledAlignmentCellScannerGenerator<
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
             StructUnionMemberColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::struct_union_members_alignment)}},
       {AlignableSyntaxSubtype::kClassMemberVariables,
-       {UnstyledAlignmentCellScannerGenerator<
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
             ClassPropertyColumnSchemaScanner>(),
-        function_from_pointer_to_member(
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::class_member_variable_alignment)}},
       {AlignableSyntaxSubtype::kCaseLikeItems,
-       {UnstyledAlignmentCellScannerGenerator<CaseItemColumnSchemaScanner>(),
-        function_from_pointer_to_member(&FormatStyle::case_items_alignment)}},
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
+            CaseItemColumnSchemaScanner>(),
+        .policy_func = function_from_pointer_to_member(
+            &FormatStyle::case_items_alignment)}},
       {AlignableSyntaxSubtype::kContinuousAssignment,
-       {UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
-        function_from_pointer_to_member(
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
+            AssignmentColumnSchemaScanner>(),
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kBlockingAssignment,
-       {UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
-        function_from_pointer_to_member(
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
+            AssignmentColumnSchemaScanner>(),
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kNonBlockingAssignment,
-       {UnstyledAlignmentCellScannerGenerator<AssignmentColumnSchemaScanner>(),
-        function_from_pointer_to_member(
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
+            AssignmentColumnSchemaScanner>(),
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kEnumListAssignment,
-       {UnstyledAlignmentCellScannerGenerator<
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
             EnumWithAssignmentsColumnSchemaScanner>(non_tree_column_scanner),
-        function_from_pointer_to_member(
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::enum_assignment_statement_alignment)}},
       {AlignableSyntaxSubtype::kDistItem,
-       {UnstyledAlignmentCellScannerGenerator<DistItemColumnSchemaScanner>(),
-        function_from_pointer_to_member(
+       {.column_scanner_func = UnstyledAlignmentCellScannerGenerator<
+            DistItemColumnSchemaScanner>(),
+        .policy_func = function_from_pointer_to_member(
             &FormatStyle::distribution_items_alignment)}},
   };
   return *handler_map;

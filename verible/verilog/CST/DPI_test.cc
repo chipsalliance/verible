@@ -117,7 +117,8 @@ TEST(GetDPIImportPrototypeTest, Various) {
           prototypes.reserve(dpi_imports.size());
           for (const auto &dpi_import : dpi_imports) {
             prototypes.push_back(TreeSearchMatch{
-                GetDPIImportPrototype(*dpi_import.match), /* no context */});
+                .match = GetDPIImportPrototype(*dpi_import.match),
+                /* no context */});
           }
           return prototypes;
         });
