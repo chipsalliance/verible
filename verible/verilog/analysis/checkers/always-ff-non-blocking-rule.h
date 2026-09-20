@@ -67,7 +67,9 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
     size_t inherited_local_count;
   };
   std::stack<Scope, std::vector<Scope>> scopes_{
-      {{-1, 0}}  // bottom element -> the stack is never empty
+      {{.syntax_tree_depth = -1,
+        .inherited_local_count =
+            0}}  // bottom element -> the stack is never empty
   };
 
   // In-order stack of local variable names

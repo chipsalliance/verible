@@ -200,1613 +200,1759 @@ constexpr ExpectedInterTokenInfo kUnhandledSpacing{kUnhandledSpaces,
 TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
   static const AnnotateFormattingInformationTestCase kTestCases[] = {
       // (empty array of tokens)
-      {DefaultStyle, 0, {}, {}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {},
+       .input_tokens = {}},
 
       // //comment1
       // //comment2
-      {DefaultStyle,
-       0,
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
        // ExpectedInterTokenInfo:
        // spaces_required, break_decision
-       {{0, SpacingOptions::kUndecided},  //
-        {2, SpacingOptions::kMustWrap}},
-       {{verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
-        {verilog_tokentype::TK_EOL_COMMENT, "//comment2"}}},
+       .expected_calculations = {{0, SpacingOptions::kUndecided},  //
+                                 {2, SpacingOptions::kMustWrap}},
+       .input_tokens = {{verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
+                        {verilog_tokentype::TK_EOL_COMMENT, "//comment2"}}},
 
       // If there is no newline before comment, it will be appended
       // (  //comment
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},  //
-        {2, SpacingOptions::kMustAppend}},
-       {{'(', "("}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},  //
+                                 {2, SpacingOptions::kMustAppend}},
+       .input_tokens = {{'(', "("},
+                        {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
 
       // [  //comment
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},  //
-        {2, SpacingOptions::kMustAppend}},
-       {{'[', "["}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},  //
+                                 {2, SpacingOptions::kMustAppend}},
+       .input_tokens = {{'[', "["},
+                        {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
 
       // {  //comment
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},  //
-        {2, SpacingOptions::kMustAppend}},
-       {{'{', "{"}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},  //
+                                 {2, SpacingOptions::kMustAppend}},
+       .input_tokens = {{'{', "{"},
+                        {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
 
       // ,  //comment
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},  //
-        {2, SpacingOptions::kMustAppend}},
-       {{',', ","}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},  //
+                                 {2, SpacingOptions::kMustAppend}},
+       .input_tokens = {{',', ","},
+                        {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
 
       // ;  //comment
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},  //
-        {2, SpacingOptions::kMustAppend}},
-       {{';', ";"}, {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},  //
+                                 {2, SpacingOptions::kMustAppend}},
+       .input_tokens = {{';', ";"},
+                        {verilog_tokentype::TK_EOL_COMMENT, "//comment"}}},
 
       // module foo();
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_module, "module"},
-        {verilog_tokentype::SymbolIdentifier, "foo"},
-        {'(', "("},
-        {')', ")"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_module, "module"},
+                        {verilog_tokentype::SymbolIdentifier, "foo"},
+                        {'(', "("},
+                        {')', ")"},
+                        {';', ";"}}},
 
       // module foo(a, b);
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},  // "a"
-        {0, SpacingOptions::kUndecided},  // ','
-        {1, SpacingOptions::kUndecided},  // "b"
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_module, "module"},
-        {verilog_tokentype::SymbolIdentifier, "foo"},
-        {'(', "("},
-        {verilog_tokentype::SymbolIdentifier, "a"},
-        {',', ","},
-        {verilog_tokentype::SymbolIdentifier, "b"},
-        {')', ")"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},  // "a"
+                                 {0, SpacingOptions::kUndecided},  // ','
+                                 {1, SpacingOptions::kUndecided},  // "b"
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_module, "module"},
+                        {verilog_tokentype::SymbolIdentifier, "foo"},
+                        {'(', "("},
+                        {verilog_tokentype::SymbolIdentifier, "a"},
+                        {',', ","},
+                        {verilog_tokentype::SymbolIdentifier, "b"},
+                        {')', ")"},
+                        {';', ";"}}},
 
       // module with_params #() ();
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},   // with_params
-        {1, SpacingOptions::kUndecided},   // #
-        {0, SpacingOptions::kMustAppend},  // (
-        {0, SpacingOptions::kUndecided},   // )
-        {1, SpacingOptions::kUndecided},   // (
-        {0, SpacingOptions::kUndecided},   // )
-        {0, SpacingOptions::kUndecided}},  // ;
-       {{verilog_tokentype::TK_module, "module"},
-        {verilog_tokentype::SymbolIdentifier, "with_params"},
-        {'#', "#"},
-        {'(', "("},
-        {')', ")"},
-        {'(', "("},
-        {')', ")"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1,
+                                  SpacingOptions::kUndecided},  // with_params
+                                 {1, SpacingOptions::kUndecided},   // #
+                                 {0, SpacingOptions::kMustAppend},  // (
+                                 {0, SpacingOptions::kUndecided},   // )
+                                 {1, SpacingOptions::kUndecided},   // (
+                                 {0, SpacingOptions::kUndecided},   // )
+                                 {0, SpacingOptions::kUndecided}},  // ;
+       .input_tokens = {{verilog_tokentype::TK_module, "module"},
+                        {verilog_tokentype::SymbolIdentifier, "with_params"},
+                        {'#', "#"},
+                        {'(', "("},
+                        {')', ")"},
+                        {'(', "("},
+                        {')', ")"},
+                        {';', ";"}}},
 
       // a = b[c];
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "a"},
-        {'=', "="},
-        {verilog_tokentype::SymbolIdentifier, "b"},
-        {'[', "["},
-        {verilog_tokentype::SymbolIdentifier, "c"},
-        {']', "]"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "a"},
+                        {'=', "="},
+                        {verilog_tokentype::SymbolIdentifier, "b"},
+                        {'[', "["},
+                        {verilog_tokentype::SymbolIdentifier, "c"},
+                        {']', "]"},
+                        {';', ";"}}},
 
       // b[c][d] (multi-dimensional spacing)
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "b"},
-        {'[', "["},
-        {verilog_tokentype::SymbolIdentifier, "c"},
-        {']', "]"},
-        {'[', "["},
-        {verilog_tokentype::SymbolIdentifier, "d"},
-        {']', "]"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "b"},
+                        {'[', "["},
+                        {verilog_tokentype::SymbolIdentifier, "c"},
+                        {']', "]"},
+                        {'[', "["},
+                        {verilog_tokentype::SymbolIdentifier, "d"},
+                        {']', "]"}}},
 
       // always @(posedge clk)
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},   // always
-        {1, SpacingOptions::kUndecided},   // @
-        {0, SpacingOptions::kUndecided},   // (
-        {0, SpacingOptions::kUndecided},   // posedge
-        {1, SpacingOptions::kUndecided},   // clk
-        {0, SpacingOptions::kUndecided}},  // )
-       {{verilog_tokentype::TK_always, "always"},
-        {'@', "@"},
-        {'(', "("},
-        {verilog_tokentype::TK_posedge, "TK_posedge"},
-        {verilog_tokentype::SymbolIdentifier, "clk"},
-        {')', ")"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},   // always
+                                 {1, SpacingOptions::kUndecided},   // @
+                                 {0, SpacingOptions::kUndecided},   // (
+                                 {0, SpacingOptions::kUndecided},   // posedge
+                                 {1, SpacingOptions::kUndecided},   // clk
+                                 {0, SpacingOptions::kUndecided}},  // )
+       .input_tokens = {{verilog_tokentype::TK_always, "always"},
+                        {'@', "@"},
+                        {'(', "("},
+                        {verilog_tokentype::TK_posedge, "TK_posedge"},
+                        {verilog_tokentype::SymbolIdentifier, "clk"},
+                        {')', ")"}}},
 
       // `WIDTH'(s) (casting operator)
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::MacroIdItem, "`WIDTH"},
-        {'\'', "'"},
-        {'(', "("},
-        {verilog_tokentype::SymbolIdentifier, "s"},
-        {')', ")"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::MacroIdItem, "`WIDTH"},
+                        {'\'', "'"},
+                        {'(', "("},
+                        {verilog_tokentype::SymbolIdentifier, "s"},
+                        {')', ")"}}},
 
       // string'(s) (casting operator)
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_string, "string"},
-        {'\'', "'"},
-        {'(', "("},
-        {verilog_tokentype::SymbolIdentifier, "s"},
-        {')', ")"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_string, "string"},
+                        {'\'', "'"},
+                        {'(', "("},
+                        {verilog_tokentype::SymbolIdentifier, "s"},
+                        {')', ")"}}},
 
       // void'(f()) (casting operator)
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_void, "void"},
-        {'\'', "'"},
-        {'(', "("},
-        {verilog_tokentype::SymbolIdentifier, "f"},
-        {'(', "("},
-        {')', ")"},
-        {')', ")"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_void, "void"},
+                        {'\'', "'"},
+                        {'(', "("},
+                        {verilog_tokentype::SymbolIdentifier, "f"},
+                        {'(', "("},
+                        {')', ")"},
+                        {')', ")"}}},
 
       // 12'{34}
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_DecNumber, "12"},
-        {'\'', "'"},
-        {'{', "{"},
-        {verilog_tokentype::TK_DecNumber, "34"},
-        {'}', "}"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_DecNumber, "12"},
+                        {'\'', "'"},
+                        {'{', "{"},
+                        {verilog_tokentype::TK_DecNumber, "34"},
+                        {'}', "}"}}},
 
       // k()'(s) (casting operator)
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "k"},
-        {'(', "("},
-        {')', ")"},
-        {'\'', "'"},
-        {'(', "("},
-        {verilog_tokentype::SymbolIdentifier, "s"},
-        {')', ")"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "k"},
+                        {'(', "("},
+                        {')', ")"},
+                        {'\'', "'"},
+                        {'(', "("},
+                        {verilog_tokentype::SymbolIdentifier, "s"},
+                        {')', ")"}}},
 
       // #1 $display
       {
-          DefaultStyle,
-          0,
-          {{0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kMustAppend},
-           {1, SpacingOptions::kUndecided}},
-          {{'#', "#"},
-           {verilog_tokentype::TK_DecNumber, "1"},
-           {verilog_tokentype::SystemTFIdentifier, "$display"}},
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                    {0, SpacingOptions::kMustAppend},
+                                    {1, SpacingOptions::kUndecided}},
+          .input_tokens = {{'#', "#"},
+                           {verilog_tokentype::TK_DecNumber, "1"},
+                           {verilog_tokentype::SystemTFIdentifier, "$display"}},
       },
 
       // 666 777
       {
-          DefaultStyle,
-          0,
-          {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-          {{verilog_tokentype::TK_DecNumber, "666"},
-           {verilog_tokentype::TK_DecNumber, "777"}},
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                    {1, SpacingOptions::kUndecided}},
+          .input_tokens = {{verilog_tokentype::TK_DecNumber, "666"},
+                           {verilog_tokentype::TK_DecNumber, "777"}},
       },
 
       // 5678 dance
       {
-          DefaultStyle,
-          0,
-          {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-          {{verilog_tokentype::TK_DecNumber, "5678"},
-           {verilog_tokentype::SymbolIdentifier, "dance"}},
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                    {1, SpacingOptions::kUndecided}},
+          .input_tokens = {{verilog_tokentype::TK_DecNumber, "5678"},
+                           {verilog_tokentype::SymbolIdentifier, "dance"}},
       },
 
       // id 4321
       {
-          DefaultStyle,
-          0,
-          {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-          {{verilog_tokentype::SymbolIdentifier, "id"},
-           {verilog_tokentype::TK_DecNumber, "4321"}},
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                    {1, SpacingOptions::kUndecided}},
+          .input_tokens = {{verilog_tokentype::SymbolIdentifier, "id"},
+                           {verilog_tokentype::TK_DecNumber, "4321"}},
       },
 
       // id1 id2
       {
-          DefaultStyle,
-          0,
-          {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-          {{verilog_tokentype::SymbolIdentifier, "id1"},
-           {verilog_tokentype::SymbolIdentifier, "id2"}},
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                    {1, SpacingOptions::kUndecided}},
+          .input_tokens = {{verilog_tokentype::SymbolIdentifier, "id1"},
+                           {verilog_tokentype::SymbolIdentifier, "id2"}},
       },
 
       // class mate
       {
-          DefaultStyle,
-          0,
-          {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-          {{verilog_tokentype::TK_class, "class"},
-           {verilog_tokentype::SymbolIdentifier, "mate"}},
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                    {1, SpacingOptions::kUndecided}},
+          .input_tokens = {{verilog_tokentype::TK_class, "class"},
+                           {verilog_tokentype::SymbolIdentifier, "mate"}},
       },
 
       // id module
       {
-          DefaultStyle,
-          0,
-          {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-          {{verilog_tokentype::SymbolIdentifier, "lunar"},
-           {verilog_tokentype::TK_module, "module"}},
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                    {1, SpacingOptions::kUndecided}},
+          .input_tokens = {{verilog_tokentype::SymbolIdentifier, "lunar"},
+                           {verilog_tokentype::TK_module, "module"}},
       },
 
       // class 1337
       {
-          DefaultStyle,
-          0,
-          {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-          {{verilog_tokentype::TK_class, "class"},
-           {verilog_tokentype::TK_DecNumber, "1337"}},
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                    {1, SpacingOptions::kUndecided}},
+          .input_tokens = {{verilog_tokentype::TK_class, "class"},
+                           {verilog_tokentype::TK_DecNumber, "1337"}},
       },
 
       // 987 module
       {
-          DefaultStyle,
-          0,
-          {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-          {{verilog_tokentype::TK_DecNumber, "987"},
-           {verilog_tokentype::TK_module, "module"}},
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                    {1, SpacingOptions::kUndecided}},
+          .input_tokens = {{verilog_tokentype::TK_DecNumber, "987"},
+                           {verilog_tokentype::TK_module, "module"}},
       },
 
       // a = 16'hf00d;
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "a"},
-        {'=', "="},
-        {verilog_tokentype::TK_DecNumber, "16"},
-        {verilog_tokentype::TK_HexBase, "'h"},
-        {verilog_tokentype::TK_HexDigits, "c0ffee"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "a"},
+                        {'=', "="},
+                        {verilog_tokentype::TK_DecNumber, "16"},
+                        {verilog_tokentype::TK_HexBase, "'h"},
+                        {verilog_tokentype::TK_HexDigits, "c0ffee"},
+                        {';', ";"}}},
 
       // a = 8'b1001_0110;
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "a"},
-        {'=', "="},
-        {verilog_tokentype::TK_DecNumber, "8"},
-        {verilog_tokentype::TK_BinBase, "'b"},
-        {verilog_tokentype::TK_BinDigits, "1001_0110"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "a"},
+                        {'=', "="},
+                        {verilog_tokentype::TK_DecNumber, "8"},
+                        {verilog_tokentype::TK_BinBase, "'b"},
+                        {verilog_tokentype::TK_BinDigits, "1001_0110"},
+                        {';', ";"}}},
 
       // a = 4'd10;
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "a"},
-        {'=', "="},
-        {verilog_tokentype::TK_DecNumber, "4"},
-        {verilog_tokentype::TK_DecBase, "'d"},
-        {verilog_tokentype::TK_DecDigits, "10"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "a"},
+                        {'=', "="},
+                        {verilog_tokentype::TK_DecNumber, "4"},
+                        {verilog_tokentype::TK_DecBase, "'d"},
+                        {verilog_tokentype::TK_DecDigits, "10"},
+                        {';', ";"}}},
 
       // a = 8'o100;
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "a"},
-        {'=', "="},
-        {verilog_tokentype::TK_DecNumber, "8"},
-        {verilog_tokentype::TK_OctBase, "'o"},
-        {verilog_tokentype::TK_OctDigits, "100"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "a"},
+                        {'=', "="},
+                        {verilog_tokentype::TK_DecNumber, "8"},
+                        {verilog_tokentype::TK_OctBase, "'o"},
+                        {verilog_tokentype::TK_OctDigits, "100"},
+                        {';', ";"}}},
 
       // a = 'hc0ffee;
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "a"},
-        {'=', "="},
-        {verilog_tokentype::TK_HexBase, "'h"},
-        {verilog_tokentype::TK_HexDigits, "c0ffee"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "a"},
+                        {'=', "="},
+                        {verilog_tokentype::TK_HexBase, "'h"},
+                        {verilog_tokentype::TK_HexDigits, "c0ffee"},
+                        {';', ";"}}},
 
       // a = funk('b0, 'd'8);
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "a"},
-        {'=', "="},
-        {verilog_tokentype::SymbolIdentifier, "funk"},
-        {'(', "("},
-        {verilog_tokentype::TK_BinBase, "'b"},
-        {verilog_tokentype::TK_BinDigits, "0"},
-        {',', ","},
-        {verilog_tokentype::TK_DecBase, "'d"},
-        {verilog_tokentype::TK_DecDigits, "8"},
-        {')', ")"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "a"},
+                        {'=', "="},
+                        {verilog_tokentype::SymbolIdentifier, "funk"},
+                        {'(', "("},
+                        {verilog_tokentype::TK_BinBase, "'b"},
+                        {verilog_tokentype::TK_BinDigits, "0"},
+                        {',', ","},
+                        {verilog_tokentype::TK_DecBase, "'d"},
+                        {verilog_tokentype::TK_DecDigits, "8"},
+                        {')', ")"},
+                        {';', ";"}}},
 
       // a = 'b0 + 'd9;
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "a"},
-        {'=', "="},
-        {verilog_tokentype::TK_BinBase, "'b"},
-        {verilog_tokentype::TK_BinDigits, "0"},
-        {'+', "+"},
-        {verilog_tokentype::TK_DecBase, "'d"},
-        {verilog_tokentype::TK_DecDigits, "9"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "a"},
+                        {'=', "="},
+                        {verilog_tokentype::TK_BinBase, "'b"},
+                        {verilog_tokentype::TK_BinDigits, "0"},
+                        {'+', "+"},
+                        {verilog_tokentype::TK_DecBase, "'d"},
+                        {verilog_tokentype::TK_DecDigits, "9"},
+                        {';', ";"}}},
 
       // a = {3{4'd9, 1'bz}};
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},  //  3
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kUndecided},  //  ,
-        {1, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kMustAppend},
-        {0, SpacingOptions::kMustAppend},  //  z
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided},
-        {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::SymbolIdentifier, "a"},
-        {'=', "="},
-        {'{', "{"},
-        {verilog_tokentype::TK_DecDigits, "3"},
-        {'{', "{"},
-        {verilog_tokentype::TK_DecDigits, "4"},
-        {verilog_tokentype::TK_DecBase, "'d"},
-        {verilog_tokentype::TK_DecDigits, "9"},
-        {',', ","},
-        {verilog_tokentype::TK_DecDigits, "1"},
-        {verilog_tokentype::TK_BinBase, "'b"},
-        {verilog_tokentype::TK_XZDigits, "z"},
-        {'}', "}"},
-        {'}', "}"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},  //  3
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kUndecided},  //  ,
+                                 {1, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kMustAppend},
+                                 {0, SpacingOptions::kMustAppend},  //  z
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "a"},
+                        {'=', "="},
+                        {'{', "{"},
+                        {verilog_tokentype::TK_DecDigits, "3"},
+                        {'{', "{"},
+                        {verilog_tokentype::TK_DecDigits, "4"},
+                        {verilog_tokentype::TK_DecBase, "'d"},
+                        {verilog_tokentype::TK_DecDigits, "9"},
+                        {',', ","},
+                        {verilog_tokentype::TK_DecDigits, "1"},
+                        {verilog_tokentype::TK_BinBase, "'b"},
+                        {verilog_tokentype::TK_XZDigits, "z"},
+                        {'}', "}"},
+                        {'}', "}"},
+                        {';', ";"}}},
 
       // a ? b : c
       // (test cases around ':' are handled in context-sensitive section)
       {
-          DefaultStyle,
-          0,
-          {
-              {0, SpacingOptions::kUndecided},  //  a
-              {1, SpacingOptions::kUndecided},  //  ?
-              {1, SpacingOptions::kUndecided},  //  b
-          },
-          {
-              {verilog_tokentype::SymbolIdentifier, "a"},
-              {'?', "?"},
-              {verilog_tokentype::SymbolIdentifier, "b"},
-          },
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations =
+              {
+                  {0, SpacingOptions::kUndecided},  //  a
+                  {1, SpacingOptions::kUndecided},  //  ?
+                  {1, SpacingOptions::kUndecided},  //  b
+              },
+          .input_tokens =
+              {
+                  {verilog_tokentype::SymbolIdentifier, "a"},
+                  {'?', "?"},
+                  {verilog_tokentype::SymbolIdentifier, "b"},
+              },
       },
 
       // 1 ? 2 : 3
       {
-          DefaultStyle,
-          0,
-          {
-              {0, SpacingOptions::kUndecided},  //  1
-              {1, SpacingOptions::kUndecided},  //  ?
-              {1, SpacingOptions::kUndecided},  //  2
-          },
-          {
-              {verilog_tokentype::TK_DecNumber, "1"},
-              {'?', "?"},
-              {verilog_tokentype::TK_DecNumber, "2"},
-          },
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations =
+              {
+                  {0, SpacingOptions::kUndecided},  //  1
+                  {1, SpacingOptions::kUndecided},  //  ?
+                  {1, SpacingOptions::kUndecided},  //  2
+              },
+          .input_tokens =
+              {
+                  {verilog_tokentype::TK_DecNumber, "1"},
+                  {'?', "?"},
+                  {verilog_tokentype::TK_DecNumber, "2"},
+              },
       },
 
       // "1" ? "2" : "3"
       {
-          DefaultStyle,
-          0,
-          {
-              {0, SpacingOptions::kUndecided},  //  "1"
-              {1, SpacingOptions::kUndecided},  //  ?
-              {1, SpacingOptions::kUndecided},  //  "2"
-          },
-          {
-              {verilog_tokentype::TK_StringLiteral, "1"},
-              {'?', "?"},
-              {verilog_tokentype::TK_StringLiteral, "2"},
-          },
+          .style = DefaultStyle,
+          .uwline_indentation = 0,
+          .expected_calculations =
+              {
+                  {0, SpacingOptions::kUndecided},  //  "1"
+                  {1, SpacingOptions::kUndecided},  //  ?
+                  {1, SpacingOptions::kUndecided},  //  "2"
+              },
+          .input_tokens =
+              {
+                  {verilog_tokentype::TK_StringLiteral, "1"},
+                  {'?', "?"},
+                  {verilog_tokentype::TK_StringLiteral, "2"},
+              },
       },
 
       // b ? 8'o100 : '0;
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},   //  b
-        {1, SpacingOptions::kUndecided},   //  ?
-        {1, SpacingOptions::kUndecided},   //  8
-        {0, SpacingOptions::kMustAppend},  //  'o
-        {0, SpacingOptions::kMustAppend},  //  100
-        kUnhandledSpacing,                 //  :
-        {1, SpacingOptions::kUndecided},   //  '0
-        {0, SpacingOptions::kUndecided}},  //  ;
-       {{verilog_tokentype::SymbolIdentifier, "b"},
-        {'?', "?"},
-        {verilog_tokentype::TK_DecNumber, "8"},
-        {verilog_tokentype::TK_OctBase, "'o"},
-        {verilog_tokentype::TK_OctDigits, "100"},
-        {':', ":"},
-        {verilog_tokentype::TK_UnBasedNumber, "'0"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},   //  b
+                                 {1, SpacingOptions::kUndecided},   //  ?
+                                 {1, SpacingOptions::kUndecided},   //  8
+                                 {0, SpacingOptions::kMustAppend},  //  'o
+                                 {0, SpacingOptions::kMustAppend},  //  100
+                                 kUnhandledSpacing,                 //  :
+                                 {1, SpacingOptions::kUndecided},   //  '0
+                                 {0, SpacingOptions::kUndecided}},  //  ;
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "b"},
+                        {'?', "?"},
+                        {verilog_tokentype::TK_DecNumber, "8"},
+                        {verilog_tokentype::TK_OctBase, "'o"},
+                        {verilog_tokentype::TK_OctDigits, "100"},
+                        {':', ":"},
+                        {verilog_tokentype::TK_UnBasedNumber, "'0"},
+                        {';', ";"}}},
 
       // a = (b + c);
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},   // a
-        {1, SpacingOptions::kUndecided},   // =
-        {1, SpacingOptions::kUndecided},   // (
-        {0, SpacingOptions::kUndecided},   // b
-        {1, SpacingOptions::kUndecided},   // +
-        {1, SpacingOptions::kUndecided},   // c
-        {0, SpacingOptions::kUndecided},   // )
-        {0, SpacingOptions::kUndecided}},  // ;
-       {{verilog_tokentype::SymbolIdentifier, "a"},
-        {'=', "="},
-        {'(', "("},
-        {verilog_tokentype::SymbolIdentifier, "b"},
-        {'+', "+"},
-        {verilog_tokentype::SymbolIdentifier, "c"},
-        {')', ")"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},   // a
+                                 {1, SpacingOptions::kUndecided},   // =
+                                 {1, SpacingOptions::kUndecided},   // (
+                                 {0, SpacingOptions::kUndecided},   // b
+                                 {1, SpacingOptions::kUndecided},   // +
+                                 {1, SpacingOptions::kUndecided},   // c
+                                 {0, SpacingOptions::kUndecided},   // )
+                                 {0, SpacingOptions::kUndecided}},  // ;
+       .input_tokens = {{verilog_tokentype::SymbolIdentifier, "a"},
+                        {'=', "="},
+                        {'(', "("},
+                        {verilog_tokentype::SymbolIdentifier, "b"},
+                        {'+', "+"},
+                        {verilog_tokentype::SymbolIdentifier, "c"},
+                        {')', ")"},
+                        {';', ";"}}},
 
       // function foo(name = "foo");
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},   //  function
-        {1, SpacingOptions::kUndecided},   //  foo
-        {0, SpacingOptions::kUndecided},   //  (
-        {0, SpacingOptions::kUndecided},   //  name
-        {1, SpacingOptions::kUndecided},   //  =
-        {1, SpacingOptions::kUndecided},   //  "foo"
-        {0, SpacingOptions::kUndecided},   //  )
-        {0, SpacingOptions::kUndecided}},  //  ;
-       {{verilog_tokentype::TK_function, "function"},
-        {verilog_tokentype::SymbolIdentifier, "foo"},
-        {'(', "("},
-        {verilog_tokentype::SymbolIdentifier, "name"},
-        {'=', "="},
-        {verilog_tokentype::TK_StringLiteral, "\"foo\""},
-        {')', ")"},
-        {';', ";"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},   //  function
+                                 {1, SpacingOptions::kUndecided},   //  foo
+                                 {0, SpacingOptions::kUndecided},   //  (
+                                 {0, SpacingOptions::kUndecided},   //  name
+                                 {1, SpacingOptions::kUndecided},   //  =
+                                 {1, SpacingOptions::kUndecided},   //  "foo"
+                                 {0, SpacingOptions::kUndecided},   //  )
+                                 {0, SpacingOptions::kUndecided}},  //  ;
+       .input_tokens = {{verilog_tokentype::TK_function, "function"},
+                        {verilog_tokentype::SymbolIdentifier, "foo"},
+                        {'(', "("},
+                        {verilog_tokentype::SymbolIdentifier, "name"},
+                        {'=', "="},
+                        {verilog_tokentype::TK_StringLiteral, "\"foo\""},
+                        {')', ")"},
+                        {';', ";"}}},
 
       // `define FOO(name = "bar")
-      {DefaultStyle,
-       0,
-       {{0, SpacingOptions::kUndecided},   //  `define
-        {1, SpacingOptions::kMustAppend},  //  FOO
-        {0, SpacingOptions::kUndecided},   //  (
-        {0, SpacingOptions::kUndecided},   //  name
-        {1, SpacingOptions::kUndecided},   //  =
-        {1, SpacingOptions::kUndecided},   //  "bar"
-        {0, SpacingOptions::kUndecided}},  //  )
-       {{verilog_tokentype::PP_define, "`define"},
-        {verilog_tokentype::SymbolIdentifier, "FOO"},
-        {'(', "("},
-        {verilog_tokentype::SymbolIdentifier, "name"},
-        {'=', "="},
-        {verilog_tokentype::TK_StringLiteral, "\"bar\""},
-        {')', ")"}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},   //  `define
+                                 {1, SpacingOptions::kMustAppend},  //  FOO
+                                 {0, SpacingOptions::kUndecided},   //  (
+                                 {0, SpacingOptions::kUndecided},   //  name
+                                 {1, SpacingOptions::kUndecided},   //  =
+                                 {1, SpacingOptions::kUndecided},   //  "bar"
+                                 {0, SpacingOptions::kUndecided}},  //  )
+       .input_tokens = {{verilog_tokentype::PP_define, "`define"},
+                        {verilog_tokentype::SymbolIdentifier, "FOO"},
+                        {'(', "("},
+                        {verilog_tokentype::SymbolIdentifier, "name"},
+                        {'=', "="},
+                        {verilog_tokentype::TK_StringLiteral, "\"bar\""},
+                        {')', ")"}}},
 
       // endfunction : funk
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided},
-        {1, SpacingOptions::kUndecided}},
-       {
-           {verilog_tokentype::TK_endfunction, "endfunction"},
-           {':', ":"},
-           {verilog_tokentype::SymbolIdentifier, "funk"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided}},
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_endfunction, "endfunction"},
+               {':', ":"},
+               {verilog_tokentype::SymbolIdentifier, "funk"},
+           }},
 
       // case (expr):
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::TK_case, "case"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "expr"},
-           {')', ")"},
-           {':', ":"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_case, "case"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "expr"},
+               {')', ")"},
+               {':', ":"},
+           }},
 
       // return 0;
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::TK_return, "return"},
-           {verilog_tokentype::TK_UnBasedNumber, "0"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_return, "return"},
+               {verilog_tokentype::TK_UnBasedNumber, "0"},
+               {';', ";"},
+           }},
 
       // funk();
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "funk"},
-           {'(', "("},
-           {')', ")"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "funk"},
+               {'(', "("},
+               {')', ")"},
+               {';', ";"},
+           }},
 
       // funk(arg);
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "funk"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "arg"},
-           {')', ")"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "funk"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "arg"},
+               {')', ")"},
+               {';', ";"},
+           }},
 
       // funk("arg");
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "funk"},
-           {'(', "("},
-           {verilog_tokentype::TK_StringLiteral, "\"arg\""},
-           {')', ")"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "funk"},
+               {'(', "("},
+               {verilog_tokentype::TK_StringLiteral, "\"arg\""},
+               {')', ")"},
+               {';', ";"},
+           }},
 
       // funk(arg1, arg2);
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "funk"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "arg1"},
-           {',', ","},
-           {verilog_tokentype::SymbolIdentifier, "arg2"},
-           {')', ")"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "funk"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "arg1"},
+               {',', ","},
+               {verilog_tokentype::SymbolIdentifier, "arg2"},
+               {')', ")"},
+               {';', ";"},
+           }},
 
       // instantiation with named ports
       // funky town(.f1(arg1), .f2(arg2));
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},  // '('
-           {0, SpacingOptions::kUndecided},  // '.'
-           {0, SpacingOptions::kUndecided},  // "f1"
-           {0, SpacingOptions::kUndecided},  // '('
-           {0, SpacingOptions::kUndecided},  // "arg1"
-           {0, SpacingOptions::kUndecided},  // ')'
-           {0, SpacingOptions::kUndecided},  // ','
-           {1, SpacingOptions::kUndecided},  // '.'
-           {0, SpacingOptions::kUndecided},  // "f1"
-           {0, SpacingOptions::kUndecided},  // '('
-           {0, SpacingOptions::kUndecided},  // "arg1"
-           {0, SpacingOptions::kUndecided},  // ')'
-           {0, SpacingOptions::kUndecided},  // ')'
-           {0, SpacingOptions::kUndecided},  // ';'
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "funky"},
-           {verilog_tokentype::SymbolIdentifier, "town"},
-           {'(', "("},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "f1"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "arg1"},
-           {')', ")"},
-           {',', ","},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "f2"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "arg2"},
-           {')', ")"},
-           {')', ")"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},  // '('
+               {0, SpacingOptions::kUndecided},  // '.'
+               {0, SpacingOptions::kUndecided},  // "f1"
+               {0, SpacingOptions::kUndecided},  // '('
+               {0, SpacingOptions::kUndecided},  // "arg1"
+               {0, SpacingOptions::kUndecided},  // ')'
+               {0, SpacingOptions::kUndecided},  // ','
+               {1, SpacingOptions::kUndecided},  // '.'
+               {0, SpacingOptions::kUndecided},  // "f1"
+               {0, SpacingOptions::kUndecided},  // '('
+               {0, SpacingOptions::kUndecided},  // "arg1"
+               {0, SpacingOptions::kUndecided},  // ')'
+               {0, SpacingOptions::kUndecided},  // ')'
+               {0, SpacingOptions::kUndecided},  // ';'
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "funky"},
+               {verilog_tokentype::SymbolIdentifier, "town"},
+               {'(', "("},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "f1"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "arg1"},
+               {')', ")"},
+               {',', ","},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "f2"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "arg2"},
+               {')', ")"},
+               {')', ")"},
+               {';', ";"},
+           }},
 
       // `ID.`ID
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::MacroIdentifier, "`ID"},
-           {'.', "."},
-           {verilog_tokentype::MacroIdentifier, "`ID"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::MacroIdentifier, "`ID"},
+               {'.', "."},
+               {verilog_tokentype::MacroIdentifier, "`ID"},
+           }},
 
       // id.id
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "id"},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "id"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "id"},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "id"},
+           }},
 
       // super.id
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::TK_super, "super"},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "id"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_super, "super"},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "id"},
+           }},
 
       // this.id
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::TK_this, "this"},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "id"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_this, "this"},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "id"},
+           }},
 
       // option.id
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::TK_option, "option"},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "id"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_option, "option"},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "id"},
+           }},
 
       // `MACRO();
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::MacroCallId, "`MACRO"},
-           {'(', "("},
-           {verilog_tokentype::MacroCallCloseToEndLine, ")"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::MacroCallId, "`MACRO"},
+               {'(', "("},
+               {verilog_tokentype::MacroCallCloseToEndLine, ")"},
+               {';', ";"},
+           }},
 
       // `MACRO(x);
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::MacroCallId, "`MACRO"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "x"},
-           {verilog_tokentype::MacroCallCloseToEndLine, ")"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::MacroCallId, "`MACRO"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "x"},
+               {verilog_tokentype::MacroCallCloseToEndLine, ")"},
+               {';', ";"},
+           }},
 
       // `MACRO(y, x);
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},  // "y"
-           {0, SpacingOptions::kUndecided},  // ','
-           {1, SpacingOptions::kUndecided},  // "x"
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::MacroCallId, "`MACRO"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "y"},
-           {',', ","},
-           {verilog_tokentype::SymbolIdentifier, "x"},
-           {verilog_tokentype::MacroCallCloseToEndLine, ")"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},  // "y"
+               {0, SpacingOptions::kUndecided},  // ','
+               {1, SpacingOptions::kUndecided},  // "x"
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::MacroCallId, "`MACRO"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "y"},
+               {',', ","},
+               {verilog_tokentype::SymbolIdentifier, "x"},
+               {verilog_tokentype::MacroCallCloseToEndLine, ")"},
+               {';', ";"},
+           }},
 
       // `define FOO
       // `define BAR
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},   // `define
-           {1, SpacingOptions::kMustAppend},  // FOO
-           {0, SpacingOptions::kMustAppend},  // "" (empty definition body)
-           {0, SpacingOptions::kMustWrap},    // `define
-           {1, SpacingOptions::kMustAppend},  // BAR
-           {0, SpacingOptions::kMustAppend},  // "" (empty definition body)
-       },
-       {
-           {verilog_tokentype::PP_define, "`define"},
-           {verilog_tokentype::SymbolIdentifier, "FOO"},
-           {verilog_tokentype::PP_define_body, ""},
-           {verilog_tokentype::PP_define, "`define"},
-           {verilog_tokentype::SymbolIdentifier, "BAR"},
-           {verilog_tokentype::PP_define_body, ""},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},   // `define
+               {1, SpacingOptions::kMustAppend},  // FOO
+               {0, SpacingOptions::kMustAppend},  // "" (empty definition body)
+               {0, SpacingOptions::kMustWrap},    // `define
+               {1, SpacingOptions::kMustAppend},  // BAR
+               {0, SpacingOptions::kMustAppend},  // "" (empty definition body)
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::PP_define, "`define"},
+               {verilog_tokentype::SymbolIdentifier, "FOO"},
+               {verilog_tokentype::PP_define_body, ""},
+               {verilog_tokentype::PP_define, "`define"},
+               {verilog_tokentype::SymbolIdentifier, "BAR"},
+               {verilog_tokentype::PP_define_body, ""},
+           }},
 
       // `define FOO 1
       // `define BAR 2
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},   // `define
-           {1, SpacingOptions::kMustAppend},  // FOO
-           {1, SpacingOptions::kMustAppend},  // 1
-           {1, SpacingOptions::kMustWrap},    // `define
-           {1, SpacingOptions::kMustAppend},  // BAR
-           {1, SpacingOptions::kMustAppend},  // 2
-       },
-       {
-           {verilog_tokentype::PP_define, "`define"},
-           {verilog_tokentype::PP_Identifier, "FOO"},
-           {verilog_tokentype::PP_define_body, "1"},
-           {verilog_tokentype::PP_define, "`define"},
-           {verilog_tokentype::PP_Identifier, "BAR"},
-           {verilog_tokentype::PP_define_body, "2"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},   // `define
+               {1, SpacingOptions::kMustAppend},  // FOO
+               {1, SpacingOptions::kMustAppend},  // 1
+               {1, SpacingOptions::kMustWrap},    // `define
+               {1, SpacingOptions::kMustAppend},  // BAR
+               {1, SpacingOptions::kMustAppend},  // 2
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::PP_define, "`define"},
+               {verilog_tokentype::PP_Identifier, "FOO"},
+               {verilog_tokentype::PP_define_body, "1"},
+               {verilog_tokentype::PP_define, "`define"},
+               {verilog_tokentype::PP_Identifier, "BAR"},
+               {verilog_tokentype::PP_define_body, "2"},
+           }},
 
       // `define FOO()
       // `define BAR(x)
       // `define BAZ(y,z)
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},   // `define
-           {1, SpacingOptions::kMustAppend},  // FOO
-           {0, SpacingOptions::kMustAppend},  // (
-           {0, SpacingOptions::kUndecided},   // )
-           {0, SpacingOptions::kMustAppend},  // "" (empty definition body)
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},   // `define
+               {1, SpacingOptions::kMustAppend},  // FOO
+               {0, SpacingOptions::kMustAppend},  // (
+               {0, SpacingOptions::kUndecided},   // )
+               {0, SpacingOptions::kMustAppend},  // "" (empty definition body)
 
-           {0, SpacingOptions::kMustWrap},    // `define
-           {1, SpacingOptions::kMustAppend},  // BAR
-           {0, SpacingOptions::kMustAppend},  // (
-           {0, SpacingOptions::kUndecided},   // x
-           {0, SpacingOptions::kUndecided},   // )
-           {0, SpacingOptions::kMustAppend},  // "" (empty definition body)
+               {0, SpacingOptions::kMustWrap},    // `define
+               {1, SpacingOptions::kMustAppend},  // BAR
+               {0, SpacingOptions::kMustAppend},  // (
+               {0, SpacingOptions::kUndecided},   // x
+               {0, SpacingOptions::kUndecided},   // )
+               {0, SpacingOptions::kMustAppend},  // "" (empty definition body)
 
-           {0, SpacingOptions::kMustWrap},    // `define
-           {1, SpacingOptions::kMustAppend},  // BAZ
-           {0, SpacingOptions::kMustAppend},  // (
-           {0, SpacingOptions::kUndecided},   // y
-           {0, SpacingOptions::kUndecided},   // ,
-           {1, SpacingOptions::kUndecided},   // z
-           {0, SpacingOptions::kUndecided},   // )
-           {0, SpacingOptions::kMustAppend},  // "" (empty definition body)
-       },
-       {
-           {verilog_tokentype::PP_define, "`define"},
-           {verilog_tokentype::PP_Identifier, "FOO"},
-           {'(', "("},
-           {')', ")"},
-           {verilog_tokentype::PP_define_body, ""},
+               {0, SpacingOptions::kMustWrap},    // `define
+               {1, SpacingOptions::kMustAppend},  // BAZ
+               {0, SpacingOptions::kMustAppend},  // (
+               {0, SpacingOptions::kUndecided},   // y
+               {0, SpacingOptions::kUndecided},   // ,
+               {1, SpacingOptions::kUndecided},   // z
+               {0, SpacingOptions::kUndecided},   // )
+               {0, SpacingOptions::kMustAppend},  // "" (empty definition body)
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::PP_define, "`define"},
+               {verilog_tokentype::PP_Identifier, "FOO"},
+               {'(', "("},
+               {')', ")"},
+               {verilog_tokentype::PP_define_body, ""},
 
-           {verilog_tokentype::PP_define, "`define"},
-           {verilog_tokentype::PP_Identifier, "BAR"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "x"},
-           {')', ")"},
-           {verilog_tokentype::PP_define_body, ""},
+               {verilog_tokentype::PP_define, "`define"},
+               {verilog_tokentype::PP_Identifier, "BAR"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "x"},
+               {')', ")"},
+               {verilog_tokentype::PP_define_body, ""},
 
-           {verilog_tokentype::PP_define, "`define"},
-           {verilog_tokentype::PP_Identifier, "BAZ"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "y"},
-           {',', ","},
-           {verilog_tokentype::SymbolIdentifier, "z"},
-           {')', ")"},
-           {verilog_tokentype::PP_define_body, ""},
-       }},
+               {verilog_tokentype::PP_define, "`define"},
+               {verilog_tokentype::PP_Identifier, "BAZ"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "y"},
+               {',', ","},
+               {verilog_tokentype::SymbolIdentifier, "z"},
+               {')', ")"},
+               {verilog_tokentype::PP_define_body, ""},
+           }},
 
       // `define ADD(y,z) y+z
       {
-          DefaultStyle,
-          1,
-          {
-              {0, SpacingOptions::kUndecided},   // `define
-              {1, SpacingOptions::kMustAppend},  // ADD
-              {0, SpacingOptions::kMustAppend},  // (
-              {0, SpacingOptions::kUndecided},   // y
-              {0, SpacingOptions::kUndecided},   // ,
-              {1, SpacingOptions::kUndecided},   // z
-              {0, SpacingOptions::kUndecided},   // )
-              {1, SpacingOptions::kMustAppend},  // "y+z"
-          },
-          {
-              {verilog_tokentype::PP_define, "`define"},
-              {verilog_tokentype::PP_Identifier, "ADD"},
-              {'(', "("},
-              {verilog_tokentype::SymbolIdentifier, "y"},
-              {',', ","},
-              {verilog_tokentype::SymbolIdentifier, "z"},
-              {')', ")"},
-              {verilog_tokentype::PP_define_body, "y+z"},
-          },
+          .style = DefaultStyle,
+          .uwline_indentation = 1,
+          .expected_calculations =
+              {
+                  {0, SpacingOptions::kUndecided},   // `define
+                  {1, SpacingOptions::kMustAppend},  // ADD
+                  {0, SpacingOptions::kMustAppend},  // (
+                  {0, SpacingOptions::kUndecided},   // y
+                  {0, SpacingOptions::kUndecided},   // ,
+                  {1, SpacingOptions::kUndecided},   // z
+                  {0, SpacingOptions::kUndecided},   // )
+                  {1, SpacingOptions::kMustAppend},  // "y+z"
+              },
+          .input_tokens =
+              {
+                  {verilog_tokentype::PP_define, "`define"},
+                  {verilog_tokentype::PP_Identifier, "ADD"},
+                  {'(', "("},
+                  {verilog_tokentype::SymbolIdentifier, "y"},
+                  {',', ","},
+                  {verilog_tokentype::SymbolIdentifier, "z"},
+                  {')', ")"},
+                  {verilog_tokentype::PP_define_body, "y+z"},
+              },
       },
 
       // function new;
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},  // function
-           {1, SpacingOptions::kUndecided},  // new
-           {0, SpacingOptions::kUndecided},  // ;
-       },
-       {
-           {verilog_tokentype::TK_function, "function"},
-           {verilog_tokentype::TK_new, "new"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},  // function
+               {1, SpacingOptions::kUndecided},  // new
+               {0, SpacingOptions::kUndecided},  // ;
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_function, "function"},
+               {verilog_tokentype::TK_new, "new"},
+               {';', ";"},
+           }},
 
       // function new();
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},  // function
-           {1, SpacingOptions::kUndecided},  // new
-           {0, SpacingOptions::kUndecided},  // (
-           {0, SpacingOptions::kUndecided},  // )
-           {0, SpacingOptions::kUndecided},  // ;
-       },
-       {
-           {verilog_tokentype::TK_function, "function"},
-           {verilog_tokentype::TK_new, "new"},
-           {'(', "("},
-           {')', ")"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},  // function
+               {1, SpacingOptions::kUndecided},  // new
+               {0, SpacingOptions::kUndecided},  // (
+               {0, SpacingOptions::kUndecided},  // )
+               {0, SpacingOptions::kUndecided},  // ;
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_function, "function"},
+               {verilog_tokentype::TK_new, "new"},
+               {'(', "("},
+               {')', ")"},
+               {';', ";"},
+           }},
 
       // end endfunction endclass (end* keywords)
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},  // end
-           {1, SpacingOptions::kMustWrap},   // end
-           {1, SpacingOptions::kMustWrap},   // endfunction
-           {1, SpacingOptions::kMustWrap},   // endclass
-           {1, SpacingOptions::kMustWrap},   // endpackage
-       },
-       {
-           {verilog_tokentype::TK_end, "end"},
-           {verilog_tokentype::TK_end, "end"},
-           {verilog_tokentype::TK_endfunction, "endfunction"},
-           {verilog_tokentype::TK_endclass, "endclass"},
-           {verilog_tokentype::TK_endpackage, "endpackage"},
-       }},
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},  // end
-           {1, SpacingOptions::kMustWrap},   // end
-           {1, SpacingOptions::kMustWrap},   // endtask
-           {1, SpacingOptions::kMustWrap},   // endmodule
-       },
-       {
-           {verilog_tokentype::TK_end, "end"},
-           {verilog_tokentype::TK_end, "end"},
-           {verilog_tokentype::TK_endtask, "endtask"},
-           {verilog_tokentype::TK_endmodule, "endmodule"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},  // end
+               {1, SpacingOptions::kMustWrap},   // end
+               {1, SpacingOptions::kMustWrap},   // endfunction
+               {1, SpacingOptions::kMustWrap},   // endclass
+               {1, SpacingOptions::kMustWrap},   // endpackage
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_end, "end"},
+               {verilog_tokentype::TK_end, "end"},
+               {verilog_tokentype::TK_endfunction, "endfunction"},
+               {verilog_tokentype::TK_endclass, "endclass"},
+               {verilog_tokentype::TK_endpackage, "endpackage"},
+           }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},  // end
+               {1, SpacingOptions::kMustWrap},   // end
+               {1, SpacingOptions::kMustWrap},   // endtask
+               {1, SpacingOptions::kMustWrap},   // endmodule
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_end, "end"},
+               {verilog_tokentype::TK_end, "end"},
+               {verilog_tokentype::TK_endtask, "endtask"},
+               {verilog_tokentype::TK_endmodule, "endmodule"},
+           }},
 
       // if (r == t) a.b(c);
       // else d.e(f);
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},  // if
-           {1, SpacingOptions::kUndecided},  // (
-           {0, SpacingOptions::kUndecided},  // r
-           {1, SpacingOptions::kUndecided},  // ==
-           {1, SpacingOptions::kUndecided},  // t
-           {0, SpacingOptions::kUndecided},  // )
-           {1, SpacingOptions::kUndecided},  // a
-           {0, SpacingOptions::kUndecided},  // .
-           {0, SpacingOptions::kUndecided},  // b
-           {0, SpacingOptions::kUndecided},  // (
-           {0, SpacingOptions::kUndecided},  // c
-           {0, SpacingOptions::kUndecided},  // )
-           {0, SpacingOptions::kUndecided},  // ;
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},  // if
+               {1, SpacingOptions::kUndecided},  // (
+               {0, SpacingOptions::kUndecided},  // r
+               {1, SpacingOptions::kUndecided},  // ==
+               {1, SpacingOptions::kUndecided},  // t
+               {0, SpacingOptions::kUndecided},  // )
+               {1, SpacingOptions::kUndecided},  // a
+               {0, SpacingOptions::kUndecided},  // .
+               {0, SpacingOptions::kUndecided},  // b
+               {0, SpacingOptions::kUndecided},  // (
+               {0, SpacingOptions::kUndecided},  // c
+               {0, SpacingOptions::kUndecided},  // )
+               {0, SpacingOptions::kUndecided},  // ;
 
-           {1, SpacingOptions::kMustWrap},   // else
-           {1, SpacingOptions::kUndecided},  // d
-           {0, SpacingOptions::kUndecided},  // .
-           {0, SpacingOptions::kUndecided},  // e
-           {0, SpacingOptions::kUndecided},  // (
-           {0, SpacingOptions::kUndecided},  // f
-           {0, SpacingOptions::kUndecided},  // )
-           {0, SpacingOptions::kUndecided},  // ;
-       },
-       {
-           {verilog_tokentype::TK_if, "if"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "r"},
-           {verilog_tokentype::TK_EQ, "=="},
-           {verilog_tokentype::SymbolIdentifier, "t"},
-           {')', ")"},
-           {verilog_tokentype::SymbolIdentifier, "a"},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "b"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "c"},
-           {')', ")"},
-           {';', ";"},
+               {1, SpacingOptions::kMustWrap},   // else
+               {1, SpacingOptions::kUndecided},  // d
+               {0, SpacingOptions::kUndecided},  // .
+               {0, SpacingOptions::kUndecided},  // e
+               {0, SpacingOptions::kUndecided},  // (
+               {0, SpacingOptions::kUndecided},  // f
+               {0, SpacingOptions::kUndecided},  // )
+               {0, SpacingOptions::kUndecided},  // ;
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_if, "if"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "r"},
+               {verilog_tokentype::TK_EQ, "=="},
+               {verilog_tokentype::SymbolIdentifier, "t"},
+               {')', ")"},
+               {verilog_tokentype::SymbolIdentifier, "a"},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "b"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "c"},
+               {')', ")"},
+               {';', ";"},
 
-           {verilog_tokentype::TK_else, "else"},
-           {verilog_tokentype::SymbolIdentifier, "d"},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "e"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "f"},
-           {')', ")"},
-           {';', ";"},
-       }},
+               {verilog_tokentype::TK_else, "else"},
+               {verilog_tokentype::SymbolIdentifier, "d"},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "e"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "f"},
+               {')', ")"},
+               {';', ";"},
+           }},
 
       // if (r == t) begin
       //   a.b(c);
       // end else begin
       //   d.e(f);
       // end
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},  // if
-           {1, SpacingOptions::kUndecided},  // (
-           {0, SpacingOptions::kUndecided},  // r
-           {1, SpacingOptions::kUndecided},  // ==
-           {1, SpacingOptions::kUndecided},  // t
-           {0, SpacingOptions::kUndecided},  // )
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},  // if
+               {1, SpacingOptions::kUndecided},  // (
+               {0, SpacingOptions::kUndecided},  // r
+               {1, SpacingOptions::kUndecided},  // ==
+               {1, SpacingOptions::kUndecided},  // t
+               {0, SpacingOptions::kUndecided},  // )
 
-           {1, SpacingOptions::kMustAppend},  // begin
-           {1, SpacingOptions::kUndecided},   // a
-           {0, SpacingOptions::kUndecided},   // .
-           {0, SpacingOptions::kUndecided},   // b
-           {0, SpacingOptions::kUndecided},   // (
-           {0, SpacingOptions::kUndecided},   // c
-           {0, SpacingOptions::kUndecided},   // )
-           {0, SpacingOptions::kUndecided},   // ;
-           {1, SpacingOptions::kMustWrap},    // end
+               {1, SpacingOptions::kMustAppend},  // begin
+               {1, SpacingOptions::kUndecided},   // a
+               {0, SpacingOptions::kUndecided},   // .
+               {0, SpacingOptions::kUndecided},   // b
+               {0, SpacingOptions::kUndecided},   // (
+               {0, SpacingOptions::kUndecided},   // c
+               {0, SpacingOptions::kUndecided},   // )
+               {0, SpacingOptions::kUndecided},   // ;
+               {1, SpacingOptions::kMustWrap},    // end
 
-           {1, SpacingOptions::kMustAppend},  // else
+               {1, SpacingOptions::kMustAppend},  // else
 
-           {1, SpacingOptions::kMustAppend},  // begin
-           {1, SpacingOptions::kUndecided},   // d
-           {0, SpacingOptions::kUndecided},   // .
-           {0, SpacingOptions::kUndecided},   // e
-           {0, SpacingOptions::kUndecided},   // (
-           {0, SpacingOptions::kUndecided},   // f
-           {0, SpacingOptions::kUndecided},   // )
-           {0, SpacingOptions::kUndecided},   // ;
-           {1, SpacingOptions::kMustWrap},    // end
-       },
-       {
-           {verilog_tokentype::TK_if, "if"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "r"},
-           {verilog_tokentype::TK_EQ, "=="},
-           {verilog_tokentype::SymbolIdentifier, "t"},
-           {')', ")"},
+               {1, SpacingOptions::kMustAppend},  // begin
+               {1, SpacingOptions::kUndecided},   // d
+               {0, SpacingOptions::kUndecided},   // .
+               {0, SpacingOptions::kUndecided},   // e
+               {0, SpacingOptions::kUndecided},   // (
+               {0, SpacingOptions::kUndecided},   // f
+               {0, SpacingOptions::kUndecided},   // )
+               {0, SpacingOptions::kUndecided},   // ;
+               {1, SpacingOptions::kMustWrap},    // end
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_if, "if"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "r"},
+               {verilog_tokentype::TK_EQ, "=="},
+               {verilog_tokentype::SymbolIdentifier, "t"},
+               {')', ")"},
 
-           {verilog_tokentype::TK_begin, "begin"},
-           {verilog_tokentype::SymbolIdentifier, "a"},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "b"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "c"},
-           {')', ")"},
-           {';', ";"},
-           {verilog_tokentype::TK_end, "end"},
+               {verilog_tokentype::TK_begin, "begin"},
+               {verilog_tokentype::SymbolIdentifier, "a"},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "b"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "c"},
+               {')', ")"},
+               {';', ";"},
+               {verilog_tokentype::TK_end, "end"},
 
-           {verilog_tokentype::TK_else, "else"},
+               {verilog_tokentype::TK_else, "else"},
 
-           {verilog_tokentype::TK_begin, "begin"},
-           {verilog_tokentype::SymbolIdentifier, "d"},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "e"},
-           {'(', "("},
-           {verilog_tokentype::SymbolIdentifier, "f"},
-           {')', ")"},
-           {';', ";"},
-           {verilog_tokentype::TK_end, "end"},
-       }},
+               {verilog_tokentype::TK_begin, "begin"},
+               {verilog_tokentype::SymbolIdentifier, "d"},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "e"},
+               {'(', "("},
+               {verilog_tokentype::SymbolIdentifier, "f"},
+               {')', ")"},
+               {';', ";"},
+               {verilog_tokentype::TK_end, "end"},
+           }},
 
       // wait ()
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_wait, "wait"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_wait, "wait"}, {'(', "("}}},
 
       // various built-in function calls
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_and, "and"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_assert, "assert"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_assume, "assume"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_cover, "cover"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_expect, "expect"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_property, "property"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_sequence, "sequence"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {1, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_final, "final"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_find, "find"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_find_index, "find_index"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_find_first, "find_first"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_find_first_index, "find_first_index"},
-        {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_find_last, "find_last"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_find_last_index, "find_last_index"},
-        {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_min, "min"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_max, "max"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_or, "or"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_product, "product"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_randomize, "randomize"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_reverse, "reverse"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_rsort, "rsort"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_shuffle, "shuffle"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_sort, "sort"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_sum, "sum"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_unique, "unique"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::kUndecided}, {0, SpacingOptions::kUndecided}},
-       {{verilog_tokentype::TK_xor, "xor"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_and, "and"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_assert, "assert"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_assume, "assume"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_cover, "cover"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_expect, "expect"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_property, "property"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_sequence, "sequence"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {1, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_final, "final"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_find, "find"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_find_index, "find_index"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_find_first, "find_first"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_find_first_index,
+                         "find_first_index"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_find_last, "find_last"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_find_last_index,
+                         "find_last_index"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_min, "min"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_max, "max"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_or, "or"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_product, "product"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_randomize, "randomize"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_reverse, "reverse"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_rsort, "rsort"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_shuffle, "shuffle"},
+                        {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_sort, "sort"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_sum, "sum"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_unique, "unique"}, {'(', "("}}},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations = {{0, SpacingOptions::kUndecided},
+                                 {0, SpacingOptions::kUndecided}},
+       .input_tokens = {{verilog_tokentype::TK_xor, "xor"}, {'(', "("}}},
 
       // escaped identifier
       // baz.\FOO .bar
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},  // baz
-           {0, SpacingOptions::kUndecided},  // .
-           {0, SpacingOptions::kUndecided},  // \FOO
-           {1, SpacingOptions::kUndecided},  // .
-           {0, SpacingOptions::kUndecided},  // bar
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "baz"},
-           {'.', "."},
-           {verilog_tokentype::EscapedIdentifier, "\\FOO"},
-           {'.', "."},
-           {verilog_tokentype::SymbolIdentifier, "bar"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},  // baz
+               {0, SpacingOptions::kUndecided},  // .
+               {0, SpacingOptions::kUndecided},  // \FOO
+               {1, SpacingOptions::kUndecided},  // .
+               {0, SpacingOptions::kUndecided},  // bar
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "baz"},
+               {'.', "."},
+               {verilog_tokentype::EscapedIdentifier, "\\FOO"},
+               {'.', "."},
+               {verilog_tokentype::SymbolIdentifier, "bar"},
+           }},
 
       // escaped identifier inside macro call
       // `BAR(\FOO )
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},  // `BAR
-           {0, SpacingOptions::kUndecided},  // (
-           {0, SpacingOptions::kUndecided},  // \FOO
-           {1, SpacingOptions::kUndecided},  // )
-       },
-       {
-           {verilog_tokentype::MacroCallId, "`BAR"},
-           {'(', "("},
-           {verilog_tokentype::EscapedIdentifier, "\\FOO"},
-           {')', ")"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},  // `BAR
+               {0, SpacingOptions::kUndecided},  // (
+               {0, SpacingOptions::kUndecided},  // \FOO
+               {1, SpacingOptions::kUndecided},  // )
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::MacroCallId, "`BAR"},
+               {'(', "("},
+               {verilog_tokentype::EscapedIdentifier, "\\FOO"},
+               {')', ")"},
+           }},
 
       // import foo_pkg::symbol;
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},  // import
-           {1, SpacingOptions::kUndecided},  // foo_pkg
-           {0, SpacingOptions::kUndecided},  // ::
-           {0, SpacingOptions::kUndecided},  // symbol
-           {0, SpacingOptions::kUndecided},  // ;
-       },
-       {
-           {verilog_tokentype::TK_import, "import"},
-           {verilog_tokentype::SymbolIdentifier, "foo_pkg"},
-           {verilog_tokentype::TK_SCOPE_RES, "::"},
-           {verilog_tokentype::SymbolIdentifier, "symbol"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},  // import
+               {1, SpacingOptions::kUndecided},  // foo_pkg
+               {0, SpacingOptions::kUndecided},  // ::
+               {0, SpacingOptions::kUndecided},  // symbol
+               {0, SpacingOptions::kUndecided},  // ;
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_import, "import"},
+               {verilog_tokentype::SymbolIdentifier, "foo_pkg"},
+               {verilog_tokentype::TK_SCOPE_RES, "::"},
+               {verilog_tokentype::SymbolIdentifier, "symbol"},
+               {';', ";"},
+           }},
 
       // import foo_pkg::*;
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},  // import
-           {1, SpacingOptions::kUndecided},  // foo_pkg
-           {0, SpacingOptions::kUndecided},  // ::
-           {0, SpacingOptions::kUndecided},  // *
-           {0, SpacingOptions::kUndecided},  // ;
-       },
-       {
-           {verilog_tokentype::TK_import, "import"},
-           {verilog_tokentype::SymbolIdentifier, "foo_pkg"},
-           {verilog_tokentype::TK_SCOPE_RES, "::"},
-           {'*', "*"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},  // import
+               {1, SpacingOptions::kUndecided},  // foo_pkg
+               {0, SpacingOptions::kUndecided},  // ::
+               {0, SpacingOptions::kUndecided},  // *
+               {0, SpacingOptions::kUndecided},  // ;
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_import, "import"},
+               {verilog_tokentype::SymbolIdentifier, "foo_pkg"},
+               {verilog_tokentype::TK_SCOPE_RES, "::"},
+               {'*', "*"},
+               {';', ";"},
+           }},
 
       // #0; (delay, unitless integer)
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},   // #
-           {0, SpacingOptions::kMustAppend},  // 0
-           {0, SpacingOptions::kUndecided},   // ;
-       },
-       {
-           {'#', "#"},
-           {verilog_tokentype::TK_DecNumber, "0"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},   // #
+               {0, SpacingOptions::kMustAppend},  // 0
+               {0, SpacingOptions::kUndecided},   // ;
+           },
+       .input_tokens =
+           {
+               {'#', "#"},
+               {verilog_tokentype::TK_DecNumber, "0"},
+               {';', ";"},
+           }},
 
       // #0.5; (delay, real-value)
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},   // #
-           {0, SpacingOptions::kMustAppend},  // 0.5
-           {0, SpacingOptions::kUndecided},   // ;
-       },
-       {
-           {'#', "#"},
-           {verilog_tokentype::TK_RealTime, "0.5"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},   // #
+               {0, SpacingOptions::kMustAppend},  // 0.5
+               {0, SpacingOptions::kUndecided},   // ;
+           },
+       .input_tokens =
+           {
+               {'#', "#"},
+               {verilog_tokentype::TK_RealTime, "0.5"},
+               {';', ";"},
+           }},
 
       // #0ns; (delay, time-literal)
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},   // #
-           {0, SpacingOptions::kMustAppend},  // 0ns
-           {0, SpacingOptions::kMustAppend},  // ;
-       },
-       {
-           {'#', "#"},
-           {verilog_tokentype::TK_TimeLiteral, "0ns"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},   // #
+               {0, SpacingOptions::kMustAppend},  // 0ns
+               {0, SpacingOptions::kMustAppend},  // ;
+           },
+       .input_tokens =
+           {
+               {'#', "#"},
+               {verilog_tokentype::TK_TimeLiteral, "0ns"},
+               {';', ";"},
+           }},
 
       // #1step; (delay, 1step)
-      {DefaultStyle,
-       1,
-       {
-           {0, SpacingOptions::kUndecided},   // #
-           {0, SpacingOptions::kMustAppend},  // 1step
-           {0, SpacingOptions::kUndecided},   // ;
-       },
-       {
-           {'#', "#"},
-           {verilog_tokentype::TK_1step, "1step"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 1,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},   // #
+               {0, SpacingOptions::kMustAppend},  // 1step
+               {0, SpacingOptions::kUndecided},   // ;
+           },
+       .input_tokens =
+           {
+               {'#', "#"},
+               {verilog_tokentype::TK_1step, "1step"},
+               {';', ";"},
+           }},
 
       // default: ;
-      {DefaultStyle,
-       0,
-       {
-           {0, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::TK_default, "default"},
-           {':', ":"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::TK_default, "default"},
+               {':', ":"},
+               {';', ";"},
+           }},
 
       // foo = 1 << bar;
-      {DefaultStyle,
-       0,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "foo"},
-           {'=', "="},
-           {verilog_tokentype::TK_DecNumber, "1"},
-           {verilog_tokentype::TK_LS, "<<"},
-           {verilog_tokentype::SymbolIdentifier, "bar"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {verilog_tokentype::TK_DecNumber, "1"},
+               {verilog_tokentype::TK_LS, "<<"},
+               {verilog_tokentype::SymbolIdentifier, "bar"},
+               {';', ";"},
+           }},
 
       // foo = bar << 1;
-      {DefaultStyle,
-       0,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "foo"},
-           {'=', "="},
-           {verilog_tokentype::SymbolIdentifier, "bar"},
-           {verilog_tokentype::TK_LS, "<<"},
-           {verilog_tokentype::TK_DecNumber, "1"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {verilog_tokentype::SymbolIdentifier, "bar"},
+               {verilog_tokentype::TK_LS, "<<"},
+               {verilog_tokentype::TK_DecNumber, "1"},
+               {';', ";"},
+           }},
 
       // foo = `BAR << 1;
-      {DefaultStyle,
-       0,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "foo"},
-           {'=', "="},
-           {verilog_tokentype::MacroIdentifier, "`BAR"},
-           {verilog_tokentype::TK_LS, "<<"},
-           {verilog_tokentype::TK_DecNumber, "1"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {verilog_tokentype::MacroIdentifier, "`BAR"},
+               {verilog_tokentype::TK_LS, "<<"},
+               {verilog_tokentype::TK_DecNumber, "1"},
+               {';', ";"},
+           }},
 
       // foo = 1 << `BAR;
-      {DefaultStyle,
-       0,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "foo"},
-           {'=', "="},
-           {verilog_tokentype::TK_DecNumber, "1"},
-           {verilog_tokentype::TK_LS, "<<"},
-           {verilog_tokentype::MacroIdentifier, "`BAR"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {verilog_tokentype::TK_DecNumber, "1"},
+               {verilog_tokentype::TK_LS, "<<"},
+               {verilog_tokentype::MacroIdentifier, "`BAR"},
+               {';', ";"},
+           }},
 
       // foo = 1 >> bar;
-      {DefaultStyle,
-       0,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "foo"},
-           {'=', "="},
-           {verilog_tokentype::TK_DecNumber, "1"},
-           {verilog_tokentype::TK_RS, ">>"},
-           {verilog_tokentype::SymbolIdentifier, "bar"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {verilog_tokentype::TK_DecNumber, "1"},
+               {verilog_tokentype::TK_RS, ">>"},
+               {verilog_tokentype::SymbolIdentifier, "bar"},
+               {';', ";"},
+           }},
 
       // foo = bar >> 1;
-      {DefaultStyle,
-       0,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "foo"},
-           {'=', "="},
-           {verilog_tokentype::SymbolIdentifier, "bar"},
-           {verilog_tokentype::TK_RS, ">>"},
-           {verilog_tokentype::TK_DecNumber, "1"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {verilog_tokentype::SymbolIdentifier, "bar"},
+               {verilog_tokentype::TK_RS, ">>"},
+               {verilog_tokentype::TK_DecNumber, "1"},
+               {';', ";"},
+           }},
 
       // foo = `BAR >> 1;
-      {DefaultStyle,
-       0,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "foo"},
-           {'=', "="},
-           {verilog_tokentype::MacroIdentifier, "`BAR"},
-           {verilog_tokentype::TK_RS, ">>"},
-           {verilog_tokentype::TK_DecNumber, "1"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {verilog_tokentype::MacroIdentifier, "`BAR"},
+               {verilog_tokentype::TK_RS, ">>"},
+               {verilog_tokentype::TK_DecNumber, "1"},
+               {';', ";"},
+           }},
 
       // foo = 1 >> `BAR;
-      {DefaultStyle,
-       0,
-       {
-           {0, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {1, SpacingOptions::kUndecided},
-           {0, SpacingOptions::kUndecided},
-       },
-       {
-           {verilog_tokentype::SymbolIdentifier, "foo"},
-           {'=', "="},
-           {verilog_tokentype::TK_DecNumber, "1"},
-           {verilog_tokentype::TK_RS, ">>"},
-           {verilog_tokentype::MacroIdentifier, "`BAR"},
-           {';', ";"},
-       }},
+      {.style = DefaultStyle,
+       .uwline_indentation = 0,
+       .expected_calculations =
+           {
+               {0, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {1, SpacingOptions::kUndecided},
+               {0, SpacingOptions::kUndecided},
+           },
+       .input_tokens =
+           {
+               {verilog_tokentype::SymbolIdentifier, "foo"},
+               {'=', "="},
+               {verilog_tokentype::TK_DecNumber, "1"},
+               {verilog_tokentype::TK_RS, ">>"},
+               {verilog_tokentype::MacroIdentifier, "`BAR"},
+               {';', ";"},
+           }},
   };
 
   int test_index = 0;
@@ -1844,2991 +1990,3005 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
 TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
   static const AnnotateWithContextTestCase kTestCases[] = {
       {
-          DefaultStyle,
-          {'=', "="},
-          {verilog_tokentype::TK_StringLiteral, "\"hello\""},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'=', "="},
+          .right_token = {verilog_tokentype::TK_StringLiteral, "\"hello\""},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'=', "="},
-          {verilog_tokentype::TK_EvalStringLiteral, "`\"hello`\""},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'=', "="},
+          .right_token = {verilog_tokentype::TK_EvalStringLiteral,
+                          "`\"hello`\""},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       // Test cases covering right token as a preprocessor directive:
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
-          {verilog_tokentype::PP_ifdef, "`ifdef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
+          .right_token = {verilog_tokentype::PP_ifdef, "`ifdef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       // Compiler directives (DR_*) should also force a wrap when on the right.
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {verilog_tokentype::DR_timescale, "`timescale"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {verilog_tokentype::DR_timescale, "`timescale"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {verilog_tokentype::DR_default_nettype, "`default_nettype"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {verilog_tokentype::DR_default_nettype,
+                          "`default_nettype"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
-          {verilog_tokentype::DR_resetall, "`resetall"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
+          .right_token = {verilog_tokentype::DR_resetall, "`resetall"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {verilog_tokentype::PP_ifdef, "`ifdef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {verilog_tokentype::PP_ifdef, "`ifdef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {verilog_tokentype::PP_ifdef, "`ifdef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {verilog_tokentype::PP_ifdef, "`ifdef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_else, "`else"},
-          {verilog_tokentype::PP_ifdef, "`ifdef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_else, "`else"},
+          .right_token = {verilog_tokentype::PP_ifdef, "`ifdef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_endif, "`endif"},
-          {verilog_tokentype::PP_ifdef, "`ifdef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_endif, "`endif"},
+          .right_token = {verilog_tokentype::PP_ifdef, "`ifdef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
-          {verilog_tokentype::PP_ifndef, "`ifndef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_EOL_COMMENT, "//comment1"},
+          .right_token = {verilog_tokentype::PP_ifndef, "`ifndef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {verilog_tokentype::PP_ifndef, "`ifndef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {verilog_tokentype::PP_ifndef, "`ifndef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {verilog_tokentype::PP_ifndef, "`ifndef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {verilog_tokentype::PP_ifndef, "`ifndef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "ID"},
-          {verilog_tokentype::PP_else, "`else"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "ID"},
+          .right_token = {verilog_tokentype::PP_else, "`else"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {verilog_tokentype::PP_else, "`else"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {verilog_tokentype::PP_else, "`else"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_endif, "`endif"},
-          {verilog_tokentype::PP_else, "`else"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_endif, "`endif"},
+          .right_token = {verilog_tokentype::PP_else, "`else"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_include, "`include"},
-          {TK_StringLiteral, "\"lost/file.svh\""},
-          {},                              // any context
-          {},                              // any context
-          {1, SpacingOptions::kUndecided}, /* or MustAppend? */
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_include, "`include"},
+          .right_token = {TK_StringLiteral, "\"lost/file.svh\""},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation =
+              {1, SpacingOptions::kUndecided}, /* or MustAppend? */
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_include, "`include"},
-          {TK_EvalStringLiteral, "`\"lost/file.svh`\""},
-          {},                              // any context
-          {},                              // any context
-          {1, SpacingOptions::kUndecided}, /* or MustAppend? */
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_include, "`include"},
+          .right_token = {TK_EvalStringLiteral, "`\"lost/file.svh`\""},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation =
+              {1, SpacingOptions::kUndecided}, /* or MustAppend? */
       },
       {
-          DefaultStyle,
-          {TK_StringLiteral, "\"lost/file.svh\""},
-          {verilog_tokentype::PP_include, "`include"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {TK_StringLiteral, "\"lost/file.svh\""},
+          .right_token = {verilog_tokentype::PP_include, "`include"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_else, "`else"},
-          {verilog_tokentype::PP_include, "`include"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_else, "`else"},
+          .right_token = {verilog_tokentype::PP_include, "`include"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {verilog_tokentype::PP_include, "`include"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {verilog_tokentype::PP_include, "`include"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "ID"},
-          {verilog_tokentype::PP_include, "`include"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "ID"},
+          .right_token = {verilog_tokentype::PP_include, "`include"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {TK_StringLiteral, "\"lost/file.svh\""},
-          {verilog_tokentype::PP_define, "`define"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {TK_StringLiteral, "\"lost/file.svh\""},
+          .right_token = {verilog_tokentype::PP_define, "`define"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_else, "`else"},
-          {verilog_tokentype::PP_define, "`define"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_else, "`else"},
+          .right_token = {verilog_tokentype::PP_define, "`define"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {verilog_tokentype::PP_define, "`define"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {verilog_tokentype::PP_define, "`define"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "ID"},
-          {verilog_tokentype::PP_define, "`define"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "ID"},
+          .right_token = {verilog_tokentype::PP_define, "`define"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_define, "`define"},
-          {SymbolIdentifier, "ID"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_define, "`define"},
+          .right_token = {SymbolIdentifier, "ID"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {TK_StringLiteral, "\"lost/file.svh\""},
-          {verilog_tokentype::PP_undef, "`undef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {TK_StringLiteral, "\"lost/file.svh\""},
+          .right_token = {verilog_tokentype::PP_undef, "`undef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_else, "`else"},
-          {verilog_tokentype::PP_undef, "`undef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_else, "`else"},
+          .right_token = {verilog_tokentype::PP_undef, "`undef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {verilog_tokentype::PP_undef, "`undef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {verilog_tokentype::PP_undef, "`undef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "ID"},
-          {verilog_tokentype::PP_undef, "`undef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "ID"},
+          .right_token = {verilog_tokentype::PP_undef, "`undef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_endfunction, "endfunction"},
-          {verilog_tokentype::PP_undef, "`undef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_endfunction, "endfunction"},
+          .right_token = {verilog_tokentype::PP_undef, "`undef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_end, "end"},
-          {verilog_tokentype::PP_undef, "`undef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_end, "end"},
+          .right_token = {verilog_tokentype::PP_undef, "`undef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::MacroCallCloseToEndLine, ")"},
-          {verilog_tokentype::PP_undef, "`undef"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroCallCloseToEndLine, ")"},
+          .right_token = {verilog_tokentype::PP_undef, "`undef"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
 
       // macro definitions
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_Identifier, "FOO"},
-          {verilog_tokentype::PP_define_body, ""}, /* empty */
-          {},                                      // any context
-          {},                                      // any context
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_Identifier, "FOO"},
+          .right_token = {verilog_tokentype::PP_define_body, ""}, /* empty */
+          .left_context = {},                                     // any context
+          .right_context = {},                                    // any context
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_Identifier, "FOO"},
-          {verilog_tokentype::PP_define_body, "bar"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_Identifier, "FOO"},
+          .right_token = {verilog_tokentype::PP_define_body, "bar"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_Identifier, "BAR"},
-          {verilog_tokentype::PP_define_body, "13"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_Identifier, "BAR"},
+          .right_token = {verilog_tokentype::PP_define_body, "13"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_Identifier, "BAR"},
-          {verilog_tokentype::PP_define_body, "\\\n  bar"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_Identifier, "BAR"},
+          .right_token = {verilog_tokentype::PP_define_body, "\\\n  bar"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::PP_Identifier, "BAR"},
-          {verilog_tokentype::PP_define_body, "\\\n  bar \\\n  + foo\n"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kPreserve},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::PP_Identifier, "BAR"},
+          .right_token = {verilog_tokentype::PP_define_body,
+                          "\\\n  bar \\\n  + foo\n"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kPreserve},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {verilog_tokentype::PP_define_body, ""}, /* empty */
-          {},                                      // any context
-          {},                                      // any context
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {verilog_tokentype::PP_define_body, ""}, /* empty */
+          .left_context = {},                                     // any context
+          .right_context = {},                                    // any context
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {verilog_tokentype::PP_define_body, "bar"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {verilog_tokentype::PP_define_body, "bar"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {verilog_tokentype::PP_define_body, "13"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {verilog_tokentype::PP_define_body, "13"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {verilog_tokentype::PP_define_body, "\\\n  bar"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {verilog_tokentype::PP_define_body, "\\\n  bar"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustAppend},
       },
       {
           // e.g. if (x) { ... } (in constraints)
-          DefaultStyle,
-          {')', ")"},
-          {'{', "{"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {'{', "{"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // right token = MacroCallId or MacroIdentifier
       {
-          DefaultStyle,
-          {SymbolIdentifier, "ID"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "ID"},
+          .right_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "ID"},
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "ID"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_EOL_COMMENT, "//comment"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {TK_EOL_COMMENT, "//comment"},
+          .right_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {TK_EOL_COMMENT, "//comment"},
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {TK_EOL_COMMENT, "//comment"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {PP_else, "`else"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {PP_else, "`else"},
+          .right_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {PP_else, "`else"},
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {PP_else, "`else"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {PP_endif, "`endif"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {PP_endif, "`endif"},
+          .right_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {PP_endif, "`endif"},
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {PP_endif, "`endif"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .right_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .right_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::MacroCallCloseToEndLine, ")"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroCallCloseToEndLine, ")"},
+          .right_token = {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::MacroCallCloseToEndLine, ")"},
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroCallCloseToEndLine, ")"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::MacroCallCloseToEndLine, ")"},
-          {';', ";"},
-          {},  // any context
-          {},  // any context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroCallCloseToEndLine, ")"},
+          .right_token = {';', ";"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
 
       {
           // single-line macro arguments are allowed to move around
-          DefaultStyle,
-          {',', ","},
-          {verilog_tokentype::MacroArg, "abcde"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {',', ","},
+          .right_token = {verilog_tokentype::MacroArg, "abcde"},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // multi-line macro arguments (unlexed) should start own line
-          DefaultStyle,
-          {',', ","},
-          {verilog_tokentype::MacroArg, "a;\nb;"},  // multi-line
-          {},                                       // any context
-          {},                                       // any context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {',', ","},
+          .right_token = {verilog_tokentype::MacroArg, "a;\nb;"},  // multi-line
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
 
       // Without context, default is to treat '-' as binary.
       {
-          DefaultStyle,
-          {'-', "-"},                               // left token
-          {verilog_tokentype::TK_DecNumber, "42"},  // right token
-          {},                                       // context
-          {},                                       // context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'-', "-"},  // left token
+          .right_token = {verilog_tokentype::TK_DecNumber,
+                          "42"},  // right token
+          .left_context = {},     // context
+          .right_context = {},    // context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'-', "-"},
-          {verilog_tokentype::TK_DecNumber, "42"},
-          {},  // context
-          {NodeEnum::kBinaryExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'-', "-"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "42"},
+          .left_context = {},  // context
+          .right_context = {NodeEnum::kBinaryExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // Handle '-' as a unary prefix expression.
       {
-          DefaultStyle,
-          {'-', "-"},                               // left token
-          {verilog_tokentype::TK_DecNumber, "42"},  // right token
-          {},                                       // context
-          {NodeEnum::kUnaryPrefixExpression},       // context
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'-', "-"},  // left token
+          .right_token = {verilog_tokentype::TK_DecNumber,
+                          "42"},                                // right token
+          .left_context = {},                                   // context
+          .right_context = {NodeEnum::kUnaryPrefixExpression},  // context
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'-', "-"},
-          {verilog_tokentype::SymbolIdentifier, "xyz"},
-          {},  // context
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'-', "-"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "xyz"},
+          .left_context = {},  // context
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'-', "-"},
-          {'(', "("},
-          {},  // context
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'-', "-"},
+          .right_token = {'(', "("},
+          .left_context = {},  // context
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'-', "-"},
-          {verilog_tokentype::MacroIdItem, "`FOO"},
-          {},  // context
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'-', "-"},
+          .right_token = {verilog_tokentype::MacroIdItem, "`FOO"},
+          .left_context = {},  // context
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
 
       // Handle '&' as binary
       {
-          DefaultStyle,
-          {'&', "&"},
-          {'~', "~"},
-          {},  // unspecified context
-          {},  // unspecified context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'&', "&"},
+          .right_token = {'~', "~"},
+          .left_context = {},   // unspecified context
+          .right_context = {},  // unspecified context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // Handle '&' as unary
       {
-          DefaultStyle,
-          {'&', "&"},
-          {verilog_tokentype::TK_DecNumber, "42"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'&', "&"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "42"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'&', "&"},
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'&', "&"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'&', "&"},
-          {'(', "("},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'&', "&"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'&', "&"},
-          {'{', "{"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'&', "&"},
+          .right_token = {'{', "{"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
 
       // Handle '|' as binary
       {
-          DefaultStyle,
-          {'|', "|"},
-          {'~', "~"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'|', "|"},
+          .right_token = {'~', "~"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // Handle '|' as unary
       {
-          DefaultStyle,
-          {'|', "|"},
-          {verilog_tokentype::TK_DecNumber, "42"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'|', "|"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "42"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'|', "|"},
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'|', "|"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'|', "|"},
-          {'(', "("},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'|', "|"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'|', "|"},
-          {'{', "{"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'|', "|"},
+          .right_token = {'{', "{"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
 
       // Handle '^' as binary
       {
-          DefaultStyle,
-          {'^', "^"},
-          {'~', "~"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'^', "^"},
+          .right_token = {'~', "~"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // Handle '^' as unary
       {
-          DefaultStyle,
-          {'^', "^"},
-          {verilog_tokentype::TK_DecNumber, "42"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'^', "^"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "42"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'^', "^"},
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'^', "^"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'^', "^"},
-          {'(', "("},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'^', "^"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'^', "^"},
-          {'{', "{"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'^', "^"},
+          .right_token = {'{', "{"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
 
       // Test '~' unary token
       {
-          DefaultStyle,
-          {'~', "~"},
-          {'(', "("},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'~', "~"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'~', "~"},
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'~', "~"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
 
       // Test '##' unary (delay) operator
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {'(', "("},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {verilog_tokentype::TK_DecNumber, "10"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "10"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {verilog_tokentype::SymbolIdentifier, "x_delay"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "x_delay"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {verilog_tokentype::MacroIdentifier, "`X_DELAY"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`X_DELAY"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {verilog_tokentype::TK_LP, "'{"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .right_token = {verilog_tokentype::TK_LP, "'{"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {'[', "["},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .right_token = {'[', "["},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {verilog_tokentype::TK_LBSTARRB, "[*]"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .right_token = {verilog_tokentype::TK_LBSTARRB, "[*]"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {verilog_tokentype::TK_LBPLUSRB, "[+]"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .right_token = {verilog_tokentype::TK_LBPLUSRB, "[+]"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "predicate"},
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "predicate"},
+          .right_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'(', "("},
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'(', "("},
+          .right_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_and, "and"},
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_and, "and"},
+          .right_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_or, "or"},
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_or, "or"},
+          .right_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_intersect, "intersect"},
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_intersect, "intersect"},
+          .right_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_throughout, "throughout"},
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_throughout, "throughout"},
+          .right_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_within, "within"},
-          {verilog_tokentype::TK_POUNDPOUND, "##"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_within, "within"},
+          .right_token = {verilog_tokentype::TK_POUNDPOUND, "##"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // Two unary operators
       {
-          DefaultStyle,
-          {'~', "~"},
-          {'~', "~"},
-          {/* any context */},
-          {NodeEnum::kUnaryPrefixExpression},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'~', "~"},
+          .right_token = {'~', "~"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnaryPrefixExpression},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
 
       // Postfix "i++"/"j--": operand and operator share the same
       // kIncrementDecrementExpression node, so no space is required.
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "i"},
-          {verilog_tokentype::TK_INCR, "++"},
-          {NodeEnum::kIncrementDecrementExpression},
-          {NodeEnum::kIncrementDecrementExpression},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "i"},
+          .right_token = {verilog_tokentype::TK_INCR, "++"},
+          .left_context = {NodeEnum::kIncrementDecrementExpression},
+          .right_context = {NodeEnum::kIncrementDecrementExpression},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "j"},
-          {verilog_tokentype::TK_DECR, "--"},
-          {NodeEnum::kIncrementDecrementExpression},
-          {NodeEnum::kIncrementDecrementExpression},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "j"},
+          .right_token = {verilog_tokentype::TK_DECR, "--"},
+          .left_context = {NodeEnum::kIncrementDecrementExpression},
+          .right_context = {NodeEnum::kIncrementDecrementExpression},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       // Prefix "++i"/"--j" used as its own statement/expression: the
       // preceding token (e.g. a ')') is not part of the same expression
       {
-          DefaultStyle,
-          {')', ")"},
-          {verilog_tokentype::TK_INCR, "++"},
-          {/* any context */},
-          {NodeEnum::kIncrementDecrementExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {verilog_tokentype::TK_INCR, "++"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kIncrementDecrementExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {verilog_tokentype::TK_DECR, "--"},
-          {/* any context */},
-          {NodeEnum::kIncrementDecrementExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {verilog_tokentype::TK_DECR, "--"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kIncrementDecrementExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // Modport explicit port name, e.g. "input .a(sig)"
       {
-          DefaultStyle,
-          {TK_input, "input"},
-          {'.', "."},
-          {/* any context */},
-          {NodeEnum::kModportSimplePort},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_input, "input"},
+          .right_token = {'.', "."},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kModportSimplePort},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_output, "output"},
-          {'.', "."},
-          {/* any context */},
-          {NodeEnum::kModportSimplePort},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_output, "output"},
+          .right_token = {'.', "."},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kModportSimplePort},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // Handle '->' as a unary prefix expression.
       {
-          DefaultStyle,
-          {TK_TRIGGER, "->"},
-          {verilog_tokentype::SymbolIdentifier, "a"},
-          {/* any context */},              // context
-          {/* any context */},              // context
-          {0, SpacingOptions::kUndecided},  // could be MustAppend though
+          .style = DefaultStyle,
+          .left_token = {TK_TRIGGER, "->"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "a"},
+          .left_context = {/* any context */},   // context
+          .right_context = {/* any context */},  // context
+          .expected_annotation =
+              {0, SpacingOptions::kUndecided},  // could be MustAppend though
       },
       {
-          DefaultStyle,
-          {TK_NONBLOCKING_TRIGGER, "->>"},
-          {verilog_tokentype::SymbolIdentifier, "a"},
-          {/* any context */},              // context
-          {/* any context */},              // context
-          {0, SpacingOptions::kUndecided},  // could be MustAppend though
+          .style = DefaultStyle,
+          .left_token = {TK_NONBLOCKING_TRIGGER, "->>"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "a"},
+          .left_context = {/* any context */},   // context
+          .right_context = {/* any context */},  // context
+          .expected_annotation =
+              {0, SpacingOptions::kUndecided},  // could be MustAppend though
       },
 
       // Handle '->'/'->>' as event trigger statements
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "1"},
-          {TK_TRIGGER, "->"},
-          {/* any context */},  // context
-          {/* any context */},  // context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "1"},
+          .right_token = {TK_TRIGGER, "->"},
+          .left_context = {/* any context */},   // context
+          .right_context = {/* any context */},  // context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "1"},
-          {TK_NONBLOCKING_TRIGGER, "->>"},
-          {/* any context */},  // context
-          {/* any context */},  // context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "1"},
+          .right_token = {TK_NONBLOCKING_TRIGGER, "->>"},
+          .left_context = {/* any context */},   // context
+          .right_context = {/* any context */},  // context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // Handle '->' as a binary operator
       {
-          DefaultStyle,
-          {TK_LOGICAL_IMPLIES, "->"},
-          {verilog_tokentype::SymbolIdentifier, "right"},
-          {/* any context */},  // context
-          {/* any context */},  // context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_LOGICAL_IMPLIES, "->"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "right"},
+          .left_context = {/* any context */},   // context
+          .right_context = {/* any context */},  // context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "left"},
-          {TK_LOGICAL_IMPLIES, "->"},
-          {/* any context */},  // context
-          {/* any context */},  // context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "left"},
+          .right_token = {TK_LOGICAL_IMPLIES, "->"},
+          .left_context = {/* any context */},   // context
+          .right_context = {/* any context */},  // context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_CONSTRAINT_IMPLIES, "->"},
-          {verilog_tokentype::SymbolIdentifier, "right"},
-          {/* any context */},  // context
-          {/* any context */},  // context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_CONSTRAINT_IMPLIES, "->"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "right"},
+          .left_context = {/* any context */},   // context
+          .right_context = {/* any context */},  // context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "left"},
-          {TK_CONSTRAINT_IMPLIES, "->"},
-          {/* any context */},  // context
-          {/* any context */},  // context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "left"},
+          .right_token = {TK_CONSTRAINT_IMPLIES, "->"},
+          .left_context = {/* any context */},   // context
+          .right_context = {/* any context */},  // context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // Inside dimension ranges, force space preservation if not around ':'
       {
-          DefaultStyle,
-          {'*', "*"},
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'*', "*"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {'*', "*"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .right_token = {'*', "*"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {/* any context */},
-          {NodeEnum::kDimensionRange},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kDimensionRange},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {':', ":"},
-          {/* any context */},
-          {NodeEnum::kDimensionRange},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .right_token = {':', ":"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kDimensionRange},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
 
       // spacing between ranges of multi-dimension arrays
       {
-          DefaultStyle,
-          {']', "]"},
-          {'[', "["},
-          {},  // any context
-          {},  // any context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {']', "]"},
+          .right_token = {'[', "["},
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
 
       // spacing before first '[' of packed arrays in declarations
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_logic, "logic"},
-          {'[', "["},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_logic, "logic"},
+          .right_token = {'[', "["},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "mytype1"},
-          {'[', "["},
-          {/* any context */},
-          {},  // unspecified context, this covers index expressions
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "mytype1"},
+          .right_token = {'[', "["},
+          .left_context = {/* any context */},
+          .right_context =
+              {},  // unspecified context, this covers index expressions
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_logic, "logic"},
-          {'[', "["},
-          {/* any context */},
-          {NodeEnum::kPackedDimensions},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_logic, "logic"},
+          .right_token = {'[', "["},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kPackedDimensions},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "mytype2"},
-          {'[', "["},
-          {/* any context */},
-          {NodeEnum::kPackedDimensions},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "mytype2"},
+          .right_token = {'[', "["},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kPackedDimensions},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id1"},
-          {'[', "["},
-          {/* any context */},
-          {NodeEnum::kPackedDimensions, NodeEnum::kExpression},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id1"},
+          .right_token = {'[', "["},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kPackedDimensions, NodeEnum::kExpression},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
 
       // spacing after last ']' of packed arrays in declarations
       {
-          DefaultStyle,
-          {']', "]"},
-          {verilog_tokentype::SymbolIdentifier, "id_a"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {']', "]"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "id_a"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {']', "]"},
-          {verilog_tokentype::SymbolIdentifier, "id_b"},
-          {/* any context */},
-          {NodeEnum::kUnqualifiedId},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {']', "]"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "id_b"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kUnqualifiedId},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {']', "]"},
-          {verilog_tokentype::SymbolIdentifier, "id_c"},
-          {/* any context */},
-          {NodeEnum::kDataTypeImplicitBasicIdDimensions,
-           NodeEnum::kUnqualifiedId},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {']', "]"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "id_c"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kDataTypeImplicitBasicIdDimensions,
+                            NodeEnum::kUnqualifiedId},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // "foo ()" in "module foo();"
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {'(', "("},
-          {/* any context */},
-          {/* unspecified context */},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {'(', "("},
-          {NodeEnum::kModuleHeader},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .right_token = {'(', "("},
+          .left_context = {NodeEnum::kModuleHeader},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // "a(" in "foo bar (.a(b));": instantiation with named ports
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {'(', "("},
-          {NodeEnum::kGateInstance},
-          {NodeEnum::kGateInstance},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .right_token = {'(', "("},
+          .left_context = {NodeEnum::kGateInstance},
+          .right_context = {NodeEnum::kGateInstance},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {'(', "("},
-          {/* any context */},
-          {NodeEnum::kPrimitiveGateInstance},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kPrimitiveGateInstance},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {'(', "("},
-          {/* any context */},
-          {NodeEnum::kActualNamedPort},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kActualNamedPort},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {'(', "("},
-          {/* any context */},
-          {NodeEnum::kGateInstance, NodeEnum::kActualNamedPort},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kGateInstance,
+                            NodeEnum::kActualNamedPort},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "foo"},
-          {'(', "("},
-          {/* any context */},
-          {NodeEnum::kModuleHeader, NodeEnum::kPort},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "foo"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kModuleHeader, NodeEnum::kPort},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
 
       // cases for the heavily overloaded ':'
 
       // ':' on the right, anything else on the left
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "x"},
-          {':', ":"},
-          {/* any context */},
-          {/* unspecified context */},
-          kUnhandledSpacing,
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "x"},
+          .right_token = {':', ":"},
+          .left_context = {/* any context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = kUnhandledSpacing,
       },
       {
           // a ? b : c (condition expression)
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "b"},
-          {':', ":"},
-          {/* any context */},
-          {NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "b"},
+          .right_token = {':', ":"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // a ? 111 : c (condition expression)
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "111"},
-          {':', ":"},
-          {/* any context */},
-          {NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "111"},
+          .right_token = {':', ":"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // a ? "1" : c (condition expression)
-          DefaultStyle,
-          {verilog_tokentype::TK_StringLiteral, "\"1\""},
-          {':', ":"},
-          {/* any context */},
-          {NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_StringLiteral, "\"1\""},
+          .right_token = {':', ":"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // a ? (1) : c (condition expression)
-          DefaultStyle,
-          {')', ":"},
-          {':', ":"},
-          {/* any context */},
-          {NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {')', ":"},
+          .right_token = {':', ":"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // a ? {b} : {c} (condition expression)
-          DefaultStyle,
-          {'}', "}"},
-          {':', ":"},
-          {/* any context */},
-          {NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'}', "}"},
+          .right_token = {':', ":"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // a ? {b} : {c} (condition expression)
-          DefaultStyle,
-          {':', ":"},
-          {'{', "{"},
-          {/* any context */},
-          {NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {'{', "{"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // ':' on the left, anything else on the right
       {
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::SymbolIdentifier, "x"},
-          {/* any context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "x"},
+          .left_context = {/* any context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // a ? b : c (condition expression)
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::SymbolIdentifier, "c"},
-          {/* any context */},
-          {NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "c"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // a ? b : 7 (condition expression)
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::TK_DecNumber, "7"},
-          {/* any context */},
-          {NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "7"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // a ? b : "7" (condition expression)
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::TK_StringLiteral, "\"7\""},
-          {/* any context */},
-          {NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::TK_StringLiteral, "\"7\""},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // a ? b : (7) (condition expression)
-          DefaultStyle,
-          {':', ":"},
-          {'(', "("},
-          {/* any context */},
-          {NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {'(', "("},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // ':' in labels
       // ':' before and after keywords:
       {
           // "begin :"
-          DefaultStyle,
-          {verilog_tokentype::TK_begin, "begin"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_begin, "begin"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // ": begin"
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::TK_begin, "begin"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::TK_begin, "begin"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "fork :"
-          DefaultStyle,
-          {verilog_tokentype::TK_fork, "fork"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_fork, "fork"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "end :"
-          DefaultStyle,
-          {verilog_tokentype::TK_end, "end"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_end, "end"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "endclass :"
-          DefaultStyle,
-          {verilog_tokentype::TK_endclass, "endclass"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_endclass, "endclass"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "endfunction :"
-          DefaultStyle,
-          {verilog_tokentype::TK_endfunction, "endfunction"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_endfunction, "endfunction"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "endtask :"
-          DefaultStyle,
-          {verilog_tokentype::TK_endtask, "endtask"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_endtask, "endtask"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "endmodule :"
-          DefaultStyle,
-          {verilog_tokentype::TK_endmodule, "endmodule"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_endmodule, "endmodule"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "endpackage :"
-          DefaultStyle,
-          {verilog_tokentype::TK_endpackage, "endpackage"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_endpackage, "endpackage"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "endinterface :"
-          DefaultStyle,
-          {verilog_tokentype::TK_endinterface, "endinterface"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_endinterface, "endinterface"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "endproperty :"
-          DefaultStyle,
-          {verilog_tokentype::TK_endproperty, "endproperty"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_endproperty, "endproperty"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "endclocking :"
-          DefaultStyle,
-          {verilog_tokentype::TK_endclocking, "endclocking"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_endclocking, "endclocking"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       // endcase and endgenerate do not get labels
 
       // ':' before and after label identifiers:
       {
           // "id :"
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {':', ":"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          kUnhandledSpacing,
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = kUnhandledSpacing,
       },
       {
           // "id :"
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kBlockIdentifier},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kBlockIdentifier},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "id : begin ..."
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kLabeledStatement},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kLabeledStatement},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "id :"
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kCaseItem},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kCaseItem},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // "id :"
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kCaseInsideItem},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kCaseInsideItem},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // "id :"
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kCasePatternItem},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kCasePatternItem},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // "id :"
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kGenerateCaseItem},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kGenerateCaseItem},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // "id :"
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kPropertyCaseItem},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kPropertyCaseItem},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // "id :"
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kRandSequenceCaseItem},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kRandSequenceCaseItem},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // ": id"
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // ": id"
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {/* unspecified context */},
-          {NodeEnum::kLabel},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kLabel},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       // Shift operators
       {
           // foo = 1 << width;
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "1"},
-          {verilog_tokentype::TK_LS, "<<"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "1"},
+          .right_token = {verilog_tokentype::TK_LS, "<<"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = 1 << width;
-          DefaultStyle,
-          {verilog_tokentype::TK_LS, "<<"},
-          {verilog_tokentype::SymbolIdentifier, "width"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_LS, "<<"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "width"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = bar << 4;
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "bar"},
-          {verilog_tokentype::TK_LS, "<<"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "bar"},
+          .right_token = {verilog_tokentype::TK_LS, "<<"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = bar << 4;
-          DefaultStyle,
-          {verilog_tokentype::TK_LS, "<<"},
-          {verilog_tokentype::TK_DecNumber, "4"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_LS, "<<"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "4"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = `VAL << 4;
-          DefaultStyle,
-          {verilog_tokentype::MacroIdentifier, "`VAL"},
-          {verilog_tokentype::TK_LS, "<<"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroIdentifier, "`VAL"},
+          .right_token = {verilog_tokentype::TK_LS, "<<"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = bar << `SIZE;
-          DefaultStyle,
-          {verilog_tokentype::TK_LS, "<<"},
-          {verilog_tokentype::MacroIdentifier, "`SIZE"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_LS, "<<"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`SIZE"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = 1 >> width;
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "1"},
-          {verilog_tokentype::TK_RS, ">>"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "1"},
+          .right_token = {verilog_tokentype::TK_RS, ">>"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = 1 >> width;
-          DefaultStyle,
-          {verilog_tokentype::TK_RS, ">>"},
-          {verilog_tokentype::SymbolIdentifier, "width"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_RS, ">>"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "width"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = bar >> 4;
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "bar"},
-          {verilog_tokentype::TK_RS, ">>"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "bar"},
+          .right_token = {verilog_tokentype::TK_RS, ">>"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = bar >> 4;
-          DefaultStyle,
-          {verilog_tokentype::TK_RS, ">>"},
-          {verilog_tokentype::TK_DecNumber, "4"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_RS, ">>"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "4"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = `VAL >> 4;
-          DefaultStyle,
-          {verilog_tokentype::MacroIdentifier, "`VAL"},
-          {verilog_tokentype::TK_RS, ">>"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroIdentifier, "`VAL"},
+          .right_token = {verilog_tokentype::TK_RS, ">>"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = bar >> `SIZE;
-          DefaultStyle,
-          {verilog_tokentype::TK_RS, ">>"},
-          {verilog_tokentype::MacroIdentifier, "`SIZE"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_RS, ">>"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`SIZE"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       // Streaming operators
       {
           // foo = {<<{bar}};
-          DefaultStyle,
-          {'=', "="},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'=', "="},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<{bar}};
-          DefaultStyle,
-          {'{', "{"},
-          {verilog_tokentype::TK_LS, "<<"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'{', "{"},
+          .right_token = {verilog_tokentype::TK_LS, "<<"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_LS, "<<"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_LS, "<<"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<{bar}};
-          DefaultStyle,
-          {'{', "{"},
-          {verilog_tokentype::SymbolIdentifier, "bar"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'{', "{"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "bar"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<{bar}};
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "bar"},
-          {'}', "}"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "bar"},
+          .right_token = {'}', "}"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<4{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_LS, "<<"},
-          {verilog_tokentype::TK_DecNumber, "4"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_LS, "<<"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "4"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<4{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "4"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "4"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<byte{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_LS, "<<"},
-          {verilog_tokentype::TK_byte, "byte"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_LS, "<<"},
+          .right_token = {verilog_tokentype::TK_byte, "byte"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<byte{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_byte, "byte"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_byte, "byte"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<type_t{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_LS, "<<"},
-          {verilog_tokentype::SymbolIdentifier, "type_t"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_LS, "<<"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "type_t"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<type_t{bar}};
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "type_t"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "type_t"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<`GET_TYPE{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_LS, "<<"},
-          {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_LS, "<<"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {<<`GET_TYPE{bar}};
-          DefaultStyle,
-          {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>{bar}};
-          DefaultStyle,
-          {'=', "="},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'=', "="},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>{bar}};
-          DefaultStyle,
-          {'{', "{"},
-          {verilog_tokentype::TK_RS, ">>"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'{', "{"},
+          .right_token = {verilog_tokentype::TK_RS, ">>"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_RS, ">>"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_RS, ">>"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>{bar}};
-          DefaultStyle,
-          {'{', "{"},
-          {verilog_tokentype::SymbolIdentifier, "bar"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'{', "{"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "bar"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>{bar}};
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "bar"},
-          {'}', "}"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "bar"},
+          .right_token = {'}', "}"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>4{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_RS, ">>"},
-          {verilog_tokentype::TK_DecNumber, "4"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_RS, ">>"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "4"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>4{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "4"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "4"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>byte{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_RS, ">>"},
-          {verilog_tokentype::TK_byte, "byte"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_RS, ">>"},
+          .right_token = {verilog_tokentype::TK_byte, "byte"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>byte{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_byte, "byte"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_byte, "byte"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>type_t{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_RS, ">>"},
-          {verilog_tokentype::SymbolIdentifier, "type_t"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_RS, ">>"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "type_t"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>type_t{bar}};
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "type_t"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "type_t"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>`GET_TYPE{bar}};
-          DefaultStyle,
-          {verilog_tokentype::TK_RS, ">>"},
-          {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_RS, ">>"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // foo = {>>`GET_TYPE{bar}};
-          DefaultStyle,
-          {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kStreamingConcatenation},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroIdentifier, "`GET_TYPE"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       // ':' in bit slicing and array indexing
       {
           // [1:0]
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "1"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionRange},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "1"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [1:0]
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::TK_DecNumber, "0"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionRange},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "0"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a:b]
-          DefaultStyle,
-          {SymbolIdentifier, "a"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionRange},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "a"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a:b]
-          DefaultStyle,
-          {':', ":"},
-          {SymbolIdentifier, "b"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionRange},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {SymbolIdentifier, "b"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [1:0]
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "1"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionRange},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "1"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [1:0]
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::TK_DecNumber, "0"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionRange},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "0"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a:b]
-          DefaultStyle,
-          {SymbolIdentifier, "a"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionRange},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "a"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a:b]
-          DefaultStyle,
-          {':', ":"},
-          {SymbolIdentifier, "b"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionRange},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {SymbolIdentifier, "b"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [1:0]
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "1"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionSlice},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "1"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionSlice},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [1:0]
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::TK_DecNumber, "0"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionSlice},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "0"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionSlice},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a:b]
-          DefaultStyle,
-          {SymbolIdentifier, "a"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionSlice},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "a"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionSlice},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a:b]
-          DefaultStyle,
-          {':', ":"},
-          {SymbolIdentifier, "b"},
-          {/* unspecified context */},
-          {NodeEnum::kDimensionSlice},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {SymbolIdentifier, "b"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kDimensionSlice},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [1:0]
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "1"},
-          {':', ":"},
-          {/* any context */},
-          {NodeEnum::kCycleDelayRange},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "1"},
+          .right_token = {':', ":"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kCycleDelayRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [1:0]
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::TK_DecNumber, "0"},
-          {/* any context */},
-          {NodeEnum::kCycleDelayRange},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "0"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kCycleDelayRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a:b]
-          DefaultStyle,
-          {SymbolIdentifier, "a"},
-          {':', ":"},
-          {/* any context */},
-          {NodeEnum::kCycleDelayRange},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "a"},
+          .right_token = {':', ":"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kCycleDelayRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a:b]
-          DefaultStyle,
-          {':', ":"},
-          {SymbolIdentifier, "b"},
-          {/* any context */},
-          {NodeEnum::kCycleDelayRange},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {SymbolIdentifier, "b"},
+          .left_context = {/* any context */},
+          .right_context = {NodeEnum::kCycleDelayRange},
           // no spaces preceding ':' in unit test context
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [1:0]
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "1"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kValueRange},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "1"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kValueRange},
           // no spaces preceding ':' in unit test context
-          {1, SpacingOptions::kUndecided},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // [1:0]
-          DefaultStyle,
-          {':', ":"},
-          {verilog_tokentype::TK_DecNumber, "0"},
-          {/* unspecified context */},
-          {NodeEnum::kValueRange},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {verilog_tokentype::TK_DecNumber, "0"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kValueRange},
           // no spaces preceding ':' in unit test context
-          {1, SpacingOptions::kUndecided},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // [a:b]
-          DefaultStyle,
-          {SymbolIdentifier, "a"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kValueRange},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "a"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kValueRange},
           // no spaces preceding ':' in unit test context
-          {1, SpacingOptions::kUndecided},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // [a:b]
-          DefaultStyle,
-          {':', ":"},
-          {SymbolIdentifier, "b"},
-          {/* unspecified context */},
-          {NodeEnum::kValueRange},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {SymbolIdentifier, "b"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kValueRange},
           // no spaces preceding ':' in unit test context
-          {1, SpacingOptions::kUndecided},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       {
           // "] {" in "typedef logic [N] { ..."
           // where [N] is a packed dimension
-          DefaultStyle,
-          {']', "]"},
-          {'{', "{"},
-          {NodeEnum::kPackedDimensions},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {']', "]"},
+          .right_token = {'{', "{"},
+          .left_context = {NodeEnum::kPackedDimensions},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "] {" in "typedef logic [M:N] { ..."
           // where [M:N] is a packed dimension
-          DefaultStyle,
-          {']', "]"},
-          {'{', "{"},
-          {NodeEnum::kPackedDimensions},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {']', "]"},
+          .right_token = {'{', "{"},
+          .left_context = {NodeEnum::kPackedDimensions},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // "]{" in other contexts
-          DefaultStyle,
-          {']', "]"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {']', "]"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
 
       // name: coverpoint
       {
-          DefaultStyle,
-          {SymbolIdentifier, "foo_cp"},
-          {':', ":"},
-          {/* unspecified context */},
-          {NodeEnum::kCoverPoint},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "foo_cp"},
+          .right_token = {':', ":"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kCoverPoint},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       // coverpoint foo {
       {
-          DefaultStyle,
-          {SymbolIdentifier, "cpaddr"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kCoverPoint, NodeEnum::kBraceGroup},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "cpaddr"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kCoverPoint, NodeEnum::kBraceGroup},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       // enum name TYPEID {
       {
-          DefaultStyle,
-          {SymbolIdentifier, "mytype_t"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {NodeEnum::kEnumType, NodeEnum::kBraceGroup},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "mytype_t"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {NodeEnum::kEnumType, NodeEnum::kBraceGroup},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // x < y (binary operator)
       {
-          DefaultStyle,
-          {SymbolIdentifier, "id"},
-          {'<', "<"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "id"},
+          .right_token = {'<', "<"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_DecNumber, "7"},
-          {'<', "<"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_DecNumber, "7"},
+          .right_token = {'<', "<"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {'<', "<"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {'<', "<"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'<', "<"},
-          {SymbolIdentifier, "id"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'<', "<"},
+          .right_token = {SymbolIdentifier, "id"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'<', "<"},
-          {TK_DecNumber, "7"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'<', "<"},
+          .right_token = {TK_DecNumber, "7"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'<', "<"},
-          {'(', "("},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'<', "<"},
+          .right_token = {'(', "("},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // x > y (binary operator)
       {
-          DefaultStyle,
-          {SymbolIdentifier, "id"},
-          {'>', ">"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "id"},
+          .right_token = {'>', ">"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_DecNumber, "7"},
-          {'>', ">"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_DecNumber, "7"},
+          .right_token = {'>', ">"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {'>', ">"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {'>', ">"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'>', ">"},
-          {SymbolIdentifier, "id"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'>', ">"},
+          .right_token = {SymbolIdentifier, "id"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'>', ">"},
-          {TK_DecNumber, "7"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'>', ">"},
+          .right_token = {TK_DecNumber, "7"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'>', ">"},
-          {'(', "("},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'>', ">"},
+          .right_token = {'(', "("},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // '@' on the right
       {
-          DefaultStyle,
-          {TK_always, "always"},
-          {'@', "@"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_always, "always"},
+          .right_token = {'@', "@"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "cblock"},
-          {'@', "@"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "cblock"},
+          .right_token = {'@', "@"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       // '@' on the left
       {
-          DefaultStyle,
-          {'@', "@"},
-          {'(', "("},
-          {},  // default context
-          {},  // default context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'@', "@"},
+          .right_token = {'(', "("},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'@', "@"},
-          {'*', "*"},  // not a binary operator in this case
-          {},          // default context
-          {},          // default context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'@', "@"},
+          .right_token = {'*', "*"},  // not a binary operator in this case
+          .left_context = {},         // default context
+          .right_context = {},        // default context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'@', "@"},
-          {SymbolIdentifier, "clock_a"},
-          {},  // default context
-          {},  // default context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'@', "@"},
+          .right_token = {SymbolIdentifier, "clock_a"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
 
       // '#' on the right
       {
-          DefaultStyle,
-          {SymbolIdentifier, "id_before_pound"},
-          {'#', "#"},
-          {},  // default context
-          {},  // default context
-               // no spaces preceding ':' in unit test context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "id_before_pound"},
+          .right_token = {'#', "#"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+                                // no spaces preceding ':' in unit test context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "id_before_pound"},
-          {'#', "#"},
-          {NodeEnum::kUnqualifiedId},
-          {},  // default context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "id_before_pound"},
+          .right_token = {'#', "#"},
+          .left_context = {NodeEnum::kUnqualifiedId},
+          .right_context = {},  // default context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "id_before_pound"},
-          {'#', "#"},
-          {NodeEnum::kQualifiedId},
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "id_before_pound"},
+          .right_token = {'#', "#"},
+          .left_context = {NodeEnum::kQualifiedId},
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // '}' on the left
       {
-          DefaultStyle,
-          {'}', "}"},
-          {SymbolIdentifier, "id_before_open_brace"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'}', "}"},
+          .right_token = {SymbolIdentifier, "id_before_open_brace"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'}', "}"},
-          {',', ","},
-          {},  // default context
-          {},  // default context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'}', "}"},
+          .right_token = {',', ","},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'}', "}"},
-          {';', ";"},
-          {},  // default context
-          {},  // default context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'}', "}"},
+          .right_token = {';', ";"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'}', "}"},
-          {'}', "}"},
-          {},  // default context
-          {},  // default context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'}', "}"},
+          .right_token = {'}', "}"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
 
       // '{' on the right
       {
-          DefaultStyle,
-          {SymbolIdentifier, "id_before_open_brace"},
-          {'{', "{"},
-          {},  // default context
-          {},  // default context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "id_before_open_brace"},
+          .right_token = {'{', "{"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_unique, "unique"},
-          {'{', "{"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_unique, "unique"},
+          .right_token = {'{', "{"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_with, "with"},
-          {'{', "{"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_with, "with"},
+          .right_token = {'{', "{"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // constraint c_id {
-          DefaultStyle,
-          {SymbolIdentifier, "id_before_open_brace"},
-          {'{', "{"},
-          {},  // default context
-          {NodeEnum::kConstraintDeclaration, NodeEnum::kBraceGroup},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "id_before_open_brace"},
+          .right_token = {'{', "{"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kConstraintDeclaration,
+                            NodeEnum::kBraceGroup},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // ';' on the left
       {
-          DefaultStyle,
-          {';', ";"},
-          {SymbolIdentifier, "id_after_semi"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {SymbolIdentifier, "id_after_semi"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {SemicolonEndOfAssertionVariableDeclarations, ";"},
-          {SymbolIdentifier, "id_after_semi"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SemicolonEndOfAssertionVariableDeclarations, ";"},
+          .right_token = {SymbolIdentifier, "id_after_semi"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
 
       // ';' on the right
       {
-          DefaultStyle,
-          {SymbolIdentifier, "id"},
-          {';', ";"},
-          {},  // default context
-          {},  // default context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "id"},
+          .right_token = {';', ";"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "id"},
-          {SemicolonEndOfAssertionVariableDeclarations, ";"},
-          {},  // default context
-          {},  // default context
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "id"},
+          .right_token = {SemicolonEndOfAssertionVariableDeclarations, ";"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {';', ";"},
-          {},                               // default context
-          {},                               // default context
-          {0, SpacingOptions::kUndecided},  // could be MustAppend too
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {';', ";"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation =
+              {0, SpacingOptions::kUndecided},  // could be MustAppend too
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {SemicolonEndOfAssertionVariableDeclarations, ";"},
-          {},                               // default context
-          {},                               // default context
-          {0, SpacingOptions::kUndecided},  // could be MustAppend too
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {SemicolonEndOfAssertionVariableDeclarations, ";"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation =
+              {0, SpacingOptions::kUndecided},  // could be MustAppend too
       },
 
       // keyword on right
       {
-          DefaultStyle,
-          {TK_DecNumber, "1"},
-          {TK_begin, "begin"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_DecNumber, "1"},
+          .right_token = {TK_begin, "begin"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_begin, "begin"},
-          {TK_begin, "begin"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_begin, "begin"},
+          .right_token = {TK_begin, "begin"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_begin, "begin"},
-          {TK_end, "end"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {TK_begin, "begin"},
+          .right_token = {TK_end, "end"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {TK_end, "end"},
-          {TK_begin, "begin"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_end, "end"},
+          .right_token = {TK_begin, "begin"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_end, "end"},
-          {TK_else, "else"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {TK_end, "end"},
+          .right_token = {TK_else, "else"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'}', "}"},
-          {TK_else, "else"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'}', "}"},
+          .right_token = {TK_else, "else"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {TK_else, "else"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {TK_else, "else"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {TK_default, "default"},
-          {TK_clocking, "clocking"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_default, "default"},
+          .right_token = {TK_clocking, "clocking"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_default, "default"},
-          {TK_disable, "disable"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_default, "default"},
+          .right_token = {TK_disable, "disable"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_disable, "disable"},
-          {TK_iff, "iff"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_disable, "disable"},
+          .right_token = {TK_iff, "iff"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_disable, "disable"},
-          {TK_soft, "soft"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_disable, "disable"},
+          .right_token = {TK_soft, "soft"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_extern, "extern"},
-          {TK_forkjoin, "forkjoin"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_extern, "extern"},
+          .right_token = {TK_forkjoin, "forkjoin"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_input, "input"},
-          {TK_logic, "logic"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_input, "input"},
+          .right_token = {TK_logic, "logic"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_var, "var"},
-          {TK_logic, "logic"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_var, "var"},
+          .right_token = {TK_logic, "logic"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_output, "output"},
-          {TK_reg, "reg"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_output, "output"},
+          .right_token = {TK_reg, "reg"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_static, "static"},
-          {TK_constraint, "constraint"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_static, "static"},
+          .right_token = {TK_constraint, "constraint"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_parameter, "parameter"},
-          {TK_type, "type"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_parameter, "parameter"},
+          .right_token = {TK_type, "type"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_virtual, "virtual"},
-          {TK_interface, "interface"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_virtual, "virtual"},
+          .right_token = {TK_interface, "interface"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_const, "const"},
-          {TK_ref, "ref"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_const, "const"},
+          .right_token = {TK_ref, "ref"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {TK_union, "union"},
-          {TK_tagged, "tagged"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {TK_union, "union"},
+          .right_token = {TK_tagged, "tagged"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {TK_end, "end"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {TK_end, "end"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {TK_endfunction, "endfunction"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {TK_endfunction, "endfunction"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {TK_endtask, "endtask"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {TK_endtask, "endtask"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {TK_endclass, "endclass"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {TK_endclass, "endclass"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {';', ";"},
-          {TK_endpackage, "endpackage"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {';', ";"},
+          .right_token = {TK_endpackage, "endpackage"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "nettype_id"},
-          {TK_with, "with"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "nettype_id"},
+          .right_token = {TK_with, "with"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {SymbolIdentifier, "id"},
-          {TK_until, "until"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {SymbolIdentifier, "id"},
+          .right_token = {TK_until, "until"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {',', ","},
-          {TK_highz0, "highz0"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {',', ","},
+          .right_token = {TK_highz0, "highz0"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {',', ","},
-          {TK_highz1, "highz1"},
-          {},  // default context
-          {},  // default context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {',', ","},
+          .right_token = {TK_highz1, "highz1"},
+          .left_context = {},   // default context
+          .right_context = {},  // default context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       // Entries spacing in primitives
       {
           // 1 0 : ? : -;
-          DefaultStyle,
-          {'1', "1"},
-          {'0', "0"},
-          {},  // default context
-          {NodeEnum::kUdpSequenceEntry},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'1', "1"},
+          .right_token = {'0', "0"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kUdpSequenceEntry},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1 0 : ? : -;
-          DefaultStyle,
-          {'0', "0"},
-          {':', ":"},
-          {},  // default context
-          {NodeEnum::kUdpSequenceEntry},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'0', "0"},
+          .right_token = {':', ":"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kUdpSequenceEntry},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1 0 : ? : -;
-          DefaultStyle,
-          {':', ":"},
-          {'?', "?"},
-          {},  // default context
-          {NodeEnum::kUdpSequenceEntry},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {'?', "?"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kUdpSequenceEntry},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1 0 : ? : -;
-          DefaultStyle,
-          {'?', "?"},
-          {':', ":"},
-          {},  // default context
-          {NodeEnum::kUdpSequenceEntry},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'?', "?"},
+          .right_token = {':', ":"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kUdpSequenceEntry},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1 0 : ? : -;
-          DefaultStyle,
-          {':', ":"},
-          {'-', "-"},
-          {},  // default context
-          {NodeEnum::kUdpSequenceEntry},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {'-', "-"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kUdpSequenceEntry},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1 0 : ? : -;
-          DefaultStyle,
-          {'-', "-"},
-          {';', ";"},
-          {},  // default context
-          {NodeEnum::kUdpSequenceEntry},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'-', "-"},
+          .right_token = {';', ";"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kUdpSequenceEntry},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // 1 0 : -;
-          DefaultStyle,
-          {'1', "1"},
-          {'0', "0"},
-          {},  // default context
-          {NodeEnum::kUdpCombEntry},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'1', "1"},
+          .right_token = {'0', "0"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kUdpCombEntry},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1 0 : -;
-          DefaultStyle,
-          {'0', "0"},
-          {':', ":"},
-          {},  // default context
-          {NodeEnum::kUdpCombEntry},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'0', "0"},
+          .right_token = {':', ":"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kUdpCombEntry},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1 0 : -;
-          DefaultStyle,
-          {':', ":"},
-          {'-', "-"},
-          {},  // default context
-          {NodeEnum::kUdpCombEntry},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {':', ":"},
+          .right_token = {'-', "-"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kUdpCombEntry},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1 0 : -;
-          DefaultStyle,
-          {'-', "-"},
-          {';', ";"},
-          {},  // default context
-          {NodeEnum::kUdpCombEntry},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'-', "-"},
+          .right_token = {';', ";"},
+          .left_context = {},  // default context
+          .right_context = {NodeEnum::kUdpCombEntry},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
 
       // time literals
       {
           // #1ps
-          DefaultStyle,
-          {'#', "#"},
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'#', "#"},
+          .right_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
           // #1ps;
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {';', ";"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {';', ";"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {verilog_tokentype::SymbolIdentifier, "task_call"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "task_call"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {verilog_tokentype::MacroIdentifier, "`MACRO"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {verilog_tokentype::MacroIdentifier, "`MACRO"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "100ps"},
-          {verilog_tokentype::MacroCallId, "`MACRO"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "100ps"},
+          .right_token = {verilog_tokentype::MacroCallId, "`MACRO"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {'#', "#"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {'#', "#"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {verilog_tokentype::TK_INCR, "++"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {verilog_tokentype::TK_INCR, "++"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {verilog_tokentype::TK_DECR, "--"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {verilog_tokentype::TK_DECR, "--"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {'@', "@"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {'@', "@"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {verilog_tokentype::TK_begin, "begin"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {verilog_tokentype::TK_begin, "begin"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {verilog_tokentype::TK_force, "force"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {verilog_tokentype::TK_force, "force"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {verilog_tokentype::TK_output, "output"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {verilog_tokentype::TK_output, "output"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // ... / 1ps
-          DefaultStyle,
-          {'/', "/"},
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'/', "/"},
+          .right_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1ps / ...
-          DefaultStyle,
-          {verilog_tokentype::TK_TimeLiteral, "1ps"},
-          {'/', "/"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_TimeLiteral, "1ps"},
+          .right_token = {'/', "/"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_EOL_COMMENT, "//comment"},
-          {verilog_tokentype::TK_LINE_CONT, "\\"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_EOL_COMMENT, "//comment"},
+          .right_token = {verilog_tokentype::TK_LINE_CONT, "\\"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {verilog_tokentype::TK_LINE_CONT, "\\"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .right_token = {verilog_tokentype::TK_LINE_CONT, "\\"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::EscapedIdentifier, "\\id.id[9]"},
-          {verilog_tokentype::TK_LINE_CONT, "\\"},
-          {/* any context */},
-          {/* any context */},
-          {1, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::EscapedIdentifier, "\\id.id[9]"},
+          .right_token = {verilog_tokentype::TK_LINE_CONT, "\\"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {1, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_DecNumber, "77"},
-          {verilog_tokentype::TK_LINE_CONT, "\\"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_DecNumber, "77"},
+          .right_token = {verilog_tokentype::TK_LINE_CONT, "\\"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {')', ")"},
-          {verilog_tokentype::TK_LINE_CONT, "\\"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {')', ")"},
+          .right_token = {verilog_tokentype::TK_LINE_CONT, "\\"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {'}', "}"},
-          {verilog_tokentype::TK_LINE_CONT, "\\"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {'}', "}"},
+          .right_token = {verilog_tokentype::TK_LINE_CONT, "\\"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {']', "]"},
-          {verilog_tokentype::TK_LINE_CONT, "\\"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token = {']', "]"},
+          .right_token = {verilog_tokentype::TK_LINE_CONT, "\\"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_LINE_CONT, "\\"},
-          {verilog_tokentype::SymbolIdentifier, "id"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_LINE_CONT, "\\"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "id"},
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustWrap},
       },
       // Space between return keyword and return value
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_return, "return"},
-          {'{', "{"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_return, "return"},
+          .right_token = {'{', "{"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_return, "return"},
-          {'(', "("},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_return, "return"},
+          .right_token = {'(', "("},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_return, "return"},
-          {'-', "-"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_return, "return"},
+          .right_token = {'-', "-"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_return, "return"},
-          {'!', "!"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_return, "return"},
+          .right_token = {'!', "!"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_return, "return"},
-          {'~', "~"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_return, "return"},
+          .right_token = {'~', "~"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::TK_return, "return"},
-          {verilog_tokentype::SystemTFIdentifier, "$foo"},
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::TK_return, "return"},
+          .right_token = {verilog_tokentype::SystemTFIdentifier, "$foo"},
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       // '/' between identifiers is a path separator in macro args (#2352),
       // but remains a binary operator in other contexts.
       {
-          DefaultStyle,
-          {verilog_tokentype::MacroIdentifier, "`PATH"},
-          {'/', "/"},
-          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
-          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::MacroIdentifier, "`PATH"},
+          .right_token = {'/', "/"},
+          .left_context = {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          .right_context = {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'/', "/"},
-          {verilog_tokentype::SymbolIdentifier, "src"},
-          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
-          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'/', "/"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "src"},
+          .left_context = {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          .right_context = {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "src"},
-          {'/', "/"},
-          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
-          {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "src"},
+          .right_token = {'/', "/"},
+          .left_context = {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          .right_context = {NodeEnum::kMacroArgList, NodeEnum::kMacroCall},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {verilog_tokentype::SymbolIdentifier, "a"},
-          {'/', "/"},
-          {/* expression, not a macro argument */},
-          {/* expression, not a macro argument */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {verilog_tokentype::SymbolIdentifier, "a"},
+          .right_token = {'/', "/"},
+          .left_context = {/* expression, not a macro argument */},
+          .right_context = {/* expression, not a macro argument */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          {'/', "/"},
-          {verilog_tokentype::SymbolIdentifier, "b"},
-          {/* expression, not a macro argument */},
-          {/* expression, not a macro argument */},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token = {'/', "/"},
+          .right_token = {verilog_tokentype::SymbolIdentifier, "b"},
+          .left_context = {/* expression, not a macro argument */},
+          .right_context = {/* expression, not a macro argument */},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
   };
   int test_index = 0;
@@ -4888,703 +5048,711 @@ static const auto CompactIndexSelectionStyle = []() {
 TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
   static const OriginalSpacingSensitiveTestCase kTestCases[] = {
       {// No comments
-       DefaultStyle,
-       '=',  // left token
-       "=",
-       "   ",                            // whitespace between
-       verilog_tokentype::TK_DecNumber,  // right token
-       "0",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {1, SpacingOptions::kUndecided}},
+       .style = DefaultStyle,
+       .left_token_enum = '=',  // left token
+       .left_token_string = "=",
+       .whitespace_between = "   ",  // whitespace between
+       .right_token_enum = verilog_tokentype::TK_DecNumber,  // right token
+       .right_token_string = "0",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {1, SpacingOptions::kUndecided}},
       {
-          DefaultStyle,
-          TK_COMMENT_BLOCK,
-          "/*comment*/",
-          "",
-          verilog_tokentype::MacroCallId,
-          "`uvm_foo_macro",
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = TK_COMMENT_BLOCK,
+          .left_token_string = "/*comment*/",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::MacroCallId,
+          .right_token_string = "`uvm_foo_macro",
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          TK_COMMENT_BLOCK,
-          "/*comment*/",
-          "",
-          verilog_tokentype::MacroIdentifier,
-          "`uvm_foo_id",
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = TK_COMMENT_BLOCK,
+          .left_token_string = "/*comment*/",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::MacroIdentifier,
+          .right_token_string = "`uvm_foo_id",
+          .left_context = {},   // any context
+          .right_context = {},  // any context
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/*comment*/",
-          "",
-          verilog_tokentype::TK_LINE_CONT,
-          "\\",
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .left_token_string = "/*comment*/",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::TK_LINE_CONT,
+          .right_token_string = "\\",
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustAppend},
       },
       {// //comment1
        // //comment2
-       DefaultStyle,
-       verilog_tokentype::TK_EOL_COMMENT,
-       "//comment1",
-       "\n",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "//comment2",
-       {},
-       {},
-       {2, SpacingOptions::kMustWrap}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .left_token_string = "//comment1",
+       .whitespace_between = "\n",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "//comment2",
+       .left_context = {},
+       .right_context = {},
+       .expected_annotation = {2, SpacingOptions::kMustWrap}},
       {// 0 // comment
-       DefaultStyle,
-       verilog_tokentype::TK_DecNumber,
-       "0",
-       "   ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustAppend}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_DecNumber,
+       .left_token_string = "0",
+       .whitespace_between = "   ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustAppend}},
       {// 0// comment
-       DefaultStyle,
-       verilog_tokentype::TK_DecNumber,
-       "0",
-       "",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustAppend}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_DecNumber,
+       .left_token_string = "0",
+       .whitespace_between = "",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustAppend}},
       {// 0 \n  // comment
-       DefaultStyle,
-       verilog_tokentype::TK_DecNumber,
-       "0",
-       " \n  ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kUndecided}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_DecNumber,
+       .left_token_string = "0",
+       .whitespace_between = " \n  ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kUndecided}},
       {// // comment 1 \n  // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 1",
-       " \n  ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustWrap}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .left_token_string = "// comment 1",
+       .whitespace_between = " \n  ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustWrap}},
       {// /* comment 1 */ \n  // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_COMMENT_BLOCK,
-       "/* comment 1 */",
-       " \n  ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustWrap}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+       .left_token_string = "/* comment 1 */",
+       .whitespace_between = " \n  ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustWrap}},
       {// /* comment 1 */  // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_COMMENT_BLOCK,
-       "/* comment 1 */",
-       " ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustAppend}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+       .left_token_string = "/* comment 1 */",
+       .whitespace_between = " ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustAppend}},
       {// ;  // comment 2
-       DefaultStyle,
-       ';',
-       ";",
-       " ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustAppend}},
+       .style = DefaultStyle,
+       .left_token_enum = ';',
+       .left_token_string = ";",
+       .whitespace_between = " ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustAppend}},
       {// ; \n // comment 2
-       DefaultStyle,
-       ';',
-       ";",
-       " \n",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kUndecided}},
+       .style = DefaultStyle,
+       .left_token_enum = ';',
+       .left_token_string = ";",
+       .whitespace_between = " \n",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kUndecided}},
       {// ,  // comment 2
-       DefaultStyle,
-       ',',
-       ",",
-       " ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustAppend}},
+       .style = DefaultStyle,
+       .left_token_enum = ',',
+       .left_token_string = ",",
+       .whitespace_between = " ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustAppend}},
       {// , \n // comment 2
-       DefaultStyle,
-       ',',
-       ",",
-       "\n ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kUndecided}},
+       .style = DefaultStyle,
+       .left_token_enum = ',',
+       .left_token_string = ",",
+       .whitespace_between = "\n ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kUndecided}},
       {// begin  // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_begin,
-       "begin",
-       " ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustAppend}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_begin,
+       .left_token_string = "begin",
+       .whitespace_between = " ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustAppend}},
       {// begin \n // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_begin,
-       "begin",
-       "\n",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kUndecided}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_begin,
+       .left_token_string = "begin",
+       .whitespace_between = "\n",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kUndecided}},
       {// else  // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_else,
-       "else",
-       " ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustAppend}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_else,
+       .left_token_string = "else",
+       .whitespace_between = " ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustAppend}},
       {// else \n // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_else,
-       "else",
-       " \n  ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kUndecided}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_else,
+       .left_token_string = "else",
+       .whitespace_between = " \n  ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kUndecided}},
       {// end  // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_end,
-       "end",
-       " ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustAppend}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_end,
+       .left_token_string = "end",
+       .whitespace_between = " ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustAppend}},
       {// end \n // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_end,
-       "end",
-       "  \n ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kUndecided}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_end,
+       .left_token_string = "end",
+       .whitespace_between = "  \n ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kUndecided}},
       {// generate  // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_generate,
-       "generate",
-       " ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustAppend}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_generate,
+       .left_token_string = "generate",
+       .whitespace_between = " ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustAppend}},
       {// generate \n // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_generate,
-       "generate",
-       "  \n",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kUndecided}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_generate,
+       .left_token_string = "generate",
+       .whitespace_between = "  \n",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kUndecided}},
       {// if  // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_if,
-       "if",
-       " ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kMustAppend}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_if,
+       .left_token_string = "if",
+       .whitespace_between = " ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kMustAppend}},
       {// if \n\n // comment 2
-       DefaultStyle,
-       verilog_tokentype::TK_if,
-       "if",
-       " \n\n ",
-       verilog_tokentype::TK_EOL_COMMENT,
-       "// comment 2",
-       {/* unspecified context */},
-       {/* unspecified context */},
-       {2, SpacingOptions::kUndecided}},
+       .style = DefaultStyle,
+       .left_token_enum = verilog_tokentype::TK_if,
+       .left_token_string = "if",
+       .whitespace_between = " \n\n ",
+       .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+       .right_token_string = "// comment 2",
+       .left_context = {/* unspecified context */},
+       .right_context = {/* unspecified context */},
+       .expected_annotation = {2, SpacingOptions::kUndecided}},
       {
-          DefaultStyle,
-          verilog_tokentype::TK_LINE_CONT,
-          "\\",
-          "\n",
-          verilog_tokentype::TK_EOL_COMMENT,
-          "//comment",
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::TK_LINE_CONT,
+          .left_token_string = "\\",
+          .whitespace_between = "\n",
+          .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+          .right_token_string = "//comment",
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          verilog_tokentype::TK_LINE_CONT,
-          "\\",
-          "\n",
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/*comment*/",
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::TK_LINE_CONT,
+          .left_token_string = "\\",
+          .whitespace_between = "\n",
+          .right_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .right_token_string = "/*comment*/",
+          .left_context = {/* any context */},
+          .right_context = {/* any context */},
+          .expected_annotation = {0, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          verilog_tokentype::MacroCallCloseToEndLine,
-          ")",
-          " ",
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/*comment*/",
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {2, SpacingOptions::kUndecided},  // could be append
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::MacroCallCloseToEndLine,
+          .left_token_string = ")",
+          .whitespace_between = " ",
+          .right_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .right_token_string = "/*comment*/",
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation =
+              {2, SpacingOptions::kUndecided},  // could be append
       },
       {
-          DefaultStyle,
-          verilog_tokentype::MacroCallCloseToEndLine,
-          ")",
-          "\n",
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/*comment*/",
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {2, SpacingOptions::kMustWrap},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::MacroCallCloseToEndLine,
+          .left_token_string = ")",
+          .whitespace_between = "\n",
+          .right_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .right_token_string = "/*comment*/",
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {2, SpacingOptions::kMustWrap},
       },
       {
-          DefaultStyle,
-          verilog_tokentype::MacroCallCloseToEndLine,
-          ")",
-          " ",
-          verilog_tokentype::TK_EOL_COMMENT,
-          "//comment",
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {2, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::MacroCallCloseToEndLine,
+          .left_token_string = ")",
+          .whitespace_between = " ",
+          .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+          .right_token_string = "//comment",
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {2, SpacingOptions::kMustAppend},
       },
       {
-          DefaultStyle,
-          verilog_tokentype::MacroCallCloseToEndLine,
-          ")",
-          "\n",
-          verilog_tokentype::TK_EOL_COMMENT,
-          "//comment",
-          {/* unspecified context */},
-          {/* unspecified context */},
-          {2, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::MacroCallCloseToEndLine,
+          .left_token_string = ")",
+          .whitespace_between = "\n",
+          .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+          .right_token_string = "//comment",
+          .left_context = {/* unspecified context */},
+          .right_context = {/* unspecified context */},
+          .expected_annotation = {2, SpacingOptions::kUndecided},
       },
       // Comments in UDP entries
       {
           // 1  /*comment*/ 0 : -;
-          DefaultStyle,
-          '1',
-          "1",
-          "",
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/* comment */",
-          {NodeEnum::kUdpCombEntry},
-          {NodeEnum::kUdpCombEntry},
-          {2, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = '1',
+          .left_token_string = "1",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .right_token_string = "/* comment */",
+          .left_context = {NodeEnum::kUdpCombEntry},
+          .right_context = {NodeEnum::kUdpCombEntry},
+          .expected_annotation = {2, SpacingOptions::kUndecided},
       },
       {
           // 1  /*comment*/ 0 : -;
-          DefaultStyle,
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/* comment */",
-          "",
-          '0',
-          "0",
-          {NodeEnum::kUdpCombEntry},
-          {NodeEnum::kUdpCombEntry},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .left_token_string = "/* comment */",
+          .whitespace_between = "",
+          .right_token_enum = '0',
+          .right_token_string = "0",
+          .left_context = {NodeEnum::kUdpCombEntry},
+          .right_context = {NodeEnum::kUdpCombEntry},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1 0  // comment\n : -;
-          DefaultStyle,
-          '0',
-          "0",
-          "",
-          verilog_tokentype::TK_EOL_COMMENT,
-          "// comment",
-          {NodeEnum::kUdpCombEntry},
-          {NodeEnum::kUdpCombEntry},
-          {2, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token_enum = '0',
+          .left_token_string = "0",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+          .right_token_string = "// comment",
+          .left_context = {NodeEnum::kUdpCombEntry},
+          .right_context = {NodeEnum::kUdpCombEntry},
+          .expected_annotation = {2, SpacingOptions::kMustAppend},
       },
       {
           // 1  /*comment*/ 0 : -;
-          DefaultStyle,
-          '1',
-          "1",
-          "",
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/* comment */",
-          {NodeEnum::kUdpSequenceEntry},
-          {NodeEnum::kUdpSequenceEntry},
-          {2, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = '1',
+          .left_token_string = "1",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .right_token_string = "/* comment */",
+          .left_context = {NodeEnum::kUdpSequenceEntry},
+          .right_context = {NodeEnum::kUdpSequenceEntry},
+          .expected_annotation = {2, SpacingOptions::kUndecided},
       },
       {
           // 1  /*comment*/ 0 : -;
-          DefaultStyle,
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/* comment */",
-          "",
-          '0',
-          "0",
-          {NodeEnum::kUdpSequenceEntry},
-          {NodeEnum::kUdpSequenceEntry},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .left_token_string = "/* comment */",
+          .whitespace_between = "",
+          .right_token_enum = '0',
+          .right_token_string = "0",
+          .left_context = {NodeEnum::kUdpSequenceEntry},
+          .right_context = {NodeEnum::kUdpSequenceEntry},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // 1 0  // comment\n : -;
-          DefaultStyle,
-          '0',
-          "0",
-          "",
-          verilog_tokentype::TK_EOL_COMMENT,
-          "// comment",
-          {NodeEnum::kUdpSequenceEntry},
-          {NodeEnum::kUdpSequenceEntry},
-          {2, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token_enum = '0',
+          .left_token_string = "0",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+          .right_token_string = "// comment",
+          .left_context = {NodeEnum::kUdpSequenceEntry},
+          .right_context = {NodeEnum::kUdpSequenceEntry},
+          .expected_annotation = {2, SpacingOptions::kMustAppend},
       },
       {
           // input  /* comment */ i;
-          DefaultStyle,
-          verilog_tokentype::TK_input,
-          "input",
-          "",
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/* comment */",
-          {NodeEnum::kUdpPortDeclaration},
-          {NodeEnum::kUdpPortDeclaration},
-          {2, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::TK_input,
+          .left_token_string = "input",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .right_token_string = "/* comment */",
+          .left_context = {NodeEnum::kUdpPortDeclaration},
+          .right_context = {NodeEnum::kUdpPortDeclaration},
+          .expected_annotation = {2, SpacingOptions::kUndecided},
       },
       {
           // input  /* comment */ i;
-          DefaultStyle,
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/* comment */",
-          "",
-          verilog_tokentype::SymbolIdentifier,
-          "i",
-          {NodeEnum::kUdpPortDeclaration},
-          {NodeEnum::kUdpPortDeclaration},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .left_token_string = "/* comment */",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::SymbolIdentifier,
+          .right_token_string = "i",
+          .left_context = {NodeEnum::kUdpPortDeclaration},
+          .right_context = {NodeEnum::kUdpPortDeclaration},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // input i  /* comment */;
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "i",
-          "",
-          verilog_tokentype::TK_COMMENT_BLOCK,
-          "/* comment */",
-          {NodeEnum::kUdpPortDeclaration},
-          {NodeEnum::kUdpPortDeclaration},
-          {2, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "i",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::TK_COMMENT_BLOCK,
+          .right_token_string = "/* comment */",
+          .left_context = {NodeEnum::kUdpPortDeclaration},
+          .right_context = {NodeEnum::kUdpPortDeclaration},
+          .expected_annotation = {2, SpacingOptions::kUndecided},
       },
       {
           // input i;  // comment\n
-          DefaultStyle,
-          ';',
-          ";",
-          "",
-          verilog_tokentype::TK_EOL_COMMENT,
-          "// comment",
-          {NodeEnum::kUdpPortDeclaration},
-          {NodeEnum::kUdpPortDeclaration},
-          {2, SpacingOptions::kMustAppend},
+          .style = DefaultStyle,
+          .left_token_enum = ';',
+          .left_token_string = ";",
+          .whitespace_between = "",
+          .right_token_enum = verilog_tokentype::TK_EOL_COMMENT,
+          .right_token_string = "// comment",
+          .left_context = {NodeEnum::kUdpPortDeclaration},
+          .right_context = {NodeEnum::kUdpPortDeclaration},
+          .expected_annotation = {2, SpacingOptions::kMustAppend},
       },
 
       {
           // [a+b]
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "a",
-          "",  // no spaces originally
-          '+',
-          "+",
-          {NodeEnum::kDimensionScalar},
-          {NodeEnum::kDimensionScalar},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "a",
+          .whitespace_between = "",  // no spaces originally
+          .right_token_enum = '+',
+          .right_token_string = "+",
+          .left_context = {NodeEnum::kDimensionScalar},
+          .right_context = {NodeEnum::kDimensionScalar},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a +b]
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "a",
-          " ",  // 1 space originally
-          '+',
-          "+",
-          {NodeEnum::kDimensionScalar},
-          {NodeEnum::kDimensionScalar},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "a",
+          .whitespace_between = " ",  // 1 space originally
+          .right_token_enum = '+',
+          .right_token_string = "+",
+          .left_context = {NodeEnum::kDimensionScalar},
+          .right_context = {NodeEnum::kDimensionScalar},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a  +b]
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "a",
-          "  ",  // 2 spaces originally
-          '+',
-          "+",
-          {NodeEnum::kDimensionScalar},
-          {NodeEnum::kDimensionScalar},
-          {0, SpacingOptions::kUndecided},  // no spacing
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "a",
+          .whitespace_between = "  ",  // 2 spaces originally
+          .right_token_enum = '+',
+          .right_token_string = "+",
+          .left_context = {NodeEnum::kDimensionScalar},
+          .right_context = {NodeEnum::kDimensionScalar},
+          .expected_annotation = {0, SpacingOptions::kUndecided},  // no spacing
       },
       {
           // [a     :    b]
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "a",
-          "     ",
-          ':',
-          ":",
-          {NodeEnum::kDimensionRange},
-          {NodeEnum::kDimensionRange},
-          {1, SpacingOptions::kUndecided},  // limit to 1
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "a",
+          .whitespace_between = "     ",
+          .right_token_enum = ':',
+          .right_token_string = ":",
+          .left_context = {NodeEnum::kDimensionRange},
+          .right_context = {NodeEnum::kDimensionRange},
+          .expected_annotation = {1, SpacingOptions::kUndecided},  // limit to 1
       },
       {
           // [a     :    b]
-          DefaultStyle,
-          ':',
-          ":",
-          "    ",
-          verilog_tokentype::SymbolIdentifier,
-          "b",
-          {NodeEnum::kDimensionRange},
-          {NodeEnum::kDimensionRange},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = ':',
+          .left_token_string = ":",
+          .whitespace_between = "    ",
+          .right_token_enum = verilog_tokentype::SymbolIdentifier,
+          .right_token_string = "b",
+          .left_context = {NodeEnum::kDimensionRange},
+          .right_context = {NodeEnum::kDimensionRange},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a + b]
-          CompactIndexSelectionStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "a",
-          " ",
-          '+',
-          "+",
-          {NodeEnum::kDimensionScalar},
-          {NodeEnum::kStreamingConcatenation},
-          {1, SpacingOptions::kUndecided},
+          .style = CompactIndexSelectionStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "a",
+          .whitespace_between = " ",
+          .right_token_enum = '+',
+          .right_token_string = "+",
+          .left_context = {NodeEnum::kDimensionScalar},
+          .right_context = {NodeEnum::kStreamingConcatenation},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // [a+b]
-          CompactIndexSelectionStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "a",
-          "",  // no spaces originally
-          '+',
-          "+",
-          {NodeEnum::kDimensionScalar},
-          {NodeEnum::kDimensionScalar},
-          {0, SpacingOptions::kUndecided},
+          .style = CompactIndexSelectionStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "a",
+          .whitespace_between = "",  // no spaces originally
+          .right_token_enum = '+',
+          .right_token_string = "+",
+          .left_context = {NodeEnum::kDimensionScalar},
+          .right_context = {NodeEnum::kDimensionScalar},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
           // [a +b]
-          CompactIndexSelectionStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "a",
-          " ",  // 1 space originally
-          '+',
-          "+",
-          {NodeEnum::kDimensionScalar},
-          {NodeEnum::kDimensionScalar},
-          {1, SpacingOptions::kUndecided},  // limit to 1 space
+          .style = CompactIndexSelectionStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "a",
+          .whitespace_between = " ",  // 1 space originally
+          .right_token_enum = '+',
+          .right_token_string = "+",
+          .left_context = {NodeEnum::kDimensionScalar},
+          .right_context = {NodeEnum::kDimensionScalar},
+          .expected_annotation =
+              {1, SpacingOptions::kUndecided},  // limit to 1 space
       },
       {
           // [a  +b]
-          CompactIndexSelectionStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "a",
-          "  ",  // 2 spaces originally
-          '+',
-          "+",
-          {NodeEnum::kDimensionScalar},
-          {NodeEnum::kDimensionScalar},
-          {1, SpacingOptions::kUndecided},  // limit to 1 space
+          .style = CompactIndexSelectionStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "a",
+          .whitespace_between = "  ",  // 2 spaces originally
+          .right_token_enum = '+',
+          .right_token_string = "+",
+          .left_context = {NodeEnum::kDimensionScalar},
+          .right_context = {NodeEnum::kDimensionScalar},
+          .expected_annotation =
+              {1, SpacingOptions::kUndecided},  // limit to 1 space
       },
       {
           // [a     :    b]
-          CompactIndexSelectionStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "a",
-          "     ",
-          ':',
-          ":",
-          {NodeEnum::kDimensionRange},
-          {NodeEnum::kDimensionRange},
-          {1, SpacingOptions::kUndecided},  // limit to 1 space
+          .style = CompactIndexSelectionStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "a",
+          .whitespace_between = "     ",
+          .right_token_enum = ':',
+          .right_token_string = ":",
+          .left_context = {NodeEnum::kDimensionRange},
+          .right_context = {NodeEnum::kDimensionRange},
+          .expected_annotation =
+              {1, SpacingOptions::kUndecided},  // limit to 1 space
       },
       {
           // [a     :    b]
-          CompactIndexSelectionStyle,
-          ':',
-          ":",
-          "    ",
-          verilog_tokentype::SymbolIdentifier,
-          "b",
-          {NodeEnum::kDimensionRange},
-          {NodeEnum::kDimensionRange},
-          {0, SpacingOptions::kUndecided},
+          .style = CompactIndexSelectionStyle,
+          .left_token_enum = ':',
+          .left_token_string = ":",
+          .whitespace_between = "    ",
+          .right_token_enum = verilog_tokentype::SymbolIdentifier,
+          .right_token_string = "b",
+          .left_context = {NodeEnum::kDimensionRange},
+          .right_context = {NodeEnum::kDimensionRange},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "a",
-          "\n    ",
-          ':',
-          ":",
-          {NodeEnum::kDimensionRange},
-          {NodeEnum::kDimensionRange},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "a",
+          .whitespace_between = "\n    ",
+          .right_token_enum = ':',
+          .right_token_string = ":",
+          .left_context = {NodeEnum::kDimensionRange},
+          .right_context = {NodeEnum::kDimensionRange},
           // 0 spaces as this is an indentation, not spacing
-          {0, SpacingOptions::kUndecided},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          '*',
-          "*",
-          "",  // 0 spaces originally
-          verilog_tokentype::SymbolIdentifier,
-          "foo",
-          {NodeEnum::kDimensionRange},
-          {NodeEnum::kDimensionRange},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = '*',
+          .left_token_string = "*",
+          .whitespace_between = "",  // 0 spaces originally
+          .right_token_enum = verilog_tokentype::SymbolIdentifier,
+          .right_token_string = "foo",
+          .left_context = {NodeEnum::kDimensionRange},
+          .right_context = {NodeEnum::kDimensionRange},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "foo",
-          "",  // 0 spaces originally
-          '*',
-          "*",
-          {NodeEnum::kDimensionRange},
-          {NodeEnum::kDimensionRange},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "foo",
+          .whitespace_between = "",  // 0 spaces originally
+          .right_token_enum = '*',
+          .right_token_string = "*",
+          .left_context = {NodeEnum::kDimensionRange},
+          .right_context = {NodeEnum::kDimensionRange},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          '*',
-          "*",
-          "",  // 0 spaces originally
-          verilog_tokentype::SymbolIdentifier,
-          "foo",
-          {NodeEnum::kDimensionScalar},
-          {NodeEnum::kDimensionScalar},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = '*',
+          .left_token_string = "*",
+          .whitespace_between = "",  // 0 spaces originally
+          .right_token_enum = verilog_tokentype::SymbolIdentifier,
+          .right_token_string = "foo",
+          .left_context = {NodeEnum::kDimensionScalar},
+          .right_context = {NodeEnum::kDimensionScalar},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "foo",
-          "",  // 0 spaces originally
-          '*',
-          "*",
-          {NodeEnum::kDimensionScalar},
-          {NodeEnum::kDimensionScalar},
-          {0, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "foo",
+          .whitespace_between = "",  // 0 spaces originally
+          .right_token_enum = '*',
+          .right_token_string = "*",
+          .left_context = {NodeEnum::kDimensionScalar},
+          .right_context = {NodeEnum::kDimensionScalar},
+          .expected_annotation = {0, SpacingOptions::kUndecided},
       },
       {
-          DefaultStyle,
-          '*',
-          "*",
-          " ",  // 1 space originally
-          verilog_tokentype::SymbolIdentifier,
-          "foo",
-          {NodeEnum::kPackedDimensions},
-          {NodeEnum::kPackedDimensions},
-          {1, SpacingOptions::kPreserve},
+          .style = DefaultStyle,
+          .left_token_enum = '*',
+          .left_token_string = "*",
+          .whitespace_between = " ",  // 1 space originally
+          .right_token_enum = verilog_tokentype::SymbolIdentifier,
+          .right_token_string = "foo",
+          .left_context = {NodeEnum::kPackedDimensions},
+          .right_context = {NodeEnum::kPackedDimensions},
+          .expected_annotation = {1, SpacingOptions::kPreserve},
       },
       {
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "foo",
-          " ",  // 1 space originally
-          '*',
-          "*",
-          {NodeEnum::kPackedDimensions},
-          {NodeEnum::kPackedDimensions},
-          {1, SpacingOptions::kPreserve},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "foo",
+          .whitespace_between = " ",  // 1 space originally
+          .right_token_enum = '*',
+          .right_token_string = "*",
+          .left_context = {NodeEnum::kPackedDimensions},
+          .right_context = {NodeEnum::kPackedDimensions},
+          .expected_annotation = {1, SpacingOptions::kPreserve},
       },
       {
-          DefaultStyle,
-          '*',
-          "*",
-          " ",  // 1 space originally
-          verilog_tokentype::SymbolIdentifier,
-          "foo",
-          {NodeEnum::kUnpackedDimensions},
-          {NodeEnum::kUnpackedDimensions},
-          {1, SpacingOptions::kPreserve},
+          .style = DefaultStyle,
+          .left_token_enum = '*',
+          .left_token_string = "*",
+          .whitespace_between = " ",  // 1 space originally
+          .right_token_enum = verilog_tokentype::SymbolIdentifier,
+          .right_token_string = "foo",
+          .left_context = {NodeEnum::kUnpackedDimensions},
+          .right_context = {NodeEnum::kUnpackedDimensions},
+          .expected_annotation = {1, SpacingOptions::kPreserve},
       },
       {
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "foo",
-          " ",  // 1 space originally
-          '*',
-          "*",
-          {NodeEnum::kUnpackedDimensions},
-          {NodeEnum::kUnpackedDimensions},
-          {1, SpacingOptions::kPreserve},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "foo",
+          .whitespace_between = " ",  // 1 space originally
+          .right_token_enum = '*',
+          .right_token_string = "*",
+          .left_context = {NodeEnum::kUnpackedDimensions},
+          .right_context = {NodeEnum::kUnpackedDimensions},
+          .expected_annotation = {1, SpacingOptions::kPreserve},
       },
       {
           // [b > 1'h0 ? 1'h0 : c] : space around '>' in ternary inside
           // subscript
-          DefaultStyle,
-          verilog_tokentype::SymbolIdentifier,
-          "b",
-          " ",  // 1 space originally
-          '>',
-          ">",
-          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
-          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::SymbolIdentifier,
+          .left_token_string = "b",
+          .whitespace_between = " ",  // 1 space originally
+          .right_token_enum = '>',
+          .right_token_string = ">",
+          .left_context = {NodeEnum::kDimensionScalar,
+                           NodeEnum::kConditionExpression},
+          .right_context = {NodeEnum::kDimensionScalar,
+                            NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
       {
           // [b > 1 ? 1 : c] : space before '?' in ternary inside subscript
-          DefaultStyle,
-          verilog_tokentype::TK_DecNumber,
-          "1",
-          " ",  // 1 space originally
-          '?',
-          "?",
-          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
-          {NodeEnum::kDimensionScalar, NodeEnum::kConditionExpression},
-          {1, SpacingOptions::kUndecided},
+          .style = DefaultStyle,
+          .left_token_enum = verilog_tokentype::TK_DecNumber,
+          .left_token_string = "1",
+          .whitespace_between = " ",  // 1 space originally
+          .right_token_enum = '?',
+          .right_token_string = "?",
+          .left_context = {NodeEnum::kDimensionScalar,
+                           NodeEnum::kConditionExpression},
+          .right_context = {NodeEnum::kDimensionScalar,
+                            NodeEnum::kConditionExpression},
+          .expected_annotation = {1, SpacingOptions::kUndecided},
       },
   };
   int test_index = 0;

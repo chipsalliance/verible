@@ -125,7 +125,7 @@ bool RuleBundle::ParseConfiguration(std::string_view text, char separator,
     const bool prefix_minus = (part[0] == '-');
     const bool has_prefix = (part[0] == '+' || prefix_minus);
 
-    RuleSetting setting = {!prefix_minus, ""};
+    RuleSetting setting = {.enabled = !prefix_minus, .configuration = ""};
 
     const auto rule_name_with_config = part.substr(has_prefix ? 1 : 0);
 

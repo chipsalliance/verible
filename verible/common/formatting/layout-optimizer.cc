@@ -219,17 +219,26 @@ LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine &uwline) const {
   if (span < style_.column_limit) {
     return LayoutFunction{
         // 0 <= X < column_limit-span
-        {0, layout, span, 0, 0},
+        {.column = 0,
+         .layout = layout,
+         .span = span,
+         .intercept = 0,
+         .gradient = 0},
         // column_limit-span <= X
-        {style_.column_limit - span, std::move(layout), span, 0,
-         style_.over_column_limit_penalty},
+        {.column = style_.column_limit - span,
+         .layout = std::move(layout),
+         .span = span,
+         .intercept = 0,
+         .gradient = style_.over_column_limit_penalty},
     };
   }
   return LayoutFunction{
-      {0, std::move(layout), span,
-       static_cast<float>((span - style_.column_limit) *
-                          style_.over_column_limit_penalty),
-       style_.over_column_limit_penalty},
+      {.column = 0,
+       .layout = std::move(layout),
+       .span = span,
+       .intercept = static_cast<float>((span - style_.column_limit) *
+                                       style_.over_column_limit_penalty),
+       .gradient = style_.over_column_limit_penalty},
   };
 }
 
@@ -258,9 +267,11 @@ LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction &lf,
 
     const int new_span = indent + segment->span;
 
-    result.push_back(LayoutFunctionSegment{indent_column, std::move(new_layout),
-                                           new_span, new_intercept,
-                                           new_gradient});
+    result.push_back(LayoutFunctionSegment{.column = indent_column,
+                                           .layout = std::move(new_layout),
+                                           .span = new_span,
+                                           .intercept = new_intercept,
+                                           .gradient = new_gradient});
 
     ++segment;
     if (segment == lf.end()) break;
@@ -318,9 +329,11 @@ LayoutFunction LayoutFunctionFactory::Juxtaposition(
     const int new_span =
         segment_l->span + segment_r->span + layout_r.Value().SpacesBefore();
 
-    result.push_back(LayoutFunctionSegment{column_l, std::move(new_layout),
-                                           new_span, new_intercept,
-                                           new_gradient});
+    result.push_back(LayoutFunctionSegment{.column = column_l,
+                                           .layout = std::move(new_layout),
+                                           .span = new_span,
+                                           .intercept = new_intercept,
+                                           .gradient = new_gradient});
 
     auto next_segment_l = segment_l + 1;
     auto next_column_l = kInfinity;
@@ -379,10 +392,12 @@ LayoutFunction LayoutFunctionFactory::Stack(
     const int span = segments->back()->span;
 
     auto new_segment = LayoutFunctionSegment{
-        current_column,
-        LayoutTree(
+        .column = current_column,
+        .layout = LayoutTree(
             LayoutItem(LayoutType::kStack, spaces_before, break_decision)),
-        span, line_breaks_penalty, 0};
+        .span = span,
+        .intercept = line_breaks_penalty,
+        .gradient = 0};
 
     for (const auto &segment_it : *segments) {
       new_segment.intercept += segment_it->CostAt(current_column);
@@ -447,9 +462,11 @@ LayoutFunction LayoutFunctionFactory::Choice(
 
       if (min_cost_segment != last_min_cost_segment) {
         result.push_back(LayoutFunctionSegment{
-            current_column, min_cost_segment->layout, min_cost_segment->span,
-            min_cost_segment->CostAt(current_column),
-            min_cost_segment->gradient});
+            .column = current_column,
+            .layout = min_cost_segment->layout,
+            .span = min_cost_segment->span,
+            .intercept = min_cost_segment->CostAt(current_column),
+            .gradient = min_cost_segment->gradient});
         last_min_cost_segment = min_cost_segment;
       }
 

@@ -32,278 +32,280 @@ struct StripCommentsTestCase {
 TEST(StripVerilogCommentsTest, Various) {
   constexpr StripCommentsTestCase kTestCases[] = {
       {
-          "",
-          "",
-          "",
-          "",
+          .input = "",
+          .expect_deleted = "",
+          .expect_spaced = "",
+          .expect_otherchar = "",
       },
       {
           // Not even valid Verilog, but still lexes.
-          "This is not the greatest code in the world,\n"
-          "This is just a tribute.\n",
+          .input = "This is not the greatest code in the world,\n"
+                   "This is just a tribute.\n",
           // delete
-          "This is not the greatest code in the world,\n"
-          "This is just a tribute.\n",
+          .expect_deleted = "This is not the greatest code in the world,\n"
+                            "This is just a tribute.\n",
           // space-out
-          "This is not the greatest code in the world,\n"
-          "This is just a tribute.\n",
+          .expect_spaced = "This is not the greatest code in the world,\n"
+                           "This is just a tribute.\n",
           // other char
-          "This is not the greatest code in the world,\n"
-          "This is just a tribute.\n",
+          .expect_otherchar = "This is not the greatest code in the world,\n"
+                              "This is just a tribute.\n",
       },
       {
-          "//shush\n",
-          "\n",
-          "       \n",
-          "//.....\n",
+          .input = "//shush\n",
+          .expect_deleted = "\n",
+          .expect_spaced = "       \n",
+          .expect_otherchar = "//.....\n",
       },
       {
-          "//////\n",
-          "\n",
-          "      \n",
-          "//////\n",
+          .input = "//////\n",
+          .expect_deleted = "\n",
+          .expect_spaced = "      \n",
+          .expect_otherchar = "//////\n",
       },
       {
-          "//////sh\n",
-          "\n",
-          "        \n",
-          "//////..\n",
+          .input = "//////sh\n",
+          .expect_deleted = "\n",
+          .expect_spaced = "        \n",
+          .expect_otherchar = "//////..\n",
       },
       {
-          "/*hush*/\n",
-          " \n",
-          "        \n",
-          "/*....*/\n",
+          .input = "/*hush*/\n",
+          .expect_deleted = " \n",
+          .expect_spaced = "        \n",
+          .expect_otherchar = "/*....*/\n",
       },
       {
-          "/***hush***/\n",
-          " \n",
-          "            \n",
-          "/***....***/\n",
+          .input = "/***hush***/\n",
+          .expect_deleted = " \n",
+          .expect_spaced = "            \n",
+          .expect_otherchar = "/***....***/\n",
       },
       {
-          "key/**/word",
-          "key word",  // one space to prevent accidental joining of tokens
-          "key    word",
-          "key/**/word",
+          .input = "key/**/word",
+          .expect_deleted =
+              "key word",  // one space to prevent accidental joining of tokens
+          .expect_spaced = "key    word",
+          .expect_otherchar = "key/**/word",
       },
       {
           // ignore lexcically invalid tokens, and pass them through
-          "/*yyyy*/123badid/*zzzz*/654anotherbadone//xxxxx\n",
-          " 123badid 654anotherbadone\n",
-          "        123badid        654anotherbadone       \n",
-          "/*....*/123badid/*....*/654anotherbadone//.....\n",
+          .input = "/*yyyy*/123badid/*zzzz*/654anotherbadone//xxxxx\n",
+          .expect_deleted = " 123badid 654anotherbadone\n",
+          .expect_spaced = "        123badid        654anotherbadone       \n",
+          .expect_otherchar =
+              "/*....*/123badid/*....*/654anotherbadone//.....\n",
       },
       {
-          "begin\n"
-          "  /*\n"
-          "a a\n"
-          "bb\n"
-          "c\n"
-          "*/  \n"  // end-of-comment at start of line
-          "end\n",
+          .input = "begin\n"
+                   "  /*\n"
+                   "a a\n"
+                   "bb\n"
+                   "c\n"
+                   "*/  \n"  // end-of-comment at start of line
+                   "end\n",
           // delete
-          "begin\n"
-          "     \n"
-          "end\n",
+          .expect_deleted = "begin\n"
+                            "     \n"
+                            "end\n",
           // space-out
-          "begin\n"
-          "    \n"
-          "   \n"
-          "  \n"
-          " \n"
-          "    \n"
-          "end\n",
+          .expect_spaced = "begin\n"
+                           "    \n"
+                           "   \n"
+                           "  \n"
+                           " \n"
+                           "    \n"
+                           "end\n",
           // other char
-          "begin\n"
-          "  /*\n"
-          "...\n"
-          "..\n"
-          ".\n"
-          "*/  \n"  // trailing spaces
-          "end\n",
+          .expect_otherchar = "begin\n"
+                              "  /*\n"
+                              "...\n"
+                              "..\n"
+                              ".\n"
+                              "*/  \n"  // trailing spaces
+                              "end\n",
       },
       {
-          "begin\n"
-          "  /*\n"
-          "a a\n"
-          "bb\n"
-          "c\n"
-          "  */  \n"  // trailing spaces
-          "end\n",
+          .input = "begin\n"
+                   "  /*\n"
+                   "a a\n"
+                   "bb\n"
+                   "c\n"
+                   "  */  \n"  // trailing spaces
+                   "end\n",
           // delete
-          "begin\n"
-          "     \n"
-          "end\n",
+          .expect_deleted = "begin\n"
+                            "     \n"
+                            "end\n",
           // space-out
-          "begin\n"
-          "    \n"
-          "   \n"
-          "  \n"
-          " \n"
-          "      \n"
-          "end\n",
+          .expect_spaced = "begin\n"
+                           "    \n"
+                           "   \n"
+                           "  \n"
+                           " \n"
+                           "      \n"
+                           "end\n",
           // other char
-          "begin\n"
-          "  /*\n"
-          "...\n"
-          "..\n"
-          ".\n"
-          "..*/  \n"  // trailing spaces
-          "end\n",
+          .expect_otherchar = "begin\n"
+                              "  /*\n"
+                              "...\n"
+                              "..\n"
+                              ".\n"
+                              "..*/  \n"  // trailing spaces
+                              "end\n",
       },
       {
           // macro call, no comments
-          "`MACRO(a, b)\n",
-          "`MACRO(a, b)\n",
-          "`MACRO(a, b)\n",
-          "`MACRO(a, b)\n",
+          .input = "`MACRO(a, b)\n",
+          .expect_deleted = "`MACRO(a, b)\n",
+          .expect_spaced = "`MACRO(a, b)\n",
+          .expect_otherchar = "`MACRO(a, b)\n",
       },
       {
           // macro call, one comment arg
-          "`MACRO(/*abc*/)\n",
-          "`MACRO( )\n",
-          "`MACRO(       )\n",
-          "`MACRO(/*...*/)\n",
+          .input = "`MACRO(/*abc*/)\n",
+          .expect_deleted = "`MACRO( )\n",
+          .expect_spaced = "`MACRO(       )\n",
+          .expect_otherchar = "`MACRO(/*...*/)\n",
       },
       {
           // macro call, comments around args
-          "`MACRO(/*!*/a/*?*/,/*!*/b/*?*/)\n",
-          "`MACRO( a , b )\n",
-          "`MACRO(     a     ,     b     )\n",
-          "`MACRO(/*.*/a/*.*/,/*.*/b/*.*/)\n",
+          .input = "`MACRO(/*!*/a/*?*/,/*!*/b/*?*/)\n",
+          .expect_deleted = "`MACRO( a , b )\n",
+          .expect_spaced = "`MACRO(     a     ,     b     )\n",
+          .expect_otherchar = "`MACRO(/*.*/a/*.*/,/*.*/b/*.*/)\n",
       },
       {
           // macro call, where args are themselves macro calls
-          "`MACRO(/*!*/`INNER(a/*?*/,/*!*/b)/*?*/)\n",
-          "`MACRO( `INNER(a , b) )\n",
-          "`MACRO(     `INNER(a     ,     b)     )\n",
-          "`MACRO(/*.*/`INNER(a/*.*/,/*.*/b)/*.*/)\n",
+          .input = "`MACRO(/*!*/`INNER(a/*?*/,/*!*/b)/*?*/)\n",
+          .expect_deleted = "`MACRO( `INNER(a , b) )\n",
+          .expect_spaced = "`MACRO(     `INNER(a     ,     b)     )\n",
+          .expect_otherchar = "`MACRO(/*.*/`INNER(a/*.*/,/*.*/b)/*.*/)\n",
       },
       {
           // macro call, EOL comments inside
-          "`MACRO(//abc\n"
-          "  //defg\n"
-          ")\n",
+          .input = "`MACRO(//abc\n"
+                   "  //defg\n"
+                   ")\n",
           // delete
-          "`MACRO(\n"
-          "  \n"
-          ")\n",
+          .expect_deleted = "`MACRO(\n"
+                            "  \n"
+                            ")\n",
           // space-out
-          "`MACRO(     \n"
-          "        \n"
-          ")\n",
+          .expect_spaced = "`MACRO(     \n"
+                           "        \n"
+                           ")\n",
           // other char
-          "`MACRO(//...\n"
-          "  //....\n"
-          ")\n",
+          .expect_otherchar = "`MACRO(//...\n"
+                              "  //....\n"
+                              ")\n",
       },
       {
-          "`define MACRO  //xyzxyz\n",
-          "`define MACRO  \n",
-          "`define MACRO          \n",
-          "`define MACRO  //......\n",
+          .input = "`define MACRO  //xyzxyz\n",
+          .expect_deleted = "`define MACRO  \n",
+          .expect_spaced = "`define MACRO          \n",
+          .expect_otherchar = "`define MACRO  //......\n",
       },
       {
           // same, but missing terminating \n
-          "`define MACRO  //xyzxyz",
-          "`define MACRO  ",
-          "`define MACRO          ",
-          "`define MACRO  //......",
+          .input = "`define MACRO  //xyzxyz",
+          .expect_deleted = "`define MACRO  ",
+          .expect_spaced = "`define MACRO          ",
+          .expect_otherchar = "`define MACRO  //......",
       },
       {
-          "`define MACRO /*-*/ab/*+*/\n",
-          "`define MACRO  ab \n",
-          "`define MACRO      ab     \n",
-          "`define MACRO /*.*/ab/*.*/\n",
+          .input = "`define MACRO /*-*/ab/*+*/\n",
+          .expect_deleted = "`define MACRO  ab \n",
+          .expect_spaced = "`define MACRO      ab     \n",
+          .expect_otherchar = "`define MACRO /*.*/ab/*.*/\n",
       },
       {
           // multiline macro definition body using line-continuations
-          "`define MACRO //---\\\n"
-          "  //---  \\\n"
-          "  //-----\n",
+          .input = "`define MACRO //---\\\n"
+                   "  //---  \\\n"
+                   "  //-----\n",
           // delete
-          "`define MACRO \\\n"
-          "  \\\n"
-          "  \n",
+          .expect_deleted = "`define MACRO \\\n"
+                            "  \\\n"
+                            "  \n",
           // space-out
-          "`define MACRO      \\\n"
-          "         \\\n"
-          "         \n",
+          .expect_spaced = "`define MACRO      \\\n"
+                           "         \\\n"
+                           "         \n",
           // other char
-          "`define MACRO //...\\\n"
-          "  //.....\\\n"
-          "  //.....\n",
+          .expect_otherchar = "`define MACRO //...\\\n"
+                              "  //.....\\\n"
+                              "  //.....\n",
       },
       {
           // multiline macro definition body using line-continuations (no end
           // \n)
-          "`define MACRO //---\\\n"
-          "  //---  \\\n"
-          "  //-----",
+          .input = "`define MACRO //---\\\n"
+                   "  //---  \\\n"
+                   "  //-----",
           // delete
-          "`define MACRO \\\n"
-          "  \\\n"
-          "  ",
+          .expect_deleted = "`define MACRO \\\n"
+                            "  \\\n"
+                            "  ",
           // space-out
-          "`define MACRO      \\\n"
-          "         \\\n"
-          "         ",
+          .expect_spaced = "`define MACRO      \\\n"
+                           "         \\\n"
+                           "         ",
           // other char
-          "`define MACRO //...\\\n"
-          "  //.....\\\n"
-          "  //.....",
+          .expect_otherchar = "`define MACRO //...\\\n"
+                              "  //.....\\\n"
+                              "  //.....",
       },
       {
           // multiline macro definition body using line-continuations
-          "`define MACRO /*-*/\\\n"
-          "  /*-*/  \\\n"
-          "  /*---*/\n",
+          .input = "`define MACRO /*-*/\\\n"
+                   "  /*-*/  \\\n"
+                   "  /*---*/\n",
           // delete
-          "`define MACRO  \\\n"
-          "     \\\n"
-          "   \n",
+          .expect_deleted = "`define MACRO  \\\n"
+                            "     \\\n"
+                            "   \n",
           // space-out
-          "`define MACRO      \\\n"
-          "         \\\n"
-          "         \n",
+          .expect_spaced = "`define MACRO      \\\n"
+                           "         \\\n"
+                           "         \n",
           // other char
-          "`define MACRO /*.*/\\\n"
-          "  /*.*/  \\\n"
-          "  /*...*/\n",
+          .expect_otherchar = "`define MACRO /*.*/\\\n"
+                              "  /*.*/  \\\n"
+                              "  /*...*/\n",
       },
       {
           // `define inside `define
-          "`define FOO \\\n"
-          " // description of BAR \\\n"
-          "`define BAR \\\n"
-          "  // placeholder1 \\\n"
-          "  // placeholder2\n",
+          .input = "`define FOO \\\n"
+                   " // description of BAR \\\n"
+                   "`define BAR \\\n"
+                   "  // placeholder1 \\\n"
+                   "  // placeholder2\n",
           // delete
-          "`define FOO \\\n"
-          " \\\n"
-          "`define BAR \\\n"
-          "  \\\n"
-          "  \n",
+          .expect_deleted = "`define FOO \\\n"
+                            " \\\n"
+                            "`define BAR \\\n"
+                            "  \\\n"
+                            "  \n",
           // space-out
-          "`define FOO \\\n"
-          "                       \\\n"
-          "`define BAR \\\n"
-          "                  \\\n"
-          "                 \n",
+          .expect_spaced = "`define FOO \\\n"
+                           "                       \\\n"
+                           "`define BAR \\\n"
+                           "                  \\\n"
+                           "                 \n",
           // other char
-          "`define FOO \\\n"
-          " //....................\\\n"
-          "`define BAR \\\n"
-          "  //..............\\\n"
-          "  //.............\n",
+          .expect_otherchar = "`define FOO \\\n"
+                              " //....................\\\n"
+                              "`define BAR \\\n"
+                              "  //..............\\\n"
+                              "  //.............\n",
       },
       {
           // macro call inside `define, one comment arg
-          "`define DEF `MACRO(/*abc*/)\n",
-          "`define DEF `MACRO( )\n",
-          "`define DEF `MACRO(       )\n",
-          "`define DEF `MACRO(/*...*/)\n",
+          .input = "`define DEF `MACRO(/*abc*/)\n",
+          .expect_deleted = "`define DEF `MACRO( )\n",
+          .expect_spaced = "`define DEF `MACRO(       )\n",
+          .expect_otherchar = "`define DEF `MACRO(/*...*/)\n",
       },
   };
   for (const auto &test : kTestCases) {

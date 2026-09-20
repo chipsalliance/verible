@@ -80,10 +80,18 @@ struct MarkedLineTestCase {
 
 TEST(MarkedLineParseTest, ValidInputs) {
   constexpr MarkedLineTestCase kTestCases[] = {
-      {" ", ' ', ""},         {" x", ' ', "x"},       {" x213", ' ', "x213"},
-      {"  abc", ' ', " abc"}, {"-abc", '-', "abc"},   {"+abc", '+', "abc"},
-      {"- abc", '-', " abc"}, {"+ abc", '+', " abc"}, {"---", '-', "--"},
-      {"+++", '+', "++"},     {"-", '-', ""},         {"+", '+', ""},
+      {.input = " ", .expected_mark = ' ', .expected_text = ""},
+      {.input = " x", .expected_mark = ' ', .expected_text = "x"},
+      {.input = " x213", .expected_mark = ' ', .expected_text = "x213"},
+      {.input = "  abc", .expected_mark = ' ', .expected_text = " abc"},
+      {.input = "-abc", .expected_mark = '-', .expected_text = "abc"},
+      {.input = "+abc", .expected_mark = '+', .expected_text = "abc"},
+      {.input = "- abc", .expected_mark = '-', .expected_text = " abc"},
+      {.input = "+ abc", .expected_mark = '+', .expected_text = " abc"},
+      {.input = "---", .expected_mark = '-', .expected_text = "--"},
+      {.input = "+++", .expected_mark = '+', .expected_text = "++"},
+      {.input = "-", .expected_mark = '-', .expected_text = ""},
+      {.input = "+", .expected_mark = '+', .expected_text = ""},
   };
   for (const auto &test : kTestCases) {
     MarkedLine m;
@@ -133,8 +141,8 @@ struct HunkIndicesTestCase {
 
 TEST(HunkIndicesParseAndPrintTest, ValidInputs) {
   constexpr HunkIndicesTestCase kTestCases[] = {
-      {"1,1", 1, 1},
-      {"14,92", 14, 92},
+      {.input = "1,1", .expected_start = 1, .expected_count = 1},
+      {.input = "14,92", .expected_start = 14, .expected_count = 92},
   };
   for (const auto &test : kTestCases) {
     HunkIndices h;
@@ -352,21 +360,25 @@ struct UpdateHeaderTestCase {
 TEST(HunkUpdateHeaderTest, Various) {
   constexpr std::string_view kNonsenseHeader = "@@ -222,999 +333,999 @@";
   const UpdateHeaderTestCase kTestCases[] = {
-      {"@@ -222,0 +333,0 @@", {/* empty lines */}},
-      {"@@ -222,1 +333,0 @@",
-       {
-           "-removed",
-       }},
-      {"@@ -222,0 +333,1 @@",
-       {
-           "+added",
-       }},
-      {"@@ -222,1 +333,1 @@",
-       {
-           " common",
-       }},
-      {"@@ -222,4 +333,3 @@",
-       {" common", "-removed", "-removed2", "+added", " common again"}},
+      {.fixed_header = "@@ -222,0 +333,0 @@", .payload = {/* empty lines */}},
+      {.fixed_header = "@@ -222,1 +333,0 @@",
+       .payload =
+           {
+               "-removed",
+           }},
+      {.fixed_header = "@@ -222,0 +333,1 @@",
+       .payload =
+           {
+               "+added",
+           }},
+      {.fixed_header = "@@ -222,1 +333,1 @@",
+       .payload =
+           {
+               " common",
+           }},
+      {.fixed_header = "@@ -222,4 +333,3 @@",
+       .payload = {" common", "-removed", "-removed2", "+added",
+                   " common again"}},
   };
   for (const auto &test : kTestCases) {
     std::vector<std::string_view> lines;
@@ -394,98 +406,108 @@ struct AddedLinesTestCase {
 TEST(HunkAddedLinesTest, Various) {
   const AddedLinesTestCase kTestCases[] = {
       {
-          {
-              "@@ -7,1 +8,1 @@",
-              " common line, not added",
-          },
-          {},
+          .hunk_text =
+              {
+                  "@@ -7,1 +8,1 @@",
+                  " common line, not added",
+              },
+          .expected_added_lines = {},
       },
       {
-          {
-              "@@ -7,2 +8,1 @@",
-              "-deleted line",
-              " common line, not added",
-          },
-          {},
+          .hunk_text =
+              {
+                  "@@ -7,2 +8,1 @@",
+                  "-deleted line",
+                  " common line, not added",
+              },
+          .expected_added_lines = {},
       },
       {
-          {"@@ -7,2 +8,1 @@", " common line, not added", "-deleted line"},
-          {},
+          .hunk_text = {"@@ -7,2 +8,1 @@", " common line, not added",
+                        "-deleted line"},
+          .expected_added_lines = {},
       },
       {
-          {
-              "@@ -7,4 +8,2 @@",
-              " common line, not added",
-              "-deleted line",
-              "-deleted line 2",
-              " common line, not added",
-          },
-          {},
+          .hunk_text =
+              {
+                  "@@ -7,4 +8,2 @@",
+                  " common line, not added",
+                  "-deleted line",
+                  "-deleted line 2",
+                  " common line, not added",
+              },
+          .expected_added_lines = {},
       },
       {
-          {
-              "@@ -7,1 +8,2 @@",
-              " common line, not added",
-              "+added line",
-          },
-          {{9, 10}},
+          .hunk_text =
+              {
+                  "@@ -7,1 +8,2 @@",
+                  " common line, not added",
+                  "+added line",
+              },
+          .expected_added_lines = {{9, 10}},
       },
       {
-          {
-              "@@ -7,1 +8,2 @@",
-              "+added line",
-              " common line, not added",
-          },
-          {{8, 9}},
+          .hunk_text =
+              {
+                  "@@ -7,1 +8,2 @@",
+                  "+added line",
+                  " common line, not added",
+              },
+          .expected_added_lines = {{8, 9}},
       },
       {
-          {
-              "@@ -17,2 +28,4 @@",
-              " common line, not added",
-              "+added line",
-              "+added line 2",
-              " common line, not added",
-          },
-          {{29, 31}},
+          .hunk_text =
+              {
+                  "@@ -17,2 +28,4 @@",
+                  " common line, not added",
+                  "+added line",
+                  "+added line 2",
+                  " common line, not added",
+              },
+          .expected_added_lines = {{29, 31}},
       },
       {
-          {
-              "@@ -7,3 +4,3 @@",
-              " common line, not added",
-              "-deleted line",
-              "+added line",
-              " common line, not added",
-          },
-          {{5, 6}},
+          .hunk_text =
+              {
+                  "@@ -7,3 +4,3 @@",
+                  " common line, not added",
+                  "-deleted line",
+                  "+added line",
+                  " common line, not added",
+              },
+          .expected_added_lines = {{5, 6}},
       },
       {
-          {
-              "@@ -7,3 +4,3 @@",
-              " common line, not added",
-              "+added line",
-              "-deleted line",
-              " common line, not added",
-          },
-          {{5, 6}},
+          .hunk_text =
+              {
+                  "@@ -7,3 +4,3 @@",
+                  " common line, not added",
+                  "+added line",
+                  "-deleted line",
+                  " common line, not added",
+              },
+          .expected_added_lines = {{5, 6}},
       },
       {
-          {
-              "@@ -380,8 +401,12 @@",
-              " common line, not added",
-              "+added line",
-              "+added line 2",
-              " nothing interesting",
-              " ",
-              "-delete me",
-              "+replacement",
-              " ",
-              " nothing interesting",
-              " ",
-              "+added line",
-              "+added line 2",
-              " common line, not added",
-          },
-          {{402, 404}, {406, 407}, {410, 412}},
+          .hunk_text =
+              {
+                  "@@ -380,8 +401,12 @@",
+                  " common line, not added",
+                  "+added line",
+                  "+added line 2",
+                  " nothing interesting",
+                  " ",
+                  "-delete me",
+                  "+replacement",
+                  " ",
+                  " nothing interesting",
+                  " ",
+                  "+added line",
+                  "+added line 2",
+                  " common line, not added",
+              },
+          .expected_added_lines = {{402, 404}, {406, 407}, {410, 412}},
       },
   };
   for (const auto &test : kTestCases) {
@@ -594,7 +616,9 @@ TEST(HunkSplitTest, MultipleSubHunks) {
                          " no-change"},
                         {
                             // one hunk (no split)
-                            {4, 6, {0, 4}},
+                            {.old_starting_line = 4,
+                             .new_starting_line = 6,
+                             .marked_line_offsets = {0, 4}},
                         }),
       HunkSplitTestCase(4, 5,
                         {"+insert",  //
@@ -602,8 +626,12 @@ TEST(HunkSplitTest, MultipleSubHunks) {
                          "+to continue"},
                         {
                             // two hunks
-                            {4, 5, {0, 1}},
-                            {4, 6, {1, 3}},
+                            {.old_starting_line = 4,
+                             .new_starting_line = 5,
+                             .marked_line_offsets = {0, 1}},
+                            {.old_starting_line = 4,
+                             .new_starting_line = 6,
+                             .marked_line_offsets = {1, 3}},
                         }),
       HunkSplitTestCase(4, 5,
                         {"+insert",  //
@@ -612,8 +640,12 @@ TEST(HunkSplitTest, MultipleSubHunks) {
                          "+to continue"},
                         {
                             // two hunks
-                            {4, 5, {0, 1}},
-                            {4, 6, {1, 4}},
+                            {.old_starting_line = 4,
+                             .new_starting_line = 5,
+                             .marked_line_offsets = {0, 1}},
+                            {.old_starting_line = 4,
+                             .new_starting_line = 6,
+                             .marked_line_offsets = {1, 4}},
                         }),
       HunkSplitTestCase(7, 7,
                         {"-insert",  //
@@ -621,8 +653,12 @@ TEST(HunkSplitTest, MultipleSubHunks) {
                          "-to continue"},
                         {
                             // two hunks
-                            {7, 7, {0, 1}},
-                            {8, 7, {1, 3}},
+                            {.old_starting_line = 7,
+                             .new_starting_line = 7,
+                             .marked_line_offsets = {0, 1}},
+                            {.old_starting_line = 8,
+                             .new_starting_line = 7,
+                             .marked_line_offsets = {1, 3}},
                         }),
       HunkSplitTestCase(7, 7,
                         {"-move",       //
@@ -631,8 +667,12 @@ TEST(HunkSplitTest, MultipleSubHunks) {
                          "+move", "+these"},
                         {
                             // two hunks
-                            {7, 7, {0, 2}},
-                            {9, 7, {2, 5}},
+                            {.old_starting_line = 7,
+                             .new_starting_line = 7,
+                             .marked_line_offsets = {0, 2}},
+                            {.old_starting_line = 9,
+                             .new_starting_line = 7,
+                             .marked_line_offsets = {2, 5}},
                         }),
       HunkSplitTestCase(2, 1,
                         {" context",  //
@@ -645,8 +685,12 @@ TEST(HunkSplitTest, MultipleSubHunks) {
                          "+scream"},
                         {
                             // two hunks
-                            {2, 1, {0, 3}},
-                            {4, 3, {3, 8}},
+                            {.old_starting_line = 2,
+                             .new_starting_line = 1,
+                             .marked_line_offsets = {0, 3}},
+                            {.old_starting_line = 4,
+                             .new_starting_line = 3,
+                             .marked_line_offsets = {3, 8}},
                         }),
       HunkSplitTestCase(3, 4,
                         {" delete",  //
@@ -660,10 +704,18 @@ TEST(HunkSplitTest, MultipleSubHunks) {
                          " line"},
                         {
                             // many hunks
-                            {3, 4, {0, 2}},
-                            {5, 5, {2, 4}},
-                            {7, 6, {4, 6}},
-                            {9, 7, {6, 9}},
+                            {.old_starting_line = 3,
+                             .new_starting_line = 4,
+                             .marked_line_offsets = {0, 2}},
+                            {.old_starting_line = 5,
+                             .new_starting_line = 5,
+                             .marked_line_offsets = {2, 4}},
+                            {.old_starting_line = 7,
+                             .new_starting_line = 6,
+                             .marked_line_offsets = {4, 6}},
+                            {.old_starting_line = 9,
+                             .new_starting_line = 7,
+                             .marked_line_offsets = {6, 9}},
                         }),
       HunkSplitTestCase(10, 10,
                         {" a",          //
@@ -678,9 +730,15 @@ TEST(HunkSplitTest, MultipleSubHunks) {
                          " away"},
                         {
                             // many hunks
-                            {10, 10, {0, 4}},
-                            {13, 12, {4, 7}},
-                            {14, 15, {7, 10}},
+                            {.old_starting_line = 10,
+                             .new_starting_line = 10,
+                             .marked_line_offsets = {0, 4}},
+                            {.old_starting_line = 13,
+                             .new_starting_line = 12,
+                             .marked_line_offsets = {4, 7}},
+                            {.old_starting_line = 14,
+                             .new_starting_line = 15,
+                             .marked_line_offsets = {7, 10}},
                         }),
   };
   for (const auto &test : kTestCases) {
@@ -1017,36 +1075,38 @@ TEST(FilePatchIsDeletedFileTest, ExistingFile) {
 TEST(FilePatchAddedLinesTest, Various) {
   const AddedLinesTestCase kTestCases[] = {
       {
-          {
-              "--- /path/to/file.txt\t2019-12-01",
-              "+++ /path/to/file.txt\t2019-12-31",
-              "@@ -12,1 +13,1 @@",
-              " no change here",
-          },
-          {},
+          .hunk_text =
+              {
+                  "--- /path/to/file.txt\t2019-12-01",
+                  "+++ /path/to/file.txt\t2019-12-31",
+                  "@@ -12,1 +13,1 @@",
+                  " no change here",
+              },
+          .expected_added_lines = {},
       },
       {
-          {
-              "--- /path/to/file.txt\t2019-12-01",
-              "+++ /path/to/file.txt\t2019-12-31",
-              "@@ -12,1 +13,1 @@",
-              " no change here",
-              "@@ -21,3 +20,2 @@",
-              " ",
-              "-bye",
-              " ",
-              "@@ -31,2 +43,4 @@",
-              " ",
-              "+hello",  // line 45
-              "+world",  // line 46
-              " ",
-              "@@ -61,3 +80,3 @@",
-              " ",
-              "-adios",
-              "+hola",  // line 81
-              " ",
-          },
-          {{44, 46}, {81, 82}},
+          .hunk_text =
+              {
+                  "--- /path/to/file.txt\t2019-12-01",
+                  "+++ /path/to/file.txt\t2019-12-31",
+                  "@@ -12,1 +13,1 @@",
+                  " no change here",
+                  "@@ -21,3 +20,2 @@",
+                  " ",
+                  "-bye",
+                  " ",
+                  "@@ -31,2 +43,4 @@",
+                  " ",
+                  "+hello",  // line 45
+                  "+world",  // line 46
+                  " ",
+                  "@@ -61,3 +80,3 @@",
+                  " ",
+                  "-adios",
+                  "+hola",  // line 81
+                  " ",
+              },
+          .expected_added_lines = {{44, 46}, {81, 82}},
       },
   };
   for (const auto &test : kTestCases) {
@@ -1205,8 +1265,10 @@ TEST_F(FilePatchPickApplyTest, EmptyPatchNoPrompt) {
 
   const auto status =
       PickApply(ins, outs,  //
-                internal::ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                internal::ExpectStringFileSequence({{"foo.txt", kExpected}}));
+                internal::ReadStringFileSequence(
+                    {{.path = "foo.txt", .contents = kOriginal}}),
+                internal::ExpectStringFileSequence(
+                    {{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
 }
@@ -1233,7 +1295,8 @@ TEST_F(FilePatchPickApplyTest, ErrorWritingFileInPlace) {
 
   const auto status = PickApply(
       ins, outs,  //
-      ReadStringFileSequence({{"foo.txt", kOriginal}}), error_file_writer);
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      error_file_writer);
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.message(), kErrorMessage);
   EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
@@ -1264,10 +1327,10 @@ TEST_F(FilePatchPickApplyTest, OneHunkNotApplied) {
       "eee\n";
   constexpr std::string_view kExpected = kOriginal;
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1301,10 +1364,10 @@ TEST_F(FilePatchPickApplyTest, PatchInconsistentWithOriginalText) {
       "ddd\n"
       "eee\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_EQ(status.code(), absl::StatusCode::kDataLoss);
 }
 
@@ -1337,10 +1400,10 @@ TEST_F(FilePatchPickApplyTest, OneDeletionAccepted) {
       "ddd\n"
       "eee\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1376,10 +1439,10 @@ TEST_F(FilePatchPickApplyTest, OneInsertionAccepted) {
       "ddd\n"
       "eee\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1415,10 +1478,10 @@ TEST_F(FilePatchPickApplyTest, OneReplacementAccepted) {
       "ddd\n"
       "eee\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1454,10 +1517,10 @@ TEST_F(FilePatchPickApplyTest, HelpFirstThenAcceptHunk) {
       "ddd\n"
       "eee\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
   EXPECT_TRUE(absl::StrContains(outs.str(), "print this help"));
@@ -1503,10 +1566,10 @@ TEST_F(FilePatchPickApplyTest, HunksOutOfOrder) {
       "fff\n"
       "ggg\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_FALSE(status.ok());
   EXPECT_TRUE(absl::StrContains(status.message(), "not properly ordered"));
 }
@@ -1551,10 +1614,10 @@ TEST_F(FilePatchPickApplyTest, AcceptOnlyFirstOfTwoHunks) {
       "fff\n"
       "ggg\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1599,10 +1662,10 @@ TEST_F(FilePatchPickApplyTest, AcceptOnlySecondOfTwoHunks) {
       "fangism\n"  // changed
       "ggg\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1646,10 +1709,10 @@ TEST_F(FilePatchPickApplyTest, SplitThenAcceptOnlyFirstOfTwoHunks) {
       "fff\n"
       "ggg\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1693,10 +1756,10 @@ TEST_F(FilePatchPickApplyTest, SplitThenAcceptOnlySecondOfTwoHunks) {
       "fangism\n"  // replaced
       "ggg\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1734,10 +1797,10 @@ TEST_F(FilePatchPickApplyTest, AbortRightAway) {
       "ggg\n";
   constexpr std::string_view kExpected = kOriginal;
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1775,10 +1838,10 @@ TEST_F(FilePatchPickApplyTest, TreatEndOfUserInputAsAbort) {
       "ggg\n";
   constexpr std::string_view kExpected = kOriginal;
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1816,10 +1879,10 @@ TEST_F(FilePatchPickApplyTest, AbortFileAfterAcceptingOneHunk) {
       "ggg\n";
   constexpr std::string_view kExpected = kOriginal;
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1862,10 +1925,10 @@ TEST_F(FilePatchPickApplyTest, AcceptTwoDeletions) {
       "fff\n"
       "hhh\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1908,10 +1971,10 @@ TEST_F(FilePatchPickApplyTest, AcceptAllDeletions) {
       "fff\n"
       "hhh\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1948,10 +2011,10 @@ TEST_F(FilePatchPickApplyTest, RejectAllDeletions) {
       "hhh\n";
   constexpr std::string_view kExpected = kOriginal;  // no changes
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -1994,10 +2057,10 @@ TEST_F(FilePatchPickApplyTest, AcceptTwoInsertions) {
       "ggg\n"
       "hhh\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -2040,10 +2103,10 @@ TEST_F(FilePatchPickApplyTest, AcceptAllInsertions) {
       "ggg\n"
       "hhh\n";
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -2078,10 +2141,10 @@ TEST_F(FilePatchPickApplyTest, RejectAllInsertions) {
       "hhh\n";
   constexpr std::string_view kExpected = kOriginal;
 
-  const auto status =
-      PickApply(ins, outs,  //
-                ReadStringFileSequence({{"foo.txt", kOriginal}}),
-                ExpectStringFileSequence({{"foo.txt", kExpected}}));
+  const auto status = PickApply(
+      ins, outs,  //
+      ReadStringFileSequence({{.path = "foo.txt", .contents = kOriginal}}),
+      ExpectStringFileSequence({{.path = "foo.txt", .contents = kExpected}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -2245,10 +2308,12 @@ TEST_F(PatchSetPickApplyTest, EmptyFilePatchHunks) {
   std::istringstream ins;
   std::ostringstream outs;
   // No file I/O or prompting because patch is empty.
-  const auto status = PickApply(
-      ins, outs,  //
-      internal::ReadStringFileSequence({{"foo/bar.txt", "don't care\n"}}),
-      internal::ExpectStringFileSequence({{"foo/bar.txt", "don't care\n"}}));
+  const auto status =
+      PickApply(ins, outs,  //
+                internal::ReadStringFileSequence(
+                    {{.path = "foo/bar.txt", .contents = "don't care\n"}}),
+                internal::ExpectStringFileSequence(
+                    {{.path = "foo/bar.txt", .contents = "don't care\n"}}));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
 }
@@ -2268,15 +2333,16 @@ TEST_F(PatchSetPickApplyTest, MultipleEmptyFilePatchHunks) {
   std::istringstream ins;
   std::ostringstream outs;
   // No file I/O or prompting because patches are empty.
-  const auto status = PickApply(ins, outs,  //
-                                internal::ReadStringFileSequence({
-                                    {"foo/bar.txt", "don't care\n"},
-                                    {"bar/foo.txt", "don't care\n"},
-                                }),
-                                internal::ExpectStringFileSequence({
-                                    {"foo/bar.txt", "don't care\n"},
-                                    {"bar/foo.txt", "don't care\n"},
-                                }));
+  const auto status =
+      PickApply(ins, outs,  //
+                internal::ReadStringFileSequence({
+                    {.path = "foo/bar.txt", .contents = "don't care\n"},
+                    {.path = "bar/foo.txt", .contents = "don't care\n"},
+                }),
+                internal::ExpectStringFileSequence({
+                    {.path = "foo/bar.txt", .contents = "don't care\n"},
+                    {.path = "bar/foo.txt", .contents = "don't care\n"},
+                }));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_TRUE(outs.str().empty()) << "Unexpected: " << outs.str();
 }
@@ -2304,15 +2370,16 @@ TEST_F(PatchSetPickApplyTest, MultipleNonEmptyFilePatchHunks) {
   std::istringstream ins("y\ny\n");  // accept one hunk in each file
   std::ostringstream outs;
   // No file I/O or prompting because patches are empty.
-  const auto status = PickApply(ins, outs,  //
-                                internal::ReadStringFileSequence({
-                                    {"foo/bar.txt", "you\nlose\nsome\n"},
-                                    {"bar/foo.txt", "you\nsome\n"},
-                                }),
-                                internal::ExpectStringFileSequence({
-                                    {"foo/bar.txt", "you\nsome\n"},
-                                    {"bar/foo.txt", "you\nwin\nsome\n"},
-                                }));
+  const auto status =
+      PickApply(ins, outs,  //
+                internal::ReadStringFileSequence({
+                    {.path = "foo/bar.txt", .contents = "you\nlose\nsome\n"},
+                    {.path = "bar/foo.txt", .contents = "you\nsome\n"},
+                }),
+                internal::ExpectStringFileSequence({
+                    {.path = "foo/bar.txt", .contents = "you\nsome\n"},
+                    {.path = "bar/foo.txt", .contents = "you\nwin\nsome\n"},
+                }));
   EXPECT_TRUE(status.ok()) << "Got: " << status.message();
   EXPECT_FALSE(outs.str().empty());
 }
@@ -2347,12 +2414,13 @@ TEST_F(PatchSetPickApplyTest, FirstFilePatchOutOfOrder) {
   const auto status =
       PickApply(ins, outs,  //
                 internal::ReadStringFileSequence({
-                    {"foo/bar.txt", "you\nlose\nsome\nout\nof\norder"},
-                    {"bar/foo.txt", "you\nsome\n"},
+                    {.path = "foo/bar.txt",
+                     .contents = "you\nlose\nsome\nout\nof\norder"},
+                    {.path = "bar/foo.txt", .contents = "you\nsome\n"},
                 }),
                 internal::ExpectStringFileSequence({
-                    {"foo/bar.txt", "you\nsome\n"},
-                    {"bar/foo.txt", "you\nwin\nsome\n"},
+                    {.path = "foo/bar.txt", .contents = "you\nsome\n"},
+                    {.path = "bar/foo.txt", .contents = "you\nwin\nsome\n"},
                 }));
   EXPECT_FALSE(status.ok());
   EXPECT_TRUE(absl::StrContains(status.message(), "not properly ordered"));

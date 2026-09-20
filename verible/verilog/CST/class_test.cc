@@ -72,7 +72,8 @@ TEST(GetClassNameTest, ClassName) {
           std::vector<TreeSearchMatch> names;
           for (const auto &decl : decls) {
             const auto *type = GetClassName(*decl.match);
-            names.push_back(TreeSearchMatch{type, {/* ignored context */}});
+            names.push_back(TreeSearchMatch{
+                .match = type, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -107,7 +108,8 @@ TEST(GetClassNameTest, ClassEndLabel) {
           std::vector<TreeSearchMatch> names;
           for (const auto &decl : decls) {
             const auto *name = GetClassEndLabel(*decl.match);
-            names.push_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.push_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -162,7 +164,8 @@ TEST(GetClassMemberTest, GetMemberName) {
           for (const auto &decl : members) {
             const auto *name =
                 GetUnqualifiedIdFromHierarchyExtension(*decl.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -197,7 +200,8 @@ TEST(FindAllModuleDeclarationTest, FindClassParameters) {
             if (decl == nullptr) {
               continue;
             }
-            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+            params.emplace_back(TreeSearchMatch{
+                .match = decl, .context = {/* ignored context */}});
           }
           return params;
         });
@@ -227,8 +231,8 @@ TEST(GetClassExtendTest, GetExtendListIdentifiers) {
             if (identifier == nullptr) {
               continue;
             }
-            identifiers.emplace_back(
-                TreeSearchMatch{identifier, {/* ignored context */}});
+            identifiers.emplace_back(TreeSearchMatch{
+                .match = identifier, .context = {/* ignored context */}});
           }
           return identifiers;
         });
@@ -256,7 +260,8 @@ TEST(GetClassConstructorTest, GetConstructorBody) {
           for (const auto &constructor : constructors) {
             const auto *body =
                 GetClassConstructorStatementList(*constructor.match);
-            bodies.emplace_back(TreeSearchMatch{body, {/* ignored context */}});
+            bodies.emplace_back(TreeSearchMatch{
+                .match = body, .context = {/* ignored context */}});
           }
           return bodies;
         });
@@ -282,8 +287,8 @@ TEST(GetClassConstructorTest, GetNewKeyword) {
           for (const auto &constructor : constructors) {
             const auto *keyword =
                 GetNewKeywordFromClassConstructor(*constructor.match);
-            keywords.emplace_back(
-                TreeSearchMatch{keyword, {/* ignored context */}});
+            keywords.emplace_back(TreeSearchMatch{
+                .match = keyword, .context = {/* ignored context */}});
           }
           return keywords;
         });

@@ -40,11 +40,12 @@ std::vector<verible::TreeSearchMatch> FindAllNetDeclarations(
 
 // Helper predicate to match all types of applicable nets
 static bool ExpectedTagPredicate(const Symbol &symbol) {
-  verible::SymbolTag var_symbol = {verible::SymbolKind::kNode,
-                                   static_cast<int>(NodeEnum::kNetVariable)};
+  verible::SymbolTag var_symbol = {
+      .kind = verible::SymbolKind::kNode,
+      .tag = static_cast<int>(NodeEnum::kNetVariable)};
   verible::SymbolTag assign_symbol = {
-      verible::SymbolKind::kNode,
-      static_cast<int>(NodeEnum::kNetDeclarationAssignment)};
+      .kind = verible::SymbolKind::kNode,
+      .tag = static_cast<int>(NodeEnum::kNetDeclarationAssignment)};
 
   // This exploits the fact that net identifiers can be found in:
   // - kNetVariable, e.g.:

@@ -181,8 +181,8 @@ class Hunk {
 
   template <typename Iter>
   Hunk(int old_starting_line, int new_starting_line, Iter begin, Iter end)
-      : header_{.old_range = {old_starting_line, 0},
-                .new_range = {new_starting_line, 0}},
+      : header_{.old_range = {.start = old_starting_line, .count = 0},
+                .new_range = {.start = new_starting_line, .count = 0}},
         lines_(begin, end) /* copy */ {
     UpdateHeader();  // automatically count marked lines
   }

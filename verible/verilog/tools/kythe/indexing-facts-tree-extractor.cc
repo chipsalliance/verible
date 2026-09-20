@@ -371,7 +371,7 @@ IndexingFactNode ExtractFiles(std::string_view file_list_path,
       IndexingNodeData(IndexingFactType::kFileList, Anchor(file_list_path),
                        Anchor(project->TranslationUnitRoot())));
 
-  VerilogExtractionState project_extraction_state{project};
+  VerilogExtractionState project_extraction_state{.project = project};
 
   // pre-allocate file nodes with the number of translation units
   file_list_facts_tree.Children().reserve(file_names.size());

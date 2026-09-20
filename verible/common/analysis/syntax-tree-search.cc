@@ -64,7 +64,8 @@ void SyntaxTreeSearcher::CheckSymbol(const Symbol &symbol) {
   BoundSymbolManager manager;
   if (matcher_.Matches(symbol, &manager)) {
     if (context_predicate_(Context())) {
-      matches_.push_back(TreeSearchMatch{&symbol, Context()});
+      matches_.push_back(
+          TreeSearchMatch{.match = &symbol, .context = Context()});
     }
   }
 }

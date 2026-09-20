@@ -63,7 +63,8 @@ void StripVerilogComments(std::string_view content, std::ostream *output,
     const verible::TokenInfo &token(lexer.DoNextToken());
     if (token.isEOF()) break;
 
-    VLOG(2) << "token: " << verible::TokenWithContext{token, context};
+    VLOG(2) << "token: "
+            << verible::TokenWithContext{.token = token, .context = context};
     const std::string_view text = token.text();
     switch (token.token_enum()) {
       case verilog_tokentype::TK_EOL_COMMENT:

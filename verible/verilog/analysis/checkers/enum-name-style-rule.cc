@@ -62,8 +62,9 @@ const LintRuleDescriptor &EnumNameStyleRule::GetDescriptor() {
           "to "
           "https://github.com/chipsalliance/verible/tree/master/verilog/tools/"
           "lint#readme for more detail on verible regex patterns.",
-      .param = {{"style_regex", std::string(kDefaultStyleRegex),
-                 "A regex used to check enum type name style."}},
+      .param = {{.name = "style_regex",
+                 .default_value = std::string(kDefaultStyleRegex),
+                 .description = "A regex used to check enum type name style."}},
   };
   return d;
 }
@@ -101,7 +102,8 @@ void EnumNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
 absl::Status EnumNameStyleRule::Configure(std::string_view configuration) {
   using verible::config::SetRegex;
   absl::Status s = verible::ParseNameValues(
-      configuration, {{"style_regex", SetRegex(&style_regex_)}});
+      configuration,
+      {{.name = "style_regex", .set_value = SetRegex(&style_regex_)}});
   return s;
 }
 

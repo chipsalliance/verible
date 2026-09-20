@@ -103,7 +103,8 @@ TEST(GetIdentifierTest, UnqualifiedIds) {
           std::vector<verible::TreeSearchMatch> got_ids;
           for (const auto &id : ids) {
             const verible::SyntaxTreeLeaf *base = GetIdentifier(*id.match);
-            got_ids.push_back(TreeSearchMatch{base, /* ignored context */});
+            got_ids.push_back(
+                TreeSearchMatch{.match = base, /* ignored context */});
           }
           return got_ids;
         });
@@ -120,7 +121,8 @@ TEST(GetIdentifierTest, UnqualifiedIds) {
             const verible::SyntaxTreeLeaf *base =
                 AutoUnwrapIdentifier(*id.match);
             if (base == nullptr) continue;
-            got_ids.push_back(TreeSearchMatch{base, /* ignored context */});
+            got_ids.push_back(
+                TreeSearchMatch{.match = base, /* ignored context */});
             EXPECT_EQ(AutoUnwrapIdentifier(*base), base);  // check convergence
           }
           return got_ids;
@@ -144,7 +146,8 @@ TEST(GetIdentifierTest, PortIdentifiers) {
           std::vector<verible::TreeSearchMatch> got_ids;
           for (const auto &id : ids) {
             const verible::SyntaxTreeLeaf *base = GetIdentifier(*id.match);
-            got_ids.push_back(TreeSearchMatch{base, /* ignored context */});
+            got_ids.push_back(
+                TreeSearchMatch{.match = base, /* ignored context */});
           }
           return got_ids;
         });
@@ -191,8 +194,8 @@ TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
             const auto *identifier =
                 GetSymbolIdentifierFromIdentifierUnpackedDimensions(
                     *decl.match);
-            identifiers.push_back(
-                TreeSearchMatch{identifier, {/* ignored context */}});
+            identifiers.push_back(TreeSearchMatch{
+                .match = identifier, .context = {/* ignored context */}});
           }
           return identifiers;
         });
@@ -228,8 +231,8 @@ TEST(FindAllSymbolIdentifierTest, VariousIds) {
           std::vector<TreeSearchMatch> identifiers;
           identifiers.reserve(symb_ids.size());
           for (const auto &symb_id : symb_ids) {
-            identifiers.push_back(
-                TreeSearchMatch{symb_id.match, {/* ignored context */}});
+            identifiers.push_back(TreeSearchMatch{
+                .match = symb_id.match, .context = {/* ignored context */}});
           }
           return identifiers;
         });

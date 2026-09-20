@@ -51,9 +51,11 @@ struct SymbolTag {
 // Pair of inline helper functions for building SymbolTag
 template <typename EnumType>
 constexpr SymbolTag NodeTag(EnumType tag) {
-  return {SymbolKind::kNode, static_cast<int>(tag)};
+  return {.kind = SymbolKind::kNode, .tag = static_cast<int>(tag)};
 }
-constexpr SymbolTag LeafTag(int tag) { return {SymbolKind::kLeaf, tag}; }
+constexpr SymbolTag LeafTag(int tag) {
+  return {.kind = SymbolKind::kLeaf, .tag = tag};
+}
 
 class Symbol {
  public:

@@ -73,8 +73,10 @@ TEST(NoTrailingSpacesRuleTest, RejectsTrailingSpaces) {
 
 TEST(NoTrailingSpacesRuleTest, ApplyAutoFix) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"module m;   \nendmodule\n", "module m;\nendmodule\n"},
-      {"module m;\t \t\nendmodule\n", "module m;\nendmodule\n"},
+      {.code = "module m;   \nendmodule\n",
+       .expected_output = "module m;\nendmodule\n"},
+      {.code = "module m;\t \t\nendmodule\n",
+       .expected_output = "module m;\nendmodule\n"},
   };
   RunApplyFixCases<VerilogAnalyzer, NoTrailingSpacesRule>(kTestCases, "");
 }

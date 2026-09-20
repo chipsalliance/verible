@@ -104,12 +104,12 @@ TEST(SuggestParenthesesRuleTest, Various) {
 
 TEST(SuggestParenthesesRuleTest, ApplyAutoFix) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"module m;\n"
-       "assign a = condition_a? condition_b ? b : c : d;"
-       "endmodule",
-       "module m;\n"
-       "assign a = condition_a? (condition_b ? b : c) : d;"
-       "endmodule"},
+      {.code = "module m;\n"
+               "assign a = condition_a? condition_b ? b : c : d;"
+               "endmodule",
+       .expected_output = "module m;\n"
+                          "assign a = condition_a? (condition_b ? b : c) : d;"
+                          "endmodule"},
   };
   RunApplyFixCases<VerilogAnalyzer, SuggestParenthesesRule>(kTestCases, "");
 }

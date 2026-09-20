@@ -223,88 +223,89 @@ struct DisabledBytesTestCase {
 
 TEST(EnabledLinesToDisabledByteRangesTest, AllCases) {
   const DisabledBytesTestCase kTestCases[] = {
-      {"", {}, {}},  // empty text
-      {"aaaa\n"
-       "bbbbbb\n"
-       "cccc\n",
-       {},  // no disabled lines
-       {}},
+      {.text = "", .enabled_lines = {}, .expected_bytes = {}},  // empty text
+      {.text = "aaaa\n"
+               "bbbbbb\n"
+               "cccc\n",
+       .enabled_lines = {},  // no disabled lines
+       .expected_bytes = {}},
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc\n",
-          {{1, 2}},  // enabled first line only
-          {{5, 17}}  // disable all other lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc\n",
+          .enabled_lines = {{1, 2}},   // enabled first line only
+          .expected_bytes = {{5, 17}}  // disable all other lines
       },
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc\n",
-          {{2, 3}},           // enabled second line only
-          {{0, 5}, {12, 17}}  // disable all other lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc\n",
+          .enabled_lines = {{2, 3}},            // enabled second line only
+          .expected_bytes = {{0, 5}, {12, 17}}  // disable all other lines
       },
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc\n",
-          {{3, 4}},  // enabled third line only
-          {{0, 12}}  // disable all other lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc\n",
+          .enabled_lines = {{3, 4}},   // enabled third line only
+          .expected_bytes = {{0, 12}}  // disable all other lines
       },
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc\n",
-          {{1, 3}},   // enabled first two lines only
-          {{12, 17}}  // disable all other lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc\n",
+          .enabled_lines = {{1, 3}},    // enabled first two lines only
+          .expected_bytes = {{12, 17}}  // disable all other lines
       },
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc\n",
-          {{2, 4}},  // enabled last two lines only
-          {{0, 5}}   // disable all other lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc\n",
+          .enabled_lines = {{2, 4}},  // enabled last two lines only
+          .expected_bytes = {{0, 5}}  // disable all other lines
       },
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc\n",
-          {{1, 4}},  // enabled no lines only
-          {}         // disable no lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc\n",
+          .enabled_lines = {{1, 4}},  // enabled no lines only
+          .expected_bytes = {}        // disable no lines
       },
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc\n",
-          {{0, 5}},  // excess range
-          {}         // disable no lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc\n",
+          .enabled_lines = {{0, 5}},  // excess range
+          .expected_bytes = {}        // disable no lines
       },
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc",    // missing terminating '\n' (POSIX)
-          {{1, 4}},  // excess range
-          {}         // disable no lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc",             // missing terminating '\n' (POSIX)
+          .enabled_lines = {{1, 4}},  // excess range
+          .expected_bytes = {}        // disable no lines
       },
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc",    // missing terminating '\n' (POSIX)
-          {{0, 5}},  // excess range
-          {}         // disable no lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc",             // missing terminating '\n' (POSIX)
+          .enabled_lines = {{0, 5}},  // excess range
+          .expected_bytes = {}        // disable no lines
       },
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc",    // missing terminating '\n' (POSIX)
-          {{4, 8}},  // excess range
-          {{0, 12}}  // disable all (whole) lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc",              // missing terminating '\n' (POSIX)
+          .enabled_lines = {{4, 8}},   // excess range
+          .expected_bytes = {{0, 12}}  // disable all (whole) lines
       },
       {
-          "aaaa\n"
-          "bbbbbb\n"
-          "cccc\n",
-          {{4, 8}},  // range outside, interpret as disable all other lines
-          {{0, 17}}  // disable all lines
+          .text = "aaaa\n"
+                  "bbbbbb\n"
+                  "cccc\n",
+          .enabled_lines =
+              {{4, 8}},  // range outside, interpret as disable all other lines
+          .expected_bytes = {{0, 17}}  // disable all lines
       },
   };
   for (const auto &test : kTestCases) {
@@ -339,50 +340,182 @@ TEST(FormatWhitespaceWithDisabledByteRangesTest, EmptyStrings) {
   // everything else is treated the same, space or not.
   // We use nonspace characters for positional readability.
   const FormatWhitespaceTestCase kTestCases[] = {
-      {"", {0, 0}, {}, ""},
-      {"\n", {0, 0}, {}, ""},
-      {"\n", {0, 1}, {}, "\n"},
-      {"\n\n", {0, 1}, {}, "\n"},
-      {"\n\n", {1, 2}, {}, "\n"},
-      {"\n\n", {1, 1}, {}, "\n"},  // space text is ""
-      {"\n\n", {0, 2}, {}, "\n\n"},
-      {"\n\n", {0, 2}, {{0, 1}}, "\n\n"},
-      {"\n\n", {0, 2}, {{1, 2}}, "\n\n"},
-      {"\n\n", {0, 2}, {{0, 2}}, "\n\n"},
-      {"abcd", {0, 2}, {}, ""},
-      {"abcd", {1, 3}, {}, "\n"},
-      {"abcd", {1, 3}, {{0, 1}, {3, 4}}, "\n"},
-      {"abcd", {1, 3}, {{0, 4}}, "bc"},
-      {"abcd", {0, 2}, {{0, 4}}, "ab"},
-      {"abcd", {2, 4}, {{0, 4}}, "cd"},
-      {"abcd", {1, 3}, {{0, 2}}, "b\n"},  // semi-disabled
-      {"abcd", {1, 3}, {{2, 4}}, "c\n"},  // semi-disabled
-      {"abcd", {0, 0}, {{0, 4}}, ""},
-      {"abcd", {1, 1}, {{0, 4}}, ""},
-      {"abcd", {0, 0}, {}, ""},
-      {"abcd", {1, 1}, {}, "\n"},
-      {"ab\ncd\nef\n", {2, 5}, {}, "\n"},
-      {"ab\ncd\nef\n", {2, 6}, {}, "\n\n"},
-      {"ab\ncd\nef\n", {3, 6}, {}, "\n"},
-      {"ab\ncd\nef\n", {3, 7}, {}, "\n"},
-      {"ab\ncd\nef\n", {2, 5}, {{0, 9}}, "\ncd"},
-      {"ab\ncd\nef\n", {2, 6}, {{0, 9}}, "\ncd\n"},
-      {"ab\ncd\nef\n", {3, 6}, {{0, 9}}, "cd\n"},
-      {"ab\ncd\nef\n", {3, 7}, {{0, 9}}, "cd\ne"},
-      {"ab\ncd\nef\n", {3, 9}, {{0, 9}}, "cd\nef\n"},
-      {"ab\ncd\nef\n", {3, 9}, {}, "\n\n"},
-      {"ab\ncd\nef\n", {3, 9}, {{3, 4}}, "c\n\n"},
-      {"ab\ncd\nef\n", {3, 9}, {{4, 5}}, "d\n\n"},
-      {"ab\ncd\nef\n", {3, 9}, {{5, 6}}, "\n\n"},
-      {"ab\ncd\nef\n", {3, 9}, {{6, 7}}, "\ne\n"},
-      {"ab\ncd\nef\n", {3, 9}, {{7, 8}}, "\nf\n"},
-      {"ab\ncd\nef\n", {3, 9}, {{8, 9}}, "\n\n"},
-      {"ab\ncd\nef\n", {2, 5}, {{0, 3}}, "\n"},
-      {"ab\ncd\nef\n", {2, 6}, {{0, 3}}, "\n\n"},
-      {"ab\ncd\nef\n", {3, 6}, {{0, 3}}, "\n"},
-      {"ab\ncd\nef\n", {3, 6}, {{5, 6}}, "\n"},
-      {"ab\ncd\nef\n", {3, 6}, {{5, 9}}, "\n"},
-      {"ab\ncd\nef\n", {3, 6}, {{6, 9}}, "\n"},
+      {.full_text = "",
+       .substring_range = {0, 0},
+       .disabled_ranges = {},
+       .expected = ""},
+      {.full_text = "\n",
+       .substring_range = {0, 0},
+       .disabled_ranges = {},
+       .expected = ""},
+      {.full_text = "\n",
+       .substring_range = {0, 1},
+       .disabled_ranges = {},
+       .expected = "\n"},
+      {.full_text = "\n\n",
+       .substring_range = {0, 1},
+       .disabled_ranges = {},
+       .expected = "\n"},
+      {.full_text = "\n\n",
+       .substring_range = {1, 2},
+       .disabled_ranges = {},
+       .expected = "\n"},
+      {.full_text = "\n\n",
+       .substring_range = {1, 1},
+       .disabled_ranges = {},
+       .expected = "\n"},  // space text is ""
+      {.full_text = "\n\n",
+       .substring_range = {0, 2},
+       .disabled_ranges = {},
+       .expected = "\n\n"},
+      {.full_text = "\n\n",
+       .substring_range = {0, 2},
+       .disabled_ranges = {{0, 1}},
+       .expected = "\n\n"},
+      {.full_text = "\n\n",
+       .substring_range = {0, 2},
+       .disabled_ranges = {{1, 2}},
+       .expected = "\n\n"},
+      {.full_text = "\n\n",
+       .substring_range = {0, 2},
+       .disabled_ranges = {{0, 2}},
+       .expected = "\n\n"},
+      {.full_text = "abcd",
+       .substring_range = {0, 2},
+       .disabled_ranges = {},
+       .expected = ""},
+      {.full_text = "abcd",
+       .substring_range = {1, 3},
+       .disabled_ranges = {},
+       .expected = "\n"},
+      {.full_text = "abcd",
+       .substring_range = {1, 3},
+       .disabled_ranges = {{0, 1}, {3, 4}},
+       .expected = "\n"},
+      {.full_text = "abcd",
+       .substring_range = {1, 3},
+       .disabled_ranges = {{0, 4}},
+       .expected = "bc"},
+      {.full_text = "abcd",
+       .substring_range = {0, 2},
+       .disabled_ranges = {{0, 4}},
+       .expected = "ab"},
+      {.full_text = "abcd",
+       .substring_range = {2, 4},
+       .disabled_ranges = {{0, 4}},
+       .expected = "cd"},
+      {.full_text = "abcd",
+       .substring_range = {1, 3},
+       .disabled_ranges = {{0, 2}},
+       .expected = "b\n"},  // semi-disabled
+      {.full_text = "abcd",
+       .substring_range = {1, 3},
+       .disabled_ranges = {{2, 4}},
+       .expected = "c\n"},  // semi-disabled
+      {.full_text = "abcd",
+       .substring_range = {0, 0},
+       .disabled_ranges = {{0, 4}},
+       .expected = ""},
+      {.full_text = "abcd",
+       .substring_range = {1, 1},
+       .disabled_ranges = {{0, 4}},
+       .expected = ""},
+      {.full_text = "abcd",
+       .substring_range = {0, 0},
+       .disabled_ranges = {},
+       .expected = ""},
+      {.full_text = "abcd",
+       .substring_range = {1, 1},
+       .disabled_ranges = {},
+       .expected = "\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {2, 5},
+       .disabled_ranges = {},
+       .expected = "\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {2, 6},
+       .disabled_ranges = {},
+       .expected = "\n\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 6},
+       .disabled_ranges = {},
+       .expected = "\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 7},
+       .disabled_ranges = {},
+       .expected = "\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {2, 5},
+       .disabled_ranges = {{0, 9}},
+       .expected = "\ncd"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {2, 6},
+       .disabled_ranges = {{0, 9}},
+       .expected = "\ncd\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 6},
+       .disabled_ranges = {{0, 9}},
+       .expected = "cd\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 7},
+       .disabled_ranges = {{0, 9}},
+       .expected = "cd\ne"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 9},
+       .disabled_ranges = {{0, 9}},
+       .expected = "cd\nef\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 9},
+       .disabled_ranges = {},
+       .expected = "\n\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 9},
+       .disabled_ranges = {{3, 4}},
+       .expected = "c\n\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 9},
+       .disabled_ranges = {{4, 5}},
+       .expected = "d\n\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 9},
+       .disabled_ranges = {{5, 6}},
+       .expected = "\n\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 9},
+       .disabled_ranges = {{6, 7}},
+       .expected = "\ne\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 9},
+       .disabled_ranges = {{7, 8}},
+       .expected = "\nf\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 9},
+       .disabled_ranges = {{8, 9}},
+       .expected = "\n\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {2, 5},
+       .disabled_ranges = {{0, 3}},
+       .expected = "\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {2, 6},
+       .disabled_ranges = {{0, 3}},
+       .expected = "\n\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 6},
+       .disabled_ranges = {{0, 3}},
+       .expected = "\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 6},
+       .disabled_ranges = {{5, 6}},
+       .expected = "\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 6},
+       .disabled_ranges = {{5, 9}},
+       .expected = "\n"},
+      {.full_text = "ab\ncd\nef\n",
+       .substring_range = {3, 6},
+       .disabled_ranges = {{6, 9}},
+       .expected = "\n"},
   };
   for (const auto &test : kTestCases) {
     std::ostringstream stream;

@@ -62,15 +62,24 @@ const LintRuleDescriptor &UndersizedBinaryLiteralRule::GetDescriptor() {
           "bases match their declared width, i.e. has enough padding prefix "
           "zeros.",
       .param = {
-          {"bin", "true", "Checking binary 'b literals."},
-          {"oct", "false", "Checking octal 'o literals."},
-          {"hex", "false", "Checking hexadecimal 'h literals."},
-          {"lint_zero", "false",
-           "Also generate a lint warning for value zero such as `32'h0`; "
-           "autofix suggestions would be to zero-expand or untype `'0`."},
-          {"autofix", "true",
-           "Provide autofix suggestions, e.g. "
-           "32'hAB provides suggested fix 32'h000000AB."},
+          {.name = "bin",
+           .default_value = "true",
+           .description = "Checking binary 'b literals."},
+          {.name = "oct",
+           .default_value = "false",
+           .description = "Checking octal 'o literals."},
+          {.name = "hex",
+           .default_value = "false",
+           .description = "Checking hexadecimal 'h literals."},
+          {.name = "lint_zero",
+           .default_value = "false",
+           .description =
+               "Also generate a lint warning for value zero such as `32'h0`; "
+               "autofix suggestions would be to zero-expand or untype `'0`."},
+          {.name = "autofix",
+           .default_value = "true",
+           .description = "Provide autofix suggestions, e.g. "
+                          "32'hAB provides suggested fix 32'h000000AB."},
       }};
   return d;
 }
@@ -195,12 +204,13 @@ std::string UndersizedBinaryLiteralRule::FormatReason(
 absl::Status UndersizedBinaryLiteralRule::Configure(
     std::string_view configuration) {
   using verible::config::SetBool;
-  return verible::ParseNameValues(configuration,
-                                  {{"bin", SetBool(&check_bin_numbers_)},
-                                   {"hex", SetBool(&check_hex_numbers_)},
-                                   {"oct", SetBool(&check_oct_numbers_)},
-                                   {"lint_zero", SetBool(&lint_zero_)},
-                                   {"autofix", SetBool(&autofix_)}});
+  return verible::ParseNameValues(
+      configuration,
+      {{.name = "bin", .set_value = SetBool(&check_bin_numbers_)},
+       {.name = "hex", .set_value = SetBool(&check_hex_numbers_)},
+       {.name = "oct", .set_value = SetBool(&check_oct_numbers_)},
+       {.name = "lint_zero", .set_value = SetBool(&lint_zero_)},
+       {.name = "autofix", .set_value = SetBool(&autofix_)}});
 }
 
 LintRuleStatus UndersizedBinaryLiteralRule::Report() const {

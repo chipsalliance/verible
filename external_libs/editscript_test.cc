@@ -80,8 +80,8 @@ TEST(DiffTest, CheckEmptyNoCommonSubsequence) {
   Edits actual = GetTokenDiffs(tokens1, tokens1 + strlen(tokens1), tokens2,
                                tokens2 + strlen(tokens2));
   auto expect =
-      Edits{{Operation::DELETE, 0, 5},    // = tokens1[ 0,  5) = all of tokens1
-            {Operation::INSERT, 0, 44}};  // = tokens2[ 0, 44) = all of tokens2
+      Edits{{.operation=Operation::DELETE, .start=0, .end=5},    // = tokens1[ 0,  5) = all of tokens1
+            {.operation=Operation::INSERT, .start=0, .end=44}};  // = tokens2[ 0, 44) = all of tokens2
   EXPECT_EQ(ToString(actual), ToString(expect));
 
   // Find the longest common subsequence.
@@ -103,14 +103,14 @@ TEST(DiffTest, CheckCharArrayDiffResultsAndLongestCommonSubsequence) {
 
   // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
   auto expect =
-      Edits{{Operation::EQUALS, 0, 4},     // = tokens1[ 0,  4) = "the "
-            {Operation::INSERT, 4, 16},    // = tokens2[ 4, 16)= "quick brown "
-            {Operation::EQUALS, 4, 15},    // = tokens1[ 4, 15) = "fox jumped "
-            {Operation::DELETE, 15, 20},   // = tokens1[15, 20) = "over "
-            {Operation::EQUALS, 20, 24},   // = tokens1[20, 24) = "the "
-            {Operation::INSERT, 31, 36},   // = tokens2[31, 36) = "lazy "
-            {Operation::EQUALS, 24, 27},   // = tokens1[24, 27) = "dog"
-            {Operation::DELETE, 27, 28}};  // = tokens1[27, 28) = "."
+      Edits{{.operation=Operation::EQUALS, .start=0, .end=4},     // = tokens1[ 0,  4) = "the "
+            {.operation=Operation::INSERT, .start=4, .end=16},    // = tokens2[ 4, 16)= "quick brown "
+            {.operation=Operation::EQUALS, .start=4, .end=15},    // = tokens1[ 4, 15) = "fox jumped "
+            {.operation=Operation::DELETE, .start=15, .end=20},   // = tokens1[15, 20) = "over "
+            {.operation=Operation::EQUALS, .start=20, .end=24},   // = tokens1[20, 24) = "the "
+            {.operation=Operation::INSERT, .start=31, .end=36},   // = tokens2[31, 36) = "lazy "
+            {.operation=Operation::EQUALS, .start=24, .end=27},   // = tokens1[24, 27) = "dog"
+            {.operation=Operation::DELETE, .start=27, .end=28}};  // = tokens1[27, 28) = "."
   EXPECT_EQ(ToString(actual), ToString(expect));
 
   // Find the longest common subsequence.
@@ -141,14 +141,14 @@ TEST(DiffTest, CheckNonConstStringVectorDiffResults) {
 
   // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
   Edits expect = decltype(actual){
-      {Operation::EQUALS, 0, 1},   // = tokens1[0, 1) = {"the"}
-      {Operation::INSERT, 1, 3},   // = tokens2[1, 3) = {"quick", "brown"}
-      {Operation::EQUALS, 1, 3},   // = tokens1[1, 3) = {"fox", "jumped"}
-      {Operation::DELETE, 3, 4},   // = tokens1[3, 4) = {"over"}
-      {Operation::EQUALS, 4, 5},   // = tokens1[4, 5) = {"the"}
-      {Operation::INSERT, 6, 7},   // = tokens2[6, 7) = {"lazy"}
-      {Operation::EQUALS, 5, 6},   // = tokens1[5, 6) = {"dog"}
-      {Operation::DELETE, 6, 7}};  // = tokens1[6, 7) = {"."}
+      {.operation=Operation::EQUALS, .start=0, .end=1},   // = tokens1[0, 1) = {"the"}
+      {.operation=Operation::INSERT, .start=1, .end=3},   // = tokens2[1, 3) = {"quick", "brown"}
+      {.operation=Operation::EQUALS, .start=1, .end=3},   // = tokens1[1, 3) = {"fox", "jumped"}
+      {.operation=Operation::DELETE, .start=3, .end=4},   // = tokens1[3, 4) = {"over"}
+      {.operation=Operation::EQUALS, .start=4, .end=5},   // = tokens1[4, 5) = {"the"}
+      {.operation=Operation::INSERT, .start=6, .end=7},   // = tokens2[6, 7) = {"lazy"}
+      {.operation=Operation::EQUALS, .start=5, .end=6},   // = tokens1[5, 6) = {"dog"}
+      {.operation=Operation::DELETE, .start=6, .end=7}};  // = tokens1[6, 7) = {"."}
   EXPECT_EQ(ToString(actual), ToString(expect));
 
   // Find the longest common subsequence.
@@ -176,7 +176,7 @@ TEST(DiffTest, CompleteDeletion) {
 
   // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
   const Edits expect{
-      {Operation::DELETE, 0, 2},  // = tokens1[0, 2) = {"the", "fox"}
+      {.operation=Operation::DELETE, .start=0, .end=2},  // = tokens1[0, 2) = {"the", "fox"}
   };
   EXPECT_EQ(ToString(actual), ToString(expect));
 }
@@ -190,7 +190,7 @@ TEST(DiffTest, CompleteInsertion) {
 
   // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
   const Edits expect{
-      {Operation::INSERT, 0, 3},  // = tokens2[0, 3) = {"jumped", "over", "me"}
+      {.operation=Operation::INSERT, .start=0, .end=3},  // = tokens2[0, 3) = {"jumped", "over", "me"}
   };
   EXPECT_EQ(ToString(actual), ToString(expect));
 }
@@ -204,8 +204,8 @@ TEST(DiffTest, ReplaceFromOneDifferentElement) {
 
   // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
   const Edits expect{
-      {Operation::DELETE, 0, 1},  // = tokens1[0, 1) = {"fox"}
-      {Operation::INSERT, 0, 3},  // = tokens2[0, 3) = {"jumped", "over", "me"}
+      {.operation=Operation::DELETE, .start=0, .end=1},  // = tokens1[0, 1) = {"fox"}
+      {.operation=Operation::INSERT, .start=0, .end=3},  // = tokens2[0, 3) = {"jumped", "over", "me"}
   };
   EXPECT_EQ(ToString(actual), ToString(expect));
 }
@@ -219,8 +219,8 @@ TEST(DiffTest, ReplaceToOneDifferentElement) {
 
   // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
   const Edits expect{
-      {Operation::DELETE, 0, 3},  // = tokens1[0, 3) = {"jumped", "over", "me"}
-      {Operation::INSERT, 0, 1},  // = tokens2[0, 1) = {"fox"}
+      {.operation=Operation::DELETE, .start=0, .end=3},  // = tokens1[0, 3) = {"jumped", "over", "me"}
+      {.operation=Operation::INSERT, .start=0, .end=1},  // = tokens2[0, 1) = {"fox"}
   };
   EXPECT_EQ(ToString(actual), ToString(expect));
 }
@@ -234,8 +234,8 @@ TEST(DiffTest, CompleteReplacement) {
 
   // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
   const Edits expect{
-      {Operation::DELETE, 0, 2},  // = tokens1[0, 2) = {"the", "fox"}
-      {Operation::INSERT, 0, 3},  // = tokens2[0, 3) = {"jumped", "over", "me"}
+      {.operation=Operation::DELETE, .start=0, .end=2},  // = tokens1[0, 2) = {"the", "fox"}
+      {.operation=Operation::INSERT, .start=0, .end=3},  // = tokens2[0, 3) = {"jumped", "over", "me"}
   };
   EXPECT_EQ(ToString(actual), ToString(expect));
 }
@@ -250,9 +250,9 @@ TEST(DiffTest, StrictSubsequence) {
 
   // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
   const Edits expect{
-      {Operation::DELETE, 0, 1},  // = tokens1[0, 1) = {"the"}
-      {Operation::EQUALS, 1, 4},  // = tokens1[1, 4) = {"fox", "jumped", "over"}
-      {Operation::DELETE, 4, 7},  // = tokens1[4, 7) = {"the", "dog", "."}
+      {.operation=Operation::DELETE, .start=0, .end=1},  // = tokens1[0, 1) = {"the"}
+      {.operation=Operation::EQUALS, .start=1, .end=4},  // = tokens1[1, 4) = {"fox", "jumped", "over"}
+      {.operation=Operation::DELETE, .start=4, .end=7},  // = tokens1[4, 7) = {"the", "dog", "."}
   };
   EXPECT_EQ(ToString(actual), ToString(expect));
 }
@@ -267,9 +267,9 @@ TEST(DiffTest, StrictSupersequence) {
 
   // EQUALS and DELETE offsets point into tokens1, INSERT into tokens2.
   const Edits expect{
-      {Operation::INSERT, 0, 1},  // = tokens2[0, 1) = {"the"}
-      {Operation::EQUALS, 0, 3},  // = tokens1[0, 3) = {"fox", "jumped", "over"}
-      {Operation::INSERT, 4, 7},  // = tokens2[4, 7) = {"the", "dog", "."}
+      {.operation=Operation::INSERT, .start=0, .end=1},  // = tokens2[0, 1) = {"the"}
+      {.operation=Operation::EQUALS, .start=0, .end=3},  // = tokens1[0, 3) = {"fox", "jumped", "over"}
+      {.operation=Operation::INSERT, .start=4, .end=7},  // = tokens2[4, 7) = {"the", "dog", "."}
   };
   EXPECT_EQ(ToString(actual), ToString(expect));
 }

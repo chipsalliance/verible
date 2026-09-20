@@ -40,7 +40,7 @@ namespace matcher {
 
 template <SymbolKind Kind, typename EnumType, EnumType Tag>
 bool EqualTagPredicate(const Symbol &symbol) {
-  SymbolTag symbol_tag = {Kind, static_cast<int>(Tag)};
+  SymbolTag symbol_tag = {.kind = Kind, .tag = static_cast<int>(Tag)};
   return symbol.Tag() == symbol_tag;
 }
 

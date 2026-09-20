@@ -52,30 +52,52 @@ const LintRuleDescriptor &ExplicitBeginRule::GetDescriptor() {
           "for, forever, foreach, while and initial statements.",
       .param =
           {
-              {"if_enable", "true",
-               "All if statements require an explicit begin-end block"},
-              {"else_enable", "true",
-               "All else statements require an explicit begin-end block"},
-              {"always_enable", "true",
-               "All always statements require an explicit begin-end block"},
-              {"always_comb_enable", "true",
-               "All always_comb statements require an explicit begin-end "
-               "block"},
-              {"always_latch_enable", "true",
-               "All always_latch statements require an explicit begin-end "
-               "block"},
-              {"always_ff_enable", "true",
-               "All always_ff statements require an explicit begin-end block"},
-              {"for_enable", "true",
-               "All for statements require an explicit begin-end block"},
-              {"forever_enable", "true",
-               "All forever statements require an explicit begin-end block"},
-              {"foreach_enable", "true",
-               "All foreach statements require an explicit begin-end block"},
-              {"while_enable", "true",
-               "All while statements require an explicit begin-end block"},
-              {"initial_enable", "true",
-               "All initial statements require an explicit begin-end block"},
+              {.name = "if_enable",
+               .default_value = "true",
+               .description =
+                   "All if statements require an explicit begin-end block"},
+              {.name = "else_enable",
+               .default_value = "true",
+               .description =
+                   "All else statements require an explicit begin-end block"},
+              {.name = "always_enable",
+               .default_value = "true",
+               .description =
+                   "All always statements require an explicit begin-end block"},
+              {.name = "always_comb_enable",
+               .default_value = "true",
+               .description =
+                   "All always_comb statements require an explicit begin-end "
+                   "block"},
+              {.name = "always_latch_enable",
+               .default_value = "true",
+               .description =
+                   "All always_latch statements require an explicit begin-end "
+                   "block"},
+              {.name = "always_ff_enable",
+               .default_value = "true",
+               .description = "All always_ff statements require an explicit "
+                              "begin-end block"},
+              {.name = "for_enable",
+               .default_value = "true",
+               .description =
+                   "All for statements require an explicit begin-end block"},
+              {.name = "forever_enable",
+               .default_value = "true",
+               .description = "All forever statements require an explicit "
+                              "begin-end block"},
+              {.name = "foreach_enable",
+               .default_value = "true",
+               .description = "All foreach statements require an explicit "
+                              "begin-end block"},
+              {.name = "while_enable",
+               .default_value = "true",
+               .description =
+                   "All while statements require an explicit begin-end block"},
+              {.name = "initial_enable",
+               .default_value = "true",
+               .description = "All initial statements require an explicit "
+                              "begin-end block"},
           },
   };
   return d;
@@ -86,17 +108,20 @@ absl::Status ExplicitBeginRule::Configure(std::string_view configuration) {
   return verible::ParseNameValues(
       configuration,
       {
-          {"if_enable", SetBool(&if_enable_)},
-          {"else_enable", SetBool(&else_enable_)},
-          {"always_enable", SetBool(&always_enable_)},
-          {"always_comb_enable", SetBool(&always_comb_enable_)},
-          {"always_latch_enable", SetBool(&always_latch_enable_)},
-          {"always_ff_enable", SetBool(&always_ff_enable_)},
-          {"for_enable", SetBool(&for_enable_)},
-          {"forever_enable", SetBool(&forever_enable_)},
-          {"foreach_enable", SetBool(&foreach_enable_)},
-          {"while_enable", SetBool(&while_enable_)},
-          {"initial_enable", SetBool(&initial_enable_)},
+          {.name = "if_enable", .set_value = SetBool(&if_enable_)},
+          {.name = "else_enable", .set_value = SetBool(&else_enable_)},
+          {.name = "always_enable", .set_value = SetBool(&always_enable_)},
+          {.name = "always_comb_enable",
+           .set_value = SetBool(&always_comb_enable_)},
+          {.name = "always_latch_enable",
+           .set_value = SetBool(&always_latch_enable_)},
+          {.name = "always_ff_enable",
+           .set_value = SetBool(&always_ff_enable_)},
+          {.name = "for_enable", .set_value = SetBool(&for_enable_)},
+          {.name = "forever_enable", .set_value = SetBool(&forever_enable_)},
+          {.name = "foreach_enable", .set_value = SetBool(&foreach_enable_)},
+          {.name = "while_enable", .set_value = SetBool(&while_enable_)},
+          {.name = "initial_enable", .set_value = SetBool(&initial_enable_)},
       });
 }
 

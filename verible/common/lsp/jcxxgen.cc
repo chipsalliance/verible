@@ -62,7 +62,7 @@ struct Property {
     return other.name == name;
   }
 
-  Location location = {"<>", 0};  // Where it is defined
+  Location location = {.filename = "<>", .line = 0};  // Where it is defined
   ObjectType *owner;
 
   std::string name;
@@ -102,7 +102,7 @@ bool ParseObjectTypesFromFile(const std::string &filename,
   static const RE2 property_re(
       "^[ \t]+([a-zA-Z_<]+)([\\?\\+]*):[ ]*([a-zA-Z0-9_]+)[ ]*(=[ \t]*(.+))?");
 
-  Location current_location = {filename.c_str(), 0};
+  Location current_location = {.filename = filename.c_str(), .line = 0};
   ObjectType *current_model = nullptr;
   std::ifstream in(filename);
   if (!in.good()) {

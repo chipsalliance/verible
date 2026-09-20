@@ -60,8 +60,9 @@ const LintRuleDescriptor &GenerateLabelPrefixRule::GetDescriptor() {
           "verilog/tools/lint#readme for more detail on verible regex "
           "patterns.",
       // NOLINTNEXTLINE(misc-include-cleaner)
-      .param = {{"style_regex", std::string(kDefaultStyleRegex),
-                 "A regex used to check generate label style."}},
+      .param = {{.name = "style_regex",
+                 .default_value = std::string(kDefaultStyleRegex),
+                 .description = "A regex used to check generate label style."}},
   };
   return d;
 }
@@ -117,7 +118,8 @@ absl::Status GenerateLabelPrefixRule::Configure(
     std::string_view configuration) {
   using verible::config::SetRegex;
   absl::Status s = verible::ParseNameValues(
-      configuration, {{"style_regex", SetRegex(&style_regex_)}});
+      configuration,
+      {{.name = "style_regex", .set_value = SetRegex(&style_regex_)}});
   return s;
 }
 

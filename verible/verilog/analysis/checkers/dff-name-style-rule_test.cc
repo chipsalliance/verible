@@ -219,10 +219,13 @@ TEST(DffNameStyleRuleTest, ExtractPipelineStage) {
     std::pair<std::string_view, std::optional<int>> expected;
   };
   const std::vector<Test> kTestCases = {
-      {"data_q0", {"data_q0", {}}}, {"data_q1", {"data_q", {1}}},
-      {"data_q2", {"data_q", {2}}}, {"data_q20", {"data_q", {20}}},
-      {"data_q0", {"data_q0", {}}}, {"a", {"a", {}}},
-      {"data", {"data", {}}}};
+      {.str = "data_q0", .expected = {"data_q0", {}}},
+      {.str = "data_q1", .expected = {"data_q", {1}}},
+      {.str = "data_q2", .expected = {"data_q", {2}}},
+      {.str = "data_q20", .expected = {"data_q", {20}}},
+      {.str = "data_q0", .expected = {"data_q0", {}}},
+      {.str = "a", .expected = {"a", {}}},
+      {.str = "data", .expected = {"data", {}}}};
 
   for (auto &test : kTestCases) {
     auto [result_str, result_int] =

@@ -127,7 +127,8 @@ TEST(FindAllTaskPrototypesTest, Various) {
           for (const auto &proto :
                FindAllTaskPrototypes(*ABSL_DIE_IF_NULL(root))) {
             headers.push_back(TreeSearchMatch{
-                GetTaskPrototypeHeader(*proto.match), /* no context */});
+                .match = GetTaskPrototypeHeader(*proto.match),
+                /* no context */});
           }
           return headers;
         });
@@ -161,7 +162,7 @@ TEST(TaskPrototypesIdsTest, Various) {
             const auto *id = ABSL_DIE_IF_NULL(GetTaskHeaderId(*header));
             EXPECT_TRUE(verible::SymbolCastToNode(*id).MatchesTag(
                 NodeEnum::kUnqualifiedId));
-            ids.push_back(TreeSearchMatch{id, /* no context */});
+            ids.push_back(TreeSearchMatch{.match = id, /* no context */});
           }
           return ids;
         });
@@ -228,8 +229,8 @@ TEST(GetTaskHeaderTest, DeclarationsHeader) {
           std::vector<TreeSearchMatch> headers;
           for (const auto &decl : task_declarations) {
             const auto &task_node = verible::SymbolCastToNode(*decl.match);
-            headers.push_back(
-                TreeSearchMatch{GetTaskHeader(task_node), /* no context */});
+            headers.push_back(TreeSearchMatch{.match = GetTaskHeader(task_node),
+                                              /* no context */});
           }
           return headers;
         });
@@ -301,7 +302,7 @@ TEST(GetTaskIdTest, UnqualifiedIds) {
             const auto ids = FindAllUnqualifiedIds(*task_id);
             for (const auto &id : ids) {
               got_ids.push_back(TreeSearchMatch{
-                  GetIdentifier(*ABSL_DIE_IF_NULL(id.match)),
+                  .match = GetIdentifier(*ABSL_DIE_IF_NULL(id.match)),
                   /* no context */});
             }
           }
@@ -373,7 +374,8 @@ TEST(GetTaskHeaderTest, GetTaskName) {
           std::vector<TreeSearchMatch> types;
           for (const auto &decl : decls) {
             const auto *type = GetTaskName(*decl.match);
-            types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+            types.push_back(TreeSearchMatch{
+                .match = type, .context = {/* ignored context */}});
           }
           return types;
         });
@@ -404,7 +406,8 @@ TEST(GetTaskHeaderTest, GetTaskBody) {
           std::vector<TreeSearchMatch> bodies;
           for (const auto &decl : decls) {
             const auto &body = GetTaskStatementList(*decl.match);
-            bodies.push_back(TreeSearchMatch{body, {/* ignored context */}});
+            bodies.push_back(TreeSearchMatch{
+                .match = body, .context = {/* ignored context */}});
           }
           return bodies;
         });

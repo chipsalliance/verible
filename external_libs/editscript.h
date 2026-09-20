@@ -101,7 +101,7 @@ inline void AppendEdit(Operation op, int64_t start, int64_t end, Edits *edits) {
     edits->back().end = end;
   } else {
     // Add a new edit operation.
-    edits->emplace_back(Edit{op, start, end});
+    edits->emplace_back(Edit{.operation=op, .start=start, .end=end});
   }
 }
 
@@ -134,7 +134,7 @@ inline void InsertEditAt(int64_t index, Operation op, int64_t start,
   }
 
   // Cannot merge into existing? Insert a new edit operation.
-  edits->emplace(edits->begin() + index, Edit{op, start, end});
+  edits->emplace(edits->begin() + index, Edit{.operation=op, .start=start, .end=end});
 }
 
 /**

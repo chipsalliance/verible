@@ -175,7 +175,8 @@ TEST(GetIdentifierFromPortDeclarationTest, VariousPorts) {
           for (const auto &port : port_declarations) {
             const auto *identifier_leaf =
                 GetIdentifierFromPortDeclaration(*port.match);
-            ids.push_back(TreeSearchMatch{identifier_leaf, /* no context */});
+            ids.push_back(
+                TreeSearchMatch{.match = identifier_leaf, /* no context */});
           }
           return ids;
         });
@@ -291,7 +292,8 @@ TEST(GetIdentifierFromModulePortDeclarationTest, VariousPorts) {
           for (const auto &port : port_declarations) {
             const auto *identifier_leaf =
                 GetIdentifierFromModulePortDeclaration(*port.match);
-            ids.push_back(TreeSearchMatch{identifier_leaf, /* no context */});
+            ids.push_back(
+                TreeSearchMatch{.match = identifier_leaf, /* no context */});
           }
           return ids;
         });
@@ -331,30 +333,43 @@ struct TaskFunctionTestCase {
 TEST(GetIdentifierFromTaskFunctionPortItemTest, ExpectSomeTaskFunctionPorts) {
   const TaskFunctionTestCase kTestCases[] = {
       // Function cases
-      {"function void foo(bar); endfunction", {{"bar", false}}},
-      {"function void foo(bar, baz); endfunction",
-       {{"bar", false}, {"baz", false}}},
-      {"function void foo(input int bar, output int baz); endfunction",
-       {{"bar", true}, {"baz", true}}},
-      {"class cls; function void foo(bar, baz); endfunction endclass",
-       {{"bar", false}, {"baz", false}}},
-      {"module mod; function void foo(bar, baz); endfunction endmodule",
-       {{"bar", false}, {"baz", false}}},
-      {"function void foo(input pkg::t_t bar, output pkg::t_t baz); "
-       "endfunction",
-       {{"bar", true}, {"baz", true}}},
+      {.code = "function void foo(bar); endfunction",
+       .expected_ports = {{.id = "bar", .have_type = false}}},
+      {.code = "function void foo(bar, baz); endfunction",
+       .expected_ports = {{.id = "bar", .have_type = false},
+                          {.id = "baz", .have_type = false}}},
+      {.code = "function void foo(input int bar, output int baz); endfunction",
+       .expected_ports = {{.id = "bar", .have_type = true},
+                          {.id = "baz", .have_type = true}}},
+      {.code = "class cls; function void foo(bar, baz); endfunction endclass",
+       .expected_ports = {{.id = "bar", .have_type = false},
+                          {.id = "baz", .have_type = false}}},
+      {.code = "module mod; function void foo(bar, baz); endfunction endmodule",
+       .expected_ports = {{.id = "bar", .have_type = false},
+                          {.id = "baz", .have_type = false}}},
+      {.code = "function void foo(input pkg::t_t bar, output pkg::t_t baz); "
+               "endfunction",
+       .expected_ports = {{.id = "bar", .have_type = true},
+                          {.id = "baz", .have_type = true}}},
       // Same, but for tasks
-      {"task automatic foo(bar); endtask", {{"bar", false}}},
-      {"task automatic foo(bar, baz); endtask",
-       {{"bar", false}, {"baz", false}}},
-      {"task automatic foo(input int bar, output int baz); endtask",
-       {{"bar", true}, {"baz", true}}},
-      {"class cls; task automatic foo(bar, baz); endtask endclass",
-       {{"bar", false}, {"baz", false}}},
-      {"module mod; task automatic foo(bar, baz); endtask endmodule",
-       {{"bar", false}, {"baz", false}}},
-      {"task automatic foo(input pkg::t_t bar, output pkg::t_t baz); endtask",
-       {{"bar", true}, {"baz", true}}},
+      {.code = "task automatic foo(bar); endtask",
+       .expected_ports = {{.id = "bar", .have_type = false}}},
+      {.code = "task automatic foo(bar, baz); endtask",
+       .expected_ports = {{.id = "bar", .have_type = false},
+                          {.id = "baz", .have_type = false}}},
+      {.code = "task automatic foo(input int bar, output int baz); endtask",
+       .expected_ports = {{.id = "bar", .have_type = true},
+                          {.id = "baz", .have_type = true}}},
+      {.code = "class cls; task automatic foo(bar, baz); endtask endclass",
+       .expected_ports = {{.id = "bar", .have_type = false},
+                          {.id = "baz", .have_type = false}}},
+      {.code = "module mod; task automatic foo(bar, baz); endtask endmodule",
+       .expected_ports = {{.id = "bar", .have_type = false},
+                          {.id = "baz", .have_type = false}}},
+      {.code = "task automatic foo(input pkg::t_t bar, output pkg::t_t baz); "
+               "endtask",
+       .expected_ports = {{.id = "bar", .have_type = true},
+                          {.id = "baz", .have_type = true}}},
   };
   for (const auto &test : kTestCases) {
     const std::string &code = test.code;
@@ -411,7 +426,8 @@ TEST(GetAllPortReferences, GetPortReferenceIdentifier) {
           for (const auto &decl : decls) {
             const auto *type = GetIdentifierFromPortReference(
                 *GetPortReferenceFromPort(*decl.match));
-            types.push_back(TreeSearchMatch{type, {/* ignored context */}});
+            types.push_back(TreeSearchMatch{
+                .match = type, .context = {/* ignored context */}});
           }
           return types;
         });
@@ -441,7 +457,8 @@ TEST(GetActualNamedPort, GetActualPortName) {
           std::vector<TreeSearchMatch> names;
           for (const auto &port : ports) {
             const auto *name = GetActualNamedPortName(*port.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -472,8 +489,8 @@ TEST(GetActualNamedPort, GetActualNamedPortParenGroup) {
             if (paren_group == nullptr) {
               continue;
             }
-            paren_groups.emplace_back(
-                TreeSearchMatch{paren_group, {/* ignored context */}});
+            paren_groups.emplace_back(TreeSearchMatch{
+                .match = paren_group, .context = {/* ignored context */}});
           }
           return paren_groups;
         });
@@ -505,8 +522,8 @@ TEST(FunctionPort, GetUnpackedDimensions) {
           for (const auto &port : ports) {
             const auto *dimension =
                 GetUnpackedDimensionsFromTaskFunctionPortItem(*port.match);
-            dimensions.emplace_back(
-                TreeSearchMatch{dimension, {/* ignored context */}});
+            dimensions.emplace_back(TreeSearchMatch{
+                .match = dimension, .context = {/* ignored context */}});
           }
           return dimensions;
         });
@@ -543,7 +560,8 @@ TEST(FunctionPort, GetDirection) {
           for (const auto &port : ports) {
             const verible::SyntaxTreeLeaf *direction =
                 GetDirectionFromPortDeclaration(*port.match);
-            directions.emplace_back(TreeSearchMatch{direction, {}});
+            directions.emplace_back(
+                TreeSearchMatch{.match = direction, .context = {}});
           }
           return directions;
         });

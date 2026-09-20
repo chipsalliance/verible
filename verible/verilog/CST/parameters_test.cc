@@ -425,7 +425,8 @@ TEST(GetIdentifierLeafFromTypeAssignmentTest, BasicTests) {
             const auto *type_assignment_symbol =
                 GetTypeAssignmentFromParamDeclaration(*decl.match);
             ids.push_back(TreeSearchMatch{
-                GetIdentifierLeafFromTypeAssignment(*type_assignment_symbol),
+                .match = GetIdentifierLeafFromTypeAssignment(
+                    *type_assignment_symbol),
                 /* no context */});
           }
           return ids;
@@ -547,7 +548,8 @@ TEST(FindAllParamByNameTest, FindNamesOfParams) {
           for (const auto &instance : instances) {
             const auto *decl = GetNamedParamFromActualParam(*instance.match);
 
-            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
+            params.emplace_back(TreeSearchMatch{
+                .match = decl, .context = {/* ignored context */}});
           }
           return params;
         });
@@ -586,8 +588,8 @@ TEST(FindAllParamByNameTest, FindParenGroupOfNamedParam) {
             if (paren_group == nullptr) {
               continue;
             }
-            paren_groups.emplace_back(
-                TreeSearchMatch{paren_group, {/* ignored context */}});
+            paren_groups.emplace_back(TreeSearchMatch{
+                .match = paren_group, .context = {/* ignored context */}});
           }
           return paren_groups;
         });
@@ -633,8 +635,8 @@ TEST(FindAllParamTest, FindExpressionFromParameterType) {
             if (expression == nullptr) {
               continue;
             }
-            expressions.emplace_back(
-                TreeSearchMatch{expression, {/* ignored context */}});
+            expressions.emplace_back(TreeSearchMatch{
+                .match = expression, .context = {/* ignored context */}});
           }
           return expressions;
         });

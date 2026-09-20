@@ -308,12 +308,36 @@ TEST_F(LayoutTest, TestHorizontalAndVerticalLayouts) {
 class LayoutFunctionTest : public ::testing::Test {
  public:
   LayoutFunctionTest()
-      : layout_function_(LayoutFunction{{0, layout_, 10, 101.0F, 11},
-                                        {1, layout_, 20, 202.0F, 22},
-                                        {2, layout_, 30, 303.0F, 33},
-                                        {3, layout_, 40, 404.0F, 44},
-                                        {40, layout_, 50, 505.0F, 55},
-                                        {50, layout_, 60, 606.0F, 66}}),
+      : layout_function_(LayoutFunction{{.column = 0,
+                                         .layout = layout_,
+                                         .span = 10,
+                                         .intercept = 101.0F,
+                                         .gradient = 11},
+                                        {.column = 1,
+                                         .layout = layout_,
+                                         .span = 20,
+                                         .intercept = 202.0F,
+                                         .gradient = 22},
+                                        {.column = 2,
+                                         .layout = layout_,
+                                         .span = 30,
+                                         .intercept = 303.0F,
+                                         .gradient = 33},
+                                        {.column = 3,
+                                         .layout = layout_,
+                                         .span = 40,
+                                         .intercept = 404.0F,
+                                         .gradient = 44},
+                                        {.column = 40,
+                                         .layout = layout_,
+                                         .span = 50,
+                                         .intercept = 505.0F,
+                                         .gradient = 55},
+                                        {.column = 50,
+                                         .layout = layout_,
+                                         .span = 60,
+                                         .intercept = 606.0F,
+                                         .gradient = 66}}),
         const_layout_function_(layout_function_) {}
 
  protected:
@@ -488,11 +512,19 @@ TEST_F(LayoutFunctionTest, AtOrToTheLeftOf) {
 }
 
 TEST_F(LayoutFunctionTest, Insertion) {
-  layout_function_.push_back({60, layout_, 1, 6.0F, 6});
+  layout_function_.push_back({.column = 60,
+                              .layout = layout_,
+                              .span = 1,
+                              .intercept = 6.0F,
+                              .gradient = 6});
   ASSERT_EQ(layout_function_.size(), 7);
   EXPECT_EQ(layout_function_[6].column, 60);
 
-  layout_function_.push_back({70, layout_, 1, 6.0F, 6});
+  layout_function_.push_back({.column = 70,
+                              .layout = layout_,
+                              .span = 1,
+                              .intercept = 6.0F,
+                              .gradient = 6});
   ASSERT_EQ(layout_function_.size(), 8);
   EXPECT_EQ(layout_function_[6].column, 60);
   EXPECT_EQ(layout_function_[7].column, 70);
@@ -787,8 +819,16 @@ TEST_F(LayoutFunctionFactoryTest, Line) {
   {
     const auto lf = factory_.Line(lines_.Short());
     const auto expected_lf = LayoutFunction{
-        {0, LT(LI(lines_.Short())), 19, 0.0F, 0},
-        {21, LT(LI(lines_.Short())), 19, 0.0F, 100},
+        {.column = 0,
+         .layout = LT(LI(lines_.Short())),
+         .span = 19,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 21,
+         .layout = LT(LI(lines_.Short())),
+         .span = 19,
+         .intercept = 0.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -796,37 +836,65 @@ TEST_F(LayoutFunctionFactoryTest, Line) {
   {
     const auto lf = factory_.Line(lines_.Long());
     const auto expected_lf = LayoutFunction{
-        {0, LT(LI(lines_.Long())), 50, 1000.0F, 100},
+        {.column = 0,
+         .layout = LT(LI(lines_.Long())),
+         .span = 50,
+         .intercept = 1000.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
     const auto lf = factory_.Line(lines_.Indented());
     const auto expected_lf = LayoutFunction{
-        {0, LT(LI(lines_.Indented())), 36, 0.0F, 0},
-        {4, LT(LI(lines_.Indented())), 36, 0.0F, 100},
+        {.column = 0,
+         .layout = LT(LI(lines_.Indented())),
+         .span = 36,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 4,
+         .layout = LT(LI(lines_.Indented())),
+         .span = 36,
+         .intercept = 0.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
     const auto lf = factory_.Line(lines_.OneUnder40Limit());
     const auto expected_lf = LayoutFunction{
-        {0, LT(LI(lines_.OneUnder40Limit())), 39, 0.0F, 0},
-        {1, LT(LI(lines_.OneUnder40Limit())), 39, 0.0F, 100},
+        {.column = 0,
+         .layout = LT(LI(lines_.OneUnder40Limit())),
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = LT(LI(lines_.OneUnder40Limit())),
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
     const auto lf = factory_.Line(lines_.ExactlyAt40Limit());
     const auto expected_lf = LayoutFunction{
-        {0, LT(LI(lines_.ExactlyAt40Limit())), 40, 0.0F, 100},
+        {.column = 0,
+         .layout = LT(LI(lines_.ExactlyAt40Limit())),
+         .span = 40,
+         .intercept = 0.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
     const auto lf = factory_.Line(lines_.OneOver40Limit());
     const auto expected_lf = LayoutFunction{
-        {0, LT(LI(lines_.OneOver40Limit())), 41, 100.0F, 100},
+        {.column = 0,
+         .layout = LT(LI(lines_.OneOver40Limit())),
+         .span = 41,
+         .intercept = 100.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -856,9 +924,21 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.Short())),            //
                                     LT(LI(lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 10, 2.0F, 0},
-        {21, expected_layout, 10, 2.0F, 100},
-        {30, expected_layout, 10, 902.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 902.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -871,8 +951,16 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.Short())),            //
                                     LT(LI(lines_.Short())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 19, 2.0F, 0},
-        {21, expected_layout, 19, 2.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -885,8 +973,16 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.Short())),            //
                                     LT(LI(lines_.Long())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 50, 1002.0F, 100},
-        {21, expected_layout, 50, 3102.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 50,
+         .intercept = 1002.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 50,
+         .intercept = 3102.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -899,8 +995,16 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.Long())),            //
                                     LT(LI(lines_.Short())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 19, 1002.0F, 100},
-        {21, expected_layout, 19, 3102.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 19,
+         .intercept = 1002.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 19,
+         .intercept = 3102.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -915,9 +1019,21 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.Long())),             //
                                     LT(LI(lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 10, 1004.0F, 100},
-        {21, expected_layout, 10, 3104.0F, 200},
-        {30, expected_layout, 10, 4904.0F, 300},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 1004.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 3104.0F,
+         .gradient = 200},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 4904.0F,
+         .gradient = 300},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -930,9 +1046,21 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.Short())),            //
                                     LT(LI(lines_.Indented())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 36, 2.0F, 0},
-        {4, expected_layout, 36, 2.0F, 100},
-        {21, expected_layout, 36, 1702.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 36,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 4,
+         .layout = expected_layout,
+         .span = 36,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 36,
+         .intercept = 1702.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -945,9 +1073,21 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.Short())),            //
                                     LT(LI(lines_.OneUnder40Limit())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 39, 2.0F, 0},
-        {1, expected_layout, 39, 2.0F, 100},
-        {21, expected_layout, 39, 2002.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 2002.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -960,8 +1100,16 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.Short())),            //
                                     LT(LI(lines_.OneOver40Limit())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 41, 102.0F, 100},
-        {21, expected_layout, 41, 2202.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 41,
+         .intercept = 102.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 41,
+         .intercept = 2202.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -974,8 +1122,16 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.Short())),            //
                                     LT(LI(lines_.ExactlyAt40Limit())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 40, 2.0F, 100},
-        {21, expected_layout, 40, 2102.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 40,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 40,
+         .intercept = 2102.0F,
+         .gradient = 100},
     };
   }
   {
@@ -987,9 +1143,21 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.OneUnder40Limit())),  //
                                     LT(LI(lines_.Short())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 19, 2.0F, 0},
-        {1, expected_layout, 19, 2.0F, 100},
-        {21, expected_layout, 19, 2002.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 19,
+         .intercept = 2002.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1002,8 +1170,16 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.OneOver40Limit())),  //
                                     LT(LI(lines_.Short())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 19, 102.0F, 100},
-        {21, expected_layout, 19, 2202.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 19,
+         .intercept = 102.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 19,
+         .intercept = 2202.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1016,8 +1192,16 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.ExactlyAt40Limit())),  //
                                     LT(LI(lines_.Short())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 40, 2.0F, 100},
-        {21, expected_layout, 40, 2102.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 40,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 40,
+         .intercept = 2102.0F,
+         .gradient = 100},
     };
   }
   {
@@ -1041,11 +1225,31 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.OneOver40Limit())),    //
                                     LT(LI(lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 10, 1112.0F, 300},
-        {1, expected_layout, 10, 1412.0F, 400},
-        {4, expected_layout, 10, 2612.0F, 500},
-        {21, expected_layout, 10, 11112.0F, 600},
-        {30, expected_layout, 10, 16512.0F, 700},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 1112.0F,
+         .gradient = 300},
+        {.column = 1,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 1412.0F,
+         .gradient = 400},
+        {.column = 4,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 2612.0F,
+         .gradient = 500},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 11112.0F,
+         .gradient = 600},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 16512.0F,
+         .gradient = 700},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1071,11 +1275,31 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
                                     LT(LI(lines_.OneOver40Limit())),    //
                                     LT(LI(lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 10, 1112.0F, 300},
-        {1, expected_layout, 10, 1412.0F, 400},
-        {4, expected_layout, 10, 2612.0F, 500},
-        {21, expected_layout, 10, 11112.0F, 600},
-        {30, expected_layout, 10, 16512.0F, 700},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 1112.0F,
+         .gradient = 300},
+        {.column = 1,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 1412.0F,
+         .gradient = 400},
+        {.column = 4,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 2612.0F,
+         .gradient = 500},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 11112.0F,
+         .gradient = 600},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 16512.0F,
+         .gradient = 700},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1097,9 +1321,21 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
   //     factory_.Line(lines_.Exactly10Columns()),
   // });
   static const auto kSampleStackLayoutFunction = LayoutFunction{
-      {0, kSampleStackLayout, 10, 1004.0F, 100},
-      {21, kSampleStackLayout, 10, 3104.0F, 200},
-      {30, kSampleStackLayout, 10, 4904.0F, 300},
+      {.column = 0,
+       .layout = kSampleStackLayout,
+       .span = 10,
+       .intercept = 1004.0F,
+       .gradient = 100},
+      {.column = 21,
+       .layout = kSampleStackLayout,
+       .span = 10,
+       .intercept = 3104.0F,
+       .gradient = 200},
+      {.column = 30,
+       .layout = kSampleStackLayout,
+       .span = 10,
+       .intercept = 4904.0F,
+       .gradient = 300},
   };
 
   {
@@ -1123,9 +1359,21 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
            LT(LI(lines_.Short())),                    //
            LT(LI(joinable_lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 29, 0.0F, 0},
-        {11, expected_layout, 29, 0.0F, 100},
-        {21, expected_layout, 29, 1000.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 11,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 1000.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1141,10 +1389,26 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
            LT(LI(joinable_lines_.Exactly10Columns())),  //
            LT(LI(joinable_lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 39, 0.0F, 0},
-        {1, expected_layout, 39, 0.0F, 100},
-        {11, expected_layout, 39, 1000.0F, 100},
-        {21, expected_layout, 39, 2000.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 11,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 1000.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 2000.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1157,9 +1421,21 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
                                     LT(LI(lines_.Exactly10Columns())),        //
                                     LT(LI(joinable_lines_.Short())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 29, 0.0F, 0},
-        {11, expected_layout, 29, 0.0F, 100},
-        {30, expected_layout, 29, 1900.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 11,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 1900.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1173,8 +1449,16 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
            LT(LI(lines_.Short())),                    //
            LT(LI(joinable_lines_.Indented())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 63, 2300.0F, 100},
-        {21, expected_layout, 63, 3600.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 63,
+         .intercept = 2300.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 63,
+         .intercept = 3600.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1187,8 +1471,16 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
                                     LT(LI(lines_.Indented())),                //
                                     LT(LI(joinable_lines_.Short())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 55, 1500.0F, 100},
-        {4, expected_layout, 55, 1900.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 55,
+         .intercept = 1500.0F,
+         .gradient = 100},
+        {.column = 4,
+         .layout = expected_layout,
+         .span = 55,
+         .intercept = 1900.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1202,10 +1494,26 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
            kSampleStackLayout,                        //
            LT(LI(joinable_lines_.Short())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 29, 1004.0F, 100},
-        {11, expected_layout, 29, 2104.0F, 200},
-        {21, expected_layout, 29, 4104.0F, 300},
-        {30, expected_layout, 29, 6804.0F, 300},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 1004.0F,
+         .gradient = 100},
+        {.column = 11,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 2104.0F,
+         .gradient = 200},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 4104.0F,
+         .gradient = 300},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 6804.0F,
+         .gradient = 300},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1219,10 +1527,26 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
            LT(LI(lines_.Short())),                    //
            kSampleStackLayout);
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 29, 2904.0F, 100},
-        {2, expected_layout, 29, 3104.0F, 200},
-        {11, expected_layout, 29, 4904.0F, 300},
-        {21, expected_layout, 29, 7904.0F, 300},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 2904.0F,
+         .gradient = 100},
+        {.column = 2,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 3104.0F,
+         .gradient = 200},
+        {.column = 11,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 4904.0F,
+         .gradient = 300},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 29,
+         .intercept = 7904.0F,
+         .gradient = 300},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1234,9 +1558,21 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
                                     LT(LI(lines_.OneUnder30Limit())),         //
                                     LT(LI(joinable_lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 39, 0.0F, 0},
-        {1, expected_layout, 39, 0.0F, 100},
-        {11, expected_layout, 39, 1000.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 11,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 1000.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1248,8 +1584,16 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
                                     LT(LI(lines_.ExactlyAt30Limit())),        //
                                     LT(LI(joinable_lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 40, 0.0F, 100},
-        {10, expected_layout, 40, 1000.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 40,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 10,
+         .layout = expected_layout,
+         .span = 40,
+         .intercept = 1000.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1261,8 +1605,16 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
                                     LT(LI(lines_.OneOver30Limit())),          //
                                     LT(LI(joinable_lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 41, 100.0F, 100},
-        {9, expected_layout, 41, 1000.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 41,
+         .intercept = 100.0F,
+         .gradient = 100},
+        {.column = 9,
+         .layout = expected_layout,
+         .span = 41,
+         .intercept = 1000.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1288,8 +1640,16 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
            LT(LI(joinable_lines_.OneOver40Limit())),    //
            LT(LI(joinable_lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 243, 19500.0F, 100},
-        {21, expected_layout, 243, 21600.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 243,
+         .intercept = 19500.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 243,
+         .intercept = 21600.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1316,8 +1676,16 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
            LT(LI(joinable_lines_.OneOver40Limit())),    //
            LT(LI(joinable_lines_.Exactly10Columns())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 243, 19500.0F, 100},
-        {21, expected_layout, 243, 21600.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 243,
+         .intercept = 19500.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout,
+         .span = 243,
+         .intercept = 21600.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1337,125 +1705,349 @@ TEST_F(LayoutFunctionFactoryTest, Choice) {
   static const auto layout = LT(LI(LayoutType::kLine, 0, false));
 
   static const ChoiceTestCase kTestCases[] = {
-      {__LINE__, {}, LayoutFunction{}},
-      {__LINE__,
-       {
-           LayoutFunction{{0, layout, 10, 100.0F, 10}},
-       },
-       LayoutFunction{{0, layout, 10, 100.0F, 10}}},
-      {__LINE__,
-       {
-           LayoutFunction{{0, layout, 10, 100.0F, 10}},
-           LayoutFunction{{0, layout, 10, 200.0F, 10}},
-       },
-       LayoutFunction{{0, layout, 10, 100.0F, 10}}},
-      {__LINE__,
-       {
-           LayoutFunction{{0, layout, 10, 200.0F, 10}},
-           LayoutFunction{{0, layout, 10, 100.0F, 10}},
-       },
-       LayoutFunction{{0, layout, 10, 100.0F, 10}}},
-      {__LINE__,
-       {
-           LayoutFunction{{0, layout, 10, 100.0F, 10}},
-           LayoutFunction{{0, layout, 10, 100.0F, 10}},
-       },
-       LayoutFunction{{0, layout, 10, 100.0F, 10}}},
-      {__LINE__,
-       {
-           LayoutFunction{{0, layout, 10, 100.0F, 1}},
-           LayoutFunction{{0, layout, 10, 0.0F, 3}},
-       },
-       LayoutFunction{
-           {0, layout, 10, 0.0F, 3},
-           {50, layout, 10, 150.0F, 1},
-       }},
-      {__LINE__,
-       {
-           LayoutFunction{
-               {0, layout, 10, 100.0F, 1},
+      {.line_no = __LINE__, .choices = {}, .expected = LayoutFunction{}},
+      {.line_no = __LINE__,
+       .choices =
+           {
+               LayoutFunction{{.column = 0,
+                               .layout = layout,
+                               .span = 10,
+                               .intercept = 100.0F,
+                               .gradient = 10}},
            },
-           LayoutFunction{
-               {0, layout, 10, 0.0F, 3},
-               {50, layout, 10, 150.0F, 0},
+       .expected = LayoutFunction{{.column = 0,
+                                   .layout = layout,
+                                   .span = 10,
+                                   .intercept = 100.0F,
+                                   .gradient = 10}}},
+      {.line_no = __LINE__,
+       .choices =
+           {
+               LayoutFunction{{.column = 0,
+                               .layout = layout,
+                               .span = 10,
+                               .intercept = 100.0F,
+                               .gradient = 10}},
+               LayoutFunction{{.column = 0,
+                               .layout = layout,
+                               .span = 10,
+                               .intercept = 200.0F,
+                               .gradient = 10}},
            },
-       },
-       LayoutFunction{
-           {0, layout, 10, 0.0F, 3},
-           {50, layout, 10, 150.0F, 0},
-       }},
-      {__LINE__,
-       {
-           LayoutFunction{
-               {0, layout, 10, 100.0F, 1},
+       .expected = LayoutFunction{{.column = 0,
+                                   .layout = layout,
+                                   .span = 10,
+                                   .intercept = 100.0F,
+                                   .gradient = 10}}},
+      {.line_no = __LINE__,
+       .choices =
+           {
+               LayoutFunction{{.column = 0,
+                               .layout = layout,
+                               .span = 10,
+                               .intercept = 200.0F,
+                               .gradient = 10}},
+               LayoutFunction{{.column = 0,
+                               .layout = layout,
+                               .span = 10,
+                               .intercept = 100.0F,
+                               .gradient = 10}},
            },
-           LayoutFunction{
-               {0, layout, 10, 0.0F, 3},
-               {50, layout, 10, 160.0F, 0},
+       .expected = LayoutFunction{{.column = 0,
+                                   .layout = layout,
+                                   .span = 10,
+                                   .intercept = 100.0F,
+                                   .gradient = 10}}},
+      {.line_no = __LINE__,
+       .choices =
+           {
+               LayoutFunction{{.column = 0,
+                               .layout = layout,
+                               .span = 10,
+                               .intercept = 100.0F,
+                               .gradient = 10}},
+               LayoutFunction{{.column = 0,
+                               .layout = layout,
+                               .span = 10,
+                               .intercept = 100.0F,
+                               .gradient = 10}},
            },
-       },
-       LayoutFunction{
-           {0, layout, 10, 0.0F, 3},
-           {50, layout, 10, 150.0F, 1},
-           {60, layout, 10, 160.0F, 0},
-       }},
-      {__LINE__,
-       {
-           LayoutFunction{
-               {0, layout, 10, 100.0F, 1},
+       .expected = LayoutFunction{{.column = 0,
+                                   .layout = layout,
+                                   .span = 10,
+                                   .intercept = 100.0F,
+                                   .gradient = 10}}},
+      {.line_no = __LINE__,
+       .choices =
+           {
+               LayoutFunction{{.column = 0,
+                               .layout = layout,
+                               .span = 10,
+                               .intercept = 100.0F,
+                               .gradient = 1}},
+               LayoutFunction{{.column = 0,
+                               .layout = layout,
+                               .span = 10,
+                               .intercept = 0.0F,
+                               .gradient = 3}},
            },
+       .expected =
            LayoutFunction{
-               {0, layout, 10, 0.0F, 3},
-               {50, layout, 10, 160.0F, 0},
+               {.column = 0,
+                .layout = layout,
+                .span = 10,
+                .intercept = 0.0F,
+                .gradient = 3},
+               {.column = 50,
+                .layout = layout,
+                .span = 10,
+                .intercept = 150.0F,
+                .gradient = 1},
+           }},
+      {.line_no = __LINE__,
+       .choices =
+           {
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 100.0F,
+                    .gradient = 1},
+               },
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 0.0F,
+                    .gradient = 3},
+                   {.column = 50,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 150.0F,
+                    .gradient = 0},
+               },
            },
-       },
-       LayoutFunction{
-           {0, layout, 10, 0.0F, 3},
-           {50, layout, 10, 150.0F, 1},
-           {60, layout, 10, 160.0F, 0},
-       }},
-      {__LINE__,
-       {
+       .expected =
            LayoutFunction{
-               {0, layout, 10, 100.0F, 1},
-               {50, layout, 10, 150.0F, 0},
+               {.column = 0,
+                .layout = layout,
+                .span = 10,
+                .intercept = 0.0F,
+                .gradient = 3},
+               {.column = 50,
+                .layout = layout,
+                .span = 10,
+                .intercept = 150.0F,
+                .gradient = 0},
+           }},
+      {.line_no = __LINE__,
+       .choices =
+           {
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 100.0F,
+                    .gradient = 1},
+               },
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 0.0F,
+                    .gradient = 3},
+                   {.column = 50,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 160.0F,
+                    .gradient = 0},
+               },
            },
+       .expected =
            LayoutFunction{
-               {0, layout, 10, 125.0F, 0},
-               {75, layout, 10, 125.0F, 1},
+               {.column = 0,
+                .layout = layout,
+                .span = 10,
+                .intercept = 0.0F,
+                .gradient = 3},
+               {.column = 50,
+                .layout = layout,
+                .span = 10,
+                .intercept = 150.0F,
+                .gradient = 1},
+               {.column = 60,
+                .layout = layout,
+                .span = 10,
+                .intercept = 160.0F,
+                .gradient = 0},
+           }},
+      {.line_no = __LINE__,
+       .choices =
+           {
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 100.0F,
+                    .gradient = 1},
+               },
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 0.0F,
+                    .gradient = 3},
+                   {.column = 50,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 160.0F,
+                    .gradient = 0},
+               },
            },
-       },
-       LayoutFunction{
-           {0, layout, 10, 100.0F, 1},
-           {25, layout, 10, 125.0F, 0},
-           {75, layout, 10, 125.0F, 1},
-           {100, layout, 10, 150.0F, 0},
-       }},
-      {__LINE__,
-       {
+       .expected =
            LayoutFunction{
-               {0, layout, 1, 50.0F, 0},
+               {.column = 0,
+                .layout = layout,
+                .span = 10,
+                .intercept = 0.0F,
+                .gradient = 3},
+               {.column = 50,
+                .layout = layout,
+                .span = 10,
+                .intercept = 150.0F,
+                .gradient = 1},
+               {.column = 60,
+                .layout = layout,
+                .span = 10,
+                .intercept = 160.0F,
+                .gradient = 0},
+           }},
+      {.line_no = __LINE__,
+       .choices =
+           {
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 100.0F,
+                    .gradient = 1},
+                   {.column = 50,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 150.0F,
+                    .gradient = 0},
+               },
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 125.0F,
+                    .gradient = 0},
+                   {.column = 75,
+                    .layout = layout,
+                    .span = 10,
+                    .intercept = 125.0F,
+                    .gradient = 1},
+               },
            },
+       .expected =
            LayoutFunction{
-               {0, layout, 2, 0.0F, 10},
+               {.column = 0,
+                .layout = layout,
+                .span = 10,
+                .intercept = 100.0F,
+                .gradient = 1},
+               {.column = 25,
+                .layout = layout,
+                .span = 10,
+                .intercept = 125.0F,
+                .gradient = 0},
+               {.column = 75,
+                .layout = layout,
+                .span = 10,
+                .intercept = 125.0F,
+                .gradient = 1},
+               {.column = 100,
+                .layout = layout,
+                .span = 10,
+                .intercept = 150.0F,
+                .gradient = 0},
+           }},
+      {.line_no = __LINE__,
+       .choices =
+           {
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 1,
+                    .intercept = 50.0F,
+                    .gradient = 0},
+               },
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 2,
+                    .intercept = 0.0F,
+                    .gradient = 10},
+               },
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 3,
+                    .intercept = 999.0F,
+                    .gradient = 0},
+                   {.column = 10,
+                    .layout = layout,
+                    .span = 3,
+                    .intercept = 0.0F,
+                    .gradient = 10},
+               },
+               LayoutFunction{
+                   {.column = 0,
+                    .layout = layout,
+                    .span = 4,
+                    .intercept = 999.0F,
+                    .gradient = 0},
+                   {.column = 20,
+                    .layout = layout,
+                    .span = 4,
+                    .intercept = 0.0F,
+                    .gradient = 10},
+               },
            },
+       .expected =
            LayoutFunction{
-               {0, layout, 3, 999.0F, 0},
-               {10, layout, 3, 0.0F, 10},
-           },
-           LayoutFunction{
-               {0, layout, 4, 999.0F, 0},
-               {20, layout, 4, 0.0F, 10},
-           },
-       },
-       LayoutFunction{
-           {0, layout, 2, 0.0F, 10},
-           {5, layout, 1, 50.0F, 0},
-           {10, layout, 3, 0.0F, 10},
-           {15, layout, 1, 50.0F, 0},
-           {20, layout, 4, 0.0F, 10},
-           {25, layout, 1, 50.0F, 0},
-       }},
+               {.column = 0,
+                .layout = layout,
+                .span = 2,
+                .intercept = 0.0F,
+                .gradient = 10},
+               {.column = 5,
+                .layout = layout,
+                .span = 1,
+                .intercept = 50.0F,
+                .gradient = 0},
+               {.column = 10,
+                .layout = layout,
+                .span = 3,
+                .intercept = 0.0F,
+                .gradient = 10},
+               {.column = 15,
+                .layout = layout,
+                .span = 1,
+                .intercept = 50.0F,
+                .gradient = 0},
+               {.column = 20,
+                .layout = layout,
+                .span = 4,
+                .intercept = 0.0F,
+                .gradient = 10},
+               {.column = 25,
+                .layout = layout,
+                .span = 1,
+                .intercept = 50.0F,
+                .gradient = 0},
+           }},
   };
 
   for (const auto &test_case : kTestCases) {
@@ -1503,12 +2095,36 @@ TEST_F(LayoutFunctionFactoryTest, Wrap) {
                                       LI(lines_.Short()),               //
                                       LI(lines_.Short()));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_vh, 19, 2.0F, 0},
-        {11, expected_layout_vh, 19, 2.0F, 100},
-        {12, expected_layout_v, 19, 4.0F, 0},
-        {21, expected_layout_v, 19, 4.0F, 200},
-        {30, expected_layout_v, 19, 1804.0F, 300},
-        {40, expected_layout_h, 48, 4800.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_vh,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 11,
+         .layout = expected_layout_vh,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 12,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 4.0F,
+         .gradient = 0},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 4.0F,
+         .gradient = 200},
+        {.column = 30,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 1804.0F,
+         .gradient = 300},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 48,
+         .intercept = 4800.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1529,12 +2145,36 @@ TEST_F(LayoutFunctionFactoryTest, Wrap) {
                                       LI(lines_.Exactly10Columns()),     //
                                       LI(lines_.Short()));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_hv, 29, 2.0F, 0},
-        {11, expected_layout_hv, 29, 2.0F, 100},
-        {12, expected_layout_v, 19, 4.0F, 0},
-        {21, expected_layout_v, 19, 4.0F, 200},
-        {30, expected_layout_v, 19, 1804.0F, 300},
-        {40, expected_layout_hv, 29, 4802.0F, 200},
+        {.column = 0,
+         .layout = expected_layout_hv,
+         .span = 29,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 11,
+         .layout = expected_layout_hv,
+         .span = 29,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 12,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 4.0F,
+         .gradient = 0},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 4.0F,
+         .gradient = 200},
+        {.column = 30,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 1804.0F,
+         .gradient = 300},
+        {.column = 40,
+         .layout = expected_layout_hv,
+         .span = 29,
+         .intercept = 4802.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1551,10 +2191,26 @@ TEST_F(LayoutFunctionFactoryTest, Wrap) {
                                       LI(lines_.OneUnder40Limit()),     //
                                       LI(lines_.Short()));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_v, 19, 2.0F, 0},
-        {1, expected_layout_v, 19, 2.0F, 100},
-        {21, expected_layout_v, 19, 2002.0F, 200},
-        {40, expected_layout_h, 58, 5800.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2002.0F,
+         .gradient = 200},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 58,
+         .intercept = 5800.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1571,9 +2227,21 @@ TEST_F(LayoutFunctionFactoryTest, Wrap) {
                                       LI(lines_.ExactlyAt40Limit()),    //
                                       LI(lines_.Short()));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_v, 19, 2.0F, 100},
-        {21, expected_layout_v, 19, 2102.0F, 200},
-        {40, expected_layout_h, 59, 5900.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2102.0F,
+         .gradient = 200},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 59,
+         .intercept = 5900.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1590,9 +2258,21 @@ TEST_F(LayoutFunctionFactoryTest, Wrap) {
                                       LI(lines_.OneOver40Limit()),      //
                                       LI(lines_.Short()));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_v, 19, 102.0F, 100},
-        {21, expected_layout_v, 19, 2202.0F, 200},
-        {40, expected_layout_h, 60, 6000.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 102.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2202.0F,
+         .gradient = 200},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 60,
+         .intercept = 6000.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1617,9 +2297,21 @@ TEST_F(LayoutFunctionFactoryTest, Wrap) {
               LI(lines_.Short(), 0)),
            LI(lines_.Indented(), 7));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_vv, 43, 404.0F, 200},
-        {14, expected_layout_vv, 43, 3204.0F, 300},
-        {33, expected_layout_vh, 43, 8902.0F, 200},
+        {.column = 0,
+         .layout = expected_layout_vv,
+         .span = 43,
+         .intercept = 404.0F,
+         .gradient = 200},
+        {.column = 14,
+         .layout = expected_layout_vv,
+         .span = 43,
+         .intercept = 3204.0F,
+         .gradient = 300},
+        {.column = 33,
+         .layout = expected_layout_vh,
+         .span = 43,
+         .intercept = 8902.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1634,8 +2326,16 @@ TEST_F(LayoutFunctionFactoryTest, Indent) {
         factory_.Indent(factory_.Line(lines_.Exactly10Columns()), 29);
     const auto expected_layout = LT(LI(lines_.Exactly10Columns(), 29));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 39, 0.0F, 0},
-        {1, expected_layout, 39, 0.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1644,7 +2344,11 @@ TEST_F(LayoutFunctionFactoryTest, Indent) {
         factory_.Indent(factory_.Line(lines_.Exactly10Columns()), 30);
     const auto expected_layout = LT(LI(lines_.Exactly10Columns(), 30));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 40, 0.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 40,
+         .intercept = 0.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1653,7 +2357,11 @@ TEST_F(LayoutFunctionFactoryTest, Indent) {
         factory_.Indent(factory_.Line(lines_.Exactly10Columns()), 31);
     const auto expected_layout = LT(LI(lines_.Exactly10Columns(), 31));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 41, 100.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 41,
+         .intercept = 100.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1661,7 +2369,11 @@ TEST_F(LayoutFunctionFactoryTest, Indent) {
     const auto lf = factory_.Indent(factory_.Line(lines_.Long()), 5);
     const auto expected_layout = LT(LI(lines_.Long(), 5));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 55, 1500.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 55,
+         .intercept = 1500.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1683,10 +2395,26 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
            LI(joinable_lines_.Exactly10Columns(), 9),  //
            LI(joinable_lines_.Exactly10Columns(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 39, 0.0F, 0},
-        {1, expected_layout, 39, 0.0F, 100},
-        {11, expected_layout, 39, 1000.0F, 100},
-        {30, expected_layout, 39, 2900.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 11,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 1000.0F,
+         .gradient = 100},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 39,
+         .intercept = 2900.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1702,9 +2430,21 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
            LI(joinable_lines_.Exactly10Columns(), 10),  //
            LI(joinable_lines_.Exactly10Columns(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 40, 0.0F, 100},
-        {10, expected_layout, 40, 1000.0F, 100},
-        {30, expected_layout, 40, 3000.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 40,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 10,
+         .layout = expected_layout,
+         .span = 40,
+         .intercept = 1000.0F,
+         .gradient = 100},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 40,
+         .intercept = 3000.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1720,9 +2460,21 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
            LI(joinable_lines_.Exactly10Columns(), 11),  //
            LI(joinable_lines_.Exactly10Columns(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 41, 100.0F, 100},
-        {9, expected_layout, 41, 1000.0F, 100},
-        {30, expected_layout, 41, 3100.0F, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 41,
+         .intercept = 100.0F,
+         .gradient = 100},
+        {.column = 9,
+         .layout = expected_layout,
+         .span = 41,
+         .intercept = 1000.0F,
+         .gradient = 100},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 41,
+         .intercept = 3100.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1738,9 +2490,21 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
                                     LI(lines_.Exactly10Columns(), 29),  //
                                     LI(lines_.Exactly10Columns(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 10, 4.0F, 0},
-        {1, expected_layout, 10, 4.0F, 100},
-        {30, expected_layout, 10, 2904.0F, 300},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 4.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 4.0F,
+         .gradient = 100},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 2904.0F,
+         .gradient = 300},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1755,8 +2519,16 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
                                     LI(lines_.Exactly10Columns(), 30),  //
                                     LI(lines_.Exactly10Columns(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 10, 4.0F, 100},
-        {30, expected_layout, 10, 3004.0F, 300},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 4.0F,
+         .gradient = 100},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 3004.0F,
+         .gradient = 300},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1771,8 +2543,16 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
                                     LI(lines_.Exactly10Columns(), 31),  //
                                     LI(lines_.Exactly10Columns(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 10, 104.0F, 100},
-        {30, expected_layout, 10, 3104.0F, 300},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 104.0F,
+         .gradient = 100},
+        {.column = 30,
+         .layout = expected_layout,
+         .span = 10,
+         .intercept = 3104.0F,
+         .gradient = 300},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1790,12 +2570,36 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
                                       LI(lines_.Short(), 0),             //
                                       LI(joinable_lines_.Short(), 1));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_h, 39, 0.0F, 0},
-        {1, expected_layout_h, 39, 0.0F, 100},
-        {2, expected_layout_v, 20, 2.0F, 0},
-        {20, expected_layout_v, 20, 2.0F, 100},
-        {21, expected_layout_v, 20, 102.0F, 200},
-        {40, expected_layout_h, 39, 3900.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 2,
+         .layout = expected_layout_v,
+         .span = 20,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 20,
+         .layout = expected_layout_v,
+         .span = 20,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 20,
+         .intercept = 102.0F,
+         .gradient = 200},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 3900.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1812,11 +2616,31 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
                                       LI(lines_.Short(), 0),             //
                                       LI(joinable_lines_.Short(), 2));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_h, 40, 0.0F, 100},
-        {1, expected_layout_v, 21, 2.0F, 0},
-        {19, expected_layout_v, 21, 2.0F, 100},
-        {21, expected_layout_v, 21, 202.0F, 200},
-        {40, expected_layout_h, 40, 4000.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_h,
+         .span = 40,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 1,
+         .layout = expected_layout_v,
+         .span = 21,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 19,
+         .layout = expected_layout_v,
+         .span = 21,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 21,
+         .intercept = 202.0F,
+         .gradient = 200},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 40,
+         .intercept = 4000.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1833,10 +2657,26 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
                                       LI(lines_.Short(), 0),             //
                                       LI(joinable_lines_.Short(), 3));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_v, 22, 2.0F, 0},
-        {18, expected_layout_v, 22, 2.0F, 100},
-        {21, expected_layout_v, 22, 302.0F, 200},
-        {40, expected_layout_h, 41, 4100.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_v,
+         .span = 22,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 18,
+         .layout = expected_layout_v,
+         .span = 22,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 22,
+         .intercept = 302.0F,
+         .gradient = 200},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 41,
+         .intercept = 4100.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1854,12 +2694,36 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
                                       LI(lines_.Short(), 1),             //
                                       LI(joinable_lines_.Short(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_h, 39, 0.0F, 0},
-        {1, expected_layout_h, 39, 0.0F, 100},
-        {2, expected_layout_v, 19, 2.0F, 0},
-        {20, expected_layout_v, 19, 2.0F, 100},
-        {21, expected_layout_v, 19, 102.0F, 200},
-        {40, expected_layout_h, 39, 3900.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 2,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 20,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 102.0F,
+         .gradient = 200},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 3900.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1876,11 +2740,31 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
                                       LI(lines_.Short(), 2),             //
                                       LI(joinable_lines_.Short(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_h, 40, 0.0F, 100},
-        {1, expected_layout_v, 19, 2.0F, 0},
-        {19, expected_layout_v, 19, 2.0F, 100},
-        {21, expected_layout_v, 19, 202.0F, 200},
-        {40, expected_layout_h, 40, 4000.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_h,
+         .span = 40,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 1,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 19,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 202.0F,
+         .gradient = 200},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 40,
+         .intercept = 4000.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1897,10 +2781,26 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
                                       LI(lines_.Short(), 3),             //
                                       LI(joinable_lines_.Short(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_v, 19, 2.0F, 0},
-        {18, expected_layout_v, 19, 2.0F, 100},
-        {21, expected_layout_v, 19, 302.0F, 200},
-        {40, expected_layout_h, 41, 4100.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 18,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 19,
+         .intercept = 302.0F,
+         .gradient = 200},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 41,
+         .intercept = 4100.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -1931,12 +2831,36 @@ TEST_F(LayoutFunctionFactoryTest, DifferentLayoutsInDifferentSegments) {
            LI(joinable_lines_.OneUnder30Limit(), 0),  //
            LI(joinable_lines_.Exactly10Columns(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_h, 39, 0.0F, 0},
-        {1, expected_layout_h, 39, 0.0F, 100},
-        {2, expected_layout_v, 10, 2.0F, 0},
-        {11, expected_layout_v, 10, 2.0F, 100},
-        {30, expected_layout_v, 10, 1902.0F, 200},
-        {40, expected_layout_h, 39, 3900.0F, 100},
+        {.column = 0,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 0.0F,
+         .gradient = 100},
+        {.column = 2,
+         .layout = expected_layout_v,
+         .span = 10,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 11,
+         .layout = expected_layout_v,
+         .span = 10,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 30,
+         .layout = expected_layout_v,
+         .span = 10,
+         .intercept = 1902.0F,
+         .gradient = 200},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 3900.0F,
+         .gradient = 100},
     };
     ExpectLayoutFunctionsEqual(juxtaposition_or_wrap, expected_lf, __LINE__);
   }
@@ -1957,13 +2881,41 @@ TEST_F(LayoutFunctionFactoryTest, DifferentLayoutsInDifferentSegments) {
            LI(joinable_lines_.OneUnder30Limit(), 0),  //
            LI(joinable_lines_.Exactly10Columns(), 0));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout_h, 39, 2.0F, 0},
-        {1, expected_layout_h, 39, 2.0F, 100},
-        {2, expected_layout_v, 10, 4.0F, 0},
-        {11, expected_layout_v, 10, 4.0F, 100},
-        {21, expected_layout_v, 10, 1004.0F, 200},
-        {30, expected_layout_v, 10, 2804.0F, 300},
-        {40, expected_layout_h, 39, 5802.0F, 200},
+        {.column = 0,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 1,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 2,
+         .layout = expected_layout_v,
+         .span = 10,
+         .intercept = 4.0F,
+         .gradient = 0},
+        {.column = 11,
+         .layout = expected_layout_v,
+         .span = 10,
+         .intercept = 4.0F,
+         .gradient = 100},
+        {.column = 21,
+         .layout = expected_layout_v,
+         .span = 10,
+         .intercept = 1004.0F,
+         .gradient = 200},
+        {.column = 30,
+         .layout = expected_layout_v,
+         .span = 10,
+         .intercept = 2804.0F,
+         .gradient = 300},
+        {.column = 40,
+         .layout = expected_layout_h,
+         .span = 39,
+         .intercept = 5802.0F,
+         .gradient = 200},
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
@@ -2459,9 +3411,21 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                                     LT(LI(tree.Children()[1].Value())),  //
                                     LT(LI(tree.Children()[2].Value())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 5, 4.0F, 0},
-        {35, expected_layout, 5, 4.0F, 100},
-        {37, expected_layout, 5, 204.0F, 300},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 5,
+         .intercept = 4.0F,
+         .gradient = 0},
+        {.column = 35,
+         .layout = expected_layout,
+         .span = 5,
+         .intercept = 4.0F,
+         .gradient = 100},
+        {.column = 37,
+         .layout = expected_layout,
+         .span = 5,
+         .intercept = 204.0F,
+         .gradient = 300},
     };
 
     const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
@@ -2481,10 +3445,26 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                                     LT(LI(tree.Children()[1].Value(), 2)),  //
                                     LT(LI(tree.Children()[2].Value(), 3)));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 8, 4.0F, 0},
-        {32, expected_layout, 8, 4.0F, 100},
-        {35, expected_layout, 8, 304.0F, 200},
-        {36, expected_layout, 8, 504.0F, 300},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 8,
+         .intercept = 4.0F,
+         .gradient = 0},
+        {.column = 32,
+         .layout = expected_layout,
+         .span = 8,
+         .intercept = 4.0F,
+         .gradient = 100},
+        {.column = 35,
+         .layout = expected_layout,
+         .span = 8,
+         .intercept = 304.0F,
+         .gradient = 200},
+        {.column = 36,
+         .layout = expected_layout,
+         .span = 8,
+         .intercept = 504.0F,
+         .gradient = 300},
     };
 
     const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
@@ -2504,9 +3484,21 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                                     LT(LI(tree.Children()[1].Value())),  //
                                     LT(LI(tree.Children()[2].Value())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 5, 4.0F, 0},
-        {35, expected_layout, 5, 4.0F, 100},
-        {37, expected_layout, 5, 204.0F, 300},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 5,
+         .intercept = 4.0F,
+         .gradient = 0},
+        {.column = 35,
+         .layout = expected_layout,
+         .span = 5,
+         .intercept = 4.0F,
+         .gradient = 100},
+        {.column = 37,
+         .layout = expected_layout,
+         .span = 5,
+         .intercept = 204.0F,
+         .gradient = 300},
     };
 
     const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
@@ -2526,10 +3518,26 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                                     LT(LI(tree.Children()[1].Value(), 2)),  //
                                     LT(LI(tree.Children()[2].Value(), 3)));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 8, 4.0F, 0},
-        {32, expected_layout, 8, 4.0F, 100},
-        {35, expected_layout, 8, 304.0F, 200},
-        {36, expected_layout, 8, 504.0F, 300},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 8,
+         .intercept = 4.0F,
+         .gradient = 0},
+        {.column = 32,
+         .layout = expected_layout,
+         .span = 8,
+         .intercept = 4.0F,
+         .gradient = 100},
+        {.column = 35,
+         .layout = expected_layout,
+         .span = 8,
+         .intercept = 304.0F,
+         .gradient = 200},
+        {.column = 36,
+         .layout = expected_layout,
+         .span = 8,
+         .intercept = 504.0F,
+         .gradient = 300},
     };
 
     const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
@@ -2547,9 +3555,21 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                                     LT(LI(tree.Children()[0].Value())),  //
                                     LT(LI(tree.Children()[1].Value())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 31, 2.0F, 0},
-        {9, expected_layout, 31, 2.0F, 100},
-        {22, expected_layout, 31, 1302.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 31,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 9,
+         .layout = expected_layout,
+         .span = 31,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 22,
+         .layout = expected_layout,
+         .span = 31,
+         .intercept = 1302.0F,
+         .gradient = 200},
     };
 
     const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
@@ -2567,9 +3587,21 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                                     LT(LI(tree.Children()[0].Value())),  //
                                     LT(LI(tree.Children()[1].Value())));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 31, 2.0F, 0},
-        {9, expected_layout, 31, 2.0F, 100},
-        {22, expected_layout, 31, 1302.0F, 200},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 31,
+         .intercept = 2.0F,
+         .gradient = 0},
+        {.column = 9,
+         .layout = expected_layout,
+         .span = 31,
+         .intercept = 2.0F,
+         .gradient = 100},
+        {.column = 22,
+         .layout = expected_layout,
+         .span = 31,
+         .intercept = 1302.0F,
+         .gradient = 200},
     };
 
     const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
@@ -2591,10 +3623,26 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
            LT(LI(tree.Children()[2].Value(), false, 0)));
 
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 31, 0.0, 0},
-        {9, expected_layout, 31, 0.0, 100},
-        {26, expected_layout, 31, 1000.0, 100},
-        {34, expected_layout, 31, 1300.0, 100},
+        {.column = 0,
+         .layout = expected_layout,
+         .span = 31,
+         .intercept = 0.0,
+         .gradient = 0},
+        {.column = 9,
+         .layout = expected_layout,
+         .span = 31,
+         .intercept = 0.0,
+         .gradient = 100},
+        {.column = 26,
+         .layout = expected_layout,
+         .span = 31,
+         .intercept = 1000.0,
+         .gradient = 100},
+        {.column = 34,
+         .layout = expected_layout,
+         .span = 31,
+         .intercept = 1300.0,
+         .gradient = 100},
     };
 
     const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);

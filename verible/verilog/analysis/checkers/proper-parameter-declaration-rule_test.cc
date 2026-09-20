@@ -227,8 +227,8 @@ TEST(ProperParameterDeclarationRuleTest, AllowPackageParameters) {
 
 TEST(ProperParameterDeclarationRuleTest, AutoFixAllowLocalParamInPackage) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"package foo; parameter int Bar = 1; endpackage",
-       "package foo; localparam int Bar = 1; endpackage"},
+      {.code = "package foo; parameter int Bar = 1; endpackage",
+       .expected_output = "package foo; localparam int Bar = 1; endpackage"},
       // TODO (sconwayaus): Commented out as the linter_test_util dosn't handle
       // multiple violations. linter_test_utils.h:137] Check failed:
       // violations.size() == 1 (2 vs. 1) TODO: apply multi-violation fixes
@@ -236,71 +236,91 @@ TEST(ProperParameterDeclarationRuleTest, AutoFixAllowLocalParamInPackage) {
       // "endpackage",
       //  "package foo; localparam int Bar = 1; localparam int Bar2 = 2; "
       //  "endpackage"},
-      {"module foo; parameter int Bar = 1; endmodule",
-       "module foo; localparam int Bar = 1; endmodule"},
-      {"class foo; parameter int Bar = 1; endclass",
-       "class foo; localparam int Bar = 1; endclass"},
-      {"package foo; class bar; endclass parameter int HelloWorld = 1; "
-       "endpackage",
-       "package foo; class bar; endclass localparam int HelloWorld = 1; "
-       "endpackage"},
-      {"package foo; class bar; parameter int HelloWorld = 1; endclass "
-       "endpackage",
-       "package foo; class bar; localparam int HelloWorld = 1; endclass "
-       "endpackage"},
-      {"module foo #(parameter int Bar = 1); parameter int HelloWorld = 1; "
-       "endmodule",
-       "module foo #(parameter int Bar = 1); localparam int HelloWorld = 1; "
-       "endmodule"},
-      {"module foo #(parameter type Bar); parameter type Bar2; endmodule",
-       "module foo #(parameter type Bar); localparam type Bar2; endmodule"},
-      {"module foo #(parameter type Bar);module innerFoo #(parameter type "
-       "innerBar, localparam int j = 2)();parameter int i = 1; localparam int "
-       "j = 2; endmodule endmodule",
-       "module foo #(parameter type Bar);module innerFoo #(parameter type "
-       "innerBar, localparam int j = 2)();localparam int i = 1; localparam int "
-       "j = 2; endmodule endmodule"},
+      {.code = "module foo; parameter int Bar = 1; endmodule",
+       .expected_output = "module foo; localparam int Bar = 1; endmodule"},
+      {.code = "class foo; parameter int Bar = 1; endclass",
+       .expected_output = "class foo; localparam int Bar = 1; endclass"},
+      {.code = "package foo; class bar; endclass parameter int HelloWorld = 1; "
+               "endpackage",
+       .expected_output =
+           "package foo; class bar; endclass localparam int HelloWorld = 1; "
+           "endpackage"},
+      {.code = "package foo; class bar; parameter int HelloWorld = 1; endclass "
+               "endpackage",
+       .expected_output =
+           "package foo; class bar; localparam int HelloWorld = 1; endclass "
+           "endpackage"},
+      {.code =
+           "module foo #(parameter int Bar = 1); parameter int HelloWorld = 1; "
+           "endmodule",
+       .expected_output = "module foo #(parameter int Bar = 1); localparam int "
+                          "HelloWorld = 1; "
+                          "endmodule"},
+      {.code =
+           "module foo #(parameter type Bar); parameter type Bar2; endmodule",
+       .expected_output =
+           "module foo #(parameter type Bar); localparam type Bar2; endmodule"},
+      {.code =
+           "module foo #(parameter type Bar);module innerFoo #(parameter type "
+           "innerBar, localparam int j = 2)();parameter int i = 1; localparam "
+           "int "
+           "j = 2; endmodule endmodule",
+       .expected_output =
+           "module foo #(parameter type Bar);module innerFoo #(parameter type "
+           "innerBar, localparam int j = 2)();localparam int i = 1; localparam "
+           "int "
+           "j = 2; endmodule endmodule"},
   };
   RunApplyFixCases<VerilogAnalyzer, ProperParameterDeclarationRule>(kTestCases);
 }
 
 TEST(ProperParameterDeclarationRuleTest, AutoFixAllowParametersInPackage) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"package foo; localparam int Bar = 1; endpackage",
-       "package foo; parameter int Bar = 1; endpackage"},
-      {"module foo; parameter int Bar = 1; endmodule",
-       "module foo; localparam int Bar = 1; endmodule"},
-      {"class foo; parameter int Bar = 1; endclass",
-       "class foo; localparam int Bar = 1; endclass"},
-      {"package foo; class bar; parameter int HelloWorld = 1; endclass "
-       "endpackage",
-       "package foo; class bar; localparam int HelloWorld = 1; endclass "
-       "endpackage"},
-      {"module foo #(parameter int Bar = 1); parameter int HelloWorld = 1; "
-       "endmodule",
-       "module foo #(parameter int Bar = 1); localparam int HelloWorld = 1; "
-       "endmodule"},
-      {"module foo #(parameter type Bar); parameter type Bar2; endmodule",
-       "module foo #(parameter type Bar); localparam type Bar2; endmodule"},
-      {"module foo #(parameter type Bar);"
-       "module innerFoo #("
-       "parameter type innerBar, localparam int j = 2)();parameter int i = 1;"
-       "localparam int j = 2;"
-       "endmodule "
-       "endmodule",
-       "module foo #(parameter type Bar);"
-       "module innerFoo #("
-       "parameter type innerBar, localparam int j = 2)();localparam int i = 1;"
-       "localparam int j = 2;"
-       "endmodule "
-       "endmodule"},
-      {"localparam int Bar = 1;", "parameter int Bar = 1;"},
-      {"package foo; localparam int Bar = 1; endpackage",
-       "package foo; parameter int Bar = 1; endpackage"},
-      {"package foo; class bar; endclass localparam int HelloWorld = 1; "
-       "endpackage",
-       "package foo; class bar; endclass parameter int HelloWorld = 1; "
-       "endpackage"},
+      {.code = "package foo; localparam int Bar = 1; endpackage",
+       .expected_output = "package foo; parameter int Bar = 1; endpackage"},
+      {.code = "module foo; parameter int Bar = 1; endmodule",
+       .expected_output = "module foo; localparam int Bar = 1; endmodule"},
+      {.code = "class foo; parameter int Bar = 1; endclass",
+       .expected_output = "class foo; localparam int Bar = 1; endclass"},
+      {.code = "package foo; class bar; parameter int HelloWorld = 1; endclass "
+               "endpackage",
+       .expected_output =
+           "package foo; class bar; localparam int HelloWorld = 1; endclass "
+           "endpackage"},
+      {.code =
+           "module foo #(parameter int Bar = 1); parameter int HelloWorld = 1; "
+           "endmodule",
+       .expected_output = "module foo #(parameter int Bar = 1); localparam int "
+                          "HelloWorld = 1; "
+                          "endmodule"},
+      {.code =
+           "module foo #(parameter type Bar); parameter type Bar2; endmodule",
+       .expected_output =
+           "module foo #(parameter type Bar); localparam type Bar2; endmodule"},
+      {.code = "module foo #(parameter type Bar);"
+               "module innerFoo #("
+               "parameter type innerBar, localparam int j = 2)();parameter int "
+               "i = 1;"
+               "localparam int j = 2;"
+               "endmodule "
+               "endmodule",
+       .expected_output = "module foo #(parameter type Bar);"
+                          "module innerFoo #("
+                          "parameter type innerBar, localparam int j = "
+                          "2)();localparam int i = 1;"
+                          "localparam int j = 2;"
+                          "endmodule "
+                          "endmodule"},
+      {.code = "localparam int Bar = 1;",
+       .expected_output = "parameter int Bar = 1;"},
+      {.code = "package foo; localparam int Bar = 1; endpackage",
+       .expected_output = "package foo; parameter int Bar = 1; endpackage"},
+      {.code =
+           "package foo; class bar; endclass localparam int HelloWorld = 1; "
+           "endpackage",
+       .expected_output =
+           "package foo; class bar; endclass parameter int HelloWorld = 1; "
+           "endpackage"},
   };
   RunApplyFixCases<VerilogAnalyzer, ProperParameterDeclarationRule>(
       kTestCases,

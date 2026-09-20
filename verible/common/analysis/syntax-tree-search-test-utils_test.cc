@@ -53,7 +53,7 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, OneMatchingViolation) {
   constexpr int kTag = -1;
   auto leaf = Leaf(kTag, bad_text);
   const std::vector<TreeSearchMatch> actual_findings{
-      {leaf.get(), {/* context ignored */}},
+      {.match = leaf.get(), .context = {/* context ignored */}},
   };
   std::ostringstream diffstream;
   EXPECT_TRUE(test.ExactMatchFindings(actual_findings, text_view, &diffstream));
@@ -78,8 +78,8 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, IgnoreEmptyStringSpan) {
   auto leaf = Leaf(kTag, bad_text);
   auto ignored_leaf = Leaf(kTag, bad_text.substr(0, 0));
   const std::vector<TreeSearchMatch> actual_findings{
-      {ignored_leaf.get(), {/* context ignored */}},
-      {leaf.get(), {/* context ignored */}},
+      {.match = ignored_leaf.get(), .context = {/* context ignored */}},
+      {.match = leaf.get(), .context = {/* context ignored */}},
   };
   std::ostringstream diffstream;
   EXPECT_TRUE(test.ExactMatchFindings(actual_findings, text_view, &diffstream));
@@ -103,8 +103,8 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, IgnoreNullptrSymbol) {
   constexpr int kTag = -1;
   auto leaf = Leaf(kTag, bad_text);
   const std::vector<TreeSearchMatch> actual_findings{
-      {leaf.get(), {/* context ignored */}},
-      {nullptr, {/* context ignored */}},
+      {.match = leaf.get(), .context = {/* context ignored */}},
+      {.match = nullptr, .context = {/* context ignored */}},
   };
   std::ostringstream diffstream;
   EXPECT_TRUE(test.ExactMatchFindings(actual_findings, text_view, &diffstream));
@@ -130,8 +130,8 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest,
   const auto bad_text2 = Leaf(kToken, text_view.substr(9, 3));
   const std::vector<TreeSearchMatch> actual_findings{
       // must be sorted on location
-      {bad_text1.get(), {/* context ignored */}},
-      {bad_text2.get(), {/* context ignored */}},
+      {.match = bad_text1.get(), .context = {/* context ignored */}},
+      {.match = bad_text2.get(), .context = {/* context ignored */}},
   };
   std::ostringstream diffstream;
   EXPECT_TRUE(test.ExactMatchFindings(actual_findings, text_view, &diffstream));
@@ -155,7 +155,7 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, OneFoundNotExpected) {
   const std::string_view bad_text = text_view.substr(3, 3);
   const auto leaf = Leaf(kToken, bad_text);
   const std::vector<TreeSearchMatch> actual_findings{
-      {leaf.get(), {/* context ignored */}},
+      {.match = leaf.get(), .context = {/* context ignored */}},
   };
   std::ostringstream diffstream;
   EXPECT_FALSE(
@@ -196,7 +196,7 @@ TEST(SyntaxTreeSearchTestCaseExactMatchFindingsTest, OneMismatchEach) {
   const std::string_view bad_text = text_view.substr(4, 3);  // "efg"
   const auto leaf = Leaf(kToken, bad_text);
   const std::vector<TreeSearchMatch> actual_findings{
-      {leaf.get(), {/* context ignored */}},
+      {.match = leaf.get(), .context = {/* context ignored */}},
   };
   std::ostringstream diffstream;
   EXPECT_FALSE(

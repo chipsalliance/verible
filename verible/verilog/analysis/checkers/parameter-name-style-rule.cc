@@ -74,13 +74,18 @@ const LintRuleDescriptor &ParameterNameStyleRule::GetDescriptor() {
           "enforcement. Refer to "
           "https://github.com/chipsalliance/verible/tree/master/verilog/tools/"
           "lint#readme for more detail on verible regex patterns.",
-      .param = {{"localparam_style", "CamelCase", "Style of localparam names"},
-                {"parameter_style", "CamelCase|ALL_CAPS",
-                 "Style of parameter names."},
-                {"localparam_style_regex", std::string(kLocalparamDefaultRegex),
-                 "A regex used to check localparam name style."},
-                {"parameter_style_regex", std::string(kParameterDefaultRegex),
-                 "A regex used to check parameter name style."}},
+      .param = {{.name = "localparam_style",
+                 .default_value = "CamelCase",
+                 .description = "Style of localparam names"},
+                {.name = "parameter_style",
+                 .default_value = "CamelCase|ALL_CAPS",
+                 .description = "Style of parameter names."},
+                {.name = "localparam_style_regex",
+                 .default_value = std::string(kLocalparamDefaultRegex),
+                 .description = "A regex used to check localparam name style."},
+                {.name = "parameter_style_regex",
+                 .default_value = std::string(kParameterDefaultRegex),
+                 .description = "A regex used to check parameter name style."}},
   };
   return d;
 }
@@ -213,11 +218,14 @@ absl::Status ParameterNameStyleRule::Configure(std::string_view configuration) {
   using verible::config::SetRegex;
 
   absl::Status s = verible::ParseNameValues(
-      configuration,
-      {{"localparam_style", SetNamedBits(&localparam_style, choices)},
-       {"parameter_style", SetNamedBits(&parameter_style, choices)},
-       {"localparam_style_regex", SetRegex(&localparam_style_regex)},
-       {"parameter_style_regex", SetRegex(&parameter_style_regex)}});
+      configuration, {{.name = "localparam_style",
+                       .set_value = SetNamedBits(&localparam_style, choices)},
+                      {.name = "parameter_style",
+                       .set_value = SetNamedBits(&parameter_style, choices)},
+                      {.name = "localparam_style_regex",
+                       .set_value = SetRegex(&localparam_style_regex)},
+                      {.name = "parameter_style_regex",
+                       .set_value = SetRegex(&parameter_style_regex)}});
 
   if (!s.ok()) {
     return s;

@@ -89,7 +89,6 @@ Checks: >
   -modernize-type-traits,
   -modernize-use-auto,
   -modernize-use-constraints,
-  -modernize-use-designated-initializers,
   -modernize-use-emplace,
   -modernize-use-integer-sign-comparison,
   -modernize-use-nodiscard,

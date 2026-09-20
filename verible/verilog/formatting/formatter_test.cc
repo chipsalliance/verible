@@ -93,11 +93,11 @@ TEST(VerifyFormattingTest, LexicalDifference) {
 
 TEST(FormatterTest, FormatCustomStyleTest) {
   static constexpr FormatterTestCase kTestCases[] = {
-      {"", ""},
-      {"module m;wire w;endmodule\n",
-       "module m;\n"
-       "          wire w;\n"
-       "endmodule\n"},
+      {.input = "", .expected = ""},
+      {.input = "module m;wire w;endmodule\n",
+       .expected = "module m;\n"
+                   "          wire w;\n"
+                   "endmodule\n"},
   };
 
   FormatStyle style;
@@ -116,12 +116,13 @@ TEST(FormatterTest, FormatCustomStyleTest) {
 
 // Small smoke subset; thematic cases live in sibling formatter_*_test.cc files.
 static constexpr FormatterTestCase kSmokeFormatterTestCases[] = {
-    {"", ""},
-    {"\n", "\n"},
-    {"\n\n", "\n\n"},
-    {"\t//comment\n", "//comment\n"},
-    {"\t/*comment*/\n", "/*comment*/\n"},
-    {"\t/*multi-line\ncomment*/\n", "/*multi-line\ncomment*/\n"},
+    {.input = "", .expected = ""},
+    {.input = "\n", .expected = "\n"},
+    {.input = "\n\n", .expected = "\n\n"},
+    {.input = "\t//comment\n", .expected = "//comment\n"},
+    {.input = "\t/*comment*/\n", .expected = "/*comment*/\n"},
+    {.input = "\t/*multi-line\ncomment*/\n",
+     .expected = "/*multi-line\ncomment*/\n"},
 };
 
 TEST(FormatterEndToEndTest, SmokeFormatterTestCases) {

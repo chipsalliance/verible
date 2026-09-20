@@ -99,30 +99,46 @@ struct FailTest {
 };
 TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
   const FailTest test_cases[] = {
-      {"`define\n", 8},                      // unterminated macro definition
-      {"\n\n`define\n", 10},                 // unterminated macro definition
-      {"`define 789\n", 8},                  // expect identifier for macro name
-      {"`define 789 non-sense\n", 8},        // expect identifier for macro name
-      {"`define 789 \\\nnon-sense\n", 8},    // expect identifier for macro name
-      {"`define FOO(\n", 13},                // unterminated parameter list
-      {"`define FOO(234\n", 12},             // invalid parameter name
-      {"`define FOO(234)\n", 12},            // invalid parameter name
-      {"`define FOO(aaa\n", 16},             // unterminated parameter list
-      {"`define FOO(aaa;\n", 15},            // bad parameter separator
-      {"`define FOO(aaa bbb\n", 16},         // bad parameter separator
-      {"`define FOO(aaa bbb)\n", 16},        // bad parameter separator
-      {"`define FOO(aaa+bbb)\n", 15},        // bad parameter separator
-      {"`define FOO(aaa.zzz\n", 15},         // bad parameter separator
-      {"`define FOO(aaa.zzz)\n", 15},        // bad parameter separator
-      {"`define FOO(aaa,\n", 17},            // unterminated parameter list
-      {"`define FOO(aaa,)\n", 16},           // missing parameter name
-      {"`define FOO(,,)\n", 12},             // missing parameter name
-      {"`define FOO(aaa, 345)\n", 17},       // invalid parameter name
-      {"`define FOO(aaa=\n", 17},            // unterminated default parameter
-      {"`define FOO(aaa =\n", 18},           // unterminated default parameter
-      {"`define FOO(aaa = 9\n", 20},         // expecting ',' or ')'
-      {"`define FOO(aaa = 9, bbb =\n", 27},  // unterminated parameter list
-      {"`define FOO(aa = 9, bb = 2\n", 27},  // expecting ',' or ')'
+      {.input = "`define\n", .offset = 8},  // unterminated macro definition
+      {.input = "\n\n`define\n",
+       .offset = 10},  // unterminated macro definition
+      {.input = "`define 789\n",
+       .offset = 8},  // expect identifier for macro name
+      {.input = "`define 789 non-sense\n",
+       .offset = 8},  // expect identifier for macro name
+      {.input = "`define 789 \\\nnon-sense\n",
+       .offset = 8},  // expect identifier for macro name
+      {.input = "`define FOO(\n", .offset = 13},  // unterminated parameter list
+      {.input = "`define FOO(234\n", .offset = 12},   // invalid parameter name
+      {.input = "`define FOO(234)\n", .offset = 12},  // invalid parameter name
+      {.input = "`define FOO(aaa\n",
+       .offset = 16},  // unterminated parameter list
+      {.input = "`define FOO(aaa;\n", .offset = 15},  // bad parameter separator
+      {.input = "`define FOO(aaa bbb\n",
+       .offset = 16},  // bad parameter separator
+      {.input = "`define FOO(aaa bbb)\n",
+       .offset = 16},  // bad parameter separator
+      {.input = "`define FOO(aaa+bbb)\n",
+       .offset = 15},  // bad parameter separator
+      {.input = "`define FOO(aaa.zzz\n",
+       .offset = 15},  // bad parameter separator
+      {.input = "`define FOO(aaa.zzz)\n",
+       .offset = 15},  // bad parameter separator
+      {.input = "`define FOO(aaa,\n",
+       .offset = 17},  // unterminated parameter list
+      {.input = "`define FOO(aaa,)\n", .offset = 16},  // missing parameter name
+      {.input = "`define FOO(,,)\n", .offset = 12},    // missing parameter name
+      {.input = "`define FOO(aaa, 345)\n",
+       .offset = 17},  // invalid parameter name
+      {.input = "`define FOO(aaa=\n",
+       .offset = 17},  // unterminated default parameter
+      {.input = "`define FOO(aaa =\n",
+       .offset = 18},  // unterminated default parameter
+      {.input = "`define FOO(aaa = 9\n", .offset = 20},  // expecting ',' or ')'
+      {.input = "`define FOO(aaa = 9, bbb =\n",
+       .offset = 27},  // unterminated parameter list
+      {.input = "`define FOO(aa = 9, bb = 2\n",
+       .offset = 27},  // expecting ',' or ')'
   };
   for (const auto &test_case : test_cases) {
     PreprocessorTester tester(test_case.input);
@@ -340,19 +356,41 @@ struct BranchFailTest {
 };
 TEST(VerilogPreprocessTest, IncompleteOrUnbalancedIfdef) {
   const BranchFailTest test_cases[] = {
-      {"`endif", 0, "Unmatched `endif"},
-      {"`else", 0, "Unmatched `else"},
-      {"`elsif FOO", 0, "Unmatched `elsif"},
-      {"`ifdef", 6, "unexpected EOF where expecting macro name"},
-      {"`ifdef FOO\n`endif\n`endif", 18, "Unmatched `endif"},
-      {"`ifdef FOO\n`endif\n`else", 18, "Unmatched `else"},
-      {"`ifdef FOO\n`endif\n`elsif BAR", 18, "Unmatched `elsif"},
-      {"`ifdef FOO\n`else\n`else", 17, "Duplicate `else"},
-      {"`ifdef FOO\n`else\n`elsif BAR", 17, "`elsif after `else"},
-      {"`ifdef FOO\n`ifdef BAR`else\n`else", 27, "Duplicate `else"},
-      {"`ifdef FOO\n`else\n`ifdef BAR\n`endif", 11, "Unterminated preprocess"},
-      {"`ifdef FOO\n`elsif BAR\n", 11, "Unterminated preprocessing"},
-      {"`ifdef FOO\n`elsif BAR\n`else\n", 22, "Unterminated preprocessing"},
+      {.input = "`endif", .offset = 0, .expected_error = "Unmatched `endif"},
+      {.input = "`else", .offset = 0, .expected_error = "Unmatched `else"},
+      {.input = "`elsif FOO",
+       .offset = 0,
+       .expected_error = "Unmatched `elsif"},
+      {.input = "`ifdef",
+       .offset = 6,
+       .expected_error = "unexpected EOF where expecting macro name"},
+      {.input = "`ifdef FOO\n`endif\n`endif",
+       .offset = 18,
+       .expected_error = "Unmatched `endif"},
+      {.input = "`ifdef FOO\n`endif\n`else",
+       .offset = 18,
+       .expected_error = "Unmatched `else"},
+      {.input = "`ifdef FOO\n`endif\n`elsif BAR",
+       .offset = 18,
+       .expected_error = "Unmatched `elsif"},
+      {.input = "`ifdef FOO\n`else\n`else",
+       .offset = 17,
+       .expected_error = "Duplicate `else"},
+      {.input = "`ifdef FOO\n`else\n`elsif BAR",
+       .offset = 17,
+       .expected_error = "`elsif after `else"},
+      {.input = "`ifdef FOO\n`ifdef BAR`else\n`else",
+       .offset = 27,
+       .expected_error = "Duplicate `else"},
+      {.input = "`ifdef FOO\n`else\n`ifdef BAR\n`endif",
+       .offset = 11,
+       .expected_error = "Unterminated preprocess"},
+      {.input = "`ifdef FOO\n`elsif BAR\n",
+       .offset = 11,
+       .expected_error = "Unterminated preprocessing"},
+      {.input = "`ifdef FOO\n`elsif BAR\n`else\n",
+       .offset = 22,
+       .expected_error = "Unterminated preprocessing"},
   };
   for (const BranchFailTest &test : test_cases) {
     PreprocessorTester tester(
@@ -375,8 +413,8 @@ struct RawAndFiltered {
 };
 TEST(VerilogPreprocess, FilterPPBranches) {
   const RawAndFiltered test_cases[] = {
-      {"[** Defined macro taking ifdef branch **]",
-       R"(
+      {.description = "[** Defined macro taking ifdef branch **]",
+       .pp_input = R"(
 `define FOO 1
 `ifdef FOO
   module bar();
@@ -385,13 +423,13 @@ TEST(VerilogPreprocess, FilterPPBranches) {
 `endif
   endmodule)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define FOO 1
  module bar();
  endmodule)"},
 
-      {"[** Undefined macro taking else branch **]",
-       R"(
+      {.description = "[** Undefined macro taking else branch **]",
+       .pp_input = R"(
 `ifdef FOO
   module bar();
 `else
@@ -399,12 +437,13 @@ TEST(VerilogPreprocess, FilterPPBranches) {
 `endif
   endmodule)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 module quux();
 endmodule)"},
 
-      {"[** Undefined macro taking else branch. defined value `undef-ed **]",
-       R"(
+      {.description = "[** Undefined macro taking else branch. defined value "
+                      "`undef-ed **]",
+       .pp_input = R"(
 `define FOO
 `undef FOO
 `ifdef FOO
@@ -414,14 +453,15 @@ endmodule)"},
 `endif
   endmodule)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define FOO
 `undef FOO
 module quux();
 endmodule)"},
 
-      {"[** Negative logic: Defined macro taking ifndef-else branch **]",
-       R"(
+      {.description =
+           "[** Negative logic: Defined macro taking ifndef-else branch **]",
+       .pp_input = R"(
 `define FOO 1
 `ifndef FOO
   module bar();
@@ -430,13 +470,14 @@ endmodule)"},
 `endif
   endmodule)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define FOO 1
 module quux();
 endmodule)"},
 
-      {"[** Negative logic: Undefined macro taking ifndef branch **]",
-       R"(
+      {.description =
+           "[** Negative logic: Undefined macro taking ifndef branch **]",
+       .pp_input = R"(
 `ifndef FOO
   module bar();
 `else
@@ -444,12 +485,12 @@ endmodule)"},
 `endif
   endmodule)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 module bar();
 endmodule)"},
 
-      {"[** Elsif: choice of first branch **]",
-       R"(
+      {.description = "[** Elsif: choice of first branch **]",
+       .pp_input = R"(
 `define FOO 1
 `ifdef FOO
   module foo(); endmodule
@@ -457,12 +498,12 @@ endmodule)"},
   module bar(); endmodule
 `endif)",
        // ... equivalent to
-       R"(
+       .equivalent = R"(
 `define FOO 1
 module foo(); endmodule)"},
 
-      {"[** Elsif: choice of elsif branch **]",
-       R"(
+      {.description = "[** Elsif: choice of elsif branch **]",
+       .pp_input = R"(
 `define BAR 1
 `ifdef FOO
   module foo(); endmodule
@@ -470,12 +511,12 @@ module foo(); endmodule)"},
   module bar(); endmodule
 `endif)",
        // ... equivalent to
-       R"(
+       .equivalent = R"(
 `define BAR 1
 module bar(); endmodule)"},
 
-      {"[** Elsif: no branch chosen **]",
-       R"(
+      {.description = "[** Elsif: no branch chosen **]",
+       .pp_input = R"(
 `define BAZ 1
 `ifdef FOO
   module foo(); endmodule
@@ -483,12 +524,13 @@ module bar(); endmodule)"},
   module bar(); endmodule
 `endif)",
        // ... equivalent to
-       R"(
+       .equivalent = R"(
 `define BAZ 1
 )"},
 
-      {"[** Elsif: only first (`ifdef) matching branch chosen **]",
-       R"(
+      {.description =
+           "[** Elsif: only first (`ifdef) matching branch chosen **]",
+       .pp_input = R"(
 `define FOO 1
 `define BAR 1
 `define BAZ 1
@@ -500,15 +542,16 @@ module bar(); endmodule)"},
   module baz(); endmodule
 `endif)",
        // ... equivalent to
-       R"(
+       .equivalent = R"(
 `define FOO 1
 `define BAR 1
 `define BAZ 1
 module foo(); endmodule
 )"},
 
-      {"[** Elsif: only first (`elsif) matching branch chosen **]",
-       R"(
+      {.description =
+           "[** Elsif: only first (`elsif) matching branch chosen **]",
+       .pp_input = R"(
 `define BAR 1
 `define BAZ 1
 `define QUUX 1
@@ -523,15 +566,15 @@ module baz(); endmodule
 module quux(); endmodule
 `endif)",
        // ... equivalent to
-       R"(
+       .equivalent = R"(
 `define BAR 1
 `define BAZ 1
 `define QUUX 1
 module bar(); endmodule
 )"},
 
-      {"[** Nested conditions **]",
-       R"(
+      {.description = "[** Nested conditions **]",
+       .pp_input = R"(
 `define BAR 1
 `ifdef FOO
   module foo(); endmodule
@@ -551,14 +594,15 @@ module bar(); endmodule
   module post_nonfoo(); endmodule
 `endif)",
        // ... equivalent to
-       R"(
+       .equivalent = R"(
 `define BAR 1
 module nonfoo(); endmodule
 module nonfoo_bar(); endmodule
 module post_nonfoo(); endmodule)"},
 
-      {"[** Meta-def: Macro defined in branch controls another branch **]",
-       R"(
+      {.description =
+           "[** Meta-def: Macro defined in branch controls another branch **]",
+       .pp_input = R"(
 `ifdef FOO
   `define BAR 1
   `undef FOOBAR
@@ -574,7 +618,7 @@ module bar(); endmodule
 module baz(); endmodule
 `endif)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define BAZ 1
 `undef FOOQUX
 module baz(); endmodule
@@ -611,8 +655,8 @@ module baz(); endmodule
 
 TEST(VerilogPreprocessTest, MacroExpansion) {
   const RawAndFiltered test_cases[] = {
-      {"[** Multi-tokens macros being correctly parsed **]",
-       R"(
+      {.description = "[** Multi-tokens macros being correctly parsed **]",
+       .pp_input = R"(
 `define ASSIGN1 =1
 `define ASSIGN0 =0
 module foo;
@@ -620,7 +664,7 @@ wire x`ASSIGN1;
 wire y `ASSIGN0;
 endmodule)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define ASSIGN1 =1
 `define ASSIGN0 =0
 module foo;
@@ -628,8 +672,8 @@ wire x =1;
 wire y =0;
 endmodule)"},
 
-      {"[** Multi-tokens macros not empty after undefing **]",
-       R"(
+      {.description = "[** Multi-tokens macros not empty after undefing **]",
+       .pp_input = R"(
 `define XWIRE wire x
 `define YWIRE wire y
 module foo;
@@ -639,7 +683,7 @@ endmodule
 `undef XWIRE
 `undef YWIRE)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define XWIRE wire x
 `define YWIRE wire y
 module foo;
@@ -649,9 +693,10 @@ endmodule
 `undef XWIRE
 `undef YWIRE)"},
 
-      {"[** Macros that contain other macro calls, redefining the inner macro "
-       "**]",
-       R"(
+      {.description = "[** Macros that contain other macro calls, redefining "
+                      "the inner macro "
+                      "**]",
+       .pp_input = R"(
 `define XWIRE wire x
 `define YWIRE wire y
 `define ASSIGN1XWIRE `XWIRE = 1;
@@ -663,7 +708,7 @@ module foo;
 `ASSIGN1XWIRE
 endmodule)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define XWIRE wire x
 `define YWIRE wire y
 `define ASSIGN1XWIRE `XWIRE = 1;
@@ -675,8 +720,8 @@ wire y = 0;
 wire new_x_wire = 1;
 endmodule)"},
 
-      {"[** Macros contatining back to back macro calls **]",
-       R"(
+      {.description = "[** Macros contatining back to back macro calls **]",
+       .pp_input = R"(
 `define XWIRE wire x
 `define YWIRE wire y
 `define ASSIGN1 = 1
@@ -690,7 +735,7 @@ module foo;
 `ASSIGN1XWIRE
 endmodule)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define XWIRE wire x
 `define YWIRE wire y
 `define ASSIGN1 = 1
@@ -704,9 +749,10 @@ wire y = 0;
 wire new_x_wire = 1;
 endmodule)"},
 
-      {"[** Macros with formal parameters, expanded with both default value, "
-       "and actual passed value **]",
-       R"(
+      {.description = "[** Macros with formal parameters, expanded with both "
+                      "default value, "
+                      "and actual passed value **]",
+       .pp_input = R"(
 `define LSb(n=2) [n-1:0]
 module testcase_ppMacro;
 localparam int A = 123;
@@ -715,7 +761,7 @@ wire b = A`LSb(5);
 wire c = A[5-1:0];
 endmodule)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define LSb(n=2) [n-1:0]
 module testcase_ppMacro;
 localparam int A = 123;
@@ -724,8 +770,8 @@ wire b = A[5-1:0];
 wire c = A[5-1:0];
 endmodule)"},
 
-      {"[** Actual parameter is another macro call **]",
-       R"(
+      {.description = "[** Actual parameter is another macro call **]",
+       .pp_input = R"(
 `define FOO a
 `define A(n) n
 `define B(n=x) n ,y
@@ -737,7 +783,7 @@ endmodule
 `undef A
 `undef FOO)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define FOO a
 `define A(n) n
 `define B(n=x) n ,y
@@ -749,8 +795,8 @@ endmodule
 `undef A
 `undef FOO)"},
 
-      {"[** Multiple parameter macros (From 2017 SV-LRM) **]",
-       R"(
+      {.description = "[** Multiple parameter macros (From 2017 SV-LRM) **]",
+       .pp_input = R"(
 `define MACRO1(a=5,b="B",c) $display(a,,b,,c);
 `define MACRO2(a=5, b, c="C") $display(a,,b,,c);
 `define MACRO3(a=5, b=0, c="C") $display(a,,b,,c);
@@ -766,7 +812,7 @@ module m;
 endmodule
 `undef MACRO)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define MACRO1(a=5,b="B",c) $display(a,,b,,c);
 `define MACRO2(a=5, b, c="C") $display(a,,b,,c);
 `define MACRO3(a=5, b=0, c="C") $display(a,,b,,c);
@@ -782,8 +828,8 @@ $display(5,,0,,"C");
 endmodule
 `undef MACRO)"},
 
-      {"[** Nested callable macros **]",
-       R"(
+      {.description = "[** Nested callable macros **]",
+       .pp_input = R"(
 `define MACRO1(n) real x=n;
 `define MACRO2(m) real y=m; `MACRO1(1)
 module foo;
@@ -793,7 +839,7 @@ endmodule
 `undef MACRO1
 `undef MACRO2)",
        // ...equivalent to
-       R"(
+       .equivalent = R"(
 `define MACRO1(n) real x=n;
 `define MACRO2(m) real y=m; `MACRO1(1)
 module foo;

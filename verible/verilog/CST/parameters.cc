@@ -217,9 +217,10 @@ const verible::Symbol *TryDescentPath(
 }  // namespace
 
 const verible::Symbol *GetParamAssignExpression(const verible::Symbol &symbol) {
-  return TryDescentPath(symbol, {{NodeEnum::kParamDeclaration, 2},
-                                 {NodeEnum::kTrailingAssign, 1},
-                                 {NodeEnum::kExpression, 0}});
+  return TryDescentPath(
+      symbol, {{.expected_type = NodeEnum::kParamDeclaration, .next_index = 2},
+               {.expected_type = NodeEnum::kTrailingAssign, .next_index = 1},
+               {.expected_type = NodeEnum::kExpression, .next_index = 0}});
 }
 
 bool IsTypeInfoEmpty(const verible::Symbol &symbol) {

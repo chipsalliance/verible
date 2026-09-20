@@ -138,14 +138,14 @@ LineColumnRange TextStructureView::GetRangeForToken(
     // In particular some unit tests pass in an artificial EOF token, not a
     // EOF token generated from this view. So handle this directly.
     const LineColumn eofPos = GetLineColAtOffset(Contents().length());
-    return {eofPos, eofPos};
+    return {.start = eofPos, .end = eofPos};
   }
   // TODO(hzeller): This should simply be GetRangeForText(token.text()),
   // but the more thorough error checking in GetRangeForText()
   // exposes a token overrun in verilog_analyzer_test.cc
   // Defer to fix in separate change.
-  return {GetLineColAtOffset(token.left(Contents())),
-          GetLineColAtOffset(token.right(Contents()))};
+  return {.start = GetLineColAtOffset(token.left(Contents())),
+          .end = GetLineColAtOffset(token.right(Contents()))};
 }
 
 LineColumnRange TextStructureView::GetRangeForText(
@@ -154,7 +154,7 @@ LineColumnRange TextStructureView::GetRangeForText(
   const auto to = std::distance(Contents().begin(), text.end());
   CHECK_GE(from, 0) << '"' << text << '"';
   CHECK_LE(to, static_cast<int64_t>(Contents().length())) << '"' << text << '"';
-  return {GetLineColAtOffset(from), GetLineColAtOffset(to)};
+  return {.start = GetLineColAtOffset(from), .end = GetLineColAtOffset(to)};
 }
 
 bool TextStructureView::ContainsText(std::string_view text) const {

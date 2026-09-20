@@ -140,7 +140,8 @@ class ViolationFixer : public verible::ViolationHandler {
         patch_stream_(patch_stream),
         answer_chooser_(answer_chooser),
         is_interactive_(is_interactive),
-        ultimate_answer_({AnswerChoice::kUnknown, 0}) {}
+        ultimate_answer_({.choice = AnswerChoice::kUnknown, .alternative = 0}) {
+  }
 
   void HandleViolation(const verible::LintViolation &violation,
                        std::string_view base, std::string_view path,

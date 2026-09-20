@@ -197,7 +197,7 @@ FitResult FitsOnLine(const UnwrappedLine &uwline,
   // Similar to SearchLineWraps, but only calculates by appending tokens until
   // a line break is required.
 
-  if (uwline.TokensRange().empty()) return {true, 0};
+  if (uwline.TokensRange().empty()) return {.fits = true, .final_column = 0};
 
   // Initialize on first token.
   // This accounts for space consumed by left-indentation.
@@ -207,18 +207,18 @@ FitResult FitsOnLine(const UnwrappedLine &uwline,
     const auto &token = state->GetNextToken();
     // If a line break is required before this token, return false.
     if (token.before.break_decision == SpacingOptions::kMustWrap) {
-      return {false, state->current_column};
+      return {.fits = false, .final_column = state->current_column};
     }
 
     // Append token onto same line while it fits.
     state = std::make_shared<StateNode>(state, style, SpacingDecision::kAppend);
     if (state->current_column > style.column_limit) {
-      return {false, state->current_column};
+      return {.fits = false, .final_column = state->current_column};
     }
   }  // while (!state->Done())
 
   // Reached the end of token-range, thus, it fits.
-  return {true, state->current_column};
+  return {.fits = true, .final_column = state->current_column};
 }
 
 }  // namespace verible

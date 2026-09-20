@@ -1210,7 +1210,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       SymbolMetaType metatype) {
     VLOG(2) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
     VLOG(3) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
-    VLOG(3) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
+    VLOG(3) << "  full text: "
+            << AutoTruncate{.text = StringSpanOfSymbol(element),
+                            .max_chars = 40};
     const auto [kv, passed] = current_scope_->TryEmplace(
         name, SymbolInfo{
                   metatype, source_, &element,
@@ -1236,7 +1238,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       SymbolMetaType metatype) {
     VLOG(2) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
     VLOG(3) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
-    VLOG(3) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
+    VLOG(3) << "  full text: "
+            << AutoTruncate{.text = StringSpanOfSymbol(element),
+                            .max_chars = 40};
     const auto p = current_scope_->TryEmplace(
         name, SymbolInfo{
                   metatype, source_, &element,
@@ -1786,7 +1790,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   verible::TokenWithContext VerboseToken(const TokenInfo &token) const {
-    return verible::TokenWithContext{token, token_context_};
+    return verible::TokenWithContext{.token = token, .context = token_context_};
   }
 
   TokenInfo::Context MakeTokenContext() const {

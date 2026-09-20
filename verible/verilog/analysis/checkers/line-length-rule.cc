@@ -67,8 +67,9 @@ const LintRuleDescriptor &LineLengthRule::GetDescriptor() {
       .desc =
           "Checks that all lines do not exceed the maximum allowed "
           "length. ",
-      .param = {{"length", absl::StrCat(kDefaultLineLength),
-                 "Desired line length"}},
+      .param = {{.name = "length",
+                 .default_value = absl::StrCat(kDefaultLineLength),
+                 .description = "Desired line length"}},
   };
   return d;
 }
@@ -186,8 +187,10 @@ void LineLengthRule::Lint(const TextStructureView &text_structure,
 absl::Status LineLengthRule::Configure(std::string_view configuration) {
   using verible::config::SetInt;
   return verible::ParseNameValues(
-      configuration, {{"length", SetInt(&line_length_limit_, kMinimumLineLength,
-                                        kMaximumLineLength)}});
+      configuration,
+      {{.name = "length",
+        .set_value = SetInt(&line_length_limit_, kMinimumLineLength,
+                            kMaximumLineLength)}});
 }
 
 LintRuleStatus LineLengthRule::Report() const {

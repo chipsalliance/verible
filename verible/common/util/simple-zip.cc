@@ -206,7 +206,9 @@ struct Encoder::Impl {
       processed_size += chunk.size();
       out_(chunk);
     }
-    return {crc, processed_size, processed_size};
+    return {.input_crc = crc,
+            .input_size = processed_size,
+            .output_size = processed_size};
   }
 
   CompressResult CompressDataToOutput(const ByteSource &generator) {
@@ -240,7 +242,9 @@ struct Encoder::Impl {
       } while (stream.avail_out == 0);
     } while (!chunk.empty());
 
-    CompressResult result = {crc, stream.total_in, stream.total_out};
+    CompressResult result = {.input_crc = crc,
+                             .input_size = stream.total_in,
+                             .output_size = stream.total_out};
     deflateEnd(&stream);
     return result;
   }

@@ -152,112 +152,127 @@ struct TestCaseData {
 
 static const TestCaseData kTestCasesData[] = {
     {
-        Tree(0),
+        .tree = Tree(0),
         // RootNodeTraversal test data
-        {
-            {0},
-            {0},
-            {0},
-        },
+        .root_node_traversal =
+            {
+                .expected_sequence_leaves = {0},
+                .expected_sequence_pre_order = {0},
+                .expected_sequence_post_order = {0},
+            },
         // SubtreeTraversal and IteratorSubtreeTraversal test data (skipped)
-        {},
+        .subtree_traversal = {},
     },
     {
-        Tree(0,        //
-             Tree(1),  //
-             Tree(2),  //
-             Tree(3)),
+        .tree = Tree(0,        //
+                     Tree(1),  //
+                     Tree(2),  //
+                     Tree(3)),
         // RootNodeTraversal test data
-        {
-            {1, 2, 3},
-            {0, 1, 2, 3},
-            {1, 2, 3, 0},
-        },
+        .root_node_traversal =
+            {
+                .expected_sequence_leaves = {1, 2, 3},
+                .expected_sequence_pre_order = {0, 1, 2, 3},
+                .expected_sequence_post_order = {1, 2, 3, 0},
+            },
         // SubtreeTraversal and IteratorSubtreeTraversal test data
-        {
-            {0},  // subtree path
-            {1},
-            {1},
-            {1},
-        },
+        .subtree_traversal =
+            {
+                .subtree_path = {0},  // subtree path
+                .expected_sequence_leaves = {1},
+                .expected_sequence_pre_order = {1},
+                .expected_sequence_post_order = {1},
+            },
     },
     {
-        Tree(0,                   //
-             Tree(1,              //
-                  Tree(11,        //
-                       Tree(111,  //
-                            Tree(1111))))),
+        .tree = Tree(0,                   //
+                     Tree(1,              //
+                          Tree(11,        //
+                               Tree(111,  //
+                                    Tree(1111))))),
         // RootNodeTraversal test data
-        {
-            {1111},
-            {0, 1, 11, 111, 1111},
-            {1111, 111, 11, 1, 0},
-        },
+        .root_node_traversal =
+            {
+                .expected_sequence_leaves = {1111},
+                .expected_sequence_pre_order = {0, 1, 11, 111, 1111},
+                .expected_sequence_post_order = {1111, 111, 11, 1, 0},
+            },
         // SubtreeTraversal and IteratorSubtreeTraversal test data
-        {
-            {0, 0},  // subtree path
-            {1111},
-            {11, 111, 1111},
-            {1111, 111, 11},
-        },
+        .subtree_traversal =
+            {
+                .subtree_path = {0, 0},  // subtree path
+                .expected_sequence_leaves = {1111},
+                .expected_sequence_pre_order = {11, 111, 1111},
+                .expected_sequence_post_order = {1111, 111, 11},
+            },
     },
     {
-        Tree(0,                      //
-             Tree(1,                 //
-                  Tree(11,           //
-                       Tree(111),    //
-                       Tree(112)),   //
-                  Tree(12),          //
-                  Tree(13)),         //
-             Tree(2,                 //
-                  Tree(21),          //
-                  Tree(22),          //
-                  Tree(23,           //
-                       Tree(231),    //
-                       Tree(232))),  //
-             Tree(3)),
+        .tree = Tree(0,                      //
+                     Tree(1,                 //
+                          Tree(11,           //
+                               Tree(111),    //
+                               Tree(112)),   //
+                          Tree(12),          //
+                          Tree(13)),         //
+                     Tree(2,                 //
+                          Tree(21),          //
+                          Tree(22),          //
+                          Tree(23,           //
+                               Tree(231),    //
+                               Tree(232))),  //
+                     Tree(3)),
         // RootNodeTraversal test data
-        {
-            {111, 112, 12, 13, 21, 22, 231, 232, 3},
-            {0, 1, 11, 111, 112, 12, 13, 2, 21, 22, 23, 231, 232, 3},
-            {111, 112, 11, 12, 13, 1, 21, 22, 231, 232, 23, 2, 3, 0},
-        },
+        .root_node_traversal =
+            {
+                .expected_sequence_leaves = {111, 112, 12, 13, 21, 22, 231, 232,
+                                             3},
+                .expected_sequence_pre_order = {0, 1, 11, 111, 112, 12, 13, 2,
+                                                21, 22, 23, 231, 232, 3},
+                .expected_sequence_post_order = {111, 112, 11, 12, 13, 1, 21,
+                                                 22, 231, 232, 23, 2, 3, 0},
+            },
         // SubtreeTraversal and IteratorSubtreeTraversal test data
-        {
-            {0},  // subtree path
-            {111, 112, 12, 13},
-            {1, 11, 111, 112, 12, 13},
-            {111, 112, 11, 12, 13, 1},
-        },
+        .subtree_traversal =
+            {
+                .subtree_path = {0},  // subtree path
+                .expected_sequence_leaves = {111, 112, 12, 13},
+                .expected_sequence_pre_order = {1, 11, 111, 112, 12, 13},
+                .expected_sequence_post_order = {111, 112, 11, 12, 13, 1},
+            },
     },
     {
-        Tree(0,                     //
-             Tree(1),               //
-             Tree(2,                //
-                  Tree(21,          //
-                       Tree(211),   //
-                       Tree(212)),  //
-                  Tree(22),         //
-                  Tree(23)),        //
-             Tree(3,                //
-                  Tree(31),         //
-                  Tree(32),         //
-                  Tree(33,          //
-                       Tree(331),   //
-                       Tree(332)))),
+        .tree = Tree(0,                     //
+                     Tree(1),               //
+                     Tree(2,                //
+                          Tree(21,          //
+                               Tree(211),   //
+                               Tree(212)),  //
+                          Tree(22),         //
+                          Tree(23)),        //
+                     Tree(3,                //
+                          Tree(31),         //
+                          Tree(32),         //
+                          Tree(33,          //
+                               Tree(331),   //
+                               Tree(332)))),
         // RootNodeTraversal test data
-        {
-            {1, 211, 212, 22, 23, 31, 32, 331, 332},
-            {0, 1, 2, 21, 211, 212, 22, 23, 3, 31, 32, 33, 331, 332},
-            {1, 211, 212, 21, 22, 23, 2, 31, 32, 331, 332, 33, 3, 0},
-        },
+        .root_node_traversal =
+            {
+                .expected_sequence_leaves = {1, 211, 212, 22, 23, 31, 32, 331,
+                                             332},
+                .expected_sequence_pre_order =
+                    {0, 1, 2, 21, 211, 212, 22, 23, 3, 31, 32, 33, 331, 332},
+                .expected_sequence_post_order = {1, 211, 212, 21, 22, 23, 2,
+                                                 31, 32, 331, 332, 33, 3, 0},
+            },
         // SubtreeTraversal and IteratorSubtreeTraversal test data
-        {
-            {2},  // subtree path
-            {31, 32, 331, 332},
-            {3, 31, 32, 33, 331, 332},
-            {31, 32, 331, 332, 33, 3},
-        },
+        .subtree_traversal =
+            {
+                .subtree_path = {2},  // subtree path
+                .expected_sequence_leaves = {31, 32, 331, 332},
+                .expected_sequence_pre_order = {3, 31, 32, 33, 331, 332},
+                .expected_sequence_post_order = {31, 32, 331, 332, 33, 3},
+            },
     },
 };
 

@@ -51,7 +51,7 @@ const LintRuleDescriptor &ConstraintNameStyleRule::GetDescriptor() {
       .desc =
           "Check that constraint names follow the required name style "
           "specified by a regular expression.",
-      .param = {{"pattern", std::string(kSuffix)}},
+      .param = {{.name = "pattern", .default_value = std::string(kSuffix)}},
   };
   return d;
 }
@@ -59,7 +59,8 @@ const LintRuleDescriptor &ConstraintNameStyleRule::GetDescriptor() {
 absl::Status ConstraintNameStyleRule::Configure(
     std::string_view configuration) {
   return verible::ParseNameValues(
-      configuration, {{"pattern", verible::config::SetRegex(&regex)}});
+      configuration,
+      {{.name = "pattern", .set_value = verible::config::SetRegex(&regex)}});
 }
 
 static const Matcher &ConstraintMatcher() {

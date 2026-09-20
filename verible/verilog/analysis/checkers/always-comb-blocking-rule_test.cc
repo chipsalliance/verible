@@ -62,18 +62,21 @@ TEST(AlwaysCombBlockingRule, FunctionFailures) {
 
 TEST(AlwaysCombBlockingTest, AutoFixAlwaysCombBlocking) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"module m;\nalways_comb a <= b;\nendmodule",
-       "module m;\nalways_comb a = b;\nendmodule"},
-      {"module m;\nalways_comb begin a <= b; end\nendmodule",
-       "module m;\nalways_comb begin a = b; end\nendmodule"},
-      {"module m;\nalways_comb begin if (sel == 0) a <= b; else a = 1'b0; "
-       "end\nendmodule",
-       "module m;\nalways_comb begin if (sel == 0) a = b; else a = 1'b0; "
-       "end\nendmodule"},
-      {"module m;\nalways_comb begin\n`ifdef RST\nf <= g;\n`else\nf = "
-       "1'b1;\n`endif\nend\nendmodule",
-       "module m;\nalways_comb begin\n`ifdef RST\nf = g;\n`else\nf = "
-       "1'b1;\n`endif\nend\nendmodule"},
+      {.code = "module m;\nalways_comb a <= b;\nendmodule",
+       .expected_output = "module m;\nalways_comb a = b;\nendmodule"},
+      {.code = "module m;\nalways_comb begin a <= b; end\nendmodule",
+       .expected_output = "module m;\nalways_comb begin a = b; end\nendmodule"},
+      {.code =
+           "module m;\nalways_comb begin if (sel == 0) a <= b; else a = 1'b0; "
+           "end\nendmodule",
+       .expected_output =
+           "module m;\nalways_comb begin if (sel == 0) a = b; else a = 1'b0; "
+           "end\nendmodule"},
+      {.code = "module m;\nalways_comb begin\n`ifdef RST\nf <= g;\n`else\nf = "
+               "1'b1;\n`endif\nend\nendmodule",
+       .expected_output =
+           "module m;\nalways_comb begin\n`ifdef RST\nf = g;\n`else\nf = "
+           "1'b1;\n`endif\nend\nendmodule"},
   };
 
   RunApplyFixCases<VerilogAnalyzer, AlwaysCombBlockingRule>(kTestCases, "");

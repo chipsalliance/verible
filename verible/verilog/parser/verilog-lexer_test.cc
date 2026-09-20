@@ -822,39 +822,41 @@ static std::initializer_list<LexerTestData> kMacroDefineTests = {
 static std::initializer_list<GenericTestDataSequence> kProtectedTests = {
     // TODO(b/134180314): lexer current drops tokens from protected sections,
     // but instead emit the tokens and filter them out.
-    {"module foo;\n"
-     "`protected\n"
-     "`endprotected\n"
-     "endmodule\n",
-     {TK_module, TK_SPACE, SymbolIdentifier, ';', TK_NEWLINE, TK_NEWLINE,
-      TK_endmodule, TK_NEWLINE}},
-    {"abc\n"
-     "`protected\n"
-     "(*&^%$#@!!@#$%^&*(a8sayasd\n"
-     "87y&*H*HYgyGYh@#BH)72361^&*\n"
-     "`endprotected\n"
-     "begin\n",
-     {SymbolIdentifier, TK_NEWLINE, TK_NEWLINE, TK_begin, TK_NEWLINE}},
-    {"task bar;\n"
-     "// pragma protect begin_protected\n"
-     "// pragma protect end_protected\n"
-     "endtask\n",
-     {TK_task, TK_SPACE, SymbolIdentifier, ';', TK_NEWLINE, TK_NEWLINE,
-      TK_endtask, TK_NEWLINE}},
-    {"end\n"
-     "//pragma protect begin_protected\n"
-     "(*&^%$#@!!@#$%^&*(a8sayasd\n"
-     "87y&*H*HYgyGYh@#BH)72361^&*\n"
-     "//pragma protect end_protected\n"
-     "always\n",
-     {TK_end, TK_NEWLINE, TK_NEWLINE, TK_always, TK_NEWLINE}},
-    {"end\n"
-     "`pragma protect begin_protected\n"
-     "(*&^%$#@!!@#$%^&*(a8sayasd\n"
-     "87y&*H*HYgyGYh@#BH)72361^&*\n"
-     "`pragma protect end_protected\n"
-     "begin\n",
-     {TK_end, TK_NEWLINE, TK_NEWLINE, TK_begin, TK_NEWLINE}},
+    {.code = "module foo;\n"
+             "`protected\n"
+             "`endprotected\n"
+             "endmodule\n",
+     .expected_tokens = {TK_module, TK_SPACE, SymbolIdentifier, ';', TK_NEWLINE,
+                         TK_NEWLINE, TK_endmodule, TK_NEWLINE}},
+    {.code = "abc\n"
+             "`protected\n"
+             "(*&^%$#@!!@#$%^&*(a8sayasd\n"
+             "87y&*H*HYgyGYh@#BH)72361^&*\n"
+             "`endprotected\n"
+             "begin\n",
+     .expected_tokens = {SymbolIdentifier, TK_NEWLINE, TK_NEWLINE, TK_begin,
+                         TK_NEWLINE}},
+    {.code = "task bar;\n"
+             "// pragma protect begin_protected\n"
+             "// pragma protect end_protected\n"
+             "endtask\n",
+     .expected_tokens = {TK_task, TK_SPACE, SymbolIdentifier, ';', TK_NEWLINE,
+                         TK_NEWLINE, TK_endtask, TK_NEWLINE}},
+    {.code = "end\n"
+             "//pragma protect begin_protected\n"
+             "(*&^%$#@!!@#$%^&*(a8sayasd\n"
+             "87y&*H*HYgyGYh@#BH)72361^&*\n"
+             "//pragma protect end_protected\n"
+             "always\n",
+     .expected_tokens = {TK_end, TK_NEWLINE, TK_NEWLINE, TK_always,
+                         TK_NEWLINE}},
+    {.code = "end\n"
+             "`pragma protect begin_protected\n"
+             "(*&^%$#@!!@#$%^&*(a8sayasd\n"
+             "87y&*H*HYgyGYh@#BH)72361^&*\n"
+             "`pragma protect end_protected\n"
+             "begin\n",
+     .expected_tokens = {TK_end, TK_NEWLINE, TK_NEWLINE, TK_begin, TK_NEWLINE}},
 };
 
 static std::initializer_list<SimpleTestData> kSymbolIdentifierTests = {

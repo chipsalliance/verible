@@ -52,7 +52,8 @@ TEST(PosixEOFRuleTest, RejectsText) {
 
 TEST(PosixEOFRuleTest, ApplyAutoFix) {
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"module m;\nendmodule", "module m;\nendmodule\n"},
+      {.code = "module m;\nendmodule",
+       .expected_output = "module m;\nendmodule\n"},
   };
   RunApplyFixCases<VerilogAnalyzer, PosixEOFRule>(kTestCases, "");
 }

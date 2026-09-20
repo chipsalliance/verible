@@ -740,12 +740,12 @@ TEST_F(GetPartitionAlignmentSubrangesTestFixture, VariousRanges) {
                                      partition_.Children().end());
 
   const std::vector<TaggedTokenPartitionRange> ranges(
-      GetPartitionAlignmentSubranges(children,
-                                     [](const TokenPartitionTree &partition) {
-                                       // Don't care about the subtype tag.
-                                       return AlignedPartitionClassification{
-                                           PartitionSelector(partition), 0};
-                                     }));
+      GetPartitionAlignmentSubranges(
+          children, [](const TokenPartitionTree &partition) {
+            // Don't care about the subtype tag.
+            return AlignedPartitionClassification{
+                .action = PartitionSelector(partition), .match_subtype = 0};
+          }));
 
   using P = std::pair<int, int>;
   std::vector<P> range_indices;
@@ -824,12 +824,13 @@ class GetPartitionAlignmentSubrangesSubtypedTestFixture
       CHECK(toks.begin() != toks.end());
       std::string_view last = *std::next(toks.begin());
       // Use the first character after the : as the subtype, so 'X', 'Y', 'Z'.
-      return {AlignmentGroupAction::kMatch, static_cast<int>(last.front())};
+      return {.action = AlignmentGroupAction::kMatch,
+              .match_subtype = static_cast<int>(last.front())};
     }
     if (text == "nomatch") {
-      return {AlignmentGroupAction::kNoMatch};
+      return {.action = AlignmentGroupAction::kNoMatch};
     }
-    return {AlignmentGroupAction::kIgnore};
+    return {.action = AlignmentGroupAction::kIgnore};
   }
 
  protected:
@@ -1406,54 +1407,108 @@ TEST(ColumnsTreeFormatter, ColumnPositionTreePrinter) {
 
   static const ColumnsTreeFormatterTestCase<T> kTestCases[] = {
       {
-          T(V{{}, kFooToken, FlushLeft}),
-          "",
+          .input = T(V{.path = {},
+                       .starting_token = kFooToken,
+                       .properties = FlushLeft}),
+          .expected = "",
       },
       {
-          T(V{{0, 1, 2}, kFooToken, FlushRight}),
-          "",
+          .input = T(V{.path = {0, 1, 2},
+                       .starting_token = kFooToken,
+                       .properties = FlushRight}),
+          .expected = "",
       },
       {
-          T(V{{}, kFooToken, FlushLeft},       //
-            T(V{{0}, kFooToken, FlushLeft}),   //
-            T(V{{1}, kFooToken, FlushRight}),  //
-            T(V{{42}, kFooToken, FlushLeft})),
-          "| < 0 < | > 1 > | < 42 < |\n",
+          .input = T(V{.path = {},
+                       .starting_token = kFooToken,
+                       .properties = FlushLeft},  //
+                     T(V{.path = {0},
+                         .starting_token = kFooToken,
+                         .properties = FlushLeft}),  //
+                     T(V{.path = {1},
+                         .starting_token = kFooToken,
+                         .properties = FlushRight}),  //
+                     T(V{.path = {42},
+                         .starting_token = kFooToken,
+                         .properties = FlushLeft})),
+          .expected = "| < 0 < | > 1 > | < 42 < |\n",
       },
       {
-          T(V{{}, kFooToken, FlushLeft},                    //
-            T(V{{0}, kFooToken, FlushLeft}),                //
-            T(V{{1}, kFooToken, FlushRight},                //
-              T(V{{1, 2}, kFooToken, FlushLeft}),           //
-              T(V{{1, 1}, kFooToken, FlushLeft}),           //
-              T(V{{1, 3, 3}, kFooToken, FlushLeft},         //
-                T(V{{1, 3, 3, 1}, kFooToken, FlushLeft})),  //
-              T(V{{2, 4, 2}, kFooToken, FlushRight}))),
-          "| < 0 < | >>>>>>>>>>>>>>>>> 1 >>>>>>>>>>>>>>>>>> |\n"
-          "        | < .2 < | < .1 < | < .3.3 < | > 2.4.2 > |\n"
-          "                          | << .1 << |\n",
+          .input = T(V{.path = {},
+                       .starting_token = kFooToken,
+                       .properties = FlushLeft},  //
+                     T(V{.path = {0},
+                         .starting_token = kFooToken,
+                         .properties = FlushLeft}),  //
+                     T(V{.path = {1},
+                         .starting_token = kFooToken,
+                         .properties = FlushRight},  //
+                       T(V{.path = {1, 2},
+                           .starting_token = kFooToken,
+                           .properties = FlushLeft}),  //
+                       T(V{.path = {1, 1},
+                           .starting_token = kFooToken,
+                           .properties = FlushLeft}),  //
+                       T(V{.path = {1, 3, 3},
+                           .starting_token = kFooToken,
+                           .properties = FlushLeft},  //
+                         T(V{.path = {1, 3, 3, 1},
+                             .starting_token = kFooToken,
+                             .properties = FlushLeft})),  //
+                       T(V{.path = {2, 4, 2},
+                           .starting_token = kFooToken,
+                           .properties = FlushRight}))),
+          .expected = "| < 0 < | >>>>>>>>>>>>>>>>> 1 >>>>>>>>>>>>>>>>>> |\n"
+                      "        | < .2 < | < .1 < | < .3.3 < | > 2.4.2 > |\n"
+                      "                          | << .1 << |\n",
       },
       {
-          T(V{{}, kFooToken, FlushLeft},             //
-            T(V{{0}, kFooToken, FlushLeft}),         //
-            T(V{{1}, kFooToken, FlushLeft}),         //
-            T(V{{42}, kFooToken, FlushLeft},         //
-              T(V{{3, 4, 5}, kFooToken, FlushLeft},  // not a subpath
-                T(V{{8}, kFooToken, FlushRight}))),  // not a subpath
-            T(V{{2}, kFooToken, FlushLeft})),
-          "| < 0 < | < 1 < | << 42 <<< | < 2 < |\n"
-          "                | < 3.4.5 < |\n"
-          "                | >>> 8 >>> |\n",
+          .input = T(V{.path = {},
+                       .starting_token = kFooToken,
+                       .properties = FlushLeft},  //
+                     T(V{.path = {0},
+                         .starting_token = kFooToken,
+                         .properties = FlushLeft}),  //
+                     T(V{.path = {1},
+                         .starting_token = kFooToken,
+                         .properties = FlushLeft}),  //
+                     T(V{.path = {42},
+                         .starting_token = kFooToken,
+                         .properties = FlushLeft},  //
+                       T(V{.path = {3, 4, 5},
+                           .starting_token = kFooToken,
+                           .properties = FlushLeft},  // not a subpath
+                         T(V{.path = {8},
+                             .starting_token = kFooToken,
+                             .properties = FlushRight}))),  // not a subpath
+                     T(V{.path = {2},
+                         .starting_token = kFooToken,
+                         .properties = FlushLeft})),
+          .expected = "| < 0 < | < 1 < | << 42 <<< | < 2 < |\n"
+                      "                | < 3.4.5 < |\n"
+                      "                | >>> 8 >>> |\n",
       },
       {
-          T(V{{}, kFooToken, FlushLeft},            //
-            T(V{{0}, kFooToken, FlushLeft},         //
-              T(V{{0, 0}, kFooToken, FlushLeft})),  //
-            T(V{{1}, kFooToken, FlushRight}),       //
-            T(V{{2}, kFooToken, FlushLeft},         //
-              T(V{{2, 0}, kFooToken, FlushLeft}))),
-          "| < 0 << | > 1 > | < 2 << |\n"
-          "| < .0 < |       | < .0 < |\n",
+          .input = T(V{.path = {},
+                       .starting_token = kFooToken,
+                       .properties = FlushLeft},  //
+                     T(V{.path = {0},
+                         .starting_token = kFooToken,
+                         .properties = FlushLeft},  //
+                       T(V{.path = {0, 0},
+                           .starting_token = kFooToken,
+                           .properties = FlushLeft})),  //
+                     T(V{.path = {1},
+                         .starting_token = kFooToken,
+                         .properties = FlushRight}),  //
+                     T(V{.path = {2},
+                         .starting_token = kFooToken,
+                         .properties = FlushLeft},  //
+                       T(V{.path = {2, 0},
+                           .starting_token = kFooToken,
+                           .properties = FlushLeft}))),
+          .expected = "| < 0 << | > 1 > | < 2 << |\n"
+                      "| < .0 < |       | < .0 < |\n",
       },
   };
 

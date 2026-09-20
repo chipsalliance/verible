@@ -87,7 +87,7 @@ LineColumn LineColumnMap::GetLineColAtOffset(std::string_view base,
   const int line_number = std::distance(begin, line_at_offset);
   const int len_within_line = bytes_offset - *line_at_offset;
   std::string_view line = base.substr(*line_at_offset, len_within_line);
-  return LineColumn{line_number, utf8_len(line)};
+  return LineColumn{.line = line_number, .column = utf8_len(line)};
 }
 
 int LineColumnMap::LineAtOffset(int bytes_offset) const {

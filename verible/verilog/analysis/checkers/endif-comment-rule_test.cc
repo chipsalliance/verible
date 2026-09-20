@@ -111,10 +111,15 @@ TEST(EndifCommentRuleTest, ApplyAutoFix) {
   constexpr int kEOLComment = 0;
   constexpr int kBlkComment = 1;
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"`ifdef FOO\n`endif\n", "`ifdef FOO\n`endif  // FOO\n", kEOLComment},
-      {"`ifdef FOO  /*xyz*/\n`endif\n", "`ifdef FOO  /*xyz*/\n`endif  // FOO\n",
-       kEOLComment},
-      {"`ifdef FOO\n`endif\n", "`ifdef FOO\n`endif  /* FOO */\n", kBlkComment},
+      {.code = "`ifdef FOO\n`endif\n",
+       .expected_output = "`ifdef FOO\n`endif  // FOO\n",
+       .fix_alternative = kEOLComment},
+      {.code = "`ifdef FOO  /*xyz*/\n`endif\n",
+       .expected_output = "`ifdef FOO  /*xyz*/\n`endif  // FOO\n",
+       .fix_alternative = kEOLComment},
+      {.code = "`ifdef FOO\n`endif\n",
+       .expected_output = "`ifdef FOO\n`endif  /* FOO */\n",
+       .fix_alternative = kBlkComment},
   };
   RunApplyFixCases<VerilogAnalyzer, EndifCommentRule>(kTestCases, "");
 }

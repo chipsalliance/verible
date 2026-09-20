@@ -36,10 +36,11 @@ using verible::TokenInfo;
 // Helper predicate to match all types of applicable variables
 static bool ExpectedTagPredicate(const Symbol &symbol) {
   verible::SymbolTag reg_symbol = {
-      verible::SymbolKind::kNode,
-      static_cast<int>(NodeEnum::kRegisterVariable)};
-  verible::SymbolTag gate_symbol = {verible::SymbolKind::kNode,
-                                    static_cast<int>(NodeEnum::kGateInstance)};
+      .kind = verible::SymbolKind::kNode,
+      .tag = static_cast<int>(NodeEnum::kRegisterVariable)};
+  verible::SymbolTag gate_symbol = {
+      .kind = verible::SymbolKind::kNode,
+      .tag = static_cast<int>(NodeEnum::kGateInstance)};
 
   // This exploits the fact that data identifiers can be found in:
   // - kRegisterVariable, e.g.:

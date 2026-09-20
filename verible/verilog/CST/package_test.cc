@@ -302,7 +302,8 @@ TEST(GetPackageNameTokenTest, VariousPackageTokenTests) {
           std::vector<TreeSearchMatch> declIdentifiers;
           for (const auto &decl : declarations) {
             const auto *packageToken = GetPackageNameLeaf(*decl.match);
-            declIdentifiers.push_back(TreeSearchMatch{packageToken, {}});
+            declIdentifiers.push_back(
+                TreeSearchMatch{.match = packageToken, .context = {}});
           }
           return declIdentifiers;
         });
@@ -354,7 +355,8 @@ TEST(GetPackageNameTest, GetPackageEndLabelName) {
           for (const auto &decl : declarations) {
             const auto *package_name = GetPackageNameEndLabel(*decl.match);
             if (package_name == nullptr) continue;
-            names.push_back(TreeSearchMatch{package_name, {}});
+            names.push_back(
+                TreeSearchMatch{.match = package_name, .context = {}});
           }
           return names;
         });
@@ -387,7 +389,8 @@ TEST(GetPackageBodyTest, GetPackageItemList) {
           for (const auto &decl : declarations) {
             const auto *package_item_list = GetPackageItemList(*decl.match);
             if (package_item_list == nullptr) continue;
-            lists.push_back(TreeSearchMatch{package_item_list, {}});
+            lists.push_back(
+                TreeSearchMatch{.match = package_item_list, .context = {}});
           }
           return lists;
         });
@@ -417,7 +420,8 @@ TEST(PackageImportTest, GetImportedPackageName) {
           std::vector<TreeSearchMatch> names;
           for (const auto &decl : decls) {
             const auto *name = GetImportedPackageName(*decl.match);
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context */}});
           }
           return names;
         });
@@ -460,7 +464,8 @@ TEST(PackageImportTest, GetImportedItemName) {
             const auto *name =
                 GeImportedItemNameFromPackageImportItem(*decl.match);
             if (name == nullptr) continue;
-            names.emplace_back(TreeSearchMatch{name, {/* ignored context*/}});
+            names.emplace_back(TreeSearchMatch{
+                .match = name, .context = {/* ignored context*/}});
           }
           return names;
         });

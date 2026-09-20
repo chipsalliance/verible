@@ -50,23 +50,24 @@ static const verible::LineNumberSet kEnableAllLines;
 static constexpr FormatterTestCase kTestCases[] = {
     //----------- 40 column marker --------->|
     {// TODO(b/148972363): might want to attract "= sss(" more
-     "module m;"
-     "assign wwwwww[77:66]"
-     "= sss(qqqq[33:22],"
-     "vv[44:1]);"
-     "endmodule",
-     "module m;\n"
-     "  assign wwwwww[77:66] = sss(\n"
-     "      qqqq[33:22], vv[44:1]\n"
-     "  );\n"
-     "endmodule\n"},
-    {"module m;\n"
-     "localparam int foo = xxxxxxxxxx + yyyyyyyyyyyyyy + zzzzzzzzzzz;\n"
-     "endmodule\n",
-     "module m;\n"
-     "  localparam int foo = xxxxxxxxxx +\n"
-     "      yyyyyyyyyyyyyy + zzzzzzzzzzz;\n"
-     "endmodule\n"},
+     .input = "module m;"
+              "assign wwwwww[77:66]"
+              "= sss(qqqq[33:22],"
+              "vv[44:1]);"
+              "endmodule",
+     .expected = "module m;\n"
+                 "  assign wwwwww[77:66] = sss(\n"
+                 "      qqqq[33:22], vv[44:1]\n"
+                 "  );\n"
+                 "endmodule\n"},
+    {.input =
+         "module m;\n"
+         "localparam int foo = xxxxxxxxxx + yyyyyyyyyyyyyy + zzzzzzzzzzz;\n"
+         "endmodule\n",
+     .expected = "module m;\n"
+                 "  localparam int foo = xxxxxxxxxx +\n"
+                 "      yyyyyyyyyyyyyy + zzzzzzzzzzz;\n"
+                 "endmodule\n"},
 };
 
 // These formatter tests involve line wrapping and hence line-wrap penalty
@@ -93,22 +94,20 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
 // Sometimes it's hard to reduce a real test case to a 40 column version,
 // so this set of tests uses 100-column.  Use raw string literals here.
 static constexpr FormatterTestCase k100ColTestCases[] = {
-    {
-        R"sv(
+    {.input = R"sv(
 module m;
 localparam int DDDDDDDDDDD = pppppppppppppppppp + LLLLLLLLLLLLLL
 + ((EEEEEEEEEEEE && FFFFFFFFFFFFFF > 0) ? hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh : 0);
 endmodule
 )sv",
-        // make sure the line does not break before a '+'
-        R"sv(
+     // make sure the line does not break before a '+'
+     .expected = R"sv(
 module m;
   localparam int DDDDDDDDDDD = pppppppppppppppppp + LLLLLLLLLLLLLL +
       ((EEEEEEEEEEEE && FFFFFFFFFFFFFF > 0) ? hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh : 0);
 endmodule
 )sv"},
-    {
-        R"sv(
+    {.input = R"sv(
 module m;
 assign bbbbbbbbbbbbbbbbb =
       iiiiiiiiiiiiiiiiiiiii ?
@@ -116,15 +115,14 @@ assign bbbbbbbbbbbbbbbbb =
       yyyyyyyyyyyyyyyyyyyyyy;
 endmodule
 )sv",
-        // make sure break happens after '?' and ':'
-        R"sv(
+     // make sure break happens after '?' and ':'
+     .expected = R"sv(
 module m;
   assign bbbbbbbbbbbbbbbbb = iiiiiiiiiiiiiiiiiiiii ?
       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx : yyyyyyyyyyyyyyyyyyyyyy;
 endmodule
 )sv"},
-    {
-        R"sv(
+    {.input = R"sv(
 module m;
   if (x) begin
     assign {ooooooooooooooooooo, ssssssssss} =
@@ -134,8 +132,8 @@ module m;
  end
 endmodule
 )sv",
-        // make sure break happens after '?' and ':'
-        R"sv(
+     // make sure break happens after '?' and ':'
+     .expected = R"sv(
 module m;
   if (x) begin
     assign {ooooooooooooooooooo, ssssssssss} = bbbbbbbbbbbbbbbbb >= cccccccccccccccccccccccc ?
@@ -145,14 +143,14 @@ module m;
 endmodule
 )sv"},
     {// Equivalent search states must be visited in deterministic order.
-     R"sv(
+     .input = R"sv(
 module m;
   function f();
     return first_call_with_a_long_name_to_force_platform_dependent_wrapping_xxxxxxxxxxxxxx(a, b, c, d) && second_call_with_a_long_name_to_keep_the_rhs_wrapped_xxxxxxxxxxxxxxxxxxxxxx();
   endfunction
 endmodule
 )sv",
-     R"sv(
+     .expected = R"sv(
 module m;
   function f();
     return first_call_with_a_long_name_to_force_platform_dependent_wrapping_xxxxxxxxxxxxxx(a, b, c,
