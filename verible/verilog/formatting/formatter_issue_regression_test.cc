@@ -109,6 +109,43 @@ TEST(FormatterEndToEndTest, MacroBeforeCloseParenFormatEquivalent) {
   EXPECT_THAT(stream.str(), testing::HasSubstr("`TOKEN_BYTE"));
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2605:
+// TIMESCALE_DIRECTIVE's EndOfLineComment handler used yyless(yyleng-1),
+// which left `\r` in the comment token for CRLF files. Emitting that token
+// plus a CRLF terminator produced `\r\r\n` and failed FormatEquivalent.
+TEST(FormatterEndToEndTest, TimescaleCrlfEolComment) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      // Next-line `//` comment after `timescale (the reduced issue case).
+      {"`timescale 1 ps / 1 ps\r\n"
+       "// hello\r\n"
+       "module m;\r\n"
+       "endmodule\r\n",
+       "`timescale 1 ps / 1 ps\r\n"
+       "// hello\r\n"
+       "module m;\r\n"
+       "endmodule\r\n"},
+      // Same-line `//` comment on the `timescale directive.
+      {"`timescale 1 ps / 1 ps // hello\r\n"
+       "module m;\r\n"
+       "endmodule\r\n",
+       "`timescale 1 ps / 1 ps  // hello\r\n"
+       "module m;\r\n"
+       "endmodule\r\n"},
+      // LF control: this path already passed lexical verification.
+      {"`timescale 1 ps / 1 ps\n"
+       "// hello\n"
+       "module m;\n"
+       "endmodule\n",
+       "`timescale 1 ps / 1 ps\n"
+       "// hello\n"
+       "module m;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.line_terminator = verible::LineTerminatorOptionStyle::kAuto;
+  RunFormatterTestCases(style, kTestCases);
+}
+
 // Regression for https://github.com/chipsalliance/verible/issues/2542:
 // Continuation EOL comments after a wrapped assign must keep a stable column
 // across re-format (convergence).
