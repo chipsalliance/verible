@@ -522,6 +522,21 @@ TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
   FormatStyle style;  // default column_limit (100)
   RunFormatterTestCases(style, kTestCases);
 }
+
+// Regression for https://github.com/chipsalliance/verible/issues/2359:
+// Unary minus after a binary minus inside [] must not fuse into `--`.
+TEST(FormatterEndToEndTest, UnaryMinusInsideIndexDoesNotFuse) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"module module_0 ();\n"
+       "  assign id_9[-1 - -1] = 0;\n"
+       "endmodule\n",
+       "module module_0 ();\n"
+       "  assign id_9[-1- -1] = 0;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  RunFormatterTestCases(style, kTestCases);
+}
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
