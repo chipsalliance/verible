@@ -630,11 +630,18 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
       const auto next_prop = std::next(column_prop_iter, 1);
       if (next_prop != column_prop_end &&
           next_prop->Value().contains_delimiter) {
-        if (longest_cell_before_delimiter < node.Value().TotalWidth()) {
-          longest_cell_before_delimiter = node.Value().TotalWidth();
-          if (&row == &matrix.back()) align_to_last_row = true;
+        // The root's first child is column 0.  A delimiter there is a leading
+        // comma, not a trailing separator — keep scanning for a later comma.
+        const bool delimiter_is_leading_column =
+            (column_prop_iter ==
+             VectorTreePreOrderTraversal(column_properties).begin());
+        if (!delimiter_is_leading_column) {
+          if (longest_cell_before_delimiter < node.Value().TotalWidth()) {
+            longest_cell_before_delimiter = node.Value().TotalWidth();
+            if (&row == &matrix.back()) align_to_last_row = true;
+          }
+          break;
         }
-        break;
       }
       ++column_prop_iter;
     }
@@ -646,7 +653,11 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
         VectorTreePreOrderTraversal(column_properties).begin();
 
     for (const auto &node : VectorTreePreOrderTraversal(row)) {
-      if (column_prop_iter->Value().contains_delimiter && align_to_last_row) {
+      const bool is_leading_delimiter_column =
+          !column_configs.Children().empty() &&
+          &*column_iter == &column_configs.Children().front();
+      if (column_prop_iter->Value().contains_delimiter && align_to_last_row &&
+          !is_leading_delimiter_column) {
         column_iter->Value().width = 0;
         column_iter->Value().left_border = 0;
       } else {
@@ -706,7 +717,8 @@ static void ComputeAlignedRowCellSpacings(
     const VectorTree<verible::AlignedColumnConfiguration> &column_configs,
     const VectorTree<verible::AlignmentColumnProperties> &properties,
     const AlignmentRow &row, std::vector<DeferredTokenAlignment> *align_actions,
-    int *accrued_spaces) {
+    int *accrued_spaces, bool *line_started,
+    bool *omit_left_border_of_first_token) {
   ColumnsTreePath node_path;
   verible::Path(row, node_path);
   VLOG(2) << TreePathFormatter(node_path) << " " << __FUNCTION__ << std::endl;
@@ -725,7 +737,15 @@ static void ComputeAlignedRowCellSpacings(
       VLOG(2) << TreePathFormatter(node_path)
               << " unused cell; width: " << total_width;
 
-      *accrued_spaces += total_width;
+      // An unused prefix delimiter (leading comma) must not hang-indent the
+      // first token of the line.  That extra indent vs. `, input` rows is what
+      // failed to converge on re-format (GitHub issue 2182).  Unused *syntax*
+      // columns still pad so later cells line up (sparse alignment).
+      if (!*line_started && column_properties_it->Value().contains_delimiter) {
+        *omit_left_border_of_first_token = true;
+      } else {
+        *accrued_spaces += total_width;
+      }
     } else if (cell.Value().IsComposite()) {
       // Cummulative subcolumns width might be smaller than their parent
       // column's width.
@@ -743,11 +763,17 @@ static void ComputeAlignedRowCellSpacings(
               << (column_properties_it->Value().flush_left ? "left" : "right");
 
       if (!column_properties_it->Value().flush_left) *accrued_spaces += padding;
-      ComputeAlignedRowCellSpacings(*column_config_it, *column_properties_it,
-                                    cell, align_actions, accrued_spaces);
+      ComputeAlignedRowCellSpacings(
+          *column_config_it, *column_properties_it, cell, align_actions,
+          accrued_spaces, line_started, omit_left_border_of_first_token);
       if (column_properties_it->Value().flush_left) *accrued_spaces += padding;
     } else {
-      *accrued_spaces += column_config_it->Value().left_border;
+      if (*omit_left_border_of_first_token && !*line_started) {
+        *omit_left_border_of_first_token = false;
+      } else {
+        *accrued_spaces += column_config_it->Value().left_border;
+      }
+      *line_started = true;
 
       VLOG(2) << TreePathFormatter(node_path) << " token cell"
               << "; starting token: " << cell.Value().tokens.front().Text();
@@ -789,9 +815,12 @@ static std::vector<DeferredTokenAlignment> ComputeAlignedRowSpacings(
   VLOG(2) << __FUNCTION__ << "; row:\n" << row;
   std::vector<DeferredTokenAlignment> align_actions;
   int accrued_spaces = 0;
+  bool line_started = false;
+  bool omit_left_border_of_first_token = false;
 
   ComputeAlignedRowCellSpacings(column_configs, properties, row, &align_actions,
-                                &accrued_spaces);
+                                &accrued_spaces, &line_started,
+                                &omit_left_border_of_first_token);
 
   VLOG(2) << "end of " << __FUNCTION__;
   return align_actions;

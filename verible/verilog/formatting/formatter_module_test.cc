@@ -1559,7 +1559,7 @@ static constexpr FormatterTestCase kModuleFormatterTestCases[] = {
      ") ();"
      "endmodule",
      "module foo #(\n"
-     "      parameter  bar = 1  //comment\n"
+     "    parameter  bar = 1  //comment\n"
      "    , localparam baz = 2\n"
      ") ();\n"
      "endmodule\n"},

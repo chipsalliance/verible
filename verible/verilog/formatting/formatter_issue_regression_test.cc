@@ -365,6 +365,32 @@ TEST(FormatterEndToEndTest, EndElseIfWithEOLCommentConverges) {
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2182:
+// A blank line in a port list with leading commas and EOL comments must
+// converge (first-port hang indent must not oscillate).
+TEST(FormatterEndToEndTest, PortListBlankLineWithCommentsConverges) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"module my_module (\n"
+       "        input   logic                           clk_pl_100 // a comment\n"
+       "    , input   logic                          aresetn // another comment\n"
+       "\n"
+       "    , output a\n"
+       "    , output b\n"
+       "    );\n"
+       "endmodule\n",
+       "module my_module (\n"
+       "    input logic clk_pl_100  // a comment\n"
+       "    , input logic aresetn     // another comment\n"
+       "\n"
+       "    , output a\n"
+       "    , output b\n"
+       ");\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  RunFormatterTestCases(style, kTestCases);
+}
+
 // Regression for https://github.com/chipsalliance/verible/issues/2352:
 // '/' between identifiers in a macro argument is a path separator and must
 // not be spaced as a division operator (that breaks compiles).
