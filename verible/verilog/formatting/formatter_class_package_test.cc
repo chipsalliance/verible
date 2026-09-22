@@ -843,6 +843,20 @@ static constexpr FormatterTestCase kClassPackageFormatterTestCases[] = {
      "  A = 0,\n"
      "  B = 1\n"
      "} foo_t;\n"},
+    {// Non-IEEE but common: enum with range dimensions
+     "typedef enum[1:0]\t{ A=0, B=1 }foo_t;",
+     "typedef enum [1:0] {\n"
+     "  A = 0,\n"
+     "  B = 1\n"
+     "} foo_t;\n"},
+    {// Non-IEEE but common: anon enum with range dimensions
+     "module m;enum[1:0]\t{ A=0, B=1 }foo;endmodule",
+     "module m;\n"
+     "  enum [1:0] {\n"
+     "    A = 0,\n"
+     "    B = 1\n"
+     "  } foo;\n"
+     "endmodule\n"},
     {"typedef foo_pkg::baz_t#(.L(L), .W(W)) bar_t;\n",
      "typedef foo_pkg::baz_t#(\n"
      "    .L(L),\n"

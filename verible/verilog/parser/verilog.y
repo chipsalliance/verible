@@ -3675,6 +3675,11 @@ enum_data_type
     { $$ = MakeTaggedNode(N::kEnumType, $1, nullptr, MakeBraceGroup($2, $3, $4)); }
   | TK_enum data_type '{' enum_name_list '}'
     { $$ = MakeTaggedNode(N::kEnumType, $1, $2, MakeBraceGroup($3, $4, $5)); }
+  /* Non-IEEE but common: enum with range dimensions */
+  | TK_enum decl_dimensions '{' enum_name_list '}'
+    { $$ = MakeTaggedNode(N::kEnumType, $1,
+                          MakeDataType(nullptr, MakePackedDimensionsNode($2)),
+                          MakeBraceGroup($3, $4, $5)); }
   ;
 enum_name_list
   : enum_name_list_preprocessor_last
