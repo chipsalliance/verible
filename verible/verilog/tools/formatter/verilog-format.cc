@@ -86,10 +86,9 @@ static std::string AbslUnparseFlag(LineRanges /* unused */) {
                        absl::StreamFormatter());
 }
 
-// TODO(fangism): Provide -i alias, as it is canonical to many formatters
 ABSL_FLAG(bool, inplace, false,
           "If true, overwrite the input file on successful conditions.");
-ABSL_FLAG(bool, i, false, "Alias for --inplace (clang-format / yapf style).");
+ABSL_FLAG(bool, i, false, "Alias for --inplace.");
 ABSL_FLAG(
     bool, verify, false,
     "If true, only checks if formatting would be done. Return code 0 means "
