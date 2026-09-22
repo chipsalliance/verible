@@ -371,8 +371,10 @@ TEST(FormatterEndToEndTest, EndElseIfWithEOLCommentConverges) {
 TEST(FormatterEndToEndTest, PortListBlankLineWithCommentsConverges) {
   static constexpr FormatterTestCase kTestCases[] = {
       {"module my_module (\n"
-       "        input   logic                           clk_pl_100 // a comment\n"
-       "    , input   logic                          aresetn // another comment\n"
+       "        input   logic                           clk_pl_100 // a "
+       "comment\n"
+       "    , input   logic                          aresetn // another "
+       "comment\n"
        "\n"
        "    , output a\n"
        "    , output b\n"
