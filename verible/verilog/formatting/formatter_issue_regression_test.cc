@@ -501,6 +501,40 @@ TEST(FormatterEndToEndTest, NonAnsiWireSignedModulePortDoesNotAbort) {
   }
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2243:
+// A `\` at the end of a // comment is lexer TK_LINE_CONT, not a macro
+// continuation.  Do not hang-indent the following comment or declaration.
+TEST(FormatterEndToEndTest, CommentTrailingBackslashDoesNotOverIndent) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"module test;\n"
+       "    //  __     __         _       _     _\n"
+       "    //  \\ \\   / /_ _ _ __(_) __ _| |__ | | ___  ___\n"
+       "    //   \\ \\ / / _` | '__| |/ _` | '_ \\| |/ _ \\/ __|\n"
+       "    //    \\ V / (_| | |  | | (_| | |_) | |  __/\\__ \\\n"
+       "    //     \\_/ \\__,_|_|  |_|\\__,_|_.__/|_|\\___||___/\n"
+       "    logic [7:0] data;\n"
+       "    logic [7:0] data2;\n"
+       "    //   / ___ \\\\__ \\__ \\ | (_| | | | | (_| | \\__ \\\n"
+       "    //  /_/   \\_\\___/___/_|\\__, |_| |_|\\__,_|\\__|\n"
+       "    assign data_o = data;\n"
+       "endmodule\n",
+       "module test;\n"
+       "  //  __     __         _       _     _\n"
+       "  //  \\ \\   / /_ _ _ __(_) __ _| |__ | | ___  ___\n"
+       "  //   \\ \\ / / _` | '__| |/ _` | '_ \\| |/ _ \\/ __|\n"
+       "  //    \\ V / (_| | |  | | (_| | |_) | |  __/\\__ \\\n"
+       "  //     \\_/ \\__,_|_|  |_|\\__,_|_.__/|_|\\___||___/\n"
+       "  logic [7:0] data;\n"
+       "  logic [7:0] data2;\n"
+       "  //   / ___ \\\\__ \\__ \\ | (_| | | | | (_| | \\__ \\\n"
+       "  //  /_/   \\_\\___/___/_|\\__, |_| |_|\\__,_|\\__|\n"
+       "  assign data_o = data;\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default indent 2 / wrap 4
+  RunFormatterTestCases(style, kTestCases);
+}
+
 // Regression for https://github.com/chipsalliance/verible/issues/2539:
 // A // comment followed by a line-continuation `\` before aligned ports must
 // not abort in align.h, and must keep the comment on its own line.
@@ -514,7 +548,7 @@ TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
        "endmodule\n",
        "module m (\n"
        "    //\\\n"
-       "        input a\n"
+       "      input a\n"
        "    , input b\n"
        ");\n"
        "endmodule\n"},
