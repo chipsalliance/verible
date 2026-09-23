@@ -20,6 +20,7 @@
 #include <initializer_list>
 #include <iterator>
 #include <ostream>
+#include <set>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -32,6 +33,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "verible/common/formatting/format-token.h"
+#include "verible/common/formatting/line-wrap-searcher.h"
 #include "verible/common/formatting/token-partition-tree.h"
 #include "verible/common/formatting/tree-unwrapper.h"
 #include "verible/common/formatting/unwrapped-line.h"
@@ -648,6 +650,66 @@ static std::ostream &operator<<(std::ostream &stream,
   return stream << verible::SequenceFormatter(f);
 }
 
+// System task/function calls whose first argument, when a plain string
+// literal (typically a printf-style format string), benefits from being
+// visually separated from the rest of the arguments when the whole call
+// doesn't fit on one line.  See kWrapFirstElementSeparately.
+static bool IsFormatStringSystemCall(std::string_view name) {
+  static const std::set<std::string_view> kNames(
+      {"$display", "$write", "$displayb", "$writeb", "$displayh", "$writeh",
+       "$displayo", "$writeo", "$strobe", "$monitor", "$strobeb", "$monitorb",
+       "$strobeh", "$monitorh", "$strobeo", "$monitoro", "$test$plusargs",
+       "$value$plusargs"});
+  return kNames.find(name) != kNames.end();
+}
+
+// True if `argument_list` has more than one argument, and its first
+// argument is a plain string literal (e.g. a format string).
+static bool StartsWithStringLiteralAndHasMoreArgs(
+    const SyntaxTreeNode &argument_list) {
+  // Children alternate: expr (, expr)*, so >1 argument means >= 3 children.
+  if (argument_list.size() < 3) return false;
+  const auto *first_arg = argument_list.front().get();
+  if (first_arg == nullptr ||
+      first_arg->Tag().tag != static_cast<int>(NodeEnum::kExpression)) {
+    return false;
+  }
+  const auto &first_expr = verible::SymbolCastToNode(*first_arg);
+  if (first_expr.size() != 1) return false;
+  const auto *sole_child = first_expr.front().get();
+  return sole_child != nullptr &&
+         sole_child->Kind() == verible::SymbolKind::kLeaf &&
+         verible::SymbolCastToLeaf(*sole_child).get().token_enum() ==
+             verilog_tokentype::TK_StringLiteral;
+}
+
+// True when `arg_list` (a kArgumentList node, in the current `context`) is
+// the argument list of one of the IsFormatStringSystemCall() calls, and its
+// first argument is a string literal followed by more arguments (a format).
+static bool IsFormatStringSystemCallArgumentList(
+    const verible::SyntaxTreeContext &context, const SyntaxTreeNode &arg_list) {
+  const auto *call = context.NearestParentWithTag(NodeEnum::kSystemTFCall);
+  const auto *call_name_leaf =
+      (call != nullptr && !call->empty()) ? call->front().get() : nullptr;
+  return call_name_leaf != nullptr &&
+         call_name_leaf->Kind() == verible::SymbolKind::kLeaf &&
+         IsFormatStringSystemCall(
+             verible::SymbolCastToLeaf(*call_name_leaf).get().text()) &&
+         StartsWithStringLiteralAndHasMoreArgs(arg_list);
+}
+
+// Returns PartitionPolicyEnum::kWrapFirstElementSeparately when
+// IsFormatStringSystemCallArgumentList(context, arg_list); otherwise
+// returns `fallback` (the policy that would otherwise have been used).
+static PartitionPolicyEnum SelectSystemCallArgumentListPolicy(
+    const verible::SyntaxTreeContext &context, const SyntaxTreeNode &arg_list,
+    PartitionPolicyEnum fallback) {
+  if (IsFormatStringSystemCallArgumentList(context, arg_list)) {
+    return PartitionPolicyEnum::kWrapFirstElementSeparately;
+  }
+  return fallback;
+}
+
 // Visitor to determine which node enum function to call
 void TreeUnwrapper::Visit(const SyntaxTreeNode &node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
@@ -752,7 +814,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                  Context().DirectParentsAre(
                      {NodeEnum::kParenGroup, NodeEnum::kSystemTFCall})) {
         VisitIndentedSection(node, style_.wrap_spaces,
-                             PartitionPolicyEnum::kWrap);
+                             SelectSystemCallArgumentListPolicy(
+                                 Context(), node, PartitionPolicyEnum::kWrap));
       } else if (Context().DirectParentsAre(
                      {NodeEnum::kParenGroup,
                       NodeEnum::kRandomizeFunctionCall}) ||
@@ -2866,6 +2929,36 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kArgumentList: {
       SetCommentLinePartitionAsAlreadyFormatted(&partition);
       AttachSeparatorsToListElementPartitions(&partition);
+
+      // For $display-like calls (IsFormatStringSystemCall) used inside an
+      // expression (e.g. "s = $sformatf(...);"), merge the remaining
+      // arguments into a single sub-partition -- so they render together.
+      // If it doesn't fit, leave the partition untouched, for the
+      // existing one-argument-per-line kFitOnLineElseExpand fallback.
+      if (partition.Value().PartitionPolicy() ==
+              PartitionPolicyEnum::kFitOnLineElseExpand &&
+          partition.Children().size() >= 3 &&
+          IsFormatStringSystemCallArgumentList(Context(), node)) {
+        auto &children = partition.Children();
+        // MergeConsecutiveSiblings() requires aboth sides of a merge to
+        // both be leaves or both be non-leaves, so check will meet that.
+        const bool all_rest_are_leaves =
+            std::all_of(children.begin() + 1, children.end(),
+                        [](const TokenPartitionTree &child) {
+                          return verible::is_leaf(child);
+                        });
+        const auto &first_rest = children[1].Value();
+        const auto &last_rest = children.back().Value();
+        verible::UnwrappedLine candidate(first_rest.IndentationSpaces(),
+                                         first_rest.TokensRange().begin());
+        candidate.SpanUpToToken(last_rest.TokensRange().end());
+        const auto fits = verible::FitsOnLine(candidate, style);
+        if (all_rest_are_leaves && fits.fits) {
+          while (children.size() > 2) {
+            verible::MergeConsecutiveSiblings(&partition, 1);
+          }
+        }
+      }
       break;
     }
 

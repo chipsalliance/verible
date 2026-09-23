@@ -522,6 +522,251 @@ TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
   FormatStyle style;  // default column_limit (100)
   RunFormatterTestCases(style, kTestCases);
 }
+
+// For $display-like calls (see IsFormatStringSystemCall) whose
+// first argument is a string literal (a format string):
+//   - if everything fits on one line, keep it on one line (default).
+//   - if it needs exactly two lines, prefer breaking right after the
+//     format string, keeping all remaining arguments together on the
+//     second line.
+//   - if that still doesn't fit in two lines, fall back to the same
+//     (default) multi-line comma-splitting behavior.
+TEST(FormatterEndToEndTest, FormatStringSystemCallArgumentWrapping) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {// Fits on one line: no change.
+       "module t;\n"
+       "  task t;\n"
+       "    $display(\"format\", args, args, args, args);\n"
+       "  endtask\n"
+       "endmodule\n",
+       "module t;\n"
+       "  task t;\n"
+       "    $display(\"format\", args, args, args, args);\n"
+       "  endtask\n"
+       "endmodule\n"},
+      {// A standalone call statement that doesn't fit even in two lines:
+       // unchanged greedy multi-per-line packing.
+       "module t;\n"
+       "  task t;\n"
+       "    $display(\"format\", args, args, args, args, args, args, args, "
+       "args, args, args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args, args);\n"
+       "  endtask\n"
+       "endmodule\n",
+       "module t;\n"
+       "  task t;\n"
+       "    $display(\"format\", args, args, args, args, args, args, args, "
+       "args, args, args, args, args,\n"
+       "             args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args,\n"
+       "             args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args,\n"
+       "             args, args, args, args, args, args);\n"
+       "  endtask\n"
+       "endmodule\n"},
+      {// Needs exactly two lines: NEW behavior, break after the format
+       // string instead of wherever the greedy packer would otherwise
+       // break.
+       "module t;\n"
+       "  task t;\n"
+       "    $display(\"format %s %s %s %s %s %s %s %s\", args, args, args, "
+       "args, args, args, args, args, args);\n"
+       "  endtask\n"
+       "endmodule\n",
+       "module t;\n"
+       "  task t;\n"
+       "    $display(\"format %s %s %s %s %s %s %s %s\",\n"
+       "             args, args, args, args, args, args, args, args, args);\n"
+       "  endtask\n"
+       "endmodule\n"},
+      {// Breaking after the format string would still overflow two
+       // lines: falls back to unchanged greedy multi-per-line packing.
+       "module t;\n"
+       "  task t;\n"
+       "    $display(\"format %s %s %s %s %s %s %s %s\", args, args, args, "
+       "args, args, args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args);\n"
+       "  endtask\n"
+       "endmodule\n",
+       "module t;\n"
+       "  task t;\n"
+       "    $display(\"format %s %s %s %s %s %s %s %s\", args, args, args, "
+       "args, args, args, args, args,\n"
+       "             args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args,\n"
+       "             args, args, args, args, args, args, args, args);\n"
+       "  endtask\n"
+       "endmodule\n"},
+      {// A non-string first argument is unaffected.
+       "module t;\n"
+       "  task t;\n"
+       "    $display(fmt_var, args, args, args, args, args, args, args, args, "
+       "args);\n"
+       "  endtask\n"
+       "endmodule\n",
+       "module t;\n"
+       "  task t;\n"
+       "    $display(fmt_var, args, args, args, args, args, args, args, args, "
+       "args);\n"
+       "  endtask\n"
+       "endmodule\n"},
+      {// \$sformatf is not one of the format-string system calls this
+       // feature applies to, so it is unaffected: unchanged
+       // one-argument-per-line fallback.
+       "module t;\n"
+       "  task t;\n"
+       "    s = $sformatf(\"format %s %s %s %s %s %s %s %s %s %s %s\", args, "
+       "args, args, args, args, args, args, args, args, args, args);\n"
+       "  endtask\n"
+       "endmodule\n",
+       "module t;\n"
+       "  task t;\n"
+       "    s = $sformatf(\n"
+       "        \"format %s %s %s %s %s %s %s %s %s %s %s\",\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args\n"
+       "    );\n"
+       "  endtask\n"
+       "endmodule\n"},
+      {// Another \$sformatf case, with more arguments: still unaffected.
+       "module t;\n"
+       "  task t;\n"
+       "    s = $sformatf(\"format %s %s %s %s %s %s %s %s %s %s %s %s %s %s "
+       "%s %s %s %s %s %s\", args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args, args, args, args, args, args, args);\n"
+       "  endtask\n"
+       "endmodule\n",
+       "module t;\n"
+       "  task t;\n"
+       "    s = $sformatf(\n"
+       "        \"format %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s "
+       "%s %s\",\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args\n"
+       "    );\n"
+       "  endtask\n"
+       "endmodule\n"},
+      {// A bare statement directly under "initial" (no begin/end) is not
+       // a "standalone call statement" in the sense this feature (and
+       // the pre-existing multi-line wrapping) cares about; its
+       // unchanged one-argument-per-line fallback must be preserved.
+       "module t;\n"
+       "  initial $display(\"format\", args, args, args, args, args, args, "
+       "args, args, args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args, args, args, args, args, args, args, "
+       "args, args, args, args, args, args, args);\n"
+       "endmodule\n",
+       "module t;\n"
+       "  initial\n"
+       "    $display(\n"
+       "        \"format\",\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args,\n"
+       "        args\n"
+       "    );\n"
+       "endmodule\n"},
+      {// Check concat related to MergeConsecutiveSiblings
+       "module t;\n"
+       "  task t;\n"
+       "    $display(\"reset=%d v_i=%d data_i=%x v_o=%d data_o=%d\","
+       "reset_lo, v_li, {counter, counter}, v_lo, data_lo);\n"
+       "  endtask\n"
+       "endmodule\n",
+       "module t;\n"
+       "  task t;\n"
+       "    $display(\"reset=%d v_i=%d data_i=%x v_o=%d data_o=%d\",\n"
+       "             reset_lo, v_li, {counter, counter}, v_lo, data_lo);\n"
+       "  endtask\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  RunFormatterTestCases(style, kTestCases);
+}
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
