@@ -97,13 +97,22 @@ static constexpr FormatterTestCase kClassPackageFormatterTestCases[] = {
     },
     {
         // Keep space before explicit modport port name
+        // Careful to still properly handle .member_selects.
         "interface\tfoo  ;"
         "modport mp1(input  .a(sig), output  .b(sig));"
+        "modport mp(output .ch0_wr(ch[0].wr), input .ch0_rd(ch[0].rd), "
+        "output .ch1_wr(ch[1].wr.other), input .ch1_rd(ch[1].rd.other));"
         "endinterface",
         "interface foo;\n"
         "  modport mp1(\n"
         "      input .a(sig),\n"
         "      output .b(sig)\n"
+        "  );\n"
+        "  modport mp(\n"
+        "      output .ch0_wr(ch[0].wr),\n"
+        "      input .ch0_rd(ch[0].rd),\n"
+        "      output .ch1_wr(ch[1].wr.other),\n"
+        "      input .ch1_rd(ch[1].rd.other)\n"
         "  );\n"
         "endinterface\n",
     },

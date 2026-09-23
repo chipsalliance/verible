@@ -2771,6 +2771,19 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           {1, SpacingOptions::kUndecided},
       },
 
+      // A '.' nested inside a modport explicit port's parenthesized
+      // expression, e.g. the hierarchical/member select in
+      // ".a(ch[0].wr)", is not the port name separator.
+      {
+          DefaultStyle,
+          {']', "]"},
+          {'.', "."},
+          {/* any context */},
+          {NodeEnum::kModportSimplePort, NodeEnum::kParenGroup,
+           NodeEnum::kHierarchyExtension},
+          {0, SpacingOptions::kUndecided},
+      },
+
       // Handle '->' as a unary prefix expression.
       {
           DefaultStyle,

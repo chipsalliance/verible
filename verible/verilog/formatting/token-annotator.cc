@@ -308,9 +308,11 @@ static WithReason<int> SpacesRequiredBetween(
 
   // TODO(fangism): Never insert trailing spaces before a newline.
 
-  // Modport port name separator, e.g. "input .a("
+  // Modport port name separator, e.g. "input .a(...)". Match only the
+  // leading '.' that is a direct child of kModportSimplePort (the port
+  // name separator itself), not any '.' inside the port's expression
   if (right.TokenEnum() == '.' &&
-      right_context.IsInside(NodeEnum::kModportSimplePort)) {
+      right_context.DirectParentIs(NodeEnum::kModportSimplePort)) {
     return {1, "Space before modport explicit port name '.'"};
   }
 
