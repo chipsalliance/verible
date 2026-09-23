@@ -3793,6 +3793,11 @@ static constexpr ParserTestCaseArray kTypedefTests = {
     "  Global = 4'h2,\n"
     "  Local = 4'h3\n"
     "} myenum_fwd;",
+    // Non-IEEE but common: enum with range dimensions
+    "typedef enum [1:0] {\n"
+    "  Global = 4'h2,\n"
+    "  Local = 4'h3\n"
+    "} myenum_fwd;",
     "typedef enum uvec8_t {\n"
     "  Global = 4'h2,\n"
     "  Local = 4'h3\n"
@@ -3848,6 +3853,8 @@ static constexpr ParserTestCaseArray kStructTests = {
 
 static constexpr ParserTestCaseArray kEnumTests = {
     "typedef enum myenum_fwd;",
+    // Non-IEEE but common: anon enum with range dimensions
+    "enum [1:0] { E0, E1, E2 } enm;",
 };
 
 static constexpr ParserTestCaseArray kUnionTests = {
