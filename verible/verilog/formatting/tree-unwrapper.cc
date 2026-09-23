@@ -375,6 +375,11 @@ static bool ShouldIndentRelativeToDirectParent(
 
 void TreeUnwrapper::UpdateInterLeafScanner(verilog_tokentype token_type) {
   VLOG(4) << __FUNCTION__ << ", token: " << verilog_symbol_name(token_type);
+  // A '\' only terminates the line it continues; it neither ends the current
+  // comment run nor starts a partition of its own.  Feeding it to the scanner
+  // reaches a terminal state early, which glues the following comments and
+  // declarations onto that line and hang-indents them (GitHub issue 2243).
+  if (token_type == verilog_tokentype::TK_LINE_CONT) return;
   inter_leaf_scanner_->UpdateState(token_type);
   if (inter_leaf_scanner_->ShouldStartNewPartition()) {
     VLOG(4) << "new partition";
@@ -515,6 +520,7 @@ static verible::TokenSequence::const_iterator StopAtLastNewlineBeforeTreeLeaf(
       case TK_EOL_COMMENT:
       case TK_COMMENT_BLOCK:
       case TK_ATTRIBUTE:
+      case TK_LINE_CONT:
         ++token_iter;
         break;
       default:
