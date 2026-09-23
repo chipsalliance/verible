@@ -60,6 +60,8 @@ std::ostream &operator<<(std::ostream &stream, PartitionPolicyEnum p) {
       return stream << "wrap";
     case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
       return stream << "juxtaposition-or-indented-stack";
+    case PartitionPolicyEnum::kWrapFirstElementSeparately:
+      return stream << "wrap-first-element-separately";
   }
   LOG(FATAL) << "Unknown partition policy " << static_cast<int>(p);
 }
