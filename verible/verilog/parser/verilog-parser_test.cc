@@ -3091,6 +3091,14 @@ static constexpr ParserTestCaseArray kModuleTests = {
     "  x5 = \'{bit:0};\n"
     "end\n"
     "endmodule",
+    "module assignment_test_non_integer_type_keys;\n"
+    "initial begin\n"
+    "  x1 = \'{int:100, real:3.14};\n"
+    "  x2 = \'{shortreal:1.5};\n"
+    "  x3 = \'{realtime:2.0, default:0};\n"
+    "  x4 = \'{real:1.0, int:2};\n"
+    "end\n"
+    "endmodule",
     "module assignment_test3;\n"
     "initial begin\n"
     "  xx = byte\'{a, b, c};\n"
