@@ -174,6 +174,54 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
   RunLintTestCases<VerilogAnalyzer, CaseMissingDefaultRule>(kTestCases);
 }
 
+// Tests that `case (...) inside` and `case (...) matches` statements are
+// handled correctly, i.e. a default item is recognized and a missing default
+// is still reported.
+TEST(CaseMissingDefaultRuleTest, CaseInsideAndMatchesTests) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      // case inside with default: no violation
+      {R"(
+       function automatic int foo (input [3:0] in);
+         case (in) inside
+           4'b0???: return 1;
+           default: return 0;
+         endcase
+       endfunction
+       )"},
+      // case inside without default: violation
+      {R"(
+       function automatic int foo (input [3:0] in);
+         )",
+       {TK_case, "case"},
+       R"( (in) inside
+           4'b0???: return 1;
+         endcase
+       endfunction
+       )"},
+      // case matches with default: no violation
+      {R"(
+       function automatic int foo (input [3:0] in);
+         case (in) matches
+           4'b0000: return 1;
+           default: return 0;
+         endcase
+       endfunction
+       )"},
+      // case matches without default: violation
+      {R"(
+       function automatic int foo (input [3:0] in);
+         )",
+       {TK_case, "case"},
+       R"( (in) matches
+           4'b0000: return 1;
+         endcase
+       endfunction
+       )"},
+  };
+
+  RunLintTestCases<VerilogAnalyzer, CaseMissingDefaultRule>(kTestCases);
+}
+
 // Tests that the expected number of case-missing-default-rule violations inside
 // tasks are found.
 TEST(CaseMissingDefaultRuleTest, CaseInsideTaskTests) {
