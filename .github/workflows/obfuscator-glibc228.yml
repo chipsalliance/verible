@@ -1,6 +1,13 @@
 name: Obfuscator Linux glibc 2.28
 
 on:
+  push:
+    branches: [feature/obfuscate-seed-token-size]
+    paths:
+      - .github/workflows/obfuscator-glibc228.yml
+      - .github/bin/build-obfuscator-glibc228.sh
+      - .github/bin/smoke-obfuscator-glibc228.sh
+      - .github/bin/verify-glibc.py
   workflow_dispatch:
 
 permissions:
