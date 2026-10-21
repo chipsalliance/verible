@@ -1,0 +1,51 @@
+name: Obfuscator Linux glibc 2.28
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-glibc228:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      BUILD_IMAGE: quay.io/pypa/manylinux_2_28_x86_64@sha256:800c2a0d2e8c0d7e998d88861e977a3f6f956c3f11f5277897b7df8aaed1c675
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build and test against glibc 2.28
+        shell: bash
+        run: |
+          docker run --rm \
+            -e BUILD_IMAGE="$BUILD_IMAGE" \
+            -v "$GITHUB_WORKSPACE:/work" -w /work \
+            "$BUILD_IMAGE" bash .github/bin/build-obfuscator-glibc228.sh
+      - name: Run binaries in a clean AlmaLinux 8 container
+        shell: bash
+        run: |
+          docker pull almalinux:8
+          docker image inspect almalinux:8 --format '{{json .RepoDigests}}' \
+            > easyobf-glibc228/runtime-image.json
+          docker run --rm -e LD_LIBRARY_PATH= \
+            -v "$GITHUB_WORKSPACE:/work" -w /work almalinux:8 \
+            bash .github/bin/smoke-obfuscator-glibc228.sh
+      - name: Package Linux binaries and verification evidence
+        shell: bash
+        run: |
+          cp easyobf-glibc228/abi-report.json \
+            easyobf-glibc228/verible-obfuscator-linux-x86_64-glibc2.28/ABI.json
+          cp easyobf-glibc228/runtime.log \
+            easyobf-glibc228/verible-obfuscator-linux-x86_64-glibc2.28/RUNTIME.txt
+          tar -C easyobf-glibc228 -czf \
+            easyobf-glibc228/verible-obfuscator-linux-x86_64-glibc2.28.tar.gz \
+            verible-obfuscator-linux-x86_64-glibc2.28
+          cd easyobf-glibc228
+          sha256sum verible-obfuscator-linux-x86_64-glibc2.28.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: obfuscator-Linux-x86_64-glibc2.28
+          path: easyobf-glibc228/
