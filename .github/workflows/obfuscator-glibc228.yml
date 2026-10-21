@@ -9,9 +9,16 @@ on:
       - .github/bin/smoke-obfuscator-glibc228.sh
       - .github/bin/verify-glibc.py
   workflow_dispatch:
+    inputs:
+      reuse_run:
+        description: Reuse verified build outputs from a previous run for runtime validation and packaging
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   linux-glibc228:
@@ -24,12 +31,22 @@ jobs:
         with:
           fetch-depth: 0
       - name: Build and test against glibc 2.28
+        if: inputs.reuse_run == ''
         shell: bash
         run: |
           docker run --rm \
             -e BUILD_IMAGE="$BUILD_IMAGE" \
             -v "$GITHUB_WORKSPACE:/work" -w /work \
             "$BUILD_IMAGE" bash .github/bin/build-obfuscator-glibc228.sh
+          sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE/easyobf-glibc228"
+      - name: Reuse verified build outputs
+        if: inputs.reuse_run != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: obfuscator-Linux-x86_64-glibc2.28
+          run-id: ${{ inputs.reuse_run }}
+          github-token: ${{ github.token }}
+          path: easyobf-glibc228
       - name: Run binaries in a clean AlmaLinux 8 container
         shell: bash
         run: |
