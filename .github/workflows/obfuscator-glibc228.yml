@@ -50,6 +50,7 @@ jobs:
       - name: Run binaries in a clean AlmaLinux 8 container
         shell: bash
         run: |
+          chmod +x easyobf-glibc228/verible-obfuscator-linux-x86_64-glibc2.28/bin/*
           docker pull almalinux:8
           docker image inspect almalinux:8 --format '{{json .RepoDigests}}' \
             > easyobf-glibc228/runtime-image.json
