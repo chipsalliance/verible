@@ -79,6 +79,13 @@ DiffStatus FormatEquivalent(std::string_view left, std::string_view right,
 DiffStatus ObfuscationEquivalent(std::string_view left, std::string_view right,
                                  std::ostream *errstream = nullptr);
 
+// Like ObfuscationEquivalent, optionally allowing identifiers to change length.
+// Token kinds, whitespace, literals, operators and other text must still match.
+DiffStatus ObfuscationEquivalentWithOptions(std::string_view left,
+                                            std::string_view right,
+                                            bool preserve_identifier_length,
+                                            std::ostream *errstream = nullptr);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_ANALYSIS_VERILOG_EQUIVALENCE_H_

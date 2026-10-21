@@ -520,5 +520,29 @@ TEST(ObfuscationEquivalentTest, LexErrorOnRight) {
                                                            << errs.str();
 }
 
+TEST(ObfuscationEquivalentTest, OptionalIdentifierLengthChanges) {
+  const auto compare = [](std::string_view left, std::string_view right,
+                          std::ostream *errors) {
+    return ObfuscationEquivalentWithOptions(left, right, false, errors);
+  };
+  ExpectCompareWithErrstream(compare, DiffStatus::kEquivalent, "wire a;\n",
+                             "wire long_identifier;\n");
+  ExpectCompareWithErrstream(compare, DiffStatus::kEquivalent,
+                             "`define X(a) a+1\n", "`define LONG(arg) arg+1\n");
+  ExpectCompareWithErrstream(compare, DiffStatus::kDifferent, "wire a;\n",
+                             "wire 123;\n");
+  ExpectCompareWithErrstream(compare, DiffStatus::kDifferent, "assign a=b+1;",
+                             "assign longer=other*1;");
+  ExpectCompareWithErrstream(compare, DiffStatus::kDifferent, "assign a=b+1;",
+                             "assign longer=other+2;");
+  ExpectCompareWithErrstream(compare, DiffStatus::kDifferent,
+                             "wire a; // secret\n",
+                             "wire longer; // changed\n");
+  ExpectCompareWithErrstream(compare, DiffStatus::kDifferent, "wire a;\n",
+                             "wire  longer;\n");
+  EXPECT_EQ(ObfuscationEquivalent("wire a;", "wire longer;"),
+            DiffStatus::kDifferent);
+}
+
 }  // namespace
 }  // namespace verilog

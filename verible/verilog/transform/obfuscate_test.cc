@@ -125,5 +125,50 @@ TEST(ObfuscateVerilogCodeTest, InputLexicalError) {
   }
 }
 
+TEST(ObfuscateVerilogCodeTest, SeededCandidatesArePortableAndPerIdentifier) {
+  auto first = SeededSymbolIdentifierGenerator(123, 12);
+  auto second = SeededSymbolIdentifierGenerator(123, 12);
+  auto different = SeededSymbolIdentifierGenerator(124, 12);
+  const auto alpha = first("alpha");
+  EXPECT_EQ(alpha, "jZJVCy4so7SJ");
+  const auto beta = second("beta");
+  EXPECT_EQ(second("alpha"), alpha);
+  EXPECT_EQ(first("beta"), beta);
+  EXPECT_NE(different("alpha"), alpha);
+  auto equal_length = SeededSymbolIdentifierGenerator(0);
+  EXPECT_EQ(equal_length("a").length(), 1);
+  EXPECT_EQ(equal_length("long_name").length(), 9);
+}
+
+TEST(ObfuscateVerilogCodeTest, VariableLengthsRemainReversible) {
+  IdentifierObfuscator ob(ExpectNeverToBeCalled);
+  ASSERT_TRUE(ob.load("X LONG_MACRO\na long_argument\n").ok());
+  const std::string original = "`define X(a) a+1\n`X(a)\n";
+  std::ostringstream output;
+  EXPECT_TRUE(ObfuscateVerilogCode(original, &output, &ob, false).ok());
+  EXPECT_EQ(output.str(),
+            "`define LONG_MACRO(long_argument) long_argument+1\n"
+            "`LONG_MACRO(long_argument)\n");
+  IdentifierObfuscator decoder(ExpectNeverToBeCalled);
+  ASSERT_TRUE(decoder.load(ob.save()).ok());
+  decoder.set_decode_mode(true);
+  std::ostringstream decoded;
+  EXPECT_TRUE(
+      ObfuscateVerilogCode(output.str(), &decoded, &decoder, false).ok());
+  EXPECT_EQ(decoded.str(), original);
+  std::ostringstream rejected;
+  EXPECT_FALSE(ObfuscateVerilogCode(original, &rejected, &ob).ok());
+  EXPECT_TRUE(rejected.str().empty());
+}
+
+TEST(ObfuscateVerilogCodeTest, ExhaustionDoesNotEmitPartialOutput) {
+  IdentifierObfuscator ob([](std::string_view) { return "x"; }, 3);
+  std::ostringstream output;
+  const auto status =
+      ObfuscateVerilogCode("wire first, second;", &output, &ob, false);
+  EXPECT_EQ(status.code(), absl::StatusCode::kResourceExhausted);
+  EXPECT_TRUE(output.str().empty());
+}
+
 }  // namespace
 }  // namespace verilog

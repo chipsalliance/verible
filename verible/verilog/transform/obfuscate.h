@@ -15,6 +15,8 @@
 #ifndef VERIBLE_VERILOG_TRANSFORM_OBFUSCATE_H_
 #define VERIBLE_VERILOG_TRANSFORM_OBFUSCATE_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <iosfwd>
 #include <string>
 #include <string_view>
@@ -28,6 +30,13 @@ namespace verilog {
 // makes sure that it is a valid symbol identifier, not another Verilog keyword.
 std::string RandomEqualLengthSymbolIdentifier(std::string_view in);
 
+// Generates portable, repeatable candidates from seed, original spelling and a
+// per-name retry counter. A zero token_size preserves original name lengths.
+// Collision resolution can depend on other names already in the translation
+// map; reuse that map when processing files separately.
+verible::Obfuscator::generator_type SeededSymbolIdentifierGenerator(
+    uint64_t seed, size_t token_size = 0);
+
 // Obfuscates Verilog code.  Identifiers are randomized as equal length
 // replacements, and transformations are recorded (in subst) and re-applied
 // to the same strings seen.  Input code only needs to be lexically valid,
@@ -36,7 +45,8 @@ std::string RandomEqualLengthSymbolIdentifier(std::string_view in);
 // Returned status signals success or possible an internal error.
 absl::Status ObfuscateVerilogCode(std::string_view content,
                                   std::ostream *output,
-                                  verible::IdentifierObfuscator *subst);
+                                  verible::IdentifierObfuscator *subst,
+                                  bool preserve_identifier_length = true);
 
 }  // namespace verilog
 

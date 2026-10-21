@@ -1,0 +1,69 @@
+name: Obfuscator seed and token size
+
+on:
+  push:
+    branches: [feature/obfuscate-seed-token-size]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Windows lexer and parser generators
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install winflexbison3 --no-progress -y
+      - uses: bazel-contrib/setup-bazel@0.15.0
+        with:
+          bazelisk-cache: true
+          disk-cache: obfuscator-${{ runner.os }}
+          repository-cache: true
+      - name: Test affected libraries and original CLI behavior
+        shell: bash
+        env:
+          USE_BAZEL_VERSION: '8.4.2'
+        run: |
+          bazel test -c opt --test_output=errors \
+            //verible/common/strings:obfuscator_test \
+            //verible/verilog/analysis:verilog-equivalence_test \
+            //verible/verilog/transform:obfuscate_test \
+            //verible/verilog/tools/obfuscator:obfuscate_test
+      - name: Build obfuscator and syntax checker
+        shell: bash
+        env:
+          USE_BAZEL_VERSION: '8.4.2'
+        run: |
+          bazel build -c opt \
+            //verible/verilog/tools/obfuscator:verible-verilog-obfuscate \
+            //verible/verilog/tools/syntax:verible-verilog-syntax
+      - name: Exercise new command line options
+        shell: bash
+        run: |
+          extension=''
+          if [[ "$RUNNER_OS" == Windows ]]; then extension='.exe'; fi
+          python verible/verilog/tools/obfuscator/seed_token_size_test.py \
+            --binary "bazel-bin/verible/verilog/tools/obfuscator/verible-verilog-obfuscate${extension}" \
+            --syntax "bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax${extension}" \
+            --output easyobf-results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: obfuscator-${{ runner.os }}
+          path: |
+            bazel-bin/verible/verilog/tools/obfuscator/verible-verilog-obfuscate*
+            bazel-bin/verible/verilog/tools/syntax/verible-verilog-syntax*
+            bazel-testlogs/verible/common/strings/obfuscator_test/test.*
+            bazel-testlogs/verible/verilog/analysis/verilog-equivalence_test/test.*
+            bazel-testlogs/verible/verilog/transform/obfuscate_test/test.*
+            bazel-testlogs/verible/verilog/tools/obfuscator/obfuscate_test/test.*
+            easyobf-results/

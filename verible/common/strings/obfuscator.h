@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_STRINGS_OBFUSCATOR_H_
 #define VERIBLE_COMMON_STRINGS_OBFUSCATOR_H_
 
+#include <cstddef>
 #include <functional>
 #include <string>
 #include <string_view>
@@ -44,7 +45,10 @@ class Obfuscator {
   using translator_type = BijectiveMap<std::string, std::string,
                                        StringViewCompare, StringViewCompare>;
 
-  explicit Obfuscator(const generator_type &g) : generator_(g) {}
+  // A nonzero attempt limit reports namespace exhaustion instead of retrying
+  // indefinitely when short generated names collide.
+  explicit Obfuscator(const generator_type &g, size_t max_attempts = 0)
+      : generator_(g), max_attempts_(max_attempts) {}
 
   // Declares a mapping from key-string to value-string that will be
   // used in obfuscation.  This is useful for applying previously used
@@ -63,6 +67,8 @@ class Obfuscator {
   // Read-only view of string translation map.
   const translator_type &GetTranslator() const { return translator_; }
 
+  const absl::Status &status() const { return status_; }
+
   // Parses a mapping dictionary, and pre-loads the translator map with it.
   // Format: one entry per line, each line is space-separated pair of
   // identifiers.
@@ -75,6 +81,9 @@ class Obfuscator {
  private:
   // Generates a random substitution string, for obfuscation.
   generator_type generator_;
+
+  size_t max_attempts_ = 0;
+  absl::Status status_;
 
   // Keeps track of transformations done on seen strings.
   translator_type translator_;
@@ -90,7 +99,9 @@ class IdentifierObfuscator : public Obfuscator {
  public:
   // Tip for users of this: use something like RandomEqualLengthIdentifier,
   // but also make sure to not accidentally generate any of your keywords.
-  explicit IdentifierObfuscator(const generator_type &g) : Obfuscator(g) {}
+  explicit IdentifierObfuscator(const generator_type &g,
+                                size_t max_attempts = 0)
+      : Obfuscator(g, max_attempts) {}
 
   // Same as inherited method, but verifies that key and value are equal length.
   // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method)

@@ -278,24 +278,35 @@ DiffStatus FormatEquivalent(std::string_view left, std::string_view right,
       errstream);
 }
 
-static bool ObfuscationEquivalentTokens(const TokenInfo &l,
-                                        const TokenInfo &r) {
+static bool ObfuscationEquivalentTokens(const TokenInfo &l, const TokenInfo &r,
+                                        bool preserve_identifier_length) {
   const auto l_vtoken_enum = verilog_tokentype(l.token_enum());
   if (IsIdentifierLike(l_vtoken_enum)) {
-    return l.EquivalentBySpace(r);
+    return preserve_identifier_length ? l.EquivalentBySpace(r)
+                                      : l.token_enum() == r.token_enum();
   }
   return l.EquivalentWithoutLocation(r);
 }
 
 DiffStatus ObfuscationEquivalent(std::string_view left, std::string_view right,
                                  std::ostream *errstream) {
+  return ObfuscationEquivalentWithOptions(left, right, true, errstream);
+}
+
+DiffStatus ObfuscationEquivalentWithOptions(std::string_view left,
+                                            std::string_view right,
+                                            bool preserve_identifier_length,
+                                            std::ostream *errstream) {
   return VerilogLexicallyEquivalent(
       left, right,
       [](const TokenInfo &) {
         // Whitespaces are required to match exactly.
         return false;
       },
-      ObfuscationEquivalentTokens, errstream);
+      [preserve_identifier_length](const TokenInfo &l, const TokenInfo &r) {
+        return ObfuscationEquivalentTokens(l, r, preserve_identifier_length);
+      },
+      errstream);
 }
 
 }  // namespace verilog

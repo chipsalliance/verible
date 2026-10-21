@@ -14,7 +14,9 @@
 
 #include "verible/verilog/transform/obfuscate.h"
 
+#include <cstdint>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -45,6 +47,47 @@ std::string RandomEqualLengthSymbolIdentifier(std::string_view in) {
       return candidate;
     }
   }
+}
+
+verible::Obfuscator::generator_type SeededSymbolIdentifierGenerator(
+    uint64_t seed, size_t token_size) {
+  // Use explicitly specified integer operations instead of std::hash or a
+  // standard-library distribution, whose results may vary across platforms.
+  return [seed, token_size, attempts = std::map<std::string, uint64_t>()](
+             std::string_view input) mutable {
+    constexpr std::string_view kLetters =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    constexpr std::string_view kAlphanumeric =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    uint64_t hash = UINT64_C(14695981039346656037) ^ seed;
+    for (const unsigned char ch : input) {
+      hash = (hash ^ ch) * UINT64_C(1099511628211);
+    }
+    const size_t length = token_size == 0 ? input.length() : token_size;
+    CHECK_GT(length, 0);
+    auto &attempt = attempts[std::string(input)];
+    verilog::VerilogLexer lexer("");
+    for (;;) {
+      uint64_t state = hash + attempt++ * UINT64_C(0x9e3779b97f4a7c15);
+      const auto next = [&state]() {
+        state += UINT64_C(0x9e3779b97f4a7c15);
+        uint64_t value = state;
+        value = (value ^ (value >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+        value = (value ^ (value >> 27)) * UINT64_C(0x94d049bb133111eb);
+        return value ^ (value >> 31);
+      };
+      std::string candidate(length, 'a');
+      candidate.front() = kLetters[next() % kLetters.size()];
+      for (size_t i = 1; i < length; ++i) {
+        candidate[i] = kAlphanumeric[next() % kAlphanumeric.size()];
+      }
+      lexer.Restart(candidate);
+      if (lexer.DoNextToken().token_enum() ==
+          verilog_tokentype::SymbolIdentifier) {
+        return candidate;
+      }
+    }
+  };
 }
 
 // TODO(fangism): single-char identifiers don't need to be obfuscated.
@@ -134,11 +177,12 @@ static absl::Status VerifyDecoding(std::string_view original,
 
 // Verify that obfuscated output is lexically equivalent to original.
 static absl::Status VerifyEquivalence(std::string_view original,
-                                      std::string_view encoded) {
+                                      std::string_view encoded,
+                                      bool preserve_identifier_length) {
   VLOG(1) << __FUNCTION__;
   std::ostringstream errstream;
-  const auto diff_status =
-      verilog::ObfuscationEquivalent(original, encoded, &errstream);
+  const auto diff_status = verilog::ObfuscationEquivalentWithOptions(
+      original, encoded, preserve_identifier_length, &errstream);
   switch (diff_status) {
     case verilog::DiffStatus::kEquivalent:
       break;
@@ -159,13 +203,16 @@ static absl::Status VerifyEquivalence(std::string_view original,
 
 absl::Status ObfuscateVerilogCode(std::string_view content,
                                   std::ostream *output,
-                                  IdentifierObfuscator *subst) {
+                                  IdentifierObfuscator *subst,
+                                  bool preserve_identifier_length) {
   VLOG(1) << __FUNCTION__;
   std::ostringstream buffer;
   ObfuscateVerilogCodeInternal(content, &buffer, subst);
+  RETURN_IF_ERROR(subst->status());
 
   // Always verify equivalence.
-  RETURN_IF_ERROR(VerifyEquivalence(content, buffer.str()));
+  RETURN_IF_ERROR(
+      VerifyEquivalence(content, buffer.str(), preserve_identifier_length));
 
   // Always verify decoding.
   RETURN_IF_ERROR(VerifyDecoding(content, buffer.str(), *subst));

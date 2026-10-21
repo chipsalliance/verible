@@ -36,6 +36,20 @@ std::string_view Obfuscator::operator()(std::string_view input) {
     const auto *p = translator_.find_reverse(input);
     return (p != nullptr) ? *p : input;
   }
+  if (!status_.ok()) return input;
+  if (max_attempts_ != 0) {
+    if (const auto *existing = translator_.find_forward(input))
+      return *existing;
+    for (size_t attempt = 0; attempt < max_attempts_; ++attempt) {
+      if (translator_.insert(std::string(input), generator_(input))) {
+        return *translator_.find_forward(input);
+      }
+    }
+    status_ = absl::ResourceExhaustedError(absl::StrCat(
+        "Cannot generate a unique name for ", input, " after ", max_attempts_,
+        " attempts; increase --token-size or reuse a mapping file."));
+    return input;
+  }
   const std::string *str = translator_.insert_using_value_generator(
       std::string(input), [this, input]() { return generator_(input); });
   return *str;

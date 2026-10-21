@@ -216,5 +216,22 @@ TEST(IdentifierObfuscatorTest, EncodeValidTransform) {
   }
 }
 
+TEST(ObfuscatorTest, BoundedCollisionRetriesReportExhaustion) {
+  int attempts = 0;
+  Obfuscator ob(
+      [&attempts](std::string_view) {
+        ++attempts;
+        return "x";
+      },
+      3);
+  EXPECT_EQ(ob("first"), "x");
+  EXPECT_EQ(ob("second"), "second");
+  EXPECT_EQ(attempts, 4);
+  EXPECT_EQ(ob.status().code(), absl::StatusCode::kResourceExhausted);
+  EXPECT_EQ(ob("third"), "third");
+  EXPECT_EQ(attempts, 4);
+  EXPECT_EQ(ob.GetTranslator().size(), 1);
+}
+
 }  // namespace
 }  // namespace verible

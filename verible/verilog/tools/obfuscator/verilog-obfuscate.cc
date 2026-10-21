@@ -13,13 +13,14 @@
 // limitations under the License.
 
 // verilog_obfuscate mangles verilog code by changing identifiers.
-// All whitespace and identifier lengths are preserved.
+// All whitespace is preserved. Identifier lengths are preserved by default.
 // Output is written to stdout.
 //
 // Example usage:
 // verilog_obfuscate [options] < file > output
 // cat files... | verilog_obfuscate [options] > output
 
+#include <cstdint>
 #include <iostream>
 #include <set>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
@@ -31,10 +32,12 @@
 #endif
 
 #include <string_view>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "verible/common/strings/obfuscator.h"
 #include "verible/common/util/file-util.h"
@@ -44,6 +47,15 @@
 #include "verible/verilog/transform/obfuscate.h"
 
 using verible::IdentifierObfuscator;
+
+ABSL_FLAG(std::string, seed, "",
+          "Unsigned 64-bit seed for repeatable identifier generation. Empty "
+          "uses random generation. Reuse a map for collision consistency "
+          "across separately processed files.");
+ABSL_FLAG(int, token_size, 0,
+          "Length of newly generated names (also spelled --token-size). "
+          "0 preserves original lengths; 1..4096 selects a uniform length. "
+          "Loaded mappings and preserved names take priority.");
 
 ABSL_FLAG(                      //
     std::string, load_map, "",  //
@@ -86,13 +98,49 @@ int main(int argc, char **argv) {
                                   " [options] < original > output\n"
                                   R"(
 verilog_obfuscate mangles Verilog code by changing identifiers.
-All whitespaces and identifier lengths are preserved.
+All whitespaces are preserved. Identifier lengths are preserved by default.
+Use --seed for repeatable names and --token-size=N for uniform name lengths.
 Output is written to stdout.
 )");
+  // Abseil flag declarations use C++ identifiers; accept the documented
+  // hyphenated spelling as an alias before handing arguments to Abseil.
+  std::vector<std::string> normalized_args;
+  normalized_args.reserve(argc);
+  for (int i = 0; i < argc; ++i) {
+    std::string argument(argv[i]);
+    if (argument == "--token-size" || argument.rfind("--token-size=", 0) == 0) {
+      argument.replace(7, 1, "_");
+    }
+    normalized_args.push_back(argument);
+    argv[i] = normalized_args.back().data();
+  }
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
+  const int token_size = absl::GetFlag(FLAGS_token_size);
+  if (token_size < 0 || token_size > 4096) {
+    std::cerr << "--token-size must be between 0 and 4096.\n";
+    return 1;
+  }
+  const auto seed_text = absl::GetFlag(FLAGS_seed);
+  uint64_t seed = 0;
+  if (!seed_text.empty() && !absl::SimpleAtoi(seed_text, &seed)) {
+    std::cerr << "--seed must be an unsigned 64-bit integer.\n";
+    return 1;
+  }
+  verible::Obfuscator::generator_type generator =
+      verilog::RandomEqualLengthSymbolIdentifier;
+  if (!seed_text.empty()) {
+    generator = verilog::SeededSymbolIdentifierGenerator(seed, token_size);
+  } else if (token_size > 0) {
+    generator = [token_size](std::string_view) {
+      return verilog::RandomEqualLengthSymbolIdentifier(
+          std::string(token_size, 'x'));
+    };
+  }
+
   // initially empty identifier map
-  IdentifierObfuscator subst(verilog::RandomEqualLengthSymbolIdentifier);
+  IdentifierObfuscator subst(
+      generator, (!seed_text.empty() || token_size > 0) ? 100000 : 0);
 
   // Set mode to encode or decode.
   const bool decode = absl::GetFlag(FLAGS_decode);
@@ -149,9 +197,18 @@ Output is written to stdout.
   }
 
   // Encode/obfuscate.  Also verifies decode-ability.
+  bool preserve_identifier_length = token_size == 0;
+  if (decode) {
+    for (const auto &entry : subst.GetTranslator().forward_view()) {
+      if (entry.first.size() != entry.second->size()) {
+        preserve_identifier_length = false;
+        break;
+      }
+    }
+  }
   std::ostringstream output;  // result buffer
-  const auto status =
-      verilog::ObfuscateVerilogCode(*content_or, &output, &subst);
+  const auto status = verilog::ObfuscateVerilogCode(
+      *content_or, &output, &subst, preserve_identifier_length);
   if (!status.ok()) {
     std::cerr << status.message();
     return 1;
