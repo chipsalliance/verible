@@ -5,6 +5,10 @@ export PATH="/opt/python/cp312-cp312/bin:$PATH"
 source /opt/rh/gcc-toolset-14/enable
 export CC="$(command -v gcc)"
 export CXX="$(command -v g++)"
+# Bazel's GCC toolchain adds -lstdc++ explicitly, so the GCC-driver option
+# -static-libstdc++ alone does not control that dependency. Configure the
+# toolchain's runtime libraries directly, leaving libc and libm dynamic.
+export BAZEL_LINKLIBS='-Wl,-Bstatic:-lstdc++:-Wl,-Bdynamic:-lm'
 git config --global --add safe.directory "$PWD"
 
 out="$PWD/easyobf-glibc228"
@@ -29,7 +33,7 @@ install -m 755 bazel-8.4.2-linux-x86_64 /usr/local/bin/bazel
 popd
 bazel --version >> "$out/environment.txt"
 
-options=(-c opt --jobs=2 --copt=-march=x86-64
+options=(-c opt --jobs=4 --copt=-march=x86-64
          --linkopt=-static-libstdc++ --linkopt=-static-libgcc)
 bazel test "${options[@]}" --test_output=errors \
   //verible/common/strings:obfuscator_test \
