@@ -57,7 +57,7 @@ static constexpr std::string_view kMessageInOut =
 const LintRuleDescriptor &PortNameSuffixRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "port-name-suffix",
-      .topic = "suffixes-for-signals-and-types",
+      .topic = "signals-and-nets",
       .desc =
           "Check that port names end with _i for inputs, _o for outputs and "
           "_io for inouts. "

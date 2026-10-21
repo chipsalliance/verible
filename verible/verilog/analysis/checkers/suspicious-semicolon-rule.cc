@@ -39,7 +39,7 @@ static constexpr std::string_view kMessage = "Potentially unintended semicolon";
 const LintRuleDescriptor &SuspiciousSemicolon::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "suspicious-semicolon",
-      .topic = "bugprone",
+      .topic = "null-statements",
       .desc =
           "Checks that there are no suspicious semicolons that might affect "
           "code behaviour but escape quick visual inspection"};

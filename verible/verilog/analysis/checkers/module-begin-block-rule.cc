@@ -40,7 +40,7 @@ static constexpr std::string_view kMessage =
 const LintRuleDescriptor &ModuleBeginBlockRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "module-begin-block",
-      .topic = "floating-begin-end-blocks",
+      .topic = "explicit-begin",
       .desc =
           "Checks that there are no begin-end blocks declared at the module "
           "level.",

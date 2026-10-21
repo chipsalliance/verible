@@ -47,7 +47,7 @@ static constexpr std::string_view kMessage =
 const LintRuleDescriptor &EndifCommentRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "endif-comment",
-      .topic = "endif-comment",
+      .topic = "macro-comments",
       .desc =
           "Checks that a Verilog `` `endif`` directive is followed by a "
           "comment that matches the name of the opening "

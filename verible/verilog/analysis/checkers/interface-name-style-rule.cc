@@ -57,7 +57,7 @@ InterfaceNameStyleRule::InterfaceNameStyleRule()
 const LintRuleDescriptor &InterfaceNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "interface-name-style",
-      .topic = "interface-conventions",
+      .topic = "interfaces",
       .desc =
           "Checks that 'interface' names follow a naming convention defined by "
           "a RE2 regular expression. The default regex pattern expects "
