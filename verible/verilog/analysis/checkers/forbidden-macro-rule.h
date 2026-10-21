@@ -1,24 +1,12 @@
-// Copyright 2017-2020 The Verible Authors.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_MACRO_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_MACRO_RULE_H_
 
-#include <map>
 #include <set>
 #include <string>
+#include <string_view>
 
+#include "absl/status/status.h"
 #include "verible/common/analysis/lint-rule-status.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
 #include "verible/common/text/concrete-syntax-leaf.h"
@@ -29,20 +17,13 @@
 namespace verilog {
 namespace analysis {
 
-// ForbiddenMacroRule checks for forbidden macro calls.
-//
-// Example violations:
-// class Bad;
-//   task Foo;
-//     `uvm_warning("id", "message")   // 1) without ;
-//     `uvm_warning("id", "message");  // 2) with ;
-//   endfunction
-// endclass
 class ForbiddenMacroRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
   static const LintRuleDescriptor &GetDescriptor();
+
+  absl::Status Configure(std::string_view configuration) final;
 
   void HandleSymbol(const verible::Symbol &symbol,
                     const verible::SyntaxTreeContext &context) final;
@@ -52,10 +33,7 @@ class ForbiddenMacroRule : public verible::SyntaxTreeLintRule {
  private:
   static std::string FormatReason(const verible::SyntaxTreeLeaf &leaf);
 
-  // Set of invalid macros, mapped to style guide links.
-  static const std::map<std::string, std::string> &InvalidMacrosMap();
-
- private:
+  std::set<std::string> forbidden_macros_;
   std::set<verible::LintViolation> violations_;
 };
 
