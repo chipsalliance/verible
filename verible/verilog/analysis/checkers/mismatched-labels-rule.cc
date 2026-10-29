@@ -44,7 +44,7 @@ static constexpr std::string_view kMessageMissing =
 const LintRuleDescriptor &MismatchedLabelsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "mismatched-labels",
-      .topic = "mismatched-labels",
+      .topic = "label-naming-and-placement",
       .desc = "Check for matching begin/end labels.",
   };
   return d;

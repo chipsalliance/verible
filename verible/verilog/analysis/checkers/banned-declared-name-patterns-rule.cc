@@ -42,7 +42,7 @@ static constexpr std::string_view kMessage =
 const LintRuleDescriptor &BannedDeclaredNamePatternsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "banned-declared-name-patterns",
-      .topic = "identifiers",
+      .topic = "naming-conventions",
       .desc =
           "Checks for banned declared name against set of unwanted "
           "patterns.",
