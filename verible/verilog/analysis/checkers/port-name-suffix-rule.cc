@@ -105,14 +105,15 @@ bool PortNameSuffixRule::IsSuffixCorrect(std::string_view suffix,
 
 void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
                                       const SyntaxTreeContext &context) {
-  constexpr std::string_view implicit_direction = "input";
   verible::matcher::BoundSymbolManager manager;
-  if (PortMatcher().Matches(symbol, &manager)) {
+  if (NodekModuleHeader().Matches(symbol, &manager)) {
+    direction_ = "inout";
+  } else if (PortMatcher().Matches(symbol, &manager)) {
     const auto *identifier_leaf = GetIdentifierFromPortDeclaration(symbol);
     const auto *direction_leaf = GetDirectionFromPortDeclaration(symbol);
     const auto token = identifier_leaf->get();
-    const auto direction =
-        direction_leaf ? direction_leaf->get().text() : implicit_direction;
+    if (direction_leaf) direction_ = direction_leaf->get().text();
+    const auto direction = direction_;
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
 
     // Check if there is any suffix
