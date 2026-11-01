@@ -5287,6 +5287,28 @@ TEST_F(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingOuterClass) {
   }
 }
 
+TEST_F(BuildSymbolTableTest, TaskDeclarationOutOfLineMacroOuterClass) {
+  // The outer class name comes from a macro call, so there is no identifier to
+  // resolve.  This must be diagnosed, not crash.
+  TestVerilogSourceFile src("outofline_task.sv",
+                            "`define CC cc\n"
+                            "class `CC;\n"
+                            "  extern virtual task tt();\n"
+                            "endclass\n"
+                            "task `CC::tt();\n"
+                            "endtask\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  ASSERT_FALSE(build_diagnostics.empty());
+  EXPECT_EQ(build_diagnostics.front().code(),
+            absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(build_diagnostics.front().message(),
+              HasSubstr("Unable to resolve out-of-line definition"));
+}
+
 TEST_F(BuildSymbolTableTest, TaskDeclarationOutOfLineMissingPrototype) {
   TestVerilogSourceFile src("outofline_task.sv",
                             "class cc;\n"
