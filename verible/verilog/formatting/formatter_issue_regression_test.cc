@@ -146,6 +146,34 @@ TEST(FormatterEndToEndTest, TimescaleCrlfEolComment) {
   RunFormatterTestCases(style, kTestCases);
 }
 
+// Regression for https://github.com/chipsalliance/verible/issues/2637:
+// The range disabled by an EOL `verilog_format: off` comment must cover the
+// whole CRLF terminator, not just "\r", otherwise the line ending was
+// rewritten and formatting failed to converge.
+TEST(FormatterEndToEndTest, FormatOffEolCommentCrlfConverges) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"// a\r\n"
+       "// verilog_format: off\r\n"
+       "`define A 1\r\n",
+       "// a\r\n"
+       "// verilog_format: off\r\n"
+       "`define A 1\r\n"},
+      {"module m;\r\n"
+       "// verilog_format: off\r\n"
+       "wire   w;\r\n"
+       "// verilog_format: on\r\n"
+       "endmodule\r\n",
+       "module m;\r\n"
+       "  // verilog_format: off\r\n"
+       "wire   w;\r\n"
+       "// verilog_format: on\r\n"
+       "endmodule\r\n"},
+  };
+  FormatStyle style;
+  style.line_terminator = verible::LineTerminatorOptionStyle::kAuto;
+  RunFormatterTestCases(style, kTestCases);
+}
+
 // Regression for https://github.com/chipsalliance/verible/issues/2542:
 // Continuation EOL comments after a wrapped assign must keep a stable column
 // across re-format (convergence).
