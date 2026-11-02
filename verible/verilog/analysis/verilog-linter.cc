@@ -65,7 +65,7 @@ ABSL_FLAG(verilog::RuleBundle, rules, {},
           "Configuration values for each rules placed after '=' character.");
 ABSL_FLAG(std::string, rules_config, "",
           "Path to lint rules configuration file. "
-          "Disables --rule_config_search if set.");
+          "Disables --rules_config_search if set.");
 ABSL_FLAG(bool, rules_config_search, false,
           "Look for lint rules configuration file '.rules.verible_lint' "
           "searching upward from the location of each analyzed file.");
