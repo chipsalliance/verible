@@ -516,7 +516,8 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kWrap:
     case PartitionPolicyEnum::kFitOnLineElseExpand:
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
-    case PartitionPolicyEnum::kJuxtapositionOrIndentedStack: {
+    case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
+    case PartitionPolicyEnum::kWrapFirstElementSeparately: {
       std::transform(node.Children().begin(), node.Children().end(),
                      layouts.begin(), [this](const TokenPartitionTree &n) {
                        return this->CalculateOptimalLayout(n);
@@ -590,6 +591,31 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
 
       return factory_.Wrap(layouts.begin(), layouts.end(), false,
                            hanging_indentation);
+    }
+
+    case PartitionPolicyEnum::kWrapFirstElementSeparately: {
+      const int hanging_indentation =
+          (node.Children().size() > 1)
+              ? std::max(node.Children()[1].Value().IndentationSpaces() -
+                             node.Value().IndentationSpaces(),
+                         0)
+              : 0;
+
+      LayoutFunction fallback = factory_.Wrap(layouts.begin(), layouts.end(),
+                                              false, hanging_indentation);
+      if (layouts.size() < 2) return fallback;
+
+      // Prefer a layout that keeps only the first child ($display format)
+      // on its own line, and puts all other (non-format) children on next,
+      // as long as that fits.  A juxtaposition that overflows the column
+      // limit incurs a very large penalty (over_column_limit_penalty per
+      // excess column), so Choice() naturally falls back to the same
+      // layout as kWrap whenever the preferred layout doesn't fit.
+      LayoutFunction rest =
+          factory_.Juxtaposition(layouts.begin() + 1, layouts.end());
+      LayoutFunction preferred = factory_.Stack(
+          {layouts.front(), factory_.Indent(rest, hanging_indentation)});
+      return factory_.Choice({std::move(preferred), std::move(fallback)});
     }
 
     case PartitionPolicyEnum::kJuxtapositionOrIndentedStack: {

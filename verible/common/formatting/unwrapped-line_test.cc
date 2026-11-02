@@ -86,6 +86,11 @@ TEST(PartitionPolicyTest, Printing) {
     stream << PartitionPolicyEnum::kJuxtapositionOrIndentedStack;
     EXPECT_EQ(stream.str(), "juxtaposition-or-indented-stack");
   }
+  {
+    std::ostringstream stream;
+    stream << PartitionPolicyEnum::kWrapFirstElementSeparately;
+    EXPECT_EQ(stream.str(), "wrap-first-element-separately");
+  }
 }
 
 // This test fixture inherits from UnwrappedLineMemoryHandler so that

@@ -103,6 +103,13 @@ enum class PartitionPolicyEnum {
   kStack,
   kWrap,
   kJuxtapositionOrIndentedStack,
+
+  // Like kWrap, but prefers a layout that keeps only the first child on its
+  // own line and juxtaposes (on one line, indented) all remaining children,
+  // as long as that fits; otherwise falls back to the same layout as kWrap.
+  // Intended for argument lists where the first argument (e.g. a $display
+  // format string) benefits from being visually separated from the rest.
+  kWrapFirstElementSeparately,
 };
 
 std::ostream &operator<<(std::ostream &, PartitionPolicyEnum);
