@@ -100,6 +100,7 @@ To pipe from stdin, use '-' as <file>.
       input errors or internal errors. In all error conditions, the original
       text is always preserved. This is useful in deploying services where
       fail-safe behaviors should be considered a success.); default: true;
+    --i (Alias for --inplace.); default: false;
     --inplace (If true, overwrite the input file on successful conditions.);
       default: false;
     --lines (Specific lines to format, 1-based, comma-separated, inclusive N-M
@@ -125,6 +126,17 @@ To pipe from stdin, use '-' as <file>.
       --lines, verify that re-formatting the formatted output yields no further
       changes, i.e. formatting is convergent.); default: true;
 ```
+
+## Exit status
+
+`--failsafe_success` defaults to **true**: even if formatting fails (parse
+error, non-convergence, internal error), the tool prints a diagnostic and still
+exits 0, leaving the original text intact. That is intentional for editor
+integrations that should not block saves.
+
+CI and scripts that must fail the job when the formatter cannot format a file
+should pass `--failsafe_success=false`. Then `verible-verilog-format` exits
+non-zero on those errors.
 
 ## Disabling Formatting {#disable-formatting}
 

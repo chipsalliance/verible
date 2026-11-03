@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Tests the --inplace flag of verible-verilog-format.
+# Tests --inplace and the clang-format-style -i alias of verible-verilog-format.
 
 declare -r MY_OUTPUT_FILE="${TEST_TMPDIR}/myoutput.txt"
 declare -r MY_EXPECT_FILE="${TEST_TMPDIR}/myexpect.txt"
@@ -35,8 +35,15 @@ module m;
 endmodule
 EOF
 
-# Run formatter.
+# Run formatter with --inplace.
 ${formatter} --inplace ${MY_OUTPUT_FILE} || exit 1
+diff --strip-trailing-cr "${MY_OUTPUT_FILE}" "${MY_EXPECT_FILE}" || exit 2
+
+# Same rewrite must work with -i (single dash), not only --i.
+cat >${MY_OUTPUT_FILE} <<EOF
+  module    m   ;endmodule
+EOF
+${formatter} -i ${MY_OUTPUT_FILE} || exit 1
 diff --strip-trailing-cr "${MY_OUTPUT_FILE}" "${MY_EXPECT_FILE}" || exit 2
 
 echo "PASS"

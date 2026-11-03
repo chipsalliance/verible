@@ -86,9 +86,9 @@ static std::string AbslUnparseFlag(LineRanges /* unused */) {
                        absl::StreamFormatter());
 }
 
-// TODO(fangism): Provide -i alias, as it is canonical to many formatters
 ABSL_FLAG(bool, inplace, false,
           "If true, overwrite the input file on successful conditions.");
+ABSL_FLAG(bool, i, false, "Alias for --inplace.");
 ABSL_FLAG(
     bool, verify, false,
     "If true, only checks if formatting would be done. Return code 0 means "
@@ -138,7 +138,7 @@ static std::ostream &FileMsg(std::string_view filename) {
 static bool formatOneFile(std::string_view filename,
                           const LineNumberSet &lines_to_format,
                           bool *any_changes) {
-  const bool inplace = absl::GetFlag(FLAGS_inplace);
+  const bool inplace = absl::GetFlag(FLAGS_inplace) || absl::GetFlag(FLAGS_i);
   const bool check_changes_only = absl::GetFlag(FLAGS_verify);
   const bool is_stdin = verible::file::IsStdin(filename);
   const auto &stdin_name = absl::GetFlag(FLAGS_stdin_name);
@@ -283,7 +283,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (!absl::GetFlag(FLAGS_inplace)) {
+    if (!absl::GetFlag(FLAGS_inplace) && !absl::GetFlag(FLAGS_i)) {
       // Dumping all to stdout doesn't really make sense.
       std::cerr << "--inplace required for multiple files." << std::endl;
       return 1;
