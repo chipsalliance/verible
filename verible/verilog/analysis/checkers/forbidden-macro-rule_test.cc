@@ -77,6 +77,19 @@ TEST(ForbiddenMacroTest, Tests) {
 
   RunLintTestCases<VerilogAnalyzer, ForbiddenMacroRule>(kTestCases);
 }
+TEST(ForbiddenMacroTest, ConfiguredForbiddenMacros) {
+  constexpr int kToken = MacroCallId;
+
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"`uvm_warning();"},
+      {{kToken, "`uvm_error"}, "();"},
+      {"`uvm_info();"},
+  };
+
+  verible::RunConfiguredLintTestCases<VerilogAnalyzer, ForbiddenMacroRule>(
+      kTestCases, "forbidden_macros:`uvm_error");
+}
 
 }  // namespace
 }  // namespace analysis
