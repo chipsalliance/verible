@@ -3783,9 +3783,9 @@ case_inside_item
   : open_range_list ':' statement_or_null
     { $$ = MakeTaggedNode(N::kCaseInsideItem, $1, $2, $3); }
   | TK_default ':' statement_or_null
-    { $$ = MakeTaggedNode(N::kCaseInsideItem, $1, $2, $3); }
+    { $$ = MakeTaggedNode(N::kDefaultItem, $1, $2, $3); }
   | TK_default statement_or_null
-    { $$ = MakeTaggedNode(N::kCaseInsideItem, $1, $2); }
+    { $$ = MakeTaggedNode(N::kDefaultItem, $1, $2); }
   | preprocessor_directive
     { $$ = MakeTaggedNode(N::kCaseInsideItem, $1); }
   ;
@@ -3795,9 +3795,9 @@ case_pattern_item
   | pattern ':' statement_or_null
     { $$ = MakeTaggedNode(N::kCasePatternItem, $1, $2, $3); }
   | TK_default ':' statement_or_null
-    { $$ = MakeTaggedNode(N::kCasePatternItem, $1, $2, $3); }
+    { $$ = MakeTaggedNode(N::kDefaultItem, $1, $2, $3); }
   | TK_default statement_or_null
-    { $$ = MakeTaggedNode(N::kCasePatternItem, $1, $2); }
+    { $$ = MakeTaggedNode(N::kDefaultItem, $1, $2); }
   | preprocessor_directive
     { $$ = MakeTaggedNode(N::kCasePatternItem, $1); }
   ;

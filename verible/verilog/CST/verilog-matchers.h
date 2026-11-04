@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_CST_VERILOG_MATCHERS_H_
 #define VERIBLE_VERILOG_CST_VERILOG_MATCHERS_H_
 
+#include "verible/common/analysis/matcher/core-matchers.h"
 #include "verible/common/analysis/matcher/matcher-builders.h"
 #include "verible/common/text/symbol.h"
 #include "verible/verilog/CST/verilog-nonterminals.h"
@@ -404,14 +405,28 @@ inline constexpr auto DeclarationDimensionsHasRanges =
 //     default : return 3
 //   endcase
 //
+//   case (in) inside
+//     default : return 3
+//   endcase
+//
+//   case (in) matches
+//     default : return 3
+//   endcase
+//
 // but not:
 //
 //   casez (in)
 //     1: return 0;
 //   endcase
 //
-inline constexpr auto HasDefaultCase =
-    verible::matcher::MakePathMatcher(N(kCaseItemList), N(kDefaultItem));
+inline verible::matcher::Matcher HasDefaultCase() {
+  return verible::matcher::AnyOf(
+      verible::matcher::MakePathMatcher(N(kCaseItemList), N(kDefaultItem))(),
+      verible::matcher::MakePathMatcher(N(kCaseInsideItemList),
+                                        N(kDefaultItem))(),
+      verible::matcher::MakePathMatcher(N(kCasePatternItemList),
+                                        N(kDefaultItem))());
+}
 
 // Matches with statements qualified with "unique"
 // For instance, matches:

@@ -69,6 +69,7 @@ cc_library(
     ],
     deps = [
         ":verilog-nonterminals",
+        "//verible/common/analysis/matcher:core-matchers",
         "//verible/common/analysis/matcher:matcher-builders",
         "//verible/common/text:symbol",
         "//verible/verilog/parser:verilog-token-enum",
