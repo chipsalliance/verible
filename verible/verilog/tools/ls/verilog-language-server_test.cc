@@ -2227,6 +2227,168 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestPackageDistinction) {
       << "Invalid result size for id:  ";
 }
 
+// Tests textDocument/inlayHint request - returns empty when module not found
+TEST_F(VerilogLanguageServerSymbolTableTest, InlayHintEmptyWhenModuleNotFound) {
+  std::string_view filelist_content = "top.sv\n";
+
+  static constexpr std::string_view module_content(
+      R"(module top;
+  // Instantiate a module that doesn't exist in symbol table
+  unknown_module inst (
+    .clk(sys_clk),
+    .data(bus_data)
+  );
+endmodule
+)");
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_file(
+      root_dir, module_content, "top.sv");
+
+  const std::string module_uri = PathToLSPUri(module_file.filename());
+  const std::string module_open_request =
+      DidOpenRequest(module_uri, module_content);
+  ASSERT_OK(SendRequest(module_open_request));
+
+  GetResponse();  // consume diagnostics
+
+  // Request inlay hints for the entire file
+  json inlay_hint_request = {{"jsonrpc", "2.0"},
+                             {"id", 10},
+                             {"method", "textDocument/inlayHint"},
+                             {"params",
+                              {{"textDocument", {{"uri", module_uri}}},
+                               {"range",
+                                {{"start", {{"line", 0}, {"character", 0}}},
+                                 {"end", {{"line", 10}, {"character", 0}}}}}}}};
+
+  ASSERT_OK(SendRequest(inlay_hint_request.dump()));
+  json response = json::parse(GetResponse());
+
+  EXPECT_EQ(response["id"], 10);
+  // Module 'unknown_module' is not in symbol table, so no hints expected
+  EXPECT_TRUE(response["result"].empty());
+}
+
+// Tests textDocument/inlayHint request - returns empty for file without
+// instantiations
+TEST_F(VerilogLanguageServerSymbolTableTest, InlayHintEmptyForSimpleModule) {
+  std::string_view filelist_content = "simple.sv\n";
+
+  static constexpr std::string_view module_content(
+      R"(module simple;
+  wire a;
+  wire b;
+endmodule
+)");
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_file(
+      root_dir, module_content, "simple.sv");
+
+  const std::string module_uri = PathToLSPUri(module_file.filename());
+  const std::string module_open_request =
+      DidOpenRequest(module_uri, module_content);
+  ASSERT_OK(SendRequest(module_open_request));
+
+  GetResponse();  // consume diagnostics
+
+  json inlay_hint_request = {{"jsonrpc", "2.0"},
+                             {"id", 11},
+                             {"method", "textDocument/inlayHint"},
+                             {"params",
+                              {{"textDocument", {{"uri", module_uri}}},
+                               {"range",
+                                {{"start", {{"line", 0}, {"character", 0}}},
+                                 {"end", {{"line", 10}, {"character", 0}}}}}}}};
+
+  ASSERT_OK(SendRequest(inlay_hint_request.dump()));
+  json response = json::parse(GetResponse());
+
+  EXPECT_EQ(response["id"], 11);
+  // No module instantiations, so no hints expected
+  EXPECT_TRUE(response["result"].empty());
+}
+
+// Tests textDocument/inlayHint request - returns hints when module definition
+// is found in symbol table
+TEST_F(VerilogLanguageServerSymbolTableTest, InlayHintWithModuleDefinition) {
+  std::string_view filelist_content = "child.sv\ntop.sv\n";
+
+  // Child module with port definitions
+  static constexpr std::string_view child_content(
+      R"(module child(
+  input clk,
+  input [7:0] data,
+  output valid
+);
+endmodule
+)");
+
+  // Top module that instantiates child
+  static constexpr std::string_view top_content(
+      R"(module top;
+  wire sys_clk;
+  wire [7:0] bus_data;
+  wire is_valid;
+  child inst (
+    .clk(sys_clk),
+    .data(bus_data),
+    .valid(is_valid)
+  );
+endmodule
+)");
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile child_file(
+      root_dir, child_content, "child.sv");
+  const verible::file::testing::ScopedTestFile top_file(root_dir, top_content,
+                                                        "top.sv");
+
+  // Open both files to populate symbol table
+  const std::string child_uri = PathToLSPUri(child_file.filename());
+  const std::string child_open_request =
+      DidOpenRequest(child_uri, child_content);
+  ASSERT_OK(SendRequest(child_open_request));
+  GetResponse();  // consume diagnostics
+
+  const std::string top_uri = PathToLSPUri(top_file.filename());
+  const std::string top_open_request = DidOpenRequest(top_uri, top_content);
+  ASSERT_OK(SendRequest(top_open_request));
+  GetResponse();  // consume diagnostics
+
+  // Request inlay hints for top.sv
+  json inlay_hint_request = {{"jsonrpc", "2.0"},
+                             {"id", 12},
+                             {"method", "textDocument/inlayHint"},
+                             {"params",
+                              {{"textDocument", {{"uri", top_uri}}},
+                               {"range",
+                                {{"start", {{"line", 0}, {"character", 0}}},
+                                 {"end", {{"line", 15}, {"character", 0}}}}}}}};
+
+  ASSERT_OK(SendRequest(inlay_hint_request.dump()));
+  json response = json::parse(GetResponse());
+
+  EXPECT_EQ(response["id"], 12);
+  // Should have hints for .clk, .data, and .valid port connections
+  std::vector<verible::lsp::InlayHint> hints = response["result"];
+  EXPECT_EQ(hints.size(), 3) << "Expected 3 hints for 3 port connections";
+
+  // Verify hints contain direction info
+  bool found_input = false;
+  bool found_output = false;
+  for (const auto &hint : hints) {
+    if (absl::StrContains(hint.label, "input")) found_input = true;
+    if (absl::StrContains(hint.label, "output")) found_output = true;
+  }
+  EXPECT_TRUE(found_input) << "Should have hint with 'input' direction";
+  EXPECT_TRUE(found_output) << "Should have hint with 'output' direction";
+}
+
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const std::string_view shutdown_request =
