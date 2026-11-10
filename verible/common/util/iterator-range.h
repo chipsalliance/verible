@@ -50,8 +50,10 @@ class iterator_range {
   const iterator &end() const { return end_; }
 
  private:
-  iterator begin_;
-  iterator end_;
+  // Value-initialized so that a default-constructed range is a valid empty
+  // range whose begin() and end() compare equal.
+  iterator begin_{};
+  iterator end_{};
 };
 
 template <typename Iter>
