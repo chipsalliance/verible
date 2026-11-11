@@ -14,6 +14,7 @@
 
 #include "verible/verilog/preprocessor/verilog-preprocess.h"
 
+#include <deque>
 #include <filesystem>
 #include <functional>
 #include <map>
@@ -26,6 +27,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/types/span.h"
 #include "verible/common/lexer/token-generator.h"
 #include "verible/common/lexer/token-stream-adapter.h"
 #include "verible/common/text/macro-definition.h"
@@ -349,6 +351,53 @@ void VerilogPreprocess::RegisterMacroDefinition(
   // TODO(hzeller): multiline warning with 'previously defined here' location
 }
 
+namespace {
+// Appends the expansion of each token of a macro body or macro argument.
+// A `` joins the tokens directly before and after it, and the joined text is
+// lexed again.  A `` next to white space joins nothing.
+class TokenConcatenator {
+ public:
+  TokenConcatenator(verible::TokenSequence *output,
+                    std::deque<std::string> *concatenated_token_texts)
+      : output_(output), concatenated_token_texts_(concatenated_token_texts) {}
+
+  void Append(const verible::TokenInfo &source_token,
+              absl::Span<const verible::TokenInfo> expansion) {
+    if (source_token.token_enum() == PP_TOKEN_CONCAT) {
+      joins_next_token_ = output_ends_without_space_;
+      return;
+    }
+    if (!VerilogLexer::KeepSyntaxTreeTokens(source_token)) {
+      joins_next_token_ = false;
+      output_ends_without_space_ = false;
+      output_->insert(output_->end(), expansion.begin(), expansion.end());
+      return;
+    }
+    // An empty macro argument leaves the output as close to the next token as
+    // it was, as in a``b``c with b empty.
+    if (expansion.empty()) return;
+    if (joins_next_token_) {
+      const std::string &joined_text = concatenated_token_texts_->emplace_back(
+          absl::StrCat(output_->back().text(), expansion.front().text()));
+      output_->pop_back();
+      RecursiveLexText(joined_text, [this](const verible::TokenInfo &token) {
+        output_->push_back(token);
+      });
+      expansion.remove_prefix(1);
+    }
+    output_->insert(output_->end(), expansion.begin(), expansion.end());
+    output_ends_without_space_ = true;
+    joins_next_token_ = false;
+  }
+
+ private:
+  verible::TokenSequence *const output_;
+  std::deque<std::string> *const concatenated_token_texts_;
+  bool joins_next_token_ = false;
+  bool output_ends_without_space_ = false;
+};
+}  // namespace
+
 // This function expands a text.
 // The expanded tokens are saved as a TokenSequence, stored at
 // preprocess_data_.lexed_macros_backup Can be accessed directly after expansion
@@ -374,6 +423,9 @@ absl::Status VerilogPreprocess::ExpandText(
   auto iter_generator = verible::MakeConstIteratorStreamer(lexed_streamview);
   const auto end = lexed_streamview.end();
 
+  TokenConcatenator concatenator(&expanded_lexed_sequence,
+                                 &preprocess_data_.concatenated_token_texts);
+
   // Token-pulling loop.
   for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
     auto &last_token = **iter;
@@ -391,11 +443,11 @@ absl::Status VerilogPreprocess::ExpandText(
         last_token.token_enum() == MacroCallId) {
       RETURN_IF_ERROR(HandleMacroIdentifier(iter, iter_generator, false));
       // merge the expanded macro tokens into 'expanded_lexed_sequence'
-      auto &expanded_child = preprocess_data_.lexed_macros_backup.back();
-      for (auto &u : expanded_child) expanded_lexed_sequence.push_back(u);
+      concatenator.Append(last_token,
+                          preprocess_data_.lexed_macros_backup.back());
       continue;
     }
-    expanded_lexed_sequence.push_back(last_token);
+    concatenator.Append(last_token, {last_token});
   }
   preprocess_data_.lexed_macros_backup.emplace_back(expanded_lexed_sequence);
   return absl::OkStatus();
@@ -431,12 +483,18 @@ absl::Status VerilogPreprocess::ExpandMacro(
   auto iter_generator = verible::MakeConstIteratorStreamer(lexed_streamview);
   const auto end = lexed_streamview.end();
 
+  TokenConcatenator concatenator(&expanded_lexed_sequence,
+                                 &preprocess_data_.concatenated_token_texts);
+
   // Token-pulling loop.
   for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
     // TODO: handle lexical error
     auto &last_token = **iter;
     if (last_token.isEOF()) break;  // end sentinel; nothing to forward
-    if (last_token.token_enum() == TK_SPACE) continue;  // don't forward spaces
+    if (last_token.token_enum() == TK_SPACE) {
+      concatenator.Append(last_token, {});  // don't forward spaces
+      continue;
+    }
     // If the expanded token is another macro identifier that needs to be
     // expanded.
     // TODO: this needs to be something like HandleTokenIterator, to claim that
@@ -446,8 +504,8 @@ absl::Status VerilogPreprocess::ExpandMacro(
         last_token.token_enum() == MacroCallId) {
       RETURN_IF_ERROR(HandleMacroIdentifier(iter, iter_generator, false));
       // merge the expanded macro tokens into 'expanded_lexed_sequence'
-      auto &expanded_child = preprocess_data_.lexed_macros_backup.back();
-      for (auto &u : expanded_child) expanded_lexed_sequence.push_back(u);
+      concatenator.Append(last_token,
+                          preprocess_data_.lexed_macros_backup.back());
       continue;
     }
     if (macro_definition->IsCallable()) {
@@ -456,12 +514,12 @@ absl::Status VerilogPreprocess::ExpandMacro(
       if (replacement) {
         RETURN_IF_ERROR(ExpandText(replacement->text()));
         // merge the expanded macro tokens into 'expanded_lexed_sequence'
-        auto &expanded_child = preprocess_data_.lexed_macros_backup.back();
-        for (auto &u : expanded_child) expanded_lexed_sequence.push_back(u);
+        concatenator.Append(last_token,
+                            preprocess_data_.lexed_macros_backup.back());
         continue;
       }
     }
-    expanded_lexed_sequence.push_back(last_token);
+    concatenator.Append(last_token, {last_token});
   }
   preprocess_data_.lexed_macros_backup.emplace_back(expanded_lexed_sequence);
   return absl::OkStatus();
