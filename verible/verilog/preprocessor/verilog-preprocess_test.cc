@@ -801,7 +801,153 @@ real x=2;
 real y=3; real x=1;
 endmodule
 `undef MACRO1
-`undef MACRO2)"}
+`undef MACRO2)"},
+
+      {"[** Token concatenation in macro body and in actual parameter **]",
+       R"(
+`define CAT(a, b) a``b
+`define PATH(a, b, c) a``_``b``_``c
+`define SUFFIX _out
+`define NAME(prefix) prefix```SUFFIX
+`define ID(x) x
+module m;
+wire `CAT(sig, nal);
+wire `CAT(abc, 123);
+wire `PATH(top, sub, sig);
+wire `NAME(data);
+wire `ID(foo``bar);
+endmodule)",
+       // ...equivalent to
+       R"(
+`define CAT(a, b) a``b
+`define PATH(a, b, c) a``_``b``_``c
+`define SUFFIX _out
+`define NAME(prefix) prefix```SUFFIX
+`define ID(x) x
+module m;
+wire signal;
+wire abc123;
+wire top_sub_sig;
+wire data_out;
+wire foobar;
+endmodule)"},
+
+      {"[** Token concatenation next to space, empty parameter, or result "
+       "that lexes as several tokens **]",
+       R"(
+`define SPACED(a, b) a `` b
+`define CAT(a, b) a``b
+`define CAT3(a, b, c) a``b``c
+`define TYPED(type, suffix) type``suffix name
+module m;
+`SPACED(type_t, name);
+`TYPED(type_t, );
+wire `CAT3(left, , right);
+wire sum = `CAT(x, +y);
+endmodule)",
+       // ...equivalent to
+       R"(
+`define SPACED(a, b) a `` b
+`define CAT(a, b) a``b
+`define CAT3(a, b, c) a``b``c
+`define TYPED(type, suffix) type``suffix name
+module m;
+type_t name;
+type_t name;
+wire leftright;
+wire sum = x+y;
+endmodule)"},
+
+      {"[** Token concatenation that forms operators and numbers **]",
+       R"(
+`define PLUS_EQUALS(x) x +``= 8
+`define SHIFT(a, b) a <``< b
+`define SIZED(size, digits) size``'d``digits
+`define CAT(a, b) a``b
+module m;
+initial `PLUS_EQUALS(count);
+wire shifted = `SHIFT(9, 1);
+wire sized = `SIZED(8, 17);
+wire sixteen = `CAT(1, 6);
+endmodule)",
+       // ...equivalent to
+       R"(
+`define PLUS_EQUALS(x) x +``= 8
+`define SHIFT(a, b) a <``< b
+`define SIZED(size, digits) size``'d``digits
+`define CAT(a, b) a``b
+module m;
+initial count += 8;
+wire shifted = 9 << 1;
+wire sized = 8'd17;
+wire sixteen = 16;
+endmodule)"},
+
+      {"[** Token concatenation of macro calls, nested calls, and a string **]",
+       R"(
+`define NAME clk
+`define CAT(a, b) a``b
+`define QUOTE(x) x```"Q`"
+module m;
+wire `CAT(`NAME, _primary);
+wire `CAT(`CAT(a, b), c);
+wire `CAT( clock , _primary);
+wire quoted = `QUOTE(32'h0+);
+endmodule)",
+       // ...equivalent to
+       R"(
+`define NAME clk
+`define CAT(a, b) a``b
+`define QUOTE(x) x```"Q`"
+module m;
+wire clk_primary;
+wire abc;
+wire clock_primary;
+wire quoted = 32'h0+`"Q`";
+endmodule)"},
+
+      {"[** Trailing token concatenation stops at the macro call **]",
+       R"(
+`define TRAILING(a) a``
+module m;
+wire `TRAILING(clock)_primary;
+endmodule)",
+       // ...equivalent to
+       R"(
+`define TRAILING(a) a``
+module m;
+wire clock _primary;
+endmodule)"},
+
+      {"[** Token concatenation next to a tab **]",
+       "\n`define TABBED(a, b) a\t``\tb\n"
+       "module m;\n`TABBED(type_t, name);\nendmodule\n",
+       // ...equivalent to
+       "\n`define TABBED(a, b) a\t``\tb\n"
+       "module m;\ntype_t name;\nendmodule\n"},
+
+      {"[** Token concatenation with nothing on one side **]",
+       R"(
+`define BUFFER(inst, o) BUF BUF_``inst`` (.O(o));
+`define CELL(n, i) X ``n`` (.I(``i``));
+`define TRAILING(a) a``
+`define LEADING(a) ``a
+module m;
+`BUFFER(a, x)
+`CELL(c, y)
+`TRAILING(type_t) `LEADING(name);
+endmodule)",
+       // ...equivalent to
+       R"(
+`define BUFFER(inst, o) BUF BUF_``inst`` (.O(o));
+`define CELL(n, i) X ``n`` (.I(``i``));
+`define TRAILING(a) a``
+`define LEADING(a) ``a
+module m;
+BUF BUF_a (.O(x));
+X c (.I(y));
+type_t name;
+endmodule)"}
 
   };
 
@@ -831,6 +977,52 @@ endmodule
       ++expanded_it;
       ++equivalent_it;
     }
+  }
+}
+
+TEST(VerilogPreprocessTest, TokenConcatenationOfNumberAndIdentifier) {
+  PreprocessorTester tester(
+      R"(
+`define CAT(a, b) a``b
+module m;
+wire w = `CAT(123, abc);
+endmodule)",
+      VerilogPreprocess::Config({.expand_macros = true}));
+  // 123abc is not a valid token, so the parser rejects it.
+  EXPECT_FALSE(tester.Status().ok());
+  EXPECT_TRUE(tester.PreprocessorData().errors.empty());
+  const auto &stream = tester.PreprocessorData().preprocessed_token_stream;
+  EXPECT_TRUE(std::any_of(stream.begin(), stream.end(), [](const auto &token) {
+    return token->text() == "123abc";
+  }));
+}
+
+TEST(VerilogPreprocessTest, TokenConcatenationRejectedInputs) {
+  struct RejectedInput {
+    std::string_view input;
+    std::string_view unjoined_text;
+  };
+  constexpr RejectedInput kRejectedInputs[] = {
+      // `` outside any macro.
+      {"module m;\nwire w = a``b;\nendmodule\n", "ab"},
+      // Line continuation after or before ``.
+      {"`define CONT(a) a``\\\n_primary\nmodule m;\nwire w = `CONT(clock);\n"
+       "endmodule\n",
+       "clock_primary"},
+      {"`define CONT(a) a\\\n``_primary\nmodule m;\nwire w = `CONT(clock);\n"
+       "endmodule\n",
+       "clock_primary"},
+  };
+  for (const RejectedInput &rejected : kRejectedInputs) {
+    PreprocessorTester tester(
+        rejected.input, VerilogPreprocess::Config({.expand_macros = true}));
+    EXPECT_FALSE(tester.Status().ok()) << rejected.input;
+    const auto &stream = tester.PreprocessorData().preprocessed_token_stream;
+    EXPECT_TRUE(std::none_of(stream.begin(), stream.end(),
+                             [&rejected](const auto &token) {
+                               return token->text() == rejected.unjoined_text;
+                             }))
+        << rejected.input;
   }
 }
 
