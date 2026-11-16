@@ -41,6 +41,13 @@ TEST(IteratorRangeTest, EmptyVector) {
   }
 }
 
+TEST(IteratorRangeTest, DefaultConstructedIsEmpty) {
+  iterator_range<std::vector<int>::iterator> range;
+  EXPECT_EQ(range.begin(), range.end());
+  const iterator_range<std::vector<int>::const_iterator> crange;
+  EXPECT_EQ(crange.begin(), crange.end());
+}
+
 TEST(IteratorRangeTest, EmptyVectorRangeComparison) {
   std::vector<int> v;
   {
