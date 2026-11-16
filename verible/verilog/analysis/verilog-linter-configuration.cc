@@ -234,7 +234,6 @@ void LinterConfiguration::UseRuleSet(const RuleSet &rules) {
 }
 
 void LinterConfiguration::UseRuleBundle(const RuleBundle &rule_bundle) {
-  const auto name_set = analysis::GetAllRegisteredLintRuleNames();
   for (const auto &rule_pair : rule_bundle.rules) {
     // This needs to use the canonical registered key string_view, which has
     // guaranteed lifetime.
