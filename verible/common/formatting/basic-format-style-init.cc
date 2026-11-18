@@ -41,7 +41,7 @@ ABSL_FLAG(verible::LineTerminatorOptionStyle, line_terminator,
           verible::LineTerminatorOptionStyle::kAuto,
           "Line terminator. "
           "The 'auto' option chooses the output depending on the observed "
-          "input. The explicit choice CR or CRLF fixes the output line "
+          "input. The explicit choice LF or CRLF fixes the output line "
           "terminator.");
 
 namespace verible {
