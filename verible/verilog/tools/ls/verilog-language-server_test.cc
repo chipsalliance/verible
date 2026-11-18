@@ -260,6 +260,8 @@ TEST_F(VerilogLanguageServerTest, LintErrorDetection) {
   EXPECT_EQ(
       diagnostics["params"]["diagnostics"][0]["range"]["start"]["character"],
       9);
+  EXPECT_EQ(diagnostics["params"]["diagnostics"][0]["code"], "posix-eof")
+      << "Lint rule name not sent as the diagnostic code";
 
   // Secondly, request a code action at the EOF error message position
   const std::string_view action_request =

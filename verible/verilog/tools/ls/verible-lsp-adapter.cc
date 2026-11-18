@@ -59,6 +59,10 @@ static verible::lsp::Diagnostic ViolationToDiagnostic(
           },
       .severity = verible::lsp::DiagnosticSeverity::kWarning,
       .has_severity = true,
+      .code = std::string(v.status->lint_rule_name),
+      .has_code = true,
+      .codeDescription = {.href = v.status->url},
+      .has_codeDescription = !v.status->url.empty(),
       .message = absl::StrCat(violation.reason, " ", v.status->url, "[",
                               v.status->lint_rule_name, "]", fix_msg),
   };

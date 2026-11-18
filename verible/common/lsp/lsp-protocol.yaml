@@ -84,9 +84,14 @@ DidCloseTextDocumentParams:     # textDocument/didClose
   textDocument: TextDocumentIdentifier
 
 # -- textDocument/publishDiagnostics
+CodeDescription:
+  href: string         # URI
+
 Diagnostic:
   range: Range
   severity?: integer   # DiagnosticSeverity enum
+  code?: string        # LSP allows integer | string; we only send strings.
+  codeDescription?: CodeDescription
   source: string = "verible"
   message: string
 
