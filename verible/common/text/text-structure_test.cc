@@ -592,10 +592,11 @@ TEST_F(TextStructureViewInternalsTest, RangeConsistencyFailPastContentsBegin) {
   EXPECT_FALSE(InternalConsistencyCheck().ok());
 }
 
-// The glibcc debug is seeing right through the marginal error conditions
-// we try to test that they are discovered by our checks here.
-// Good, but that also means that we have to disable with GLBCCXX debug
-#ifndef _GLIBCXX_DEBUG
+// Standard library debug/bounded iterators see right through the marginal
+// out-of-bounds iterator conditions we form here to test our own checks.
+// Good, but that also means we have to skip these tests when enabled.
+#if !defined(_GLIBCXX_DEBUG) && \
+    !defined(_LIBCPP_ABI_BOUNDED_ITERATORS_IN_VECTOR)
 // Test that FastTokenRangeConsistencyCheck catches first token iterator past
 // begin.
 TEST_F(TextStructureViewInternalsTest,
@@ -639,7 +640,8 @@ TEST_F(TextStructureViewInternalsTest,
   EXPECT_FALSE(FastTokenRangeConsistencyCheck().ok());
   EXPECT_FALSE(InternalConsistencyCheck().ok());
 }
-#endif  // GLIBCC_DEBUG
+#endif  // !defined(_GLIBCXX_DEBUG) &&
+        // !defined(_LIBCPP_ABI_BOUNDED_ITERATORS_IN_VECTOR)
 
 // Test that FastTokenRangeConsistencyCheck catches last token in tree
 // located past the begin.
