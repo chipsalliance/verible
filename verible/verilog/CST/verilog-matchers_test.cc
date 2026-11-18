@@ -782,6 +782,44 @@ TEST(VerilogMatchers, HasDefaultCaseTests) {
        endfunction
        )",
        0},
+      {HasDefaultCase(),
+       R"(
+       function automatic int foo (input [3:0] in);
+         case (in) inside
+           4'b0???: return 0;
+           default: return 1;
+         endcase
+       endfunction
+       )",
+       1},
+      {HasDefaultCase(),
+       R"(
+       function automatic int foo (input [3:0] in);
+         case (in) inside
+           4'b0???: return 0;
+         endcase
+       endfunction
+       )",
+       0},
+      {HasDefaultCase(),
+       R"(
+       function automatic int foo (input [3:0] in);
+         case (in) matches
+           4'b0000: return 0;
+           default: return 1;
+         endcase
+       endfunction
+       )",
+       1},
+      {HasDefaultCase(),
+       R"(
+       function automatic int foo (input [3:0] in);
+         case (in) matches
+           4'b0000: return 0;
+         endcase
+       endfunction
+       )",
+       0},
   };
   for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
