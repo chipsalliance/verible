@@ -148,4 +148,4 @@ path.
 
 ## Version
 
-Generated on 2026-11-16 12:22:48 -0800 from [c6b29d6](https://github.com/google/verible/commit/c6b29d6251f66f54dd4d42050bab87f01f961f2a)
+Generated on 2026-11-18 10:33:21 -0800 from [5a46a15](https://github.com/google/verible/commit/5a46a151634ca141e92b3f44a5b0d97faef22037)
