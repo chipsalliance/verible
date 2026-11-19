@@ -1001,6 +1001,12 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
         ReserveNewColumn(column, *node[4], FlushLeft);  // ']'
         return;
       }
+      case NodeEnum::kDimensionSlice:
+      case NodeEnum::kDimensionAssociativeType: {
+        // Keep dimensions containing nested type syntax in one alignment cell.
+        ReserveNewColumn(node, FlushLeft);
+        break;
+      }
       default:
         break;
     }
