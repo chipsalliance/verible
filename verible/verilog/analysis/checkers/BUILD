@@ -26,6 +26,7 @@ cc_library(
         ":dff-name-style-rule",
         ":disable-statement-rule",
         ":endif-comment-rule",
+        ":enum-constant-name-style-rule",
         ":enum-name-style-rule",
         ":explicit-begin-rule",
         ":explicit-function-lifetime-rule",
@@ -619,6 +620,43 @@ cc_test(
     srcs = ["forbidden-anonymous-enums-rule_test.cc"],
     deps = [
         ":forbidden-anonymous-enums-rule",
+        "//verible/common/analysis:linter-test-utils",
+        "//verible/common/analysis:syntax-tree-linter-test-utils",
+        "//verible/verilog/analysis:verilog-analyzer",
+        "//verible/verilog/parser:verilog-token-enum",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "enum-constant-name-style-rule",
+    srcs = ["enum-constant-name-style-rule.cc"],
+    hdrs = ["enum-constant-name-style-rule.h"],
+    deps = [
+        "//verible/common/analysis:lint-rule-status",
+        "//verible/common/analysis:syntax-tree-lint-rule",
+        "//verible/common/analysis/matcher",
+        "//verible/common/analysis/matcher:bound-symbol-manager",
+        "//verible/common/text:config-utils",
+        "//verible/common/text:symbol",
+        "//verible/common/text:syntax-tree-context",
+        "//verible/verilog/CST:type",
+        "//verible/verilog/CST:verilog-matchers",
+        "//verible/verilog/analysis:descriptions",
+        "//verible/verilog/analysis:lint-rule-registry",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/strings",
+        "@re2",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "enum-constant-name-style-rule_test",
+    srcs = ["enum-constant-name-style-rule_test.cc"],
+    deps = [
+        ":enum-constant-name-style-rule",
         "//verible/common/analysis:linter-test-utils",
         "//verible/common/analysis:syntax-tree-linter-test-utils",
         "//verible/verilog/analysis:verilog-analyzer",

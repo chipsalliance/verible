@@ -61,6 +61,7 @@ _linter_test_configs = [
     ("dff-name-style", "dff_name_style", False),
     ("disable-statement", "disable_statement", False),
     ("endif-comment", "endif_comment", False),
+    ("enum-constant-name-style", "enum_constant_name_style", False),
     ("enum-name-style", "enum_name_style", True),
     ("explicit-begin", "explicit_begin", False),
     ("explicit-function-lifetime", "explicit_function_lifetime", True),
