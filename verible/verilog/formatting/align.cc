@@ -1436,8 +1436,17 @@ static void non_tree_column_scanner(
           << verible::StringSpanOfTokenRange(trailing_tokens);
 
   if (!leading_tokens.empty()) {
+    AlignmentColumnProperties prop = FlushLeft;
+    const bool leading_commas_only = std::all_of(
+        leading_tokens.begin(), leading_tokens.end(),
+        [](const PreFormatToken &tok) { return tok.TokenEnum() == ','; });
+    if (leading_commas_only) {
+      // Treat `,` as a delimiter so unused leading-comma columns do not
+      // hang-indent the first port of a group (GitHub issue 2182).
+      prop.contains_delimiter = true;
+    }
     column_entries->Children().emplace_back(verible::ColumnPositionEntry{
-        kLeadingTokensPath, *leading_tokens.front().token, FlushLeft});
+        kLeadingTokensPath, *leading_tokens.front().token, prop});
   }
 
   if (trailing_tokens.empty()) return;
