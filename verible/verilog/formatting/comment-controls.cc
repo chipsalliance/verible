@@ -70,7 +70,9 @@ ByteOffsetSet DisableFormattingRanges(std::string_view text,
             if (begin_disable_offset == kNullOffset) {
               begin_disable_offset = token.right(text);
               if (vtoken_enum == TK_EOL_COMMENT) {
-                ++begin_disable_offset;  // to cover the trailing '\n'
+                // to cover the trailing "\n" or "\r\n"
+                begin_disable_offset +=
+                    text.substr(begin_disable_offset, 2) == "\r\n" ? 2 : 1;
               }
             }  // else ignore
           } else if (comment_tokens.front() == "on") {
