@@ -372,7 +372,7 @@ static WithReason<int> SpacesRequiredBetween(
 
   if (left.TokenEnum() == ':') {
     // Spacing in ranges
-    if (InRangeLikeContext(right_context)) {
+    if (InRangeLikeContext(right_context, true)) {
       // Take advantage here that the left token was already annotated (above)
       return {left.before.spaces_required,
               "Symmetrize spaces before and after ':' in bit slice"};
@@ -474,7 +474,7 @@ static WithReason<int> SpacesRequiredBetween(
     }
 
     // Spacing in ranges
-    if (InRangeLikeContext(right_context)) {
+    if (InRangeLikeContext(right_context, true)) {
       int spaces = right.OriginalLeadingSpaces().length();
       if (spaces > 1) {
         // ExcessSpaces returns 0 if there was a newline - prevents
