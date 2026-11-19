@@ -255,6 +255,11 @@ static WithReason<int> SpacesRequiredBetween(
                                        right_context)) {
       return {0, "No space around '/' path separators in macro arguments"};
     }
+    // Consecutive +/- would fuse into the `--`/`++` tokens (issue #2359).
+    if ((left.TokenEnum() == '-' || left.TokenEnum() == '+') &&
+        (right.TokenEnum() == '-' || right.TokenEnum() == '+')) {
+      return {1, "Space between consecutive +/- operators (avoid '--'/'++')."};
+    }
     // Inside [], allows 0 or 1 spaces, and symmetrize.
     // TODO(fangism): make this behavior configurable
     if (right.format_token_enum == FormatTokenType::binary_operator &&
@@ -272,6 +277,13 @@ static WithReason<int> SpacesRequiredBetween(
     }
     if (left.format_token_enum == FormatTokenType::binary_operator &&
         InRangeLikeContext(left_context)) {
+      // Compact `[-1--1]` would lex as the `--` decrement token (issue #2359).
+      if ((left.TokenEnum() == '-' || left.TokenEnum() == '+') &&
+          (right.TokenEnum() == '-' || right.TokenEnum() == '+')) {
+        return {1,
+                "Space between consecutive +/- inside [] "
+                "(avoid fusing into '--'/'++')."};
+      }
       return {left.before.spaces_required,
               "Symmetrize spaces before and after binary operator inside []."};
     }
