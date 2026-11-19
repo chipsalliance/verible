@@ -5062,7 +5062,7 @@ TEST(FormatterEndToEndTest, ParamDeclarationAlignmentCommentBlockNoCrash) {
 }
 
 
- 
+
 // Regression test for issue #2489: associative-array index types must remain
 // nested under their declaration dimension during class-member alignment.
 // Changing the column limit must not shift the packed dimension's brackets.
@@ -5081,7 +5081,8 @@ TEST(FormatterEndToEndTest, ClassMemberAssociativeDimensionColumnLimit) {
   FormatStyle style;
   style.class_member_variable_alignment = AlignmentPolicy::kAlign;
 
-  for (const int column_limit : {48, 49}) {
+  constexpr int kColumnLimits[] = {48, 49};
+  for (const int column_limit : kColumnLimits) {
     style.column_limit = column_limit;
     std::ostringstream output;
     const auto status = FormatVerilog(kInput, "<filename>", style, output);
