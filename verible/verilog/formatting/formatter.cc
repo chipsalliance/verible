@@ -551,7 +551,8 @@ static void DeterminePartitionExpansion(
     case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
     case PartitionPolicyEnum::kJuxtaposition:
     case PartitionPolicyEnum::kStack:
-    case PartitionPolicyEnum::kWrap: {
+    case PartitionPolicyEnum::kWrap:
+    case PartitionPolicyEnum::kWrapFirstElementSeparately: {
       // The policies are handled (and replaced) in Layout Optimizer.
       LOG(FATAL) << "Unreachable. " << partition_policy;
       break;
@@ -893,6 +894,7 @@ Status Formatter::Format(const ExecutionControl &control) {
         case PartitionPolicyEnum::kStack:
         case PartitionPolicyEnum::kWrap:
         case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
+        case PartitionPolicyEnum::kWrapFirstElementSeparately:
           verible::OptimizeTokenPartitionTree(style_, &node);
           break;
         case PartitionPolicyEnum::kTabularAlignment:

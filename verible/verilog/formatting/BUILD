@@ -52,6 +52,7 @@ cc_library(
         ":format-style",
         ":verilog-token",
         "//verible/common/formatting:format-token",
+        "//verible/common/formatting:line-wrap-searcher",
         "//verible/common/formatting:token-partition-tree",
         "//verible/common/formatting:tree-unwrapper",
         "//verible/common/formatting:unwrapped-line",
