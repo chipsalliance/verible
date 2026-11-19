@@ -116,7 +116,8 @@ static bool InDeclaredDimensions(const SyntaxTreeContext &context) {
 static bool InRangeLikeContext(const SyntaxTreeContext &context) {
   return context.IsInsideFirst(
       {NodeEnum::kDimensionScalar, NodeEnum::kDimensionRange,
-       NodeEnum::kDimensionSlice, NodeEnum::kCycleDelayRange},
+       NodeEnum::kDimensionSlice, NodeEnum::kCycleDelayRange,
+       NodeEnum::kEnumName},
       {NodeEnum::kConditionExpression});  // exclude
 }
 
