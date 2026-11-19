@@ -5061,8 +5061,6 @@ TEST(FormatterEndToEndTest, ParamDeclarationAlignmentCommentBlockNoCrash) {
   }
 }
 
-
-
 // Regression test for issue #2489: associative-array index types must remain
 // nested under their declaration dimension during class-member alignment.
 // Changing the column limit must not shift the packed dimension's brackets.
