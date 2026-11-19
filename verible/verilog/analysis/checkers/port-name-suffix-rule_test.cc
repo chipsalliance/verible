@@ -154,6 +154,45 @@ TEST(PortNameSuffixRuleTest, RejectTests) {
   RunLintTestCases<VerilogAnalyzer, PortNameSuffixRule>(kTestCases);
 }
 
+TEST(PortNameSuffixRuleTest, InheritedDirection) {
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"module t(input logic first_i, logic second_i); endmodule"},
+      {"module inherited_port(output logic first_o, logic second_o); "
+       "endmodule"},
+      {"module t(inout wire first_io, wire second_io); endmodule"},
+      {"module t(output logic first_o, logic second_o, bit third_o); "
+       "endmodule"},
+      {"module t(output logic first_o, logic second_o, "
+       "input logic third_i, logic fourth_i); endmodule"},
+      {"module t(ref logic first_x, logic second_x); endmodule"},
+      {"module t(output logic first_o, logic ",
+       {kToken, "second_i"},
+       "); endmodule"},
+      {"module t(inout wire first_io, wire ",
+       {kToken, "second_i"},
+       "); endmodule"},
+      {"module t(input logic first_i, logic ",
+       {kToken, "second_o"},
+       "); endmodule"},
+      // Inheritance still applies after a port with an invalid name.
+      {"module t(output logic ",
+       {kToken, "first"},
+       ", logic second_o); endmodule"},
+      // The first ANSI port defaults to inout when its direction is omitted.
+      {"module t(logic first_io); endmodule"},
+      {"module t(logic ", {kToken, "first_i"}, "); endmodule"},
+      // Each module, interface, and program starts a new port list.
+      {"module t(output logic first_o); endmodule\n"
+       "module u(logic second_io); endmodule"},
+      {"interface t(output logic first_o); endinterface\n"
+       "interface u(logic second_io); endinterface"},
+      {"program t(output logic first_o); endprogram\n"
+       "program u(logic second_io); endprogram"},
+  };
+  RunLintTestCases<VerilogAnalyzer, PortNameSuffixRule>(kTestCases);
+}
+
 }  // namespace
 }  // namespace analysis
 }  // namespace verilog

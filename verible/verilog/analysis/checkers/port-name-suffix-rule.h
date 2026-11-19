@@ -50,6 +50,10 @@ class PortNameSuffixRule : public verible::SyntaxTreeLintRule {
   static bool IsSuffixCorrect(std::string_view suffix,
                               std::string_view direction);
 
+  // An omitted ANSI port direction inherits from the preceding port, or
+  // defaults to inout at the start of a module, interface, or program header.
+  std::string_view direction_ = "inout";
+
   // Violations
   std::set<verible::LintViolation> violations_;
 };
