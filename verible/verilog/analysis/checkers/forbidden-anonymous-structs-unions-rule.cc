@@ -47,7 +47,7 @@ static constexpr std::string_view kMessageUnion =
 const LintRuleDescriptor &ForbiddenAnonymousStructsUnionsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "typedef-structs-unions",
-      .topic = "typedef-structs-unions",
+      .topic = "structure-types",
       .desc =
           "Checks that a Verilog `struct` or `union` declaration is "
           "named using `typedef`.",

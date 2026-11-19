@@ -43,7 +43,7 @@ static constexpr std::string_view kMessage =
 const LintRuleDescriptor &ForbiddenAnonymousEnumsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "typedef-enums",
-      .topic = "typedef-enums",
+      .topic = "enumerations",
       .desc =
           "Checks that a Verilog `enum` declaration is named using "
           "`typedef`.",

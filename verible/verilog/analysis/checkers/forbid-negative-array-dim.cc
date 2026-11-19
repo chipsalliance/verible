@@ -45,7 +45,7 @@ static constexpr std::string_view kMessage =
 const LintRuleDescriptor &ForbidNegativeArrayDim::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "forbid-negative-array-dim",
-      .topic = "forbid-negative-array-dim",
+      .topic = "packed-arrays",
       .desc = "Check for negative constant literals inside array dimensions.",
   };
   return d;

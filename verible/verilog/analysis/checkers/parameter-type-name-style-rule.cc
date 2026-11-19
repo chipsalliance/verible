@@ -48,7 +48,7 @@ static constexpr std::string_view kMessage =
 const LintRuleDescriptor &ParameterTypeNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "parameter-type-name-style",
-      .topic = "parametrized-objects",
+      .topic = "naming-module-parameters",
       .desc =
           "Checks that parameter type names follow the lower_snake_case naming "
           "convention and end with _t.",

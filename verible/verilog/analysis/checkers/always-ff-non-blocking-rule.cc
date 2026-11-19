@@ -56,7 +56,7 @@ static constexpr std::string_view kMessage =
 const LintRuleDescriptor &AlwaysFFNonBlockingRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "always-ff-non-blocking",
-      .topic = "sequential-logic",
+      .topic = "seq-logic-use-non-blocking",
       .desc =
           "Checks that blocking assignments are, at most, targeting "
           "locals in sequential logic.",

@@ -446,7 +446,7 @@ void GetLintRuleDescriptionsMarkdown(std::ostream *os) {
     *os << " See " << verible::GetStyleGuideCitation(d.topic) << ".\n\n";
 
     if (!d.param.empty()) {
-      *os << "##### Parameter" << (d.param.size() > 1 ? "s" : "") << "\n";
+      *os << "#### Parameter" << (d.param.size() > 1 ? "s" : "") << "\n";
       for (const auto &p : d.param) {
         *os << "  * `" << p.name << "` Default: `" << p.default_value << "` "
             << p.description << "\n";

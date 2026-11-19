@@ -54,7 +54,7 @@ const char InstanceShadowRule::kMessage[] =
 const LintRuleDescriptor &InstanceShadowRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "instance-shadowing",
-      .topic = "mark-shadowed-instances",
+      .topic = "module-instantiation",
       .desc =
           "Warns if there are multiple declarations in the same scope "
           "that shadow each other with the same name."};

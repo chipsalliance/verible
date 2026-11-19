@@ -45,7 +45,7 @@ static const char kMessage[] =
 const LintRuleDescriptor &ExplicitBeginRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "explicit-begin",
-      .topic = "explicit-begin",
+      .topic = "generate-constructs",
       .desc =
           "Checks that a Verilog ``begin`` directive follows all "
           "if, else, always, always_comb, always_latch, always_ff, "

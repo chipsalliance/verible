@@ -67,7 +67,7 @@ VERILOG_REGISTER_LINT_RULE(DffNameStyleRule);
 const LintRuleDescriptor &DffNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "dff-name-style",
-      .topic = "dff-name-style",
+      .topic = "registers",
       .desc =
           "Checks that D Flip-Flops use appropiate naming conventions in both "
           "input and output ports. The left hand side (output) and right hand "

@@ -51,7 +51,7 @@ static constexpr std::string_view kMessageSeqBlock =
 const LintRuleDescriptor &DisableStatementNoLabelsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "disable-statement",
-      .topic = "disable-invalid-in-non-sequential",
+      .topic = "disabling-tasks-and-blocks",
       .desc =
           "Checks that there are no occurrences of `disable some_label` "
           "if label is referring to a fork or other none sequential block "

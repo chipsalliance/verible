@@ -41,7 +41,7 @@ static constexpr std::string_view kMessage =
 const LintRuleDescriptor &GenerateLabelRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "generate-label",
-      .topic = "generate-statements",
+      .topic = "generate-constructs",
       .desc = "Checks that every generate block statement is labeled.",
   };
   return d;
