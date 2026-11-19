@@ -1643,7 +1643,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
     DependentReferences &ref(capture.Ref());
     // Expecting only two-level reference "outer::inner".
-    CHECK_EQ(ABSL_DIE_IF_NULL(ref.components)->Children().size(), 1);
+    // The outer scope is missing if it did not yield a reference, e.g. when
+    // the class name comes from a macro call.
+    if (ref.components == nullptr || ref.components->Children().size() != 1) {
+      return absl::InvalidArgumentError(
+          absl::StrCat("Unable to resolve out-of-line definition \"",
+                       StringSpanOfSymbol(qualified_id),
+                       "\", expected \"outer::inner\" with plain identifiers"));
+    }
 
     // Must resolve base, instead of deferring to resolve phase.
     // Do not inject the outer_scope (class name) into the current scope.
