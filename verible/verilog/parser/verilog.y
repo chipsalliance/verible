@@ -971,6 +971,8 @@ simple_type
     { $$ = std::move($1); }
   | integer_vector_type
     { $$ = std::move($1); }
+  | non_integer_type
+    { $$ = std::move($1); }
   /* TODO(fangism): support package scope or class scope type here:
   | qualified_id
   */

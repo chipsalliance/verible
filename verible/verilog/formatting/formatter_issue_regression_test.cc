@@ -522,6 +522,27 @@ TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
   FormatStyle style;  // default column_limit (100)
   RunFormatterTestCases(style, kTestCases);
 }
+
+// Regression for https://github.com/chipsalliance/verible/issues/2630:
+// real, shortreal and realtime are valid assignment pattern keys
+// (simple_type includes non_integer_type) and must be formatted like
+// integer type keys.
+TEST(FormatterEndToEndTest, NonIntegerTypeAssignmentPatternKey) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"module m;\n"
+       "initial c = '{int:100, real:3.14};\n"
+       "initial c = '{shortreal:1.5, default:0};\n"
+       "initial c = '{realtime:2.0};\n"
+       "endmodule\n",
+       "module m;\n"
+       "  initial c = '{int : 100, real : 3.14};\n"
+       "  initial c = '{shortreal : 1.5, default: 0};\n"
+       "  initial c = '{realtime : 2.0};\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;  // default column_limit (100)
+  RunFormatterTestCases(style, kTestCases);
+}
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
