@@ -5068,15 +5068,15 @@ TEST(FormatterEndToEndTest, ParamDeclarationAlignmentCommentBlockNoCrash) {
 // Changing the column limit must not shift the packed dimension's brackets.
 TEST(FormatterEndToEndTest, ClassMemberAssociativeDimensionColumnLimit) {
   constexpr std::string_view kInput =
-      "class foo;\\n"
-      "    bit some_very_very_very_long_variable;\\n"
-      "    bit     some_other_variable [bit[80:0]];\\n"
-      "endclass\\n";
+      "class foo;\n"
+      "    bit some_very_very_very_long_variable;\n"
+      "    bit     some_other_variable [bit[80:0]];\n"
+      "endclass\n";
   constexpr std::string_view kExpected =
-      "class foo;\\n"
-      "  bit some_very_very_very_long_variable;\\n"
-      "  bit some_other_variable[bit [80:0]];\\n"
-      "endclass\\n";
+      "class foo;\n"
+      "  bit some_very_very_very_long_variable;\n"
+      "  bit some_other_variable[bit [80:0]];\n"
+      "endclass\n";
 
   FormatStyle style;
   style.class_member_variable_alignment = AlignmentPolicy::kAlign;
