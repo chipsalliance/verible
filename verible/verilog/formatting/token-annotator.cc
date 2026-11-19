@@ -113,14 +113,16 @@ static bool InDeclaredDimensions(const SyntaxTreeContext &context) {
       {NodeEnum::kPackedDimensions, NodeEnum::kUnpackedDimensions}, {});
 }
 
-static bool InRangeLikeContext(const SyntaxTreeContext &context) {
+static bool InRangeLikeContext(const SyntaxTreeContext &context,
+                               bool is_enum_name_range_separator = false) {
   // Keep each include list within MatchesTagAnyOf's four-tag limit.
   return context.IsInsideFirst(
              {NodeEnum::kDimensionScalar, NodeEnum::kDimensionRange,
               NodeEnum::kDimensionSlice, NodeEnum::kCycleDelayRange},
              {NodeEnum::kConditionExpression}) ||
-         context.IsInsideFirst({NodeEnum::kEnumName},
-                               {NodeEnum::kConditionExpression});  // exclude
+         (is_enum_name_range_separator &&
+          context.IsInsideFirst({NodeEnum::kEnumName},
+                                {NodeEnum::kConditionExpression}));
 }
 
 // '/' between identifiers inside a macro argument is a filesystem path
@@ -261,7 +263,7 @@ static WithReason<int> SpacesRequiredBetween(
     // Inside [], allows 0 or 1 spaces, and symmetrize.
     // TODO(fangism): make this behavior configurable
     if (right.format_token_enum == FormatTokenType::binary_operator &&
-        InRangeLikeContext(right_context)) {
+        InRangeLikeContext(right_context, right.TokenEnum() == ':')) {
       if (style.compact_indexing_and_selections &&
           !InDeclaredDimensions(right_context)) {
         return {0,
@@ -274,7 +276,7 @@ static WithReason<int> SpacesRequiredBetween(
       return {spaces, "Limit <= 1 space before binary operator inside []."};
     }
     if (left.format_token_enum == FormatTokenType::binary_operator &&
-        InRangeLikeContext(left_context)) {
+        InRangeLikeContext(left_context, left.TokenEnum() == ':')) {
       return {left.before.spaces_required,
               "Symmetrize spaces before and after binary operator inside []."};
     }
