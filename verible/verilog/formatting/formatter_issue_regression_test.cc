@@ -522,9 +522,10 @@ TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
   FormatStyle style;  // default column_limit (100)
   RunFormatterTestCases(style, kTestCases);
 }
+
 // Regression for https://github.com/chipsalliance/verible/issues/2629:
 // Enum-name ranges should use the same symmetric 0-or-1-space rule as
-// declaration ranges, without exceeding the syntax-tag matching limit.
+// declaration ranges.
 TEST(FormatterEndToEndTest, EnumNameRangeColonSpacing) {
   static constexpr FormatterTestCase kTestCases[] = {
       {"typedef enum {A[1:5], B[1 :5], C[1    :5]} a_e;\n"
