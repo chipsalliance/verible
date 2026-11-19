@@ -114,11 +114,13 @@ static bool InDeclaredDimensions(const SyntaxTreeContext &context) {
 }
 
 static bool InRangeLikeContext(const SyntaxTreeContext &context) {
+  // Keep each include list within MatchesTagAnyOf's four-tag limit.
   return context.IsInsideFirst(
-      {NodeEnum::kDimensionScalar, NodeEnum::kDimensionRange,
-       NodeEnum::kDimensionSlice, NodeEnum::kCycleDelayRange,
-       NodeEnum::kEnumName},
-      {NodeEnum::kConditionExpression});  // exclude
+             {NodeEnum::kDimensionScalar, NodeEnum::kDimensionRange,
+              NodeEnum::kDimensionSlice, NodeEnum::kCycleDelayRange},
+             {NodeEnum::kConditionExpression}) ||
+         context.IsInsideFirst({NodeEnum::kEnumName},
+                               {NodeEnum::kConditionExpression});  // exclude
 }
 
 // '/' between identifiers inside a macro argument is a filesystem path
