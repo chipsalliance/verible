@@ -6086,6 +6086,24 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      {verible::TK_EOF, ""}},
     {"[int'",  // unexpected EOF
      {verible::TK_EOF, ""}},
+    {"module test(\n",
+     "input logic a,\n",
+     "input logic b,\n",
+     "output logic out\n",
+     ");\n",
+     "assign out = a",  // invalid binary operator
+     {TK_NAND, "~&"},
+     "b;",
+     "endmodule\n"},
+    {"module test(\n",
+     "input logic a,\n",
+     "input logic b,\n",
+     "output logic out\n",
+     ");\n",
+     "assign out = a",  // invalid binary operator
+     {TK_NOR, "~|"},
+     "b;",
+     "endmodule\n"},
 };
 
 using verible::LeafTag;
