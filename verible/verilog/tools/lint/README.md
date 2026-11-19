@@ -55,7 +55,7 @@ usage: verible-verilog-lint [options] <file> [<file>...]
       enables it, '-' disable it. Configuration values for each rules placed
       after '=' character.); default: ;
     --rules_config (Path to lint rules configuration file. Disables
-      --rule_config_search if set.); default: "";
+      --rules_config_search if set.); default: "";
     --rules_config_search (Look for lint rules configuration file
       '.rules.verible_lint' searching upward from the location of each analyzed
       file.); default: false;
