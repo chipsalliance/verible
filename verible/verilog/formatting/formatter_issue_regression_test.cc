@@ -528,13 +528,14 @@ TEST(FormatterEndToEndTest, PortListCommentWithLineContinuationDoesNotAbort) {
 // declaration ranges.
 TEST(FormatterEndToEndTest, EnumNameRangeColonSpacing) {
   static constexpr FormatterTestCase kTestCases[] = {
-      {"typedef enum {A[1:5], B[1 :5], C[1    :5]} a_e;\n"
+      {"typedef enum {A[1:5], B[1 :5], C[1: 5], D[1    :5]} a_e;\n"
        "logic [1:5] y;\n"
        "logic [1  :  5] w;\n",
        "typedef enum {\n"
        "  A[1:5],\n"
        "  B[1 : 5],\n"
-       "  C[1 : 5]\n"
+       "  C[1:5],\n"
+       "  D[1 : 5]\n"
        "} a_e;\n"
        "logic [1:5] y;\n"
        "logic [1 : 5] w;\n"},
