@@ -134,34 +134,38 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
       number.literal != "?") {
     std::vector<AutoFix> autofixes;
 
-    // Special number zero (if lint_zero defined): suggest a '0 in this case
-    if (number.literal == "0" && !number.signedness) {
-      autofixes.push_back(
-          AutoFix("Replace with unsized `0",
-                  {{width_text, ""}, {base_text.substr(0, 2), "'"}}));
-    }
-
-    // Regular fix: prefix with leading zeroes.
-    const int leading_0 = (missing_bits + bits_per_digit - 1) / bits_per_digit;
-    autofixes.push_back(
-        AutoFix("Left-expand leading zeroes",
-                {{digits_text.substr(0, 0), std::string(leading_0, '0')}}));
-
-    // For literals with small values that can be represented in one decimal
-    // digit, this often might also be useful as decimal. Make this the final
-    // suggestion.
-    if (number.literal.size() == 1 && std::isdigit(number.literal[0])) {
-      static const std::string desc = "Replace with decimal";
-      if (number.signedness) {
-        autofixes.push_back(AutoFix(desc, {{base_text.substr(0, 3), "'sd"}}));
-      } else {
-        autofixes.push_back(AutoFix(desc, {{base_text.substr(0, 2), "'d"}}));
+    if (autofix_) {
+      // Special number zero (if lint_zero defined): suggest a '0 in this case
+      if (number.literal == "0" && !number.signedness) {
+        autofixes.push_back(
+            AutoFix("Replace with unsized `0",
+                    {{width_text, ""}, {base_text.substr(0, 2), "'"}}));
       }
-    }
 
-    // Suggest inferred width.
-    autofixes.push_back(AutoFix("Adjust width to inferred width",
-                                {{width_text, std::to_string(inferred_size)}}));
+      // Regular fix: prefix with leading zeroes.
+      const int leading_0 =
+          (missing_bits + bits_per_digit - 1) / bits_per_digit;
+      autofixes.push_back(
+          AutoFix("Left-expand leading zeroes",
+                  {{digits_text.substr(0, 0), std::string(leading_0, '0')}}));
+
+      // For literals with small values that can be represented in one decimal
+      // digit, this often might also be useful as decimal. Make this the final
+      // suggestion.
+      if (number.literal.size() == 1 && std::isdigit(number.literal[0])) {
+        static const std::string desc = "Replace with decimal";
+        if (number.signedness) {
+          autofixes.push_back(AutoFix(desc, {{base_text.substr(0, 3), "'sd"}}));
+        } else {
+          autofixes.push_back(AutoFix(desc, {{base_text.substr(0, 2), "'d"}}));
+        }
+      }
+
+      // Suggest inferred width.
+      autofixes.push_back(
+          AutoFix("Adjust width to inferred width",
+                  {{width_text, std::to_string(inferred_size)}}));
+    }
 
     violations_.insert(LintViolation(
         digits_leaf->get(),

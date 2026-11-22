@@ -15,6 +15,8 @@
 #include "verible/verilog/analysis/checkers/undersized-binary-literal-rule.h"
 
 #include <initializer_list>
+#include <memory>
+#include <utility>
 
 #include "absl/status/status.h"
 #include "gtest/gtest.h"
@@ -180,6 +182,30 @@ TEST(UndersizedBinaryLiteralTest, ApplyAutoFix) {
   };
   RunApplyFixCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
       kTestCases, "bin:true;hex:true;oct:true;autofix:true");
+}
+
+TEST(UndersizedBinaryLiteralTest, AutoFixDisabled) {
+  for (const auto code : {
+           "localparam x = 8'b1;",
+           "localparam x = 8'sb1;",
+           "localparam x = 9'o7;",
+           "localparam x = 32'hAB;",
+           "localparam x = 32'h0;",
+           "localparam x = 32'sh0;",
+       }) {
+    SCOPED_TRACE(code);
+    VerilogAnalyzer analyzer(code, "<<inline-test>>");
+    ASSERT_TRUE(analyzer.Analyze().ok());
+    auto rule = std::make_unique<UndersizedBinaryLiteralRule>();
+    ASSERT_TRUE(rule->Configure("bin:true;hex:true;oct:true;lint_zero:true;"
+                                "autofix:false")
+                    .ok());
+    verible::LintRunner<UndersizedBinaryLiteralRule::rule_type> lint_runner(
+        std::move(rule));
+    const auto status = lint_runner.Run(analyzer.Data(), "<<inline-test>>");
+    ASSERT_EQ(status.violations.size(), 1);
+    EXPECT_TRUE(status.violations.begin()->autofixes.empty());
+  }
 }
 
 TEST(UndersizedBinaryLiteralRule, AutoFixDigitZeroProvideUnsizedAlternative) {
