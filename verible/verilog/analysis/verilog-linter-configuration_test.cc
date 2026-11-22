@@ -714,6 +714,39 @@ TEST(RuleBundleTest, ParseRuleBundleWithQuotationMarks) {
   EXPECT_EQ("bar", bundle.rules["test-rule-4"].configuration);
 }
 
+TEST(RuleBundleTest, ParseAndUnparseQuotedParameterValues) {
+  constexpr std::string_view text =
+      R"cfg(test-rule-1=foo:bar;regex="(?:[a-z;,]{1,3}\d)",-test-rule-2)cfg";
+  RuleBundle bundle;
+  std::string error;
+  ASSERT_TRUE(bundle.ParseConfiguration(text, ',', &error)) << error;
+  EXPECT_TRUE(error.empty());
+  ASSERT_THAT(bundle.rules, SizeIs(2));
+  EXPECT_EQ(bundle.rules.at("test-rule-1").configuration,
+            R"cfg(foo:bar;regex="(?:[a-z;,]{1,3}\d)")cfg");
+  EXPECT_FALSE(bundle.rules.at("test-rule-2").enabled);
+  EXPECT_EQ(bundle.UnparseConfiguration(',', /*reverse=*/false), text);
+}
+
+TEST(RuleBundleTest, ParseQuotedParameterInsideLegacyWrapper) {
+  constexpr std::string_view text =
+      R"(test-rule-1="regex="[a-z]{1,3}";foo:bar",test-rule-2)";
+  RuleBundle bundle;
+  std::string error;
+  ASSERT_TRUE(bundle.ParseConfiguration(text, ',', &error)) << error;
+  ASSERT_THAT(bundle.rules, SizeIs(2));
+  EXPECT_EQ(bundle.rules.at("test-rule-1").configuration,
+            R"(regex="[a-z]{1,3}";foo:bar)");
+}
+
+TEST(RuleBundleTest, RejectsUnterminatedQuotedParameter) {
+  RuleBundle bundle;
+  std::string error;
+  EXPECT_FALSE(bundle.ParseConfiguration(R"(test-rule-1=regex="[a-z]{1,3})",
+                                         ',', &error));
+  EXPECT_THAT(error, testing::HasSubstr("Unterminated quoted parameter value"));
+}
+
 TEST(RuleBundleTest, ParseRuleBundleAcceptOne) {
   constexpr std::string_view text = "test-rule-1";
   RuleBundle bundle;

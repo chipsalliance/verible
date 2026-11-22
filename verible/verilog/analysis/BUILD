@@ -226,6 +226,7 @@ cc_library(
         "//verible/common/analysis:syntax-tree-lint-rule",
         "//verible/common/analysis:text-structure-lint-rule",
         "//verible/common/analysis:token-stream-lint-rule",
+        "//verible/common/text:config-utils",
         "//verible/common/util:container-util",
         "//verible/common/util:enum-flags",
         "//verible/common/util:file-util",

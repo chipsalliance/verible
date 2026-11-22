@@ -129,7 +129,7 @@ The `--rules` flag allows to enable/disable rules as well as pass configuration
 to rules that accept them. It accepts a comma-separated list
 [rule names][lint-rule-list]. If prefixed with a `-` (minus), the rule is
 disabled. No prefix or a '+' (plus) prefix enables the rule. An optional
-configuration can be passed after an `=` assignment. Each name/value is
+configuration can be passed after an `=` assignment.
 
 So rule configurations with parameters looks like this
 ```
@@ -154,8 +154,21 @@ verible-verilog-lint --rules="undersized-binary-literal=hex:true;lint_zero:true"
 ```
 
 Additionally, the `--rules_config` flag can be used to read configuration stored
-in a file. The syntax is the same as above, except the rules can be also
-separated with the newline character.
+in a file. Put one rule per line. A `#` starts a comment in a rules file.
+
+Use `parameter="value"` to include a comma, semicolon, or colon in a
+parameter value. The quotes must reach Verible literally, so in a POSIX shell
+you can enclose the entire flag in single quotes.
+
+```bash
+verible-verilog-lint '--rules=signal-name-style=style_regex="[a-z]{1,3}",-no-tabs' design.sv
+```
+
+In a rules file, write the same rule as
+`signal-name-style=style_regex="[a-z]{1,3}"`. Separate multiple parameters with
+semicolons outside the quotes. Backslashes inside the quotes are passed through
+to the rule, including regex escapes such as `\d`. A backslash-escaped double
+quote stays inside the value.
 
 ### Regular Expressions
 Some lint rules allow users to use a regular expression to configure the rule. Verible utilises the RE2 regular expression library and full syntax documentation can be found at https://github.com/google/re2/wiki/syntax.
