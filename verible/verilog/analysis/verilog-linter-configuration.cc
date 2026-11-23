@@ -15,6 +15,7 @@
 #include "verible/verilog/analysis/verilog-linter-configuration.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <map>

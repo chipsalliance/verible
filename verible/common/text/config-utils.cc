@@ -15,6 +15,7 @@
 #include "verible/common/text/config-utils.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <initializer_list>
 #include <iterator>
