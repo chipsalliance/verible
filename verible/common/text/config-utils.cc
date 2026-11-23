@@ -15,6 +15,7 @@
 #include "verible/common/text/config-utils.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <initializer_list>
 #include <iterator>
@@ -26,6 +27,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
@@ -39,16 +41,70 @@ namespace verible {
 using config::NVConfigSpec;
 using std::string_view;
 
-// TODO(hzeller): consider using flex for a more readable tokenization that
-// can also much easier deal with whitespaces, strings etc.
+namespace {
+
+// The view starts at the opening quote. Skip escaped characters while locating
+// the closing quote, but leave the original bytes intact for the value setter.
+size_t FindClosingQuote(string_view quoted) {
+  for (size_t i = 1; i < quoted.size(); ++i) {
+    if (quoted[i] == '\\') {
+      ++i;
+    } else if (quoted[i] == '"') {
+      return i;
+    }
+  }
+  return string_view::npos;
+}
+
+}  // namespace
+
+absl::StatusOr<size_t> config::FindConfigSeparator(string_view config,
+                                                   char separator) {
+  bool in_name = true;
+  for (size_t i = 0; i < config.size(); ++i) {
+    const char c = config[i];
+    if (c == separator) return i;
+    if (c == ';') {
+      in_name = true;
+    } else if (in_name && (c == ':' || c == '=')) {
+      in_name = false;
+      if (c == '=' && i + 1 < config.size() && config[i + 1] == '"') {
+        const size_t end = FindClosingQuote(config.substr(i + 1));
+        if (end == string_view::npos) {
+          return absl::InvalidArgumentError(
+              "Unterminated quoted parameter value");
+        }
+        i += end + 1;
+      }
+    }
+  }
+  return string_view::npos;
+}
+
 absl::Status ParseNameValues(string_view config_string,
                              const std::initializer_list<NVConfigSpec> &spec) {
-  if (config_string.empty()) return absl::OkStatus();
+  while (!config_string.empty()) {
+    const auto end = config::FindConfigSeparator(config_string, ';');
+    if (!end.ok()) return end.status();
+    const string_view single_config = config_string.substr(0, *end);
+    config_string.remove_prefix(single_config.size() +
+                                (*end != string_view::npos));
+    if (single_config.empty()) continue;
 
-  for (const string_view single_config :
-       absl::StrSplit(config_string, ';', absl::SkipEmpty())) {
-    const std::pair<string_view, string_view> nv_pair =
+    std::pair<string_view, string_view> nv_pair =
         absl::StrSplit(single_config, ':');
+    const size_t assignment = single_config.find_first_of(":=");
+    if (assignment != string_view::npos &&
+        absl::StartsWith(single_config.substr(assignment), "=\"")) {
+      const string_view quoted = single_config.substr(assignment + 1);
+      const size_t close = FindClosingQuote(quoted);
+      if (!absl::StripAsciiWhitespace(quoted.substr(close + 1)).empty()) {
+        return absl::InvalidArgumentError(
+            "Unexpected text after quoted parameter value");
+      }
+      nv_pair = {single_config.substr(0, assignment),
+                 quoted.substr(1, close - 1)};
+    }
     const auto value_config = std::find_if(  // linear search
         spec.begin(), spec.end(),
         [&nv_pair](const NVConfigSpec &s) { return nv_pair.first == s.name; });
@@ -124,10 +180,6 @@ ConfigValueSetter SetBool(bool *value) {
                                       "'true', 'on' or 'false', 'off'");
   };
 }
-
-// TODO(hzeller): For strings, consider to allow quoted strings that then also
-// allow C-Escapes. But that would require that ParseNameValues() can properly
-// deal with whitespace, which it might after converted to flex.
 
 ConfigValueSetter SetString(std::string* value) {
   return [value](string_view v) {

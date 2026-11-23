@@ -14,6 +14,7 @@
 #ifndef VERIBLE_COMMON_TEXT_CONFIG_UTILS_H_
 #define VERIBLE_COMMON_TEXT_CONFIG_UTILS_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <initializer_list>
@@ -23,6 +24,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "re2/re2.h"
 
 namespace verible {
@@ -33,15 +35,20 @@ struct NVConfigSpec {
   const char *name;
   ConfigValueSetter set_value;
 };
+
+// Finds the first separator outside a quoted parameter value in a rule
+// configuration. Returns npos if absent, or an error for an unterminated value.
+absl::StatusOr<size_t> FindConfigSeparator(std::string_view config,
+                                           char separator);
 }  // namespace config
 
 // A utility function to parse name/value pairs from a string and directly
 // set user values.
 //
-// The "config_string" is the string to parse. It contains a list
-// of colon-separated name:value-pairs. These name/value pairs are seaprated
-// by semicolon or newline. So 'panic:no; answer:42' would be a valid string.
-// (We might adopt a more elaborate syntax in the future).
+// The "config_string" contains semicolon-separated name:value pairs, e.g.
+// 'panic:no;answer:42'. Use name="value" to include delimiters in a value.
+// Quoted values are passed to their setters without the surrounding quotes.
+// Backslashes are preserved, including those used to escape an inner quote.
 //
 // For a parsed name/value pair, a setter associated with that name is called
 // with the value.

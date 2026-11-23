@@ -15,6 +15,7 @@
 #include "verible/verilog/analysis/verilog-linter-configuration.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <map>
@@ -31,11 +32,11 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
 #include "verible/common/analysis/line-lint-rule.h"
 #include "verible/common/analysis/syntax-tree-lint-rule.h"
 #include "verible/common/analysis/text-structure-lint-rule.h"
 #include "verible/common/analysis/token-stream-lint-rule.h"
+#include "verible/common/text/config-utils.h"
 #include "verible/common/util/container-util.h"
 #include "verible/common/util/enum-flags.h"
 #include "verible/common/util/file-util.h"
@@ -96,8 +97,29 @@ bool RuleBundle::ParseConfiguration(std::string_view text, char separator,
   rules.clear();
 
   bool parsed_correctly = true;
-  for (std::string_view part :
-       absl::StrSplit(text, separator, absl::SkipEmpty())) {
+  while (!text.empty()) {
+    size_t end =
+        separator == ',' ? text.find_first_of("=,") : text.find(separator);
+    if (separator == ',') {
+      if (end != std::string_view::npos && text[end] == '=') {
+        size_t config_start = end + 1;
+        // Look for quoted parameters inside the legacy whole-rule wrapper too.
+        if (config_start < text.size() && text[config_start] == '"') {
+          ++config_start;
+        }
+        const auto offset = verible::config::FindConfigSeparator(
+            text.substr(config_start), ',');
+        if (!offset.ok()) {
+          absl::StrAppend(error, error->empty() ? "" : "\n",
+                          offset.status().message());
+          return false;
+        }
+        end = *offset == std::string_view::npos ? *offset
+                                                : config_start + *offset;
+      }
+    }
+    std::string_view part = text.substr(0, end);
+    text.remove_prefix(part.size() + (end != std::string_view::npos));
     if (separator == '\n') {
       // In configuration files, we can ignore #-comments
       // TODO(hzeller): this will fall short if in the configuration string
@@ -120,8 +142,6 @@ bool RuleBundle::ParseConfiguration(std::string_view text, char separator,
     if (part.empty()) continue;
     // If prefix is '-', the rule is disabled. For symmetry, we also allow
     // '+' to enable rule.
-    // Note that part is guaranteed to be at least one character because
-    // of absl::SkipEmpty()
     const bool prefix_minus = (part[0] == '-');
     const bool has_prefix = (part[0] == '+' || prefix_minus);
 

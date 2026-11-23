@@ -88,6 +88,51 @@ status="$?"
 }
 
 ################################################################################
+echo "=== Test quoted rule parameters in --rules and --rules_config"
+
+QUOTED_RULES_SOURCE="$TEST_TMPDIR/quoted_rules.sv"
+QUOTED_RULES_CONFIG="$TEST_TMPDIR/quoted_rules.conf"
+cat > "$QUOTED_RULES_SOURCE" <<'EOF'
+module quoted_rules;
+  logic abc;
+endmodule
+EOF
+
+for regex in '[a-z]{1,3}' '[a-z;]+' '[a-z:]+' '(?:abc)'; do
+  rule="signal-name-style=style_regex=\"$regex\""
+  "$lint_tool" --ruleset=none --rules="$rule,no-tabs" \
+      "$QUOTED_RULES_SOURCE" > "$MY_OUTPUT_FILE" 2>&1 || {
+    cat "$MY_OUTPUT_FILE"
+    exit 1
+  }
+  printf '%s # naming pattern\n%s\n' "$rule" 'no-tabs' > "$QUOTED_RULES_CONFIG"
+  "$lint_tool" --ruleset=none --rules_config="$QUOTED_RULES_CONFIG" \
+      "$QUOTED_RULES_SOURCE" > "$MY_OUTPUT_FILE" 2>&1 || {
+    cat "$MY_OUTPUT_FILE"
+    exit 1
+  }
+done
+
+# Keep the legacy unquoted comma in a rules file working.
+printf '%s\n' 'signal-name-style=style_regex:[a-z]{1,3}' > "$QUOTED_RULES_CONFIG"
+"$lint_tool" --ruleset=none --rules_config="$QUOTED_RULES_CONFIG" \
+    "$QUOTED_RULES_SOURCE" > "$MY_OUTPUT_FILE" 2>&1 || {
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+################################################################################
+echo "=== Test malformed quoted rule parameter in --rules_config"
+
+printf '%s\n' 'signal-name-style=style_regex="[a-z]{1,3}' > "$QUOTED_RULES_CONFIG"
+"$lint_tool" --ruleset=none --rules_config="$QUOTED_RULES_CONFIG" \
+    "$QUOTED_RULES_SOURCE" > "$MY_OUTPUT_FILE" 2>&1
+if [[ $? != 2 ]] || ! grep -q 'Unterminated quoted parameter value' "$MY_OUTPUT_FILE"; then
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+fi
+
+################################################################################
 echo "=== Test --parse_fatal (default)"
 
 TEST_FILE="${TEST_TMPDIR}/syntax-error.sv"

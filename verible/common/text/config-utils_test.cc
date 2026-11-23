@@ -29,6 +29,45 @@
 namespace verible {
 namespace config {
 
+TEST(ConfigUtilsTest, QuotedRegexParameters) {
+  const std::string_view patterns[] = {
+      "[a-z]{1,3}",     "[a-z;]+",         "[a-z:]+", "(?:abc)",
+      R"(\d+\.[a-z]+)", R"(\"[a-z;,]+\")", R"(abc\\)"};
+  for (const auto pattern : patterns) {
+    SCOPED_TRACE(pattern);
+    std::string configuration = "regex=\"";
+    configuration.append(pattern).append("\";limit:42");
+    std::unique_ptr<re2::RE2> regex;
+    int limit = 0;
+    const auto status = ParseNameValues(
+        configuration,
+        {{"regex", SetRegex(&regex)}, {"limit", SetInt(&limit)}});
+    ASSERT_TRUE(status.ok()) << status;
+    ASSERT_NE(regex, nullptr);
+    EXPECT_EQ(regex->pattern(), pattern);
+    EXPECT_EQ(limit, 42);
+  }
+}
+
+TEST(ConfigUtilsTest, PreservesLegacyLiteralQuotes) {
+  std::string value;
+  bool enabled = false;
+  const auto status = ParseNameValues(
+      R"(value:"abc=def";enabled)",
+      {{"value", SetString(&value)}, {"enabled", SetBool(&enabled)}});
+  ASSERT_TRUE(status.ok()) << status;
+  EXPECT_EQ(value, R"("abc=def")");
+  EXPECT_TRUE(enabled);
+}
+
+TEST(ConfigUtilsTest, RejectsMalformedQuotedParameters) {
+  std::string value;
+  const auto spec = {NVConfigSpec{"value", SetString(&value)}};
+  EXPECT_FALSE(ParseNameValues(R"(value="unfinished;)", spec).ok());
+  EXPECT_FALSE(ParseNameValues(R"(value="escaped\")", spec).ok());
+  EXPECT_FALSE(ParseNameValues(R"(value="complete"extra)", spec).ok());
+}
+
 TEST(ConfigUtilsTest, ComplainInvalidParameter) {
   absl::Status s;
   // singular ...

@@ -147,6 +147,7 @@ cc_library(
     deps = [
         "//verible/common/util:logging",
         "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
         "@abseil-cpp//absl/strings",
         "@re2",
     ],
