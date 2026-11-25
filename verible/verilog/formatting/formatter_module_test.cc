@@ -3089,6 +3089,91 @@ TEST(FormatterEndToEndTest, TernaryInsideSubscriptExpression_issue2597) {
   }
 }
 
+TEST(FormatterEndToEndTest, TimeunitsDeclarations) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      // Top-level timeunit and timeprecision stay on separate lines.
+      {"timeunit 1ns;\n"
+       "timeprecision 1ps;\n",
+       "timeunit 1ns;\n"
+       "timeprecision 1ps;\n"},
+      // Top-level compacted on one line is split onto separate lines.
+      {"timeunit 1ns; timeprecision 1ps;\n",
+       "timeunit 1ns;\n"
+       "timeprecision 1ps;\n"},
+      // Blank line between top-level timeunit and timeprecision is preserved.
+      {"timeunit 1ns;\n"
+       "\n"
+       "timeprecision 1ps;\n",
+       "timeunit 1ns;\n"
+       "\n"
+       "timeprecision 1ps;\n"},
+      // Combined timeunit/precision slash form.
+      {"timeunit 1ns/1ps;\n", "timeunit 1ns / 1ps;\n"},
+      // Module-level timeunit and timeprecision.
+      {"module m;\n"
+       "  timeunit 1ns;\n"
+       "  timeprecision 1ps;\n"
+       "  logic a;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  timeunit 1ns;\n"
+       "  timeprecision 1ps;\n"
+       "  logic a;\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  timeunit 1ns; timeprecision 1ps;\n"
+       "  logic a;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  timeunit 1ns;\n"
+       "  timeprecision 1ps;\n"
+       "  logic a;\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "  timeunit 1ns;\n"
+       "\n"
+       "  timeprecision 1ps;\n"
+       "endmodule\n",
+       "module m;\n"
+       "  timeunit 1ns;\n"
+       "\n"
+       "  timeprecision 1ps;\n"
+       "endmodule\n"},
+      // Package-level timeunit and timeprecision.
+      {"package p;\n"
+       "  timeunit 1ns;\n"
+       "  timeprecision 1ps;\n"
+       "  localparam int X = 1;\n"
+       "endpackage\n",
+       "package p;\n"
+       "  timeunit 1ns;\n"
+       "  timeprecision 1ps;\n"
+       "  localparam int X = 1;\n"
+       "endpackage\n"},
+      // Interface-level timeunit and timeprecision.
+      {"interface iface;\n"
+       "  timeunit 1ns;\n"
+       "  timeprecision 1ps;\n"
+       "endinterface\n",
+       "interface iface;\n"
+       "  timeunit 1ns;\n"
+       "  timeprecision 1ps;\n"
+       "endinterface\n"},
+      // Program-level timeunit and timeprecision.
+      {"program prog;\n"
+       "  timeunit 1ns;\n"
+       "  timeprecision 1ps;\n"
+       "endprogram\n",
+       "program prog;\n"
+       "  timeunit 1ns;\n"
+       "  timeprecision 1ps;\n"
+       "endprogram\n"},
+  };
+
+  FormatStyle style;  // default column_limit (100)
+  RunFormatterTestCases(style, kTestCases);
+}
+
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
