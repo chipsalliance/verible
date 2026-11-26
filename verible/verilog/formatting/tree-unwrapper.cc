@@ -797,6 +797,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kLoopGenerateConstruct:
     case NodeEnum::kClassConstructor:
     case NodeEnum::kPackageImportDeclaration:
+    case NodeEnum::kTimeunitsDeclaration:
     case NodeEnum::kPreprocessorInclude:
     case NodeEnum::kPreprocessorUndef:
     case NodeEnum::kTFPortDeclaration:

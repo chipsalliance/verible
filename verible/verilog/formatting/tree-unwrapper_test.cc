@@ -8454,6 +8454,47 @@ TEST_F(TreeUnwrapperTest, UnwrapPrimitivesTests) {
                                      test_case));
   }
 }
+
+const TreeUnwrapperTestData kUnwrapTimeunitsTestCases[] = {
+    {
+        "top-level timeunit and timeprecision",
+        "timeunit 1ns;\n"
+        "timeprecision 1ps;\n",
+        L(0, {"timeunit", "1ns", ";"}),
+        L(0, {"timeprecision", "1ps", ";"}),
+    },
+    {
+        "module with timeunit and timeprecision",
+        "module m;\n"
+        "  timeunit 1ns;\n"
+        "  timeprecision 1ps;\n"
+        "endmodule\n",
+        ModuleDeclaration(0, L(0, {"module", "m", ";"}),
+                          ModuleItemList(1, L(1, {"timeunit", "1ns", ";"}),
+                                         L(1, {"timeprecision", "1ps", ";"})),
+                          L(0, {"endmodule"})),
+    },
+    {
+        "package with timeunit and timeprecision",
+        "package p;\n"
+        "  timeunit 1ns;\n"
+        "  timeprecision 1ps;\n"
+        "endpackage\n",
+        PackageDeclaration(0, L(0, {"package", "p", ";"}),
+                           PackageItemList(1, L(1, {"timeunit", "1ns", ";"}),
+                                           L(1, {"timeprecision", "1ps", ";"})),
+                           L(0, {"endpackage"})),
+    },
+};
+
+TEST_F(TreeUnwrapperTest, UnwrapTimeunitsTests) {
+  for (const auto &test_case : kUnwrapTimeunitsTestCases) {
+    auto tree_unwrapper = CreateTreeUnwrapper(test_case.source_code);
+    const auto *uwline_tree = tree_unwrapper->Unwrap();
+    EXPECT_TRUE(VerifyUnwrappedLines(&std::cout, *ABSL_DIE_IF_NULL(uwline_tree),
+                                     test_case));
+  }
+}
 }  // namespace
 }  // namespace formatter
 }  // namespace verilog
